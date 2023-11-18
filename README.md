@@ -2,14 +2,17 @@
 
 # TODO
 - [ ] vpn
-- [ ] vnc connection
+- [x] vnc connection
 - [ ] themes
 - [ ] firefox with vertical tabs
-- [ ] .dotfiles
+- [ ] .dotfiles fiure out sym links stuff
+- [ ] mbr to gpt should maybe fix rEFInd
+- [ ] rEFInd config
 - [ ] tmux
-- [ ] sway config remove borders add top bar
+- [ ] sway config add top bar
+- [ ] sway config background
 - [ ] copy paste consistent
-- [ ] automatic vnc connection on boot
+- [x] automatic vnc connection on boot
 - [ ] greeter start sway and erikf login on boot
 - [ ] nvim config
 
