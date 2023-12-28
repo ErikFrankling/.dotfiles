@@ -1,0 +1,3 @@
+#!/bin/bash
+sudo python ~/.dotfiles/scripts/refind-next-boot 'Microsoft'
+systemctl reboot
