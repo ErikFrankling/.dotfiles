@@ -299,9 +299,15 @@ require('lazy').setup({
     build = function() vim.fn["mkdp#util#install"]() end,
   },
 
-  { 'lvimuser/lsp-inlayhints.nvim',        opts = {} },
+  { 'lvimuser/lsp-inlayhints.nvim', opts = {} },
 
-  { 'https://github.com/p00f/godbolt.nvim' },
+  {
+    'https://github.com/p00f/godbolt.nvim',
+    quickfix = {
+      enable = true,    -- whether to populate the quickfix list in case of errors
+      auto_open = true, -- whether to open the quickfix list in case of errors
+    },
+  },
 
   -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
   --       These are some example plugins that I've included in the kickstart repository.
