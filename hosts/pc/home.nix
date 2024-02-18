@@ -1,6 +1,10 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ...  }:
 
 {
+  imports = [
+    ../../modules/home-manager/neovim
+  ];
+
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
   home.username = "erikf";
@@ -44,7 +48,10 @@
     # # symlink to the Nix store copy.
     # ".screenrc".source = dotfiles/screenrc;
 
-    ".config/nvim/".source = .dotfiles/nvim;
+    ".config/nvim/" = {
+      source = ../../nvim;
+      recursive = true;
+    };
 
     # # You can also set the file content immediately.
     # ".gradle/gradle.properties".text = ''
@@ -75,7 +82,12 @@
     userEmail = "erik.frankling@frankling.se";
   };
 
-  programs.neovim.enable = true;
+  # programs.neovim = {
+  #   enable = true;
+  #   # package = pkgs.neovim-nightly;
+  #   vimAlias = true;
+  #   # extraLuaConfig = lib.fileContents ../../nvim/init.lua;
+  # };
 
   home.sessionVariables = {
     # EDITOR = "emacs";
