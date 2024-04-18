@@ -4,15 +4,32 @@
     inputs.nixvim.homeManagerModules.nixvim
     ./lsp.nix
     ./treesitter.nix
-    # ./keymaps.nix
+    ./keymaps.nix
     ./completions.nix
     ./telescope.nix
   ];
 
   config.programs.nixvim = {
     enable = true;
-    exstraConfigLua = builtins.readFile ./init.lua;
+    # exstraConfigLua = builtins.readFile ./init.lua;
+    
+    globals = {
+      mapleader = " ";
+      maplocalleader = " ";
+    };
+
+    keymaps = [
+      {
+        action = "<cmd>w<CR>";
+        key = "<C-a>";
+        options = {
+          silent = true;
+        };
+      }
+    ];
+
     options = {
+      
       background = "dark";
       number = true;
       relativenumber = true;
