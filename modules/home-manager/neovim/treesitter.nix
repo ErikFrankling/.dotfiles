@@ -2,7 +2,6 @@
   config.programs.nixvim.plugins = {
     treesitter = {
       enable = true;
-      auto_install = true;
       ensureInstalled = [
         "bash"
         "c"
