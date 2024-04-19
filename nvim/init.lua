@@ -299,7 +299,7 @@ require('lazy').setup({
     build = function() vim.fn["mkdp#util#install"]() end,
   },
 
-  { 'lvimuser/lsp-inlayhints.nvim', opts = {} },
+  { 'lvimuser/lsp-inlayhints.nvim', opts = {}, branch = 'anticonceal' },
 
   {
     'https://github.com/p00f/godbolt.nvim',
@@ -353,6 +353,15 @@ vim.api.nvim_create_autocmd("LspAttach", {
 -- See `:help vim.o`
 -- NOTE: You can change these options as you wish!
 
+-- Show hidden characters
+vim.cmd([[
+  set list
+  set listchars=tab:→\ ,space:·
+  ]])
+
+vim.o.softtabstop = 4
+vim.o.shiftwidth = 4
+
 -- Set highlight on search
 vim.o.hlsearch = true
 
@@ -389,7 +398,7 @@ vim.o.timeoutlen = 300
 vim.o.completeopt = 'menuone,noselect'
 
 -- NOTE: You should make sure your terminal supports this
-vim.o.termguicolors = true
+-- vim.o.termguicolors = true
 
 -- [[ Basic Keymaps ]]
 
@@ -668,7 +677,17 @@ require('mason-lspconfig').setup()
 --  define the property 'filetypes' to the map in question.
 local servers = {
   -- clangd = {},
-  -- gopls = {},
+  gopls = {
+    hints = {
+      assignVariableTypes = true,
+      compositeLiteralFields = true,
+      compositeLiteralTypes = true,
+      constantValues = true,
+      functionTypeParameters = true,
+      parameterNames = true,
+      rangeVariableTypes = true,
+    },
+  },
   pyright = {},
   rust_analyzer = {},
   -- tsserver = {},
@@ -697,6 +716,42 @@ local mason_lspconfig = require 'mason-lspconfig'
 
 mason_lspconfig.setup {
   ensure_installed = vim.tbl_keys(servers),
+}
+
+local lspconfig = require("lspconfig")
+-- local ih = require("inlay-hints")
+--
+-- lspconfig.gopls.setup({
+--   on_attach = function(c, b)
+--     ih.on_attach(c, b)
+--   end,
+--   settings = {
+--     gopls = {
+--       hints = {
+--         assignVariableTypes = true,
+--         compositeLiteralFields = true,
+--         compositeLiteralTypes = true,
+--         constantValues = true,
+--         functionTypeParameters = true,
+--         parameterNames = true,
+--         rangeVariableTypes = true,
+--       },
+--     },
+--   },
+-- })
+
+lspconfig.zls.setup {
+  capabilities = capabilities,
+  on_attach = on_attach,
+  settings = {
+    zls = {
+      cmd = { '/usr/bin/zls' },
+      -- Add any additional override configuration in the following tables. They will be passed to
+      -- the `settings` field of the server config. You must look up that documentation yourself.
+      filetypes = { 'zig' },
+      dangerous_comptime_experiments_do_not_enable = true,
+    },
+  },
 }
 
 mason_lspconfig.setup_handlers {
