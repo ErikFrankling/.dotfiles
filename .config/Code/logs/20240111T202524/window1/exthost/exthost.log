@@ -1,0 +1,9 @@
+2024-01-11 20:25:24.691 [info] Extension host with pid 44988 started
+2024-01-11 20:25:24.691 [info] Skipping acquiring lock for /home/erikf/.config/Code/User/workspaceStorage/5616a7d43e9ed6886a9e914f74878791.
+2024-01-11 20:25:24.715 [info] ExtensionService#_doActivateExtension vscode.git-base, startup: true, activationEvent: '*', root cause: vscode.git
+2024-01-11 20:25:24.719 [info] ExtensionService#_doActivateExtension vscode.git, startup: true, activationEvent: '*'
+2024-01-11 20:25:24.753 [info] ExtensionService#_doActivateExtension vscode.github, startup: true, activationEvent: '*'
+2024-01-11 20:25:24.798 [info] Eager extensions activated
+2024-01-11 20:25:24.805 [info] ExtensionService#_doActivateExtension vscode.debug-auto-launch, startup: false, activationEvent: 'onStartupFinished'
+2024-01-11 20:25:24.806 [info] ExtensionService#_doActivateExtension vscode.merge-conflict, startup: false, activationEvent: 'onStartupFinished'
+2024-01-11 20:25:24.881 [info] ExtensionService#_doActivateExtension vscode.github-authentication, startup: false, activationEvent: 'onAuthenticationRequest:github'

@@ -1,0 +1,18 @@
+2023/11/15-19:49:48.968 751 Creating DB /home/erikf/.config/google-chrome/Default/IndexedDB/https_mynixos.com_0.indexeddb.leveldb since it was missing.
+2023/11/15-19:49:48.973 751 Reusing MANIFEST /home/erikf/.config/google-chrome/Default/IndexedDB/https_mynixos.com_0.indexeddb.leveldb/MANIFEST-000001
+2023/11/15-19:49:49.157 764 Level-0 table #5: started
+2023/11/15-19:49:49.160 764 Level-0 table #5: 1268 bytes OK
+2023/11/15-19:49:49.162 764 Delete type=0 #3
+2023/11/15-19:49:49.162 751 Manual compaction at level-0 from '\x00\x01\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x02\x00\x00\x00' @ 0 : 0; will stop at (end)
+2023/11/15-19:49:52.490 754 Level-0 table #7: started
+2023/11/15-19:49:52.492 754 Level-0 table #7: 1482 bytes OK
+2023/11/15-19:49:52.494 754 Delete type=0 #4
+2023/11/15-19:49:52.494 754 Manual compaction at level-0 from (begin) .. (end); will stop at (end)
+2023/11/15-19:49:52.494 754 Manual compaction at level-1 from (begin) .. (end); will stop at '\x00\x03\x01\x02\x01\x13\x00[\x00D\x00E\x00F\x00A\x00U\x00L\x00T\x00]\x00!\x00u\x00n\x00d\x00e\x00f\x00i\x00n\x00e\x00d' @ 122 : 1
+2023/11/15-19:49:52.494 754 Compacting 1@1 + 1@2 files
+2023/11/15-19:49:52.496 754 Generated table #8@1: 34 keys, 972 bytes
+2023/11/15-19:49:52.496 754 Compacted 1@1 + 1@2 files => 972 bytes
+2023/11/15-19:49:52.498 754 compacted to: files[ 0 0 1 0 0 0 0 ]
+2023/11/15-19:49:52.498 754 Delete type=2 #7
+2023/11/15-19:49:52.498 754 Delete type=2 #5
+2023/11/15-19:49:52.498 754 Manual compaction at level-1 from '\x00\x03\x01\x02\x01\x13\x00[\x00D\x00E\x00F\x00A\x00U\x00L\x00T\x00]\x00!\x00u\x00n\x00d\x00e\x00f\x00i\x00n\x00e\x00d' @ 122 : 1 .. (end); will stop at (end)

@@ -1,0 +1,33 @@
+2023/12/19-13:23:55.616 4bd Reusing MANIFEST /home/erikf/.config/google-chrome/Default/IndexedDB/https_everything.curl.dev_0.indexeddb.leveldb/MANIFEST-000001
+2023/12/19-13:23:55.616 4bd Recovering log #7
+2023/12/19-13:23:55.617 4bd Reusing old log /home/erikf/.config/google-chrome/Default/IndexedDB/https_everything.curl.dev_0.indexeddb.leveldb/000007.log 
+2023/12/19-13:23:55.877 4bd Level-0 table #11: started
+2023/12/19-13:23:55.880 4bd Level-0 table #11: 933 bytes OK
+2023/12/19-13:23:55.882 4bd Delete type=0 #7
+2023/12/19-13:23:55.882 4bd Manual compaction at level-0 from '\x00\x07\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x08\x00\x00\x00' @ 0 : 0; will stop at '\x00\x07\x00\x00\x05' @ 275 : 1
+2023/12/19-13:23:55.882 4bd Compacting 1@0 + 1@1 files
+2023/12/19-13:23:55.884 4bd Generated table #12@0: 82 keys, 1831 bytes
+2023/12/19-13:23:55.884 4bd Compacted 1@0 + 1@1 files => 1831 bytes
+2023/12/19-13:23:55.886 4bd compacted to: files[ 0 1 1 0 0 0 0 ]
+2023/12/19-13:23:55.886 4bd Delete type=2 #11
+2023/12/19-13:23:55.886 4bd Manual compaction at level-0 from '\x00\x07\x00\x00\x05' @ 275 : 1 .. '\x00\x08\x00\x00\x00' @ 0 : 0; will stop at (end)
+2023/12/19-15:23:53.121 4bd Level-0 table #14: started
+2023/12/19-15:23:53.122 4bd Level-0 table #14: 373 bytes OK
+2023/12/19-15:23:53.125 4bd Delete type=0 #10
+2023/12/19-15:23:53.125 4bd Delete type=2 #8
+2023/12/19-15:23:53.125 4bd Manual compaction at level-0 from (begin) .. (end); will stop at '\x00\x04\x01\x02\x01\x05\x00_\x00_\x00s\x00a\x00k' @ 294 : 1
+2023/12/19-15:23:53.125 4bd Compacting 1@0 + 1@1 files
+2023/12/19-15:23:53.127 4bd Generated table #15@0: 83 keys, 1716 bytes
+2023/12/19-15:23:53.127 4bd Compacted 1@0 + 1@1 files => 1716 bytes
+2023/12/19-15:23:53.129 4bd compacted to: files[ 0 1 1 0 0 0 0 ]
+2023/12/19-15:23:53.129 4bd Delete type=2 #12
+2023/12/19-15:23:53.129 4bd Delete type=2 #14
+2023/12/19-15:23:53.129 4bd Manual compaction at level-0 from '\x00\x04\x01\x02\x01\x05\x00_\x00_\x00s\x00a\x00k' @ 294 : 1 .. (end); will stop at (end)
+2023/12/19-15:23:53.129 4bd Manual compaction at level-1 from (begin) .. (end); will stop at '\x00\x05\x01\x02\x013\x00[\x00D\x00E\x00F\x00A\x00U\x00L\x00T\x00]\x00!\x001\x00:\x009\x005\x008\x002\x008\x005\x005\x008\x003\x000\x004\x003\x00:\x00w\x00e\x00b\x00:\x009\x00c\x008\x000\x004\x007\x005\x00f\x00a\x00a\x008\x00b\x00c\x009\x00f\x009\x00c\x00b\x000\x008\x007\x006' @ 232 : 1
+2023/12/19-15:23:53.129 4bd Compacting 1@1 + 1@2 files
+2023/12/19-15:23:53.131 4bd Generated table #16@1: 68 keys, 1667 bytes
+2023/12/19-15:23:53.131 4bd Compacted 1@1 + 1@2 files => 1667 bytes
+2023/12/19-15:23:53.133 4bd compacted to: files[ 0 0 1 0 0 0 0 ]
+2023/12/19-15:23:53.133 4bd Delete type=2 #15
+2023/12/19-15:23:53.133 4bd Delete type=2 #5
+2023/12/19-15:23:53.133 4bd Manual compaction at level-1 from '\x00\x05\x01\x02\x013\x00[\x00D\x00E\x00F\x00A\x00U\x00L\x00T\x00]\x00!\x001\x00:\x009\x005\x008\x002\x008\x005\x005\x008\x003\x000\x004\x003\x00:\x00w\x00e\x00b\x00:\x009\x00c\x008\x000\x004\x007\x005\x00f\x00a\x00a\x008\x00b\x00c\x009\x00f\x009\x00c\x00b\x000\x008\x007\x006' @ 232 : 1 .. (end); will stop at (end)

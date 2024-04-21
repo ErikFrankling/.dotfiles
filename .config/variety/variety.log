@@ -1,0 +1,299 @@
+INFO: 2023-12-18 12:55:25,801: main() 'Using profile folder /home/erikf/.config/variety/'
+INFO: 2023-12-18 12:55:25,803: perform_upgrade() 'Last run version was 0.8.11 or earlier, current version is 0.8.11'
+INFO: 2023-12-18 12:55:25,859: process_command() 'Received command: []'
+INFO: 2023-12-18 12:55:25,859: start() 'Using data_path /usr/share/variety'
+INFO: 2023-12-18 12:55:25,859: load() 'Jumble loading'
+INFO: 2023-12-18 12:55:25,859: _walk_modules() 'Jumble loading module in __init__ from /usr/lib/python3.11/site-packages/variety/plugins/builtin/__init__.py'
+INFO: 2023-12-18 12:55:25,860: _walk_modules() 'Jumble loading module in LocalFilesSource from /usr/lib/python3.11/site-packages/variety/plugins/builtin/quotes/LocalFilesSource.py'
+INFO: 2023-12-18 12:55:25,860: load() 'Jumble found plugin class: <class 'LocalFilesSource.LocalFilesSource'>: {'name': 'Local text files', 'description': 'Displays quotes, defined in local text files.\nPut your own txt files in: ~/.config/variety/pluginconfig/quotes/.\nThe file format is:\n\nquote -- author\n.\nsecond quote -- another author\n.\netc...\n\nExample: http://rvelthuis.de/zips/quotes.txt', 'author': 'Peter Levi', 'version': '0.1'}'
+INFO: 2023-12-18 12:55:25,860: _walk_modules() 'Jumble loading module in QuotationsPageSource from /usr/lib/python3.11/site-packages/variety/plugins/builtin/quotes/QuotationsPageSource.py'
+INFO: 2023-12-18 12:55:25,878: load() 'Jumble found plugin class: <class 'QuotationsPageSource.QuotationsPageSource'>: {'name': 'TheQuotationsPage.com', 'description': 'Fetches quotes from TheQuotationsPage.com', 'author': 'Peter Levi', 'version': '0.1'}'
+INFO: 2023-12-18 12:55:25,878: _walk_modules() 'Jumble loading module in UrbanDictionarySource from /usr/lib/python3.11/site-packages/variety/plugins/builtin/quotes/UrbanDictionarySource.py'
+INFO: 2023-12-18 12:55:25,878: load() 'Jumble found plugin class: <class 'UrbanDictionarySource.UrbanDictionarySource'>: {'name': 'Urban Dictionary', 'description': 'Displays definitions from Urban Dictionary', 'author': 'James Miller', 'version': '0.1'}'
+INFO: 2023-12-18 12:55:25,878: _walk_modules() 'Jumble loading module in FortuneSource from /usr/lib/python3.11/site-packages/variety/plugins/builtin/quotes/FortuneSource.py'
+INFO: 2023-12-18 12:55:25,879: load() 'Jumble found plugin class: <class 'FortuneSource.FortuneSource'>: {'name': 'UNIX fortune program', 'description': 'Displays quotes using the UNIX fortune program. You may want to install additional fortune packs, e.g. fortunes-bofh-excuses.', 'author': 'Dan Jones', 'version': '0.1'}'
+INFO: 2023-12-18 12:55:25,879: _walk_modules() 'Jumble loading module in GoodreadsSource from /usr/lib/python3.11/site-packages/variety/plugins/builtin/quotes/GoodreadsSource.py'
+INFO: 2023-12-18 12:55:25,879: load() 'Jumble found plugin class: <class 'GoodreadsSource.GoodreadsSource'>: {'name': 'Goodreads', 'description': 'Fetches quotes from Goodreads.com', 'author': 'Peter Levi', 'version': '0.1'}'
+INFO: 2023-12-18 12:55:25,879: _walk_modules() 'Jumble loading module in __init__ from /usr/lib/python3.11/site-packages/variety/plugins/builtin/quotes/__init__.py'
+INFO: 2023-12-18 12:55:25,880: _walk_modules() 'Jumble loading module in ResizingDisplayModesPlugin from /usr/lib/python3.11/site-packages/variety/plugins/builtin/display_modes/ResizingDisplayModesPlugin.py'
+INFO: 2023-12-18 12:55:25,880: load() 'Jumble found plugin class: <class 'ResizingDisplayModesPlugin.ResizingDisplayModesPlugin'>: {'name': 'ResizingDisplayModesPlugin', 'description': 'Display modes that use image resizing within Variety', 'version': '1.0', 'author': 'Peter Levi'}'
+INFO: 2023-12-18 12:55:25,880: _walk_modules() 'Jumble loading module in __init__ from /usr/lib/python3.11/site-packages/variety/plugins/builtin/display_modes/__init__.py'
+INFO: 2023-12-18 12:55:25,880: _walk_modules() 'Jumble loading module in GnomeDisplayModesPlugin from /usr/lib/python3.11/site-packages/variety/plugins/builtin/display_modes/GnomeDisplayModesPlugin.py'
+INFO: 2023-12-18 12:55:25,881: load() 'Jumble found plugin class: <class 'GnomeDisplayModesPlugin.GnomeDisplayModesPlugin'>: {'name': 'GnomeDisplayModesPlugin', 'description': 'Display modes relying on the underlying desktop environment', 'version': '1.0', 'author': 'Peter Levi'}'
+INFO: 2023-12-18 12:55:25,881: _walk_modules() 'Jumble loading module in LegacyDisplayModesPlugin from /usr/lib/python3.11/site-packages/variety/plugins/builtin/display_modes/LegacyDisplayModesPlugin.py'
+INFO: 2023-12-18 12:55:25,881: load() 'Jumble found plugin class: <class 'LegacyDisplayModesPlugin.LegacyDisplayModesPlugin'>: {'name': 'LegacyDisplayModesPlugin', 'description': 'Legacy display mode for compatibility with past Variety versions', 'version': '1.0', 'author': 'Peter Levi'}'
+INFO: 2023-12-18 12:55:25,881: _walk_modules() 'Jumble loading module in EarthviewDownloader from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/EarthviewDownloader.py'
+INFO: 2023-12-18 12:55:25,882: load() 'Jumble found plugin class: <class 'EarthviewDownloader.EarthviewDownloader'>: {'name': 'EarthviewDownloader', 'description': 'Google Earth View Wallpapers', 'author': 'Peter Levi', 'version': '0.1'}'
+INFO: 2023-12-18 12:55:25,882: _walk_modules() 'Jumble loading module in WallhavenSource from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/WallhavenSource.py'
+INFO: 2023-12-18 12:55:25,883: load() 'Jumble found plugin class: <class 'WallhavenSource.WallhavenSource'>: {'name': 'WallhavenSource', 'description': 'Configurable source for fetching images from Wallhaven.cc', 'author': 'Peter Levi', 'version': '0.1'}'
+INFO: 2023-12-18 12:55:25,883: _walk_modules() 'Jumble loading module in MediaRSSSource from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/MediaRSSSource.py'
+INFO: 2023-12-18 12:55:25,884: load() 'Jumble found plugin class: <class 'MediaRSSSource.MediaRSSSource'>: {'name': 'MediaRSSSource', 'description': 'Configurable source for fetching images from MediaRSS feeds', 'author': 'Peter Levi', 'version': '0.1'}'
+INFO: 2023-12-18 12:55:25,884: _walk_modules() 'Jumble loading module in NationalGeographicDownloader from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/NationalGeographicDownloader.py'
+INFO: 2023-12-18 12:55:25,884: load() 'Jumble found plugin class: <class 'NationalGeographicDownloader.NationalGeographicDownloader'>: {'name': 'NationalGeographicDownloader', 'description': "National Geographic's photo of the day", 'author': 'Eric Rösch', 'version': '0.1'}'
+INFO: 2023-12-18 12:55:25,884: _walk_modules() 'Jumble loading module in UnsplashConfigurableSource from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/UnsplashConfigurableSource.py'
+INFO: 2023-12-18 12:55:25,885: load() 'Jumble found plugin class: <class 'UnsplashConfigurableSource.UnsplashConfigurableSource'>: {'name': 'UnsplashConfigurableSource', 'description': 'Configurable source for fetching photos from Unsplash.com', 'author': 'Peter Levi', 'version': '0.1'}'
+INFO: 2023-12-18 12:55:25,885: _walk_modules() 'Jumble loading module in WallhavenLegacyDownloader from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/WallhavenLegacyDownloader.py'
+INFO: 2023-12-18 12:55:25,885: _walk_modules() 'Jumble loading module in RedditDownloader from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/RedditDownloader.py'
+INFO: 2023-12-18 12:55:25,886: _walk_modules() 'Jumble loading module in ArtStationDownloader from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/ArtStationDownloader.py'
+INFO: 2023-12-18 12:55:25,886: _walk_modules() 'Jumble loading module in ArtStationSource from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/ArtStationSource.py'
+INFO: 2023-12-18 12:55:25,887: load() 'Jumble found plugin class: <class 'ArtStationSource.ArtStationSource'>: {'name': 'ArtStationSource', 'description': 'Configurable source for fetching images from ArtStation', 'author': 'Denis Gordeev', 'version': '0.1'}'
+INFO: 2023-12-18 12:55:25,887: _walk_modules() 'Jumble loading module in WallhavenDownloader from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/WallhavenDownloader.py'
+INFO: 2023-12-18 12:55:25,887: _walk_modules() 'Jumble loading module in __init__ from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/__init__.py'
+INFO: 2023-12-18 12:55:25,887: _walk_modules() 'Jumble loading module in APODDownloader from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/APODDownloader.py'
+INFO: 2023-12-18 12:55:25,888: load() 'Jumble found plugin class: <class 'APODDownloader.APODDownloader'>: {'name': 'APODDownloader', 'description': 'NASA Astro Pic of the Day', 'author': 'Peter Levi', 'version': '0.1'}'
+INFO: 2023-12-18 12:55:25,888: _walk_modules() 'Jumble loading module in BingDownloader from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/BingDownloader.py'
+INFO: 2023-12-18 12:55:25,889: load() 'Jumble found plugin class: <class 'BingDownloader.BingDownloader'>: {'name': 'BingDownloader', 'description': 'Bing Photo of the Day', 'author': 'Peter Levi', 'version': '0.1'}'
+INFO: 2023-12-18 12:55:25,889: _walk_modules() 'Jumble loading module in RedditSource from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/RedditSource.py'
+INFO: 2023-12-18 12:55:25,889: load() 'Jumble found plugin class: <class 'RedditSource.RedditSource'>: {'name': 'RedditSource', 'description': 'Configurable source for fetching images from Reddit', 'author': 'Peter Levi', 'version': '0.1'}'
+INFO: 2023-12-18 12:55:25,889: _walk_modules() 'Jumble loading module in UnsplashDownloader from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/UnsplashDownloader.py'
+INFO: 2023-12-18 12:55:25,890: load() 'Jumble found plugin class: <class 'UnsplashDownloader.UnsplashDownloader'>: {'name': 'UnsplashDownloader', 'description': 'High-resolution photos from Unsplash.com', 'author': 'Peter Levi', 'version': '0.1'}'
+INFO: 2023-12-18 12:55:25,890: _walk_modules() 'Jumble loading module in MediaRSSDownloader from /usr/lib/python3.11/site-packages/variety/plugins/builtin/downloaders/MediaRSSDownloader.py'
+ERROR: 2023-12-18 12:55:25,890: get_xdg_pictures_folder() 'Could not get path to Pictures folder. Defaulting to ~/Pictures.'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/Util.py", line 815, in get_xdg_pictures_folder
+    raise Exception("Could not get path to Pictures folder. Defaulting to ~/Pictures.")
+Exception: Could not get path to Pictures folder. Defaulting to ~/Pictures.
+ERROR: 2023-12-18 12:55:25,891: get_xdg_pictures_folder() 'Could not get path to Pictures folder. Defaulting to ~/Pictures.'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/Util.py", line 815, in get_xdg_pictures_folder
+    raise Exception("Could not get path to Pictures folder. Defaulting to ~/Pictures.")
+Exception: Could not get path to Pictures folder. Defaulting to ~/Pictures.
+INFO: 2023-12-18 12:55:25,898: reload_config() 'Creating new downloader for type apod, location NASA's Astronomy Picture of the Day'
+INFO: 2023-12-18 12:55:25,900: log_options() 'Loaded options:'
+INFO: 2023-12-18 12:55:25,900: log_options() 'change_enabled = True'
+INFO: 2023-12-18 12:55:25,900: log_options() 'change_interval = 432000'
+INFO: 2023-12-18 12:55:25,900: log_options() 'change_on_start = True'
+INFO: 2023-12-18 12:55:25,900: log_options() 'clipboard_enabled = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'clipboard_hosts = ['wallhaven.cc', 'wallpapers.net', 'flickr.com', 'imgur.com', 'deviantart.com', 'interfacelift.com', 'vladstudio.com', 'imageshack.us', 'deviantart.net', 'imageshack.com']'
+INFO: 2023-12-18 12:55:25,900: log_options() 'clipboard_use_whitelist = True'
+INFO: 2023-12-18 12:55:25,900: log_options() 'clock_date_font = Serif 30'
+INFO: 2023-12-18 12:55:25,900: log_options() 'clock_enabled = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'clock_filter = -density 100 -font `fc-match -f '%{file[0]}' '%CLOCK_FONT_NAME'` -pointsize %CLOCK_FONT_SIZE -gravity SouthEast -fill '#00000044' -annotate 0x0+[%HOFFSET+58]+[%VOFFSET+108] '%H:%M' -fill white -annotate 0x0+[%HOFFSET+60]+[%VOFFSET+110] '%H:%M' -font `fc-match -f '%{file[0]}' '%DATE_FONT_NAME'` -pointsize %DATE_FONT_SIZE -fill '#00000044' -annotate 0x0+[%HOFFSET+58]+[%VOFFSET+58] '%A, %B %d' -fill white -annotate 0x0+[%HOFFSET+60]+[%VOFFSET+60] '%A, %B %d''
+INFO: 2023-12-18 12:55:25,900: log_options() 'clock_font = Serif 70'
+INFO: 2023-12-18 12:55:25,900: log_options() 'configfile = /home/erikf/.config/variety/variety.conf'
+INFO: 2023-12-18 12:55:25,900: log_options() 'copyto_enabled = True'
+INFO: 2023-12-18 12:55:25,900: log_options() 'copyto_folder = Default'
+INFO: 2023-12-18 12:55:25,900: log_options() 'desired_color = [160, 160, 160]'
+INFO: 2023-12-18 12:55:25,900: log_options() 'desired_color_enabled = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'download_folder = /home/erikf/.config/variety/Downloaded'
+INFO: 2023-12-18 12:55:25,900: log_options() 'download_preference_ratio = 0.9'
+INFO: 2023-12-18 12:55:25,900: log_options() 'favorites_folder = /home/erikf/.config/variety/Favorites'
+INFO: 2023-12-18 12:55:25,900: log_options() 'favorites_operations = [['Downloaded', 'Copy'], ['Fetched', 'Move'], ['Others', 'Copy']]'
+INFO: 2023-12-18 12:55:25,900: log_options() 'fetched_folder = /home/erikf/.config/variety/Fetched'
+INFO: 2023-12-18 12:55:25,900: log_options() 'filters = [[False, 'Keep original', ''], [False, 'Grayscale', '-type Grayscale'], [False, 'Heavy blur', '-scale 20% -blur 0x10 -resize 500%'], [False, 'Soft blur', '-scale 20% -blur 0x2 -resize 500%'], [False, 'Oil painting', '-paint 8'], [False, 'Pointilism', '-spread 10 -noise 3'], [False, 'Pixellate', '-scale 3% -scale 3333%']]'
+INFO: 2023-12-18 12:55:25,900: log_options() 'get_wallpaper_script = /home/erikf/.config/variety/scripts/get_wallpaper'
+INFO: 2023-12-18 12:55:25,900: log_options() 'icon = Light'
+INFO: 2023-12-18 12:55:25,900: log_options() 'internet_enabled = True'
+INFO: 2023-12-18 12:55:25,900: log_options() 'lightness_enabled = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'lightness_mode = 0'
+INFO: 2023-12-18 12:55:25,900: log_options() 'min_rating = 4'
+INFO: 2023-12-18 12:55:25,900: log_options() 'min_rating_enabled = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'min_size = 80'
+INFO: 2023-12-18 12:55:25,900: log_options() 'min_size_enabled = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quota_enabled = True'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quota_size = 1000'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_authors = '
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_bg_color = [80, 80, 80]'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_bg_opacity = 55'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_change_enabled = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_change_interval = 300'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_disabled_sources = ['Urban Dictionary']'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_enabled = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_favorites_file = /home/erikf/.config/variety/favorite_quotes.txt'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_font = Serif 30'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_hpos = 100'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_max_length = 250'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_tags = '
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_text_color = [255, 255, 255]'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_text_shadow = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_vpos = 40'
+INFO: 2023-12-18 12:55:25,900: log_options() 'quotes_width = 70'
+INFO: 2023-12-18 12:55:25,900: log_options() 'safe_mode = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'set_wallpaper_script = /home/erikf/.config/variety/scripts/set_wallpaper'
+INFO: 2023-12-18 12:55:25,900: log_options() 'slideshow_custom_enabled = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'slideshow_custom_folder = /home/erikf/Pictures'
+INFO: 2023-12-18 12:55:25,900: log_options() 'slideshow_downloads_enabled = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'slideshow_fade = 0.4'
+INFO: 2023-12-18 12:55:25,900: log_options() 'slideshow_favorites_enabled = True'
+INFO: 2023-12-18 12:55:25,900: log_options() 'slideshow_mode = Fullscreen'
+INFO: 2023-12-18 12:55:25,900: log_options() 'slideshow_monitor = All'
+INFO: 2023-12-18 12:55:25,900: log_options() 'slideshow_pan = 0.05'
+INFO: 2023-12-18 12:55:25,900: log_options() 'slideshow_seconds = 6.0'
+INFO: 2023-12-18 12:55:25,900: log_options() 'slideshow_sort_order = Random'
+INFO: 2023-12-18 12:55:25,900: log_options() 'slideshow_sources_enabled = True'
+INFO: 2023-12-18 12:55:25,900: log_options() 'slideshow_zoom = 0.2'
+INFO: 2023-12-18 12:55:25,900: log_options() 'smart_enabled = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'smart_notice_shown = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'smart_register_shown = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'sources = [[False, 'favorites', 'The Favorites folder'], [False, 'fetched', 'The Fetched folder'], [False, 'folder', '/usr/share/backgrounds'], [False, 'flickr', 'user:www.flickr.com/photos/peter-levi/;user_id:93647178@N00;'], [True, 'apod', "NASA's Astronomy Picture of the Day"], [False, 'bing', 'Bing Photo of the Day'], [False, 'earthview', 'Google Earth View Wallpapers'], [False, 'natgeo', "National Geographic's photo of the day"], [False, 'unsplash', 'High-resolution photos from Unsplash.com']]'
+INFO: 2023-12-18 12:55:25,900: log_options() 'stats_enabled = True'
+INFO: 2023-12-18 12:55:25,900: log_options() 'stats_notice_shown = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'sync_enabled = True'
+INFO: 2023-12-18 12:55:25,900: log_options() 'use_landscape_enabled = True'
+INFO: 2023-12-18 12:55:25,900: log_options() 'wallhaven_api_key = '
+INFO: 2023-12-18 12:55:25,900: log_options() 'wallpaper_auto_rotate = False'
+INFO: 2023-12-18 12:55:25,900: log_options() 'wallpaper_display_mode = os'
+INFO: 2023-12-18 12:55:25,900: reload_config() 'No need to clear prepared queue'
+INFO: 2023-12-18 12:55:25,900: update_indicator() 'Setting file info to: /home/erikf/.config/variety/Downloaded/nasa_apod/IMG_9447.jpg'
+INFO: 2023-12-18 12:55:25,905: load_last_change_time() 'Change interval >= 6 hours, using persisted last_change_time 1702870619.6186984'
+INFO: 2023-12-18 12:55:25,905: load_last_change_time() 'Still to wait: 402093 seconds'
+INFO: 2023-12-18 12:55:25,905: update_indicator() 'Setting file info to: /home/erikf/.config/variety/Downloaded/nasa_apod/IMG_9447.jpg'
+INFO: 2023-12-18 12:55:25,905: regular_change_thread() 'regular_change thread running'
+INFO: 2023-12-18 12:55:25,905: prepare_thread() 'Prepare thread running'
+INFO: 2023-12-18 12:55:25,905: prepare_thread() 'Prepared buffer contains 0 images'
+INFO: 2023-12-18 12:55:25,905: prepare_thread() 'Preparing some images'
+INFO: 2023-12-18 12:55:25,916: update_indicator_icon() 'Creating indicator'
+INFO: 2023-12-18 12:55:25,916: prepare_thread() 'After search prepared buffer contains 13 images'
+WARNING: 2023-12-18 12:55:25,918: create_menu() 'Variety Slideshow is not installed. This is an optional extension adding pan-and-zoom slideshows to Variety: see https://github.com/peterlevi/variety-slideshow for details'
+INFO: 2023-12-18 12:55:25,918: create_indicator() 'indicator backend: AyatanaAppIndicator3'
+INFO: 2023-12-18 12:55:25,925: set_from_theme_icon() 'Showing indicator icon variety-indicator from GTK theme'
+INFO: 2023-12-18 12:55:26,004: do_set_wp() 'Calling do_set_wp with /home/erikf/.config/variety/Downloaded/nasa_apod/IMG_9447.jpg, time: 1702900526.004584'
+ERROR: 2023-12-18 12:55:26,010: get_xdg_pictures_folder() 'Could not get path to Pictures folder. Defaulting to ~/Pictures.'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/Util.py", line 815, in get_xdg_pictures_folder
+    raise Exception("Could not get path to Pictures folder. Defaulting to ~/Pictures.")
+Exception: Could not get path to Pictures folder. Defaulting to ~/Pictures.
+ERROR: 2023-12-18 12:55:26,015: cleanup_old_wallpapers() 'Cannot remove all old wallpaper files from /home/erikf/Pictures:'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/VarietyWindow.py", line 2740, in cleanup_old_wallpapers
+    for name in os.listdir(folder):
+                ^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/erikf/Pictures'
+ERROR: 2023-12-18 12:55:26,016: apply_copyto_operation() 'Could not copy file /home/erikf/.config/variety/Downloaded/nasa_apod/IMG_9447.jpg to copyto folder /home/erikf/Pictures. Using it from original locations, so LightDM might not be able to use it.'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/VarietyWindow.py", line 1500, in apply_copyto_operation
+    shutil.copy(to_set, target_file)
+  File "/usr/lib/python3.11/shutil.py", line 419, in copy
+    copyfile(src, dst, follow_symlinks=follow_symlinks)
+  File "/usr/lib/python3.11/shutil.py", line 258, in copyfile
+    with open(dst, 'wb') as fdst:
+         ^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/erikf/Pictures/variety-copied-wallpaper-7f7dd377bdf08d845c443b1d87659831.jpg'
+INFO: 2023-12-18 12:55:26,021: update_indicator() 'Setting file info to: /home/erikf/.config/variety/Downloaded/nasa_apod/IMG_9447.jpg'
+INFO: 2023-12-18 12:55:26,021: list_files() 'More than 1 files in the folders, stop listing'
+INFO: 2023-12-18 12:55:26,997: reload() 'Reloading preferences dialog'
+ERROR: 2023-12-18 12:55:26,997: get_xdg_pictures_folder() 'Could not get path to Pictures folder. Defaulting to ~/Pictures.'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/Util.py", line 815, in get_xdg_pictures_folder
+    raise Exception("Could not get path to Pictures folder. Defaulting to ~/Pictures.")
+Exception: Could not get path to Pictures folder. Defaulting to ~/Pictures.
+ERROR: 2023-12-18 12:55:26,998: get_xdg_pictures_folder() 'Could not get path to Pictures folder. Defaulting to ~/Pictures.'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/Util.py", line 815, in get_xdg_pictures_folder
+    raise Exception("Could not get path to Pictures folder. Defaulting to ~/Pictures.")
+Exception: Could not get path to Pictures folder. Defaulting to ~/Pictures.
+ERROR: 2023-12-18 12:55:26,999: get_xdg_pictures_folder() 'Could not get path to Pictures folder. Defaulting to ~/Pictures.'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/Util.py", line 815, in get_xdg_pictures_folder
+    raise Exception("Could not get path to Pictures folder. Defaulting to ~/Pictures.")
+Exception: Could not get path to Pictures folder. Defaulting to ~/Pictures.
+ERROR: 2023-12-18 12:55:26,999: get_file_icon_name() 'Exception while obtaining folder icon for /home/erikf/Pictures:'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/Util.py", line 800, in get_file_icon_name
+    query_info = f.query_info("standard::icon", Gio.FileQueryInfoFlags.NONE, None)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gi.repository.GLib.GError: g-io-error-quark: Error when getting information for file “/home/erikf/Pictures”: No such file or directory (1)
+ERROR: 2023-12-18 12:55:26,999: get_file_icon_name() 'Exception while obtaining folder icon for /home/erikf/Pictures:'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/Util.py", line 800, in get_file_icon_name
+    query_info = f.query_info("standard::icon", Gio.FileQueryInfoFlags.NONE, None)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gi.repository.GLib.GError: g-io-error-quark: Error when getting information for file “/home/erikf/Pictures”: No such file or directory (1)
+ERROR: 2023-12-18 12:55:27,002: get_xdg_pictures_folder() 'Could not get path to Pictures folder. Defaulting to ~/Pictures.'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/Util.py", line 815, in get_xdg_pictures_folder
+    raise Exception("Could not get path to Pictures folder. Defaulting to ~/Pictures.")
+Exception: Could not get path to Pictures folder. Defaulting to ~/Pictures.
+INFO: 2023-12-18 12:55:27,916: trigger_download() 'Triggering download thread to check if download needed and possible'
+INFO: 2023-12-18 12:55:30,905: set_wallpaper() 'Calling set_wallpaper with /home/erikf/.config/variety/Downloaded/nasa_apod/LunarEclipseRyanHan.jpg'
+INFO: 2023-12-18 12:55:30,905: prepare_thread() 'Prepared buffer contains 13 images'
+INFO: 2023-12-18 12:55:30,906: do_set_wp() 'Calling do_set_wp with /home/erikf/.config/variety/Downloaded/nasa_apod/LunarEclipseRyanHan.jpg, time: 1702900530.906501'
+ERROR: 2023-12-18 12:55:30,906: get_xdg_pictures_folder() 'Could not get path to Pictures folder. Defaulting to ~/Pictures.'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/Util.py", line 815, in get_xdg_pictures_folder
+    raise Exception("Could not get path to Pictures folder. Defaulting to ~/Pictures.")
+Exception: Could not get path to Pictures folder. Defaulting to ~/Pictures.
+ERROR: 2023-12-18 12:55:30,911: cleanup_old_wallpapers() 'Cannot remove all old wallpaper files from /home/erikf/Pictures:'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/VarietyWindow.py", line 2740, in cleanup_old_wallpapers
+    for name in os.listdir(folder):
+                ^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/erikf/Pictures'
+ERROR: 2023-12-18 12:55:30,912: apply_copyto_operation() 'Could not copy file /home/erikf/.config/variety/Downloaded/nasa_apod/LunarEclipseRyanHan.jpg to copyto folder /home/erikf/Pictures. Using it from original locations, so LightDM might not be able to use it.'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/VarietyWindow.py", line 1500, in apply_copyto_operation
+    shutil.copy(to_set, target_file)
+  File "/usr/lib/python3.11/shutil.py", line 419, in copy
+    copyfile(src, dst, follow_symlinks=follow_symlinks)
+  File "/usr/lib/python3.11/shutil.py", line 258, in copyfile
+    with open(dst, 'wb') as fdst:
+         ^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/erikf/Pictures/variety-copied-wallpaper-7a97e336eab9194ce23d5237600ce609.jpg'
+INFO: 2023-12-18 12:55:30,916: update_indicator() 'Setting file info to: /home/erikf/.config/variety/Downloaded/nasa_apod/LunarEclipseRyanHan.jpg'
+INFO: 2023-12-18 12:55:30,917: list_files() 'More than 1 files in the folders, stop listing'
+INFO: 2023-12-18 12:55:32,906: trigger_download() 'Triggering download thread to check if download needed and possible'
+INFO: 2023-12-18 12:55:32,906: trigger_download() 'Triggering download thread to check if download needed and possible'
+INFO: 2023-12-18 12:55:32,906: get_throttling() 'NASA Astro Pic of the Day: parsing serverside options'
+INFO: 2023-12-18 12:55:32,906: get_throttling() 'Could not parse NASA Astro Pic of the Day serverside options, using defaults None, None'
+INFO: 2023-12-18 12:55:32,906: get_throttling() 'NASA Astro Pic of the Day: parsing serverside options'
+INFO: 2023-12-18 12:55:32,906: get_throttling() 'Could not parse NASA Astro Pic of the Day serverside options, using defaults None, None'
+INFO: 2023-12-18 12:55:32,906: download_one() 'NASA Astro Pic of the Day: Downloading an image, config: None'
+INFO: 2023-12-18 12:55:32,906: download_one() 'NASA Astro Pic of the Day: Queue size: 0'
+INFO: 2023-12-18 12:55:32,906: get_throttling() 'NASA Astro Pic of the Day: parsing serverside options'
+INFO: 2023-12-18 12:55:32,906: get_throttling() 'Could not parse NASA Astro Pic of the Day serverside options, using defaults None, None'
+INFO: 2023-12-18 12:55:32,906: download_one() 'NASA Astro Pic of the Day: Filling queue'
+INFO: 2023-12-18 12:55:32,906: fill_queue() 'Filling APOD queue from Archive'
+INFO: 2023-12-18 12:55:35,021: download_one() 'NASA Astro Pic of the Day: Queue populated with 730 URLs'
+INFO: 2023-12-18 12:55:35,021: download_queue_item() 'APOD URL: https://apod.nasa.gov/apod/ap230703.html'
+INFO: 2023-12-18 12:55:35,486: download_queue_item() 'Image URL: https://apod.nasa.gov/apod/image/2307/VenusUv_akatsuki_1024.jpg'
+INFO: 2023-12-18 12:55:35,486: save_locally() 'Origin URL: https://apod.nasa.gov/apod/ap230703.html'
+INFO: 2023-12-18 12:55:35,486: save_locally() 'Image URL: https://apod.nasa.gov/apod/image/2307/VenusUv_akatsuki_1024.jpg'
+INFO: 2023-12-18 12:55:35,486: save_locally() 'Local path: /home/erikf/.config/variety/Downloaded/nasa_apod/VenusUv_akatsuki_1024.jpg'
+INFO: 2023-12-18 12:55:36,405: save_locally() 'Download complete'
+INFO: 2023-12-18 12:55:36,406: update_indicator() 'Setting file info to: /home/erikf/.config/variety/Downloaded/nasa_apod/LunarEclipseRyanHan.jpg'
+INFO: 2023-12-18 12:55:36,406: list_files() 'More than 1 files in the folders, stop listing'
+INFO: 2023-12-18 12:55:36,407: prepare_thread() 'Prepared buffer contains 13 images'
+INFO: 2023-12-18 12:55:37,407: get_throttling() 'NASA Astro Pic of the Day: parsing serverside options'
+INFO: 2023-12-18 12:55:37,407: get_throttling() 'Could not parse NASA Astro Pic of the Day serverside options, using defaults None, None'
+INFO: 2023-12-18 12:55:37,407: get_throttling() 'NASA Astro Pic of the Day: parsing serverside options'
+INFO: 2023-12-18 12:55:37,407: get_throttling() 'Could not parse NASA Astro Pic of the Day serverside options, using defaults None, None'
+INFO: 2023-12-18 12:55:37,407: download_one() 'NASA Astro Pic of the Day: Downloading an image, config: None'
+INFO: 2023-12-18 12:55:37,407: download_one() 'NASA Astro Pic of the Day: Queue size: 729'
+INFO: 2023-12-18 12:55:37,407: download_one() 'NASA Astro Pic of the Day: Queue populated with 729 URLs'
+INFO: 2023-12-18 12:55:37,407: download_queue_item() 'APOD URL: https://apod.nasa.gov/apod/ap221106.html'
+INFO: 2023-12-18 12:55:37,873: download_queue_item() 'Image URL: https://apod.nasa.gov/apod/image/2211/darksun_lafferty_1600.jpg'
+INFO: 2023-12-18 12:55:37,873: save_locally() 'Origin URL: https://apod.nasa.gov/apod/ap221106.html'
+INFO: 2023-12-18 12:55:37,873: save_locally() 'Image URL: https://apod.nasa.gov/apod/image/2211/darksun_lafferty_1600.jpg'
+INFO: 2023-12-18 12:55:37,873: save_locally() 'Local path: /home/erikf/.config/variety/Downloaded/nasa_apod/darksun_lafferty_1600.jpg'
+INFO: 2023-12-18 12:55:38,408: trigger_download() 'Triggering download thread to check if download needed and possible'
+INFO: 2023-12-18 12:55:39,228: save_locally() 'Download complete'
+INFO: 2023-12-18 12:55:39,228: update_indicator() 'Setting file info to: /home/erikf/.config/variety/Downloaded/nasa_apod/LunarEclipseRyanHan.jpg'
+INFO: 2023-12-18 12:55:39,229: list_files() 'More than 1 files in the folders, stop listing'
+INFO: 2023-12-18 12:55:39,229: download_one_from() 'Adding downloaded file /home/erikf/.config/variety/Downloaded/nasa_apod/darksun_lafferty_1600.jpg to unseen_downloads'
+INFO: 2023-12-18 12:55:43,247: do_set_wp() 'Calling do_set_wp with /home/erikf/.config/variety/Downloaded/nasa_apod/IMG_9447.jpg, time: 1702900543.2471986'
+ERROR: 2023-12-18 12:55:43,247: get_xdg_pictures_folder() 'Could not get path to Pictures folder. Defaulting to ~/Pictures.'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/Util.py", line 815, in get_xdg_pictures_folder
+    raise Exception("Could not get path to Pictures folder. Defaulting to ~/Pictures.")
+Exception: Could not get path to Pictures folder. Defaulting to ~/Pictures.
+ERROR: 2023-12-18 12:55:43,252: cleanup_old_wallpapers() 'Cannot remove all old wallpaper files from /home/erikf/Pictures:'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/VarietyWindow.py", line 2740, in cleanup_old_wallpapers
+    for name in os.listdir(folder):
+                ^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/erikf/Pictures'
+ERROR: 2023-12-18 12:55:43,252: apply_copyto_operation() 'Could not copy file /home/erikf/.config/variety/Downloaded/nasa_apod/IMG_9447.jpg to copyto folder /home/erikf/Pictures. Using it from original locations, so LightDM might not be able to use it.'
+Traceback (most recent call last):
+  File "/usr/lib/python3.11/site-packages/variety/VarietyWindow.py", line 1500, in apply_copyto_operation
+    shutil.copy(to_set, target_file)
+  File "/usr/lib/python3.11/shutil.py", line 419, in copy
+    copyfile(src, dst, follow_symlinks=follow_symlinks)
+  File "/usr/lib/python3.11/shutil.py", line 258, in copyfile
+    with open(dst, 'wb') as fdst:
+         ^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/erikf/Pictures/variety-copied-wallpaper-ef4ffbc60029f0405a35fbca2425d677.jpg'
+INFO: 2023-12-18 12:55:43,257: update_indicator() 'Setting file info to: /home/erikf/.config/variety/Downloaded/nasa_apod/IMG_9447.jpg'
+INFO: 2023-12-18 12:55:43,258: list_files() 'More than 1 files in the folders, stop listing'
+INFO: 2023-12-18 12:55:45,906: server_options_thread() 'Fetching server options from http://tiny.cc/variety-options-063'
+INFO: 2023-12-18 12:55:46,593: server_options_thread() 'Fetched server options: {'flickr': {'min_fill_queue_interval': 1200, 'min_download_interval': 1200}, 'wallbase': {'min_fill_queue_interval': 1800, 'min_download_interval': 1800}, 'wallhaven': {'min_fill_queue_interval': 1800, 'min_download_interval': 1800}, 'wallpapers.net': {'min_fill_queue_interval': 601, 'min_download_interval': 0}, 'unsplash': {'min_fill_queue_interval': 20000000000, 'min_download_interval': 20000000000}, 'unsplash_v2': {'min_fill_queue_interval': 3600, 'min_download_interval': 1800}, 'status_message': {'0.0.1': '', '*': ''}}'
+INFO: 2023-12-19 03:51:20,215: on_quit() 'Quitting'

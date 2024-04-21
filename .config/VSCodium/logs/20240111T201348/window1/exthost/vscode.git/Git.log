@@ -1,0 +1,17 @@
+2024-01-11 20:13:49.762 [info] Log level: Info
+2024-01-11 20:13:49.762 [info] Validating found git in: "git"
+2024-01-11 20:13:49.762 [info] Using git "2.43.0" from "git"
+2024-01-11 20:13:49.762 [info] > git rev-parse --show-toplevel [2ms]
+2024-01-11 20:13:49.762 [info] > git rev-parse --git-dir --git-common-dir [4ms]
+2024-01-11 20:13:49.762 [info] Open repository: /home/erikf/projects/kth/erikfran-raytracer
+2024-01-11 20:13:49.763 [info] > git config --get commit.template [5ms]
+2024-01-11 20:13:49.764 [info] > git rev-parse --show-toplevel [2ms]
+2024-01-11 20:13:49.771 [info] > git for-each-ref --format=%(refname)%00%(upstream:short)%00%(objectname)%00%(upstream:track)%00%(upstream:remotename)%00%(upstream:remoteref) refs/heads/main refs/remotes/main [4ms]
+2024-01-11 20:13:49.771 [info] > git rev-parse --show-toplevel [1ms]
+2024-01-11 20:13:49.779 [info] > git rev-parse --show-toplevel [4ms]
+2024-01-11 20:13:49.783 [info] > git status -z -uall [5ms]
+2024-01-11 20:13:49.789 [info] > git rev-parse --show-toplevel [7ms]
+2024-01-11 20:13:49.790 [info] > git config --get commit.template [1ms]
+2024-01-11 20:13:49.806 [info] > git for-each-ref --format=%(refname)%00%(upstream:short)%00%(objectname)%00%(upstream:track)%00%(upstream:remotename)%00%(upstream:remoteref) refs/heads/main refs/remotes/main [1ms]
+2024-01-11 20:13:49.812 [info] > git status -z -uall [2ms]
+2024-01-11 20:13:50.269 [info] > git check-ignore -v -z --stdin [1ms]

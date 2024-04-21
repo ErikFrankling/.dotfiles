@@ -1,0 +1,15 @@
+2024-01-21 17:36:28.642 [info] Deleted uninstalled extension from disk rust-lang.rust /home/erikf/.vscode-oss/extensions/rust-lang.rust-0.7.8-universal
+2024-01-21 17:36:59.308 [info] Getting Manifest... tomoki1207.pdf
+2024-01-21 17:36:59.429 [info] Installing extension: tomoki1207.pdf
+2024-01-21 17:37:00.239 [info] Extension signature verification is not done: tomoki1207.pdf
+2024-01-21 17:37:00.359 [info] Extracted extension to file:///home/erikf/.vscode-oss/extensions/tomoki1207.pdf-1.2.2-universal: tomoki1207.pdf
+2024-01-21 17:37:00.364 [info] Renamed to /home/erikf/.vscode-oss/extensions/tomoki1207.pdf-1.2.2-universal
+2024-01-21 17:37:00.364 [info] Extracting extension completed. tomoki1207.pdf
+2024-01-21 17:37:00.370 [info] Extension installed successfully: tomoki1207.pdf
+2024-01-21 17:37:00.421 [error] [uncaught exception in sharedProcess]: Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp': EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp'
+    at r.create (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35852)
+    at a (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35986)
+    at s.toFileSystemProviderError (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:47852)
+    at s.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:38447)
+    at async C.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:20932)
+    at async Y.onDidFilesChange (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:100:138138)

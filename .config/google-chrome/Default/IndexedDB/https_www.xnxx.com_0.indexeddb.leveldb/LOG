@@ -1,0 +1,6 @@
+2023/12/18-01:19:27.217 3e7 Creating DB /home/erikf/.config/google-chrome/Default/IndexedDB/https_www.xnxx.com_0.indexeddb.leveldb since it was missing.
+2023/12/18-01:19:27.222 3e7 Reusing MANIFEST /home/erikf/.config/google-chrome/Default/IndexedDB/https_www.xnxx.com_0.indexeddb.leveldb/MANIFEST-000001
+2023/12/18-01:22:55.420 3e8 Level-0 table #5: started
+2023/12/18-01:22:55.421 3e8 Level-0 table #5: 4133 bytes OK
+2023/12/18-01:22:55.423 3e8 Delete type=0 #3
+2023/12/18-01:22:55.424 3e8 Manual compaction at level-0 from (begin) .. (end); will stop at (end)

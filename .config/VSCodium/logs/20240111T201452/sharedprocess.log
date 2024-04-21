@@ -1,0 +1,123 @@
+2024-01-11 20:34:44.149 [info] Getting Manifest... polymeilex.wgsl
+2024-01-11 20:34:44.281 [info] Installing extension: polymeilex.wgsl
+2024-01-11 20:34:44.718 [info] Extension signature verification is not done: polymeilex.wgsl
+2024-01-11 20:34:44.736 [info] Extracted extension to file:///home/erikf/.vscode-oss/extensions/polymeilex.wgsl-0.1.16-universal: polymeilex.wgsl
+2024-01-11 20:34:44.741 [info] Renamed to /home/erikf/.vscode-oss/extensions/polymeilex.wgsl-0.1.16-universal
+2024-01-11 20:34:44.742 [info] Extracting extension completed. polymeilex.wgsl
+2024-01-11 20:34:44.748 [info] Extension installed successfully: polymeilex.wgsl
+2024-01-11 20:34:44.822 [error] [uncaught exception in sharedProcess]: Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp': EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp'
+    at r.create (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35852)
+    at a (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35986)
+    at s.toFileSystemProviderError (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:47852)
+    at s.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:38447)
+    at async C.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:20932)
+    at async Y.onDidFilesChange (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:100:138138)
+2024-01-11 20:35:11.381 [info] Getting Manifest... rust-lang.rust
+2024-01-11 20:35:11.512 [info] Installing extension: rust-lang.rust
+2024-01-11 20:35:11.959 [info] Extension signature verification is not done: rust-lang.rust
+2024-01-11 20:35:11.989 [info] Extracted extension to file:///home/erikf/.vscode-oss/extensions/rust-lang.rust-0.7.8-universal: rust-lang.rust
+2024-01-11 20:35:11.995 [info] Renamed to /home/erikf/.vscode-oss/extensions/rust-lang.rust-0.7.8-universal
+2024-01-11 20:35:11.996 [info] Extracting extension completed. rust-lang.rust
+2024-01-11 20:35:12.006 [info] Extension installed successfully: rust-lang.rust
+2024-01-11 20:35:12.073 [error] [uncaught exception in sharedProcess]: Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp': EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp'
+    at r.create (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35852)
+    at a (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35986)
+    at s.toFileSystemProviderError (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:47852)
+    at s.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:38447)
+    at async C.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:20932)
+    at async Y.onDidFilesChange (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:100:138138)
+2024-01-11 20:35:23.802 [info] Getting Manifest... rust-lang.rust-analyzer
+2024-01-11 20:35:23.920 [info] Installing extension: rust-lang.rust-analyzer
+2024-01-11 20:35:25.931 [info] Extension signature verification is not done: rust-lang.rust-analyzer
+2024-01-11 20:35:26.099 [info] Extracted extension to file:///home/erikf/.vscode-oss/extensions/rust-lang.rust-analyzer-0.3.1799-linux-x64: rust-lang.rust-analyzer
+2024-01-11 20:35:26.108 [info] Renamed to /home/erikf/.vscode-oss/extensions/rust-lang.rust-analyzer-0.3.1799-linux-x64
+2024-01-11 20:35:26.109 [info] Extracting extension completed. rust-lang.rust-analyzer
+2024-01-11 20:35:26.114 [info] Extension installed successfully: rust-lang.rust-analyzer
+2024-01-11 20:35:26.187 [error] [uncaught exception in sharedProcess]: Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp': EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp'
+    at r.create (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35852)
+    at a (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35986)
+    at s.toFileSystemProviderError (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:47852)
+    at s.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:38447)
+    at async C.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:20932)
+    at async Y.onDidFilesChange (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:100:138138)
+2024-01-11 20:35:28.900 [info] Uninstalling extension from the profile: rust-lang.rust@0.7.8 vscode-userdata:/home/erikf/.vscode-oss/extensions/extensions.json
+2024-01-11 20:35:28.915 [info] Marked extension as uninstalled rust-lang.rust-0.7.8-universal
+2024-01-11 20:35:28.982 [error] [uncaught exception in sharedProcess]: Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp': EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp'
+    at r.create (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35852)
+    at a (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35986)
+    at s.toFileSystemProviderError (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:47852)
+    at s.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:38447)
+    at async C.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:20932)
+    at async Y.onDidFilesChange (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:100:138138)
+2024-01-11 20:35:29.036 [info] Successfully uninstalled extension from the profile rust-lang.rust@0.7.8 vscode-userdata:/home/erikf/.vscode-oss/extensions/extensions.json
+2024-01-11 20:35:57.221 [info] Getting Manifest... pinage404.rust-extension-pack
+2024-01-11 20:35:57.350 [info] Installing extension: pinage404.rust-extension-pack
+2024-01-11 20:35:58.698 [info] Getting Manifest... bungcip.better-toml
+2024-01-11 20:35:58.872 [info] Getting Manifest... serayuzgur.crates
+2024-01-11 20:35:59.044 [info] Getting Manifest... rust-lang.rust-analyzer
+2024-01-11 20:35:59.047 [info] Getting Manifest... swellaby.vscode-rust-test-adapter
+2024-01-11 20:35:59.340 [info] Getting Manifest... hbenl.vscode-test-explorer
+2024-01-11 20:35:59.626 [info] Getting Manifest... hbenl.test-adapter-converter
+2024-01-11 20:35:59.806 [info] Installing extension: bungcip.better-toml pinage404.rust-extension-pack
+2024-01-11 20:35:59.806 [info] Installing extension: serayuzgur.crates pinage404.rust-extension-pack
+2024-01-11 20:35:59.806 [info] Installing extension: swellaby.vscode-rust-test-adapter pinage404.rust-extension-pack
+2024-01-11 20:35:59.806 [info] Installing extension: hbenl.vscode-test-explorer pinage404.rust-extension-pack
+2024-01-11 20:35:59.807 [info] Installing extension: hbenl.test-adapter-converter pinage404.rust-extension-pack
+2024-01-11 20:36:00.190 [info] Extension signature verification is not done: hbenl.test-adapter-converter
+2024-01-11 20:36:00.194 [info] Extracted extension to file:///home/erikf/.vscode-oss/extensions/hbenl.test-adapter-converter-0.1.6-universal: hbenl.test-adapter-converter
+2024-01-11 20:36:00.203 [info] Renamed to /home/erikf/.vscode-oss/extensions/hbenl.test-adapter-converter-0.1.6-universal
+2024-01-11 20:36:00.203 [info] Extracting extension completed. hbenl.test-adapter-converter
+2024-01-11 20:36:00.281 [error] [uncaught exception in sharedProcess]: Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp': EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp'
+    at r.create (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35852)
+    at a (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35986)
+    at s.toFileSystemProviderError (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:47852)
+    at s.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:38447)
+    at async C.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:20932)
+    at async Y.onDidFilesChange (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:100:138138)
+2024-01-11 20:36:00.299 [info] Extension signature verification is not done: serayuzgur.crates
+2024-01-11 20:36:00.304 [info] Extracted extension to file:///home/erikf/.vscode-oss/extensions/serayuzgur.crates-0.6.5-universal: serayuzgur.crates
+2024-01-11 20:36:00.307 [info] Renamed to /home/erikf/.vscode-oss/extensions/serayuzgur.crates-0.6.5-universal
+2024-01-11 20:36:00.308 [info] Extracting extension completed. serayuzgur.crates
+2024-01-11 20:36:00.309 [info] Extension signature verification is not done: bungcip.better-toml
+2024-01-11 20:36:00.335 [info] Extracted extension to file:///home/erikf/.vscode-oss/extensions/bungcip.better-toml-0.3.2-universal: bungcip.better-toml
+2024-01-11 20:36:00.339 [info] Renamed to /home/erikf/.vscode-oss/extensions/bungcip.better-toml-0.3.2-universal
+2024-01-11 20:36:00.340 [info] Extracting extension completed. bungcip.better-toml
+2024-01-11 20:36:00.698 [info] Extension signature verification is not done: hbenl.vscode-test-explorer
+2024-01-11 20:36:00.715 [info] Extracted extension to file:///home/erikf/.vscode-oss/extensions/hbenl.vscode-test-explorer-2.21.1-universal: hbenl.vscode-test-explorer
+2024-01-11 20:36:00.720 [info] Renamed to /home/erikf/.vscode-oss/extensions/hbenl.vscode-test-explorer-2.21.1-universal
+2024-01-11 20:36:00.720 [info] Extracting extension completed. hbenl.vscode-test-explorer
+2024-01-11 20:36:00.798 [error] [uncaught exception in sharedProcess]: Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp': EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp'
+    at r.create (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35852)
+    at a (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35986)
+    at s.toFileSystemProviderError (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:47852)
+    at s.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:38447)
+    at async C.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:20932)
+    at async Y.onDidFilesChange (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:100:138138)
+2024-01-11 20:36:01.118 [info] Extension signature verification is not done: swellaby.vscode-rust-test-adapter
+2024-01-11 20:36:01.127 [info] Extracted extension to file:///home/erikf/.vscode-oss/extensions/swellaby.vscode-rust-test-adapter-0.11.1-universal: swellaby.vscode-rust-test-adapter
+2024-01-11 20:36:01.133 [info] Renamed to /home/erikf/.vscode-oss/extensions/swellaby.vscode-rust-test-adapter-0.11.1-universal
+2024-01-11 20:36:01.133 [info] Extracting extension completed. swellaby.vscode-rust-test-adapter
+2024-01-11 20:36:01.211 [error] [uncaught exception in sharedProcess]: Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp': EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp'
+    at r.create (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35852)
+    at a (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35986)
+    at s.toFileSystemProviderError (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:47852)
+    at s.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:38447)
+    at async C.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:20932)
+    at async Y.onDidFilesChange (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:100:138138)
+2024-01-11 20:36:01.531 [info] Extension signature verification is not done: pinage404.rust-extension-pack
+2024-01-11 20:36:01.533 [info] Extracted extension to file:///home/erikf/.vscode-oss/extensions/pinage404.rust-extension-pack-0.2.0-universal: pinage404.rust-extension-pack
+2024-01-11 20:36:01.536 [info] Renamed to /home/erikf/.vscode-oss/extensions/pinage404.rust-extension-pack-0.2.0-universal
+2024-01-11 20:36:01.536 [info] Extracting extension completed. pinage404.rust-extension-pack
+2024-01-11 20:36:01.541 [info] Extension installed successfully: hbenl.test-adapter-converter
+2024-01-11 20:36:01.541 [info] Extension installed successfully: serayuzgur.crates
+2024-01-11 20:36:01.541 [info] Extension installed successfully: bungcip.better-toml
+2024-01-11 20:36:01.541 [info] Extension installed successfully: hbenl.vscode-test-explorer
+2024-01-11 20:36:01.541 [info] Extension installed successfully: swellaby.vscode-rust-test-adapter
+2024-01-11 20:36:01.541 [info] Extension installed successfully: pinage404.rust-extension-pack
+2024-01-11 20:36:01.612 [error] [uncaught exception in sharedProcess]: Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp': EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, stat '/home/erikf/.vscode-oss/extensions/extensions.json.vsctmp'
+    at r.create (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35852)
+    at a (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:51:35986)
+    at s.toFileSystemProviderError (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:47852)
+    at s.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:38447)
+    at async C.stat (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:56:20932)
+    at async Y.onDidFilesChange (/opt/vscodium-bin/resources/app/out/vs/code/node/sharedProcess/sharedProcessMain.js:100:138138)

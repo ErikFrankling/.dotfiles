@@ -1,0 +1,30 @@
+2024/04/19-10:30:37.540 9d4 Reusing MANIFEST /home/erikf/.config/WebCord/Local Storage/leveldb/MANIFEST-000001
+2024/04/19-10:30:37.558 9d4 Recovering log #295
+2024/04/19-10:30:37.559 9d4 Reusing old log /home/erikf/.config/WebCord/Local Storage/leveldb/000295.log 
+2024/04/19-11:03:03.536 9d5 Level-0 table #300: started
+2024/04/19-11:03:03.539 9d5 Level-0 table #300: 24534 bytes OK
+2024/04/19-11:03:03.541 9d5 Delete type=0 #295
+2024/04/19-14:08:16.941 9d5 Level-0 table #302: started
+2024/04/19-14:08:16.948 9d5 Level-0 table #302: 25353 bytes OK
+2024/04/19-14:08:16.950 9d5 Delete type=0 #299
+2024/04/19-21:11:51.455 9d5 Level-0 table #304: started
+2024/04/19-21:11:51.462 9d5 Level-0 table #304: 23708 bytes OK
+2024/04/19-21:11:51.464 9d5 Delete type=0 #301
+2024/04/19-22:37:20.312 9d5 Level-0 table #306: started
+2024/04/19-22:37:20.318 9d5 Level-0 table #306: 22961 bytes OK
+2024/04/19-22:37:20.321 9d5 Delete type=0 #303
+2024/04/19-22:37:20.321 9d5 Compacting 4@0 + 1@1 files
+2024/04/19-22:37:20.323 9d5 Generated table #307@0: 61 keys, 26307 bytes
+2024/04/19-22:37:20.323 9d5 Compacted 4@0 + 1@1 files => 26307 bytes
+2024/04/19-22:37:20.325 9d5 compacted to: files[ 0 1 1 0 0 0 0 ]
+2024/04/19-22:37:20.325 9d5 Delete type=2 #304
+2024/04/19-22:37:20.325 9d5 Delete type=2 #302
+2024/04/19-22:37:20.325 9d5 Delete type=2 #297
+2024/04/19-22:37:20.325 9d5 Delete type=2 #306
+2024/04/19-22:37:20.325 9d5 Delete type=2 #300
+2024/04/19-22:39:13.144 9d4 Level-0 table #309: started
+2024/04/19-22:39:13.150 9d4 Level-0 table #309: 24045 bytes OK
+2024/04/19-22:39:13.153 9d4 Delete type=0 #305
+2024/04/20-01:02:04.880 9d5 Level-0 table #311: started
+2024/04/20-01:02:04.887 9d5 Level-0 table #311: 28418 bytes OK
+2024/04/20-01:02:04.893 9d5 Delete type=0 #308

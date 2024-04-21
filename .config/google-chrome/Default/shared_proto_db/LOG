@@ -1,0 +1,6 @@
+2024/01/30-01:13:43.790 207c Reusing MANIFEST /home/erikf/.config/google-chrome/Default/shared_proto_db/MANIFEST-000001
+2024/01/30-01:13:43.790 207c Recovering log #7
+2024/01/30-01:13:43.797 207c Reusing old log /home/erikf/.config/google-chrome/Default/shared_proto_db/000007.log 
+2024/01/30-01:13:45.927 2045 Level-0 table #12: started
+2024/01/30-01:13:45.932 2045 Level-0 table #12: 113942 bytes OK
+2024/01/30-01:13:45.936 2045 Delete type=0 #7

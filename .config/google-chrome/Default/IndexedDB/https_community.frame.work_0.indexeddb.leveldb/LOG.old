@@ -1,0 +1,7 @@
+2023/11/24-16:28:45.000 3f2 Reusing MANIFEST /home/erikf/.config/google-chrome/Default/IndexedDB/https_community.frame.work_0.indexeddb.leveldb/MANIFEST-000001
+2023/11/24-16:28:45.000 3f2 Recovering log #3
+2023/11/24-16:28:45.002 3f2 Reusing old log /home/erikf/.config/google-chrome/Default/IndexedDB/https_community.frame.work_0.indexeddb.leveldb/000003.log 
+2023/11/24-16:30:07.175 3e1 Level-0 table #5: started
+2023/11/24-16:30:07.178 3e1 Level-0 table #5: 88603 bytes OK
+2023/11/24-16:30:07.181 3e1 Delete type=0 #3
+2023/11/24-16:30:07.181 3e1 Manual compaction at level-0 from (begin) .. (end); will stop at (end)

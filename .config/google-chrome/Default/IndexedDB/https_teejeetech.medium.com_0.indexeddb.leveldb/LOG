@@ -1,0 +1,6 @@
+2023/11/19-06:26:18.803 5a0 Creating DB /home/erikf/.config/google-chrome/Default/IndexedDB/https_teejeetech.medium.com_0.indexeddb.leveldb since it was missing.
+2023/11/19-06:26:18.808 5a0 Reusing MANIFEST /home/erikf/.config/google-chrome/Default/IndexedDB/https_teejeetech.medium.com_0.indexeddb.leveldb/MANIFEST-000001
+2023/11/19-06:26:23.858 5b1 Level-0 table #5: started
+2023/11/19-06:26:23.860 5b1 Level-0 table #5: 3076 bytes OK
+2023/11/19-06:26:23.862 5b1 Delete type=0 #3
+2023/11/19-06:26:23.862 5a0 Manual compaction at level-0 from (begin) .. (end); will stop at (end)

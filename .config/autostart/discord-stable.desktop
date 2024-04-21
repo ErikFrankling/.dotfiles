@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Exec=/usr/lib/electron24/electron
+Hidden=false
+NoDisplay=false
+Name=electron
+Icon=/usr/share/pixmaps/discord.png
+Comment=Text and voice chat for gamers.
+X-GNOME-Autostart-enabled=true

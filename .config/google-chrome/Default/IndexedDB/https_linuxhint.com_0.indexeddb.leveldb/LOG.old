@@ -1,0 +1,6 @@
+2023/11/17-05:33:04.473 2540a Creating DB /home/erikf/.config/google-chrome/Default/IndexedDB/https_linuxhint.com_0.indexeddb.leveldb since it was missing.
+2023/11/17-05:33:04.483 2540a Reusing MANIFEST /home/erikf/.config/google-chrome/Default/IndexedDB/https_linuxhint.com_0.indexeddb.leveldb/MANIFEST-000001
+2023/11/17-05:33:08.481 2540a Level-0 table #5: started
+2023/11/17-05:33:08.483 2540a Level-0 table #5: 5417 bytes OK
+2023/11/17-05:33:08.485 2540a Delete type=0 #3
+2023/11/17-05:33:08.485 2540a Manual compaction at level-0 from (begin) .. (end); will stop at (end)

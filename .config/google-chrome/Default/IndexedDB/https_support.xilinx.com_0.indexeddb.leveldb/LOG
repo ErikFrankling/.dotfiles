@@ -1,0 +1,11 @@
+2023/12/23-18:07:38.197 27b6 Creating DB /home/erikf/.config/google-chrome/Default/IndexedDB/https_support.xilinx.com_0.indexeddb.leveldb since it was missing.
+2023/12/23-18:07:38.202 27b6 Reusing MANIFEST /home/erikf/.config/google-chrome/Default/IndexedDB/https_support.xilinx.com_0.indexeddb.leveldb/MANIFEST-000001
+2023/12/23-18:07:40.175 27ca Manual compaction at level-0 from '\x00\x09\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0a\x00\x00\x00' @ 0 : 0; will stop at (end)
+2023/12/23-18:07:42.348 27b7 Level-0 table #5: started
+2023/12/23-18:07:42.360 27b7 Level-0 table #5: 2052566 bytes OK
+2023/12/23-18:07:42.363 27b7 Delete type=0 #3
+2023/12/23-18:07:42.368 27b7 Level-0 table #7: started
+2023/12/23-18:07:42.383 27b7 Level-0 table #7: 1479872 bytes OK
+2023/12/23-18:07:42.389 27b7 Delete type=0 #4
+2023/12/23-18:08:30.111 27b7 Compacting 1@1 + 1@2 files
+2023/12/23-18:08:30.114 27b7 compacted to: files[ 0 1 1 0 0 0 0 ]

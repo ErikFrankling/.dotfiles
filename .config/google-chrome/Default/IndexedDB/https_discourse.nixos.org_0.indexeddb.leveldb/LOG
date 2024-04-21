@@ -1,0 +1,7 @@
+2023/12/11-12:25:07.340 3e0 Reusing MANIFEST /home/erikf/.config/google-chrome/Default/IndexedDB/https_discourse.nixos.org_0.indexeddb.leveldb/MANIFEST-000001
+2023/12/11-12:25:07.340 3e0 Recovering log #3
+2023/12/11-12:25:07.343 3e0 Reusing old log /home/erikf/.config/google-chrome/Default/IndexedDB/https_discourse.nixos.org_0.indexeddb.leveldb/000003.log 
+2023/12/11-12:25:40.213 3e0 Level-0 table #5: started
+2023/12/11-12:25:40.217 3e0 Level-0 table #5: 217238 bytes OK
+2023/12/11-12:25:40.220 3e0 Delete type=0 #3
+2023/12/11-12:25:40.220 3e0 Manual compaction at level-0 from (begin) .. (end); will stop at (end)

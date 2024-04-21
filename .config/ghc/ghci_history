@@ -1,0 +1,20 @@
+sort list 
+list
+list = [1, 2, 3]
+n
+n = 2
+take 2 [1, 2, 3]
+main
+:q
+:q
+exit
+:q
+exit
+putStrLn show (n + 5)
+:t n
+n -t
+-t n
+n
+let n = read input :: Int
+    • Couldn't match expected type: Int -> IO b
+input <- getLine
