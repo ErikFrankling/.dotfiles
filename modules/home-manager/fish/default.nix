@@ -48,6 +48,13 @@
             git push
         end
 
+        function push
+            git pull
+            git add -A
+            git commit -am "$argv"
+            git push
+        end
+
         function fish_greeting
             neofetch
         end
