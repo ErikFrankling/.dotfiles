@@ -12,6 +12,8 @@
   config.programs.nixvim = {
     enable = true;
     # exstraConfigLua = builtins.readFile ./init.lua;
+
+    clipboard.register = "unnamedplus";
     
     globals = {
       mapleader = " ";
@@ -23,7 +25,7 @@
         action = "<cmd>w<CR>";
         key = "<C-a>";
         options = {
-          silent = true;
+          # silent = true;
         };
       }
     ];

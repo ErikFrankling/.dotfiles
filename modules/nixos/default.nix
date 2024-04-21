@@ -11,6 +11,8 @@
     btop
     fzf
     ripgrep
+    wl-clipboard
+    wl-clipboard-x11
   ];
   main-user.enable = true;
   main-user.userName = "erikf";

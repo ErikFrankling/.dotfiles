@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 
 {
   programs.wofi.enable = true;
@@ -6,6 +6,11 @@
   home.sessionVariables = {
     XCURSOR_SIZE = "15";
   };
+
+  home.packages = with pkgs; [
+  ];
+
+  services.cliphist.enable = true;
 
   wayland.windowManager.hyprland = {
       enable = true;
