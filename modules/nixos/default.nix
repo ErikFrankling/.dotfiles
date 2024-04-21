@@ -1,27 +1,64 @@
-# Edit this configuration file to define what should be installed on
-# your system.  Help is available in the configuration.nix(5) man page
-# and in the NixOS manual (accessible by running ‘nixos-help’).
-
 { config, pkgs, inputs, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-      ../../modules/nixos/main-user.nix
-      inputs.home-manager.nixosModules.default
+  imports = [
+      ./main-user.nix
     ];
 
+  # List packages installed in system profile. To search, run:
+  # $ nix search wget
+  environment.systemPackages = with pkgs; [
+    btop
+    fzf
+  ];
   main-user.enable = true;
   main-user.userName = "erikf";
 
-  # Bootloader.
-  boot.loader.grub.enable = true;
-  boot.loader.grub.device = "/dev/sda";
-  boot.loader.grub.useOSProber = true;
+  programs.fish.enable = true;
 
-  networking.hostName = "nixos"; # Define your hostname.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+ # Enabling hyprlnd on NixOS
+programs.hyprland = {
+  enable = true;
+  # nvidiaPatches = true;
+  xwayland.enable = true;
+};
+
+environment.sessionVariables = {
+  # If your cursor becomes invisible
+  # WLR_NO_HARDWARE_CURSORS = "1";
+  # Hint electron apps to use wayland
+  NIXOS_OZONE_WL = "1";
+};
+
+hardware = {
+    # Opengl
+    opengl.enable = true;
+
+    # Most wayland compositors need this
+    # nvidia.modesetting.enable = true;
+};
+
+# XDG portal
+xdg.portal.enable = true;
+xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+
+# Enable sound with pipewire.
+sound.enable = true;
+security.rtkit.enable = true;
+services.pipewire = {
+  enable = true;
+  alsa.enable = true;
+  alsa.support32Bit = true;
+  pulse.enable = true;
+  jack.enable = true;
+};
+
+  # Bootloader.
+  # boot.loader.grub.enable = true;
+  # boot.loader.grub.device = "/dev/nvme0n1";
+  # boot.loader.grub.useOSProber = true;
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
@@ -48,44 +85,15 @@
     LC_TIME = "sv_SE.UTF-8";
   };
 
-  # Configure keymap in X11
-  services.xserver = {
-    layout = "se";
-    xkbVariant = "";
-  };
-
-  # Configure console keymap
-  console.keyMap = "sv-latin1";
-
   security.sudo.wheelNeedsPassword = false;
-
-  hardware.opengl.enable = true;
 
   # Enable automatic login for the user.
   services.getty.autologinUser = "erikf";
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-  home-manager = {
-    # also pass inputs to home-manager modules
-    extraSpecialArgs = {inherit inputs;};
-    users = {
-      "erikf" = import ./home.nix;
-    };
-  };
-
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
-  virtualisation.virtualbox.guest.enable = true;
-
-  programs.fish.enable = true;
-
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
-  environment.systemPackages = with pkgs; [
-    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-  #  wget
-  ];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -99,7 +107,9 @@
 
   system.autoUpgrade.enable = true;
   system.autoUpgrade.allowReboot = true;
-
+    users.users."erikf".openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJXhLc3vVBQPQLGlf4kMJ/WHXPlsXWzuustUwzFj/AaX erikf"
+    ];
   # Enable the OpenSSH daemon.
   services.openssh = {
     enable = true;
