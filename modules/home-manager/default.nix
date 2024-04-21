@@ -4,7 +4,7 @@
   imports = [
     ./neovim
     ./hyprland.nix
-    ./fish.nix
+    ./fish
   ];
 
   nixpkgs.config.allowUnfree = true;
@@ -66,7 +66,7 @@
 
   programs.git = {
     enable = true;
-    userName  = "ErikFrankling";
+    userName  = "Erik Frankling";
     userEmail = "erik.frankling@frankling.se";
   };
 
