@@ -55,6 +55,12 @@
             git push
         end
 
+        function rebuild
+            cd /home/erikf/.dotfiles
+            git add -A
+            sudo nixos-rebuild switch --flake /home/erikf/.dotfiles#framework
+        end
+
         function fish_greeting
             neofetch
         end
