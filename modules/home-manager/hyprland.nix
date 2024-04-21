@@ -9,6 +9,13 @@
 
   wayland.windowManager.hyprland = {
       enable = true;
+      xwayland.enable = true;
+
+    extraConfig = ''
+      exec-once = wl-paste --type text --watch cliphist store #Stores only text data
+
+      exec-once = wl-paste --type image --watch cliphist store #Stores only image data
+    '';
 
       settings = {        # For all categories, see https://wiki.hyprland.org/Configuring/Variables/
         input = {

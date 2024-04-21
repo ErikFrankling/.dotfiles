@@ -1,7 +1,6 @@
 if status is-interactive
     alias ls='ls -oAhp --color=auto'
     alias grep='grep --color=auto'
-    alias inst='sudo pacman -S'
     alias xclients='xlsclients'
 
     function sync
@@ -11,13 +10,6 @@ if status is-interactive
         git push
     end
 
-    # set  last_repository (sh "$HOME/.dotfiles/scripts/onefetch-last-repository.sh")
-    #
-    # function cd
-    #     cd $args
-    #     sh "$HOME/.dotfiles/scripts/onefetch-last-repository.sh"
-    # end
-    
     function fish_greeting
         neofetch
     end
@@ -30,15 +22,10 @@ if status is-interactive
     set -gx QT_STYLE_OVERRIDE adwaita-dark
     set -gx HISTCONTROL ignoredups
     set -gx MOZ_ENABLE_WAYLAND 1
-
-    sh "$HOME/.cargo/env"
 end
 
 if status is-login
-    dbus-run-session Hyprland
+    if test -z "$DISPLAY" -a "$XDG_VTNR" = 1
+        dbus-run-session Hyprland
+    end
 end
-
-set -q GHCUP_INSTALL_BASE_PREFIX[1]; or set GHCUP_INSTALL_BASE_PREFIX $HOME ; set -gx PATH $HOME/.cabal/bin /home/erikf/.ghcup/bin $PATH # ghcup-env
-
-# opam configuration
-source /home/erikf/.opam/opam-init/init.fish > /dev/null 2> /dev/null; or true

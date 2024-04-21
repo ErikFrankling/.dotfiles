@@ -10,6 +10,7 @@
   environment.systemPackages = with pkgs; [
     btop
     fzf
+    ripgrep
   ];
   main-user.enable = true;
   main-user.userName = "erikf";
