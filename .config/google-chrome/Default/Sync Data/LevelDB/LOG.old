@@ -1,6 +1,0 @@
-2024/01/10-12:09:11.167 50f1 Reusing MANIFEST /home/erikf/.config/google-chrome/Default/Sync Data/LevelDB/MANIFEST-000001
-2024/01/10-12:09:11.188 50f1 Recovering log #611
-2024/01/10-12:09:11.194 50f1 Reusing old log /home/erikf/.config/google-chrome/Default/Sync Data/LevelDB/000611.log 
-2024/01/10-12:09:12.040 50dd Level-0 table #616: started
-2024/01/10-12:09:12.045 50dd Level-0 table #616: 122574 bytes OK
-2024/01/10-12:09:12.050 50dd Delete type=0 #611

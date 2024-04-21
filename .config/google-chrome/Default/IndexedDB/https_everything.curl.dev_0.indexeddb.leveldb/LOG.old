@@ -1,7 +1,0 @@
-2023/12/19-05:02:59.696 632 Reusing MANIFEST /home/erikf/.config/google-chrome/Default/IndexedDB/https_everything.curl.dev_0.indexeddb.leveldb/MANIFEST-000001
-2023/12/19-05:02:59.696 632 Recovering log #4
-2023/12/19-05:02:59.697 632 Reusing old log /home/erikf/.config/google-chrome/Default/IndexedDB/https_everything.curl.dev_0.indexeddb.leveldb/000004.log 
-2023/12/19-05:03:00.006 646 Level-0 table #8: started
-2023/12/19-05:03:00.008 646 Level-0 table #8: 2424 bytes OK
-2023/12/19-05:03:00.011 646 Delete type=0 #4
-2023/12/19-05:03:00.011 633 Manual compaction at level-0 from '\x00\x06\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x07\x00\x00\x00' @ 0 : 0; will stop at (end)

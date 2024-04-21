@@ -1,6 +1,0 @@
-2023/11/23-00:54:49.427 3e6 Creating DB /home/erikf/.config/google-chrome/Default/IndexedDB/https_betterprogramming.pub_0.indexeddb.leveldb since it was missing.
-2023/11/23-00:54:49.431 3e6 Reusing MANIFEST /home/erikf/.config/google-chrome/Default/IndexedDB/https_betterprogramming.pub_0.indexeddb.leveldb/MANIFEST-000001
-2023/11/23-00:55:24.839 3e6 Level-0 table #5: started
-2023/11/23-00:55:24.841 3e6 Level-0 table #5: 3072 bytes OK
-2023/11/23-00:55:24.843 3e6 Delete type=0 #3
-2023/11/23-00:55:24.843 3e6 Manual compaction at level-0 from (begin) .. (end); will stop at (end)

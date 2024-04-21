@@ -1,6 +1,0 @@
-2023/12/16-04:23:41.598 382 Creating DB /home/erikf/.config/google-chrome/Default/IndexedDB/https_www.wallpaper.com_0.indexeddb.leveldb since it was missing.
-2023/12/16-04:23:41.603 382 Reusing MANIFEST /home/erikf/.config/google-chrome/Default/IndexedDB/https_www.wallpaper.com_0.indexeddb.leveldb/MANIFEST-000001
-2023/12/16-04:24:14.110 383 Level-0 table #5: started
-2023/12/16-04:24:14.112 383 Level-0 table #5: 119664 bytes OK
-2023/12/16-04:24:14.114 383 Delete type=0 #3
-2023/12/16-04:24:14.115 383 Manual compaction at level-0 from (begin) .. (end); will stop at (end)

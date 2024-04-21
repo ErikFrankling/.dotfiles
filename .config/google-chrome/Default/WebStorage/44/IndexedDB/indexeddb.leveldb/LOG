@@ -1,7 +1,0 @@
-2023/12/19-14:36:41.938 4be Reusing MANIFEST /home/erikf/.config/google-chrome/Default/WebStorage/44/IndexedDB/indexeddb.leveldb/MANIFEST-000001
-2023/12/19-14:36:41.938 4be Recovering log #3
-2023/12/19-14:36:41.939 4be Reusing old log /home/erikf/.config/google-chrome/Default/WebStorage/44/IndexedDB/indexeddb.leveldb/000003.log 
-2023/12/19-14:42:17.468 4be Level-0 table #5: started
-2023/12/19-14:42:17.470 4be Level-0 table #5: 1366 bytes OK
-2023/12/19-14:42:17.472 4be Delete type=0 #3
-2023/12/19-14:42:17.472 4be Manual compaction at level-0 from (begin) .. (end); will stop at (end)

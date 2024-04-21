@@ -8,7 +8,7 @@
       inputs.home-manager.nixosModules.default
     ];
 
-  networking.hostName = "nixos"; # Define your hostname.
+  networking.hostName = "nix-vm"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure keymap in X11
