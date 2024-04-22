@@ -30,10 +30,10 @@
           ];
         };
     
-      nixosConfigurations.pc = nixpkgs.lib.nixosSystem {
+      nixosConfigurations.vm = nixpkgs.lib.nixosSystem {
           specialArgs = {inherit inputs;};
           modules = [ 
-            ./hosts/pc/configuration.nix
+            ./hosts/vm/configuration.nix
           ];
         };
 
