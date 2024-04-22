@@ -8,7 +8,7 @@
     home.packages = with pkgs; [
         thunderbird
         webcord
-        spotify
+        # spotify
         pavucontrol
         obs-studio
     ];
