@@ -40,19 +40,18 @@
             action = "<Cmd>w<CR>";
             options = { desc = "Save"; };
         }
-        {
-            mode = [ "i" ];
-            key = "Å";
-            action = "require(\"copilot.suggestion\").accept";
-            lua = true;
-
-        }
-        {
-            mode = [ "i" ];
-            key = "å";
-            action = "require(\"copilot.suggestion\").accept_word";
-            lua = true;
-        }
+        # {
+        #     mode = [ "i" ];
+        #     key = "Å";
+        #     action = "require(\"copilot.suggestion\").accept";
+        #     lua = true;
+        # }
+        # {
+        #     mode = [ "i" ];
+        #     key = "å";
+        #     action = "require(\"copilot.suggestion\").accept_word";
+        #     lua = true;
+        # }
         {
             mode = [ "n" ];
             key = "k";

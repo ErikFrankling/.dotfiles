@@ -7,31 +7,38 @@
     ./keymaps.nix
     ./completions.nix
     ./telescope.nix
+    ./autoformat.nix
   ];
 
   config.programs.nixvim = {
     enable = true;
     # exstraConfigLua = builtins.readFile ./init.lua;
-
+    autoCmd = [
+      {
+        event = "FileType";
+        pattern = "nix";
+        command = "setlocal tabstop=2 shiftwidth=2";
+      }
+    ];
     clipboard.register = "unnamedplus";
-    
+
     globals = {
       mapleader = " ";
       maplocalleader = " ";
     };
 
-    keymaps = [
-      {
-        action = "<cmd>w<CR>";
-        key = "<C-a>";
-        options = {
-          # silent = true;
-        };
-      }
-    ];
+    # keymaps = [
+    #   {
+    #     action = "<cmd>w<CR>";
+    #     key = "<C-a>";
+    #     options = {
+    #       # silent = true;
+    #     };
+    #   }
+    # ];
 
-    options = {
-      
+    opts = {
+
       background = "dark";
       number = true;
       relativenumber = true;
@@ -45,36 +52,38 @@
       foldlevelstart = 99;
     };
 
-    colorschemes.base16 = {
-      enable = true;
-      useTruecolor = true;
-      colorscheme = "material-darker";
-    };
+    colorschemes.onedark.enable = true;
+
+    # colorschemes.base16 = {
+    #   enable = true;
+    #   options.termguicolors = true;
+    #   colorscheme = "material-darker";
+    # };
 
     plugins = {
-      comment-nvim.enable = true;
-      barbar = {
-        enable = true;
-        keymaps = {
-          silent = true;
-          previous = "<leader>tk";
-          next = "<leader>tj";
-          movePrevious = "<leader>th";
-          moveNext = "<leader>tl";
-          goTo1 = "<leader>t1";
-          goTo2 = "<leader>t2";
-          goTo3 = "<leader>t3";
-          goTo4 = "<leader>t4";
-          goTo5 = "<leader>t5";
-          goTo6 = "<leader>t6";
-          goTo7 = "<leader>t7";
-          goTo8 = "<leader>t8";
-          goTo9 = "<leader>t9";
-          last = "<leader>tL";
-          close = "<leader>tq";
-        };
-        sidebarFiletypes = { NvimTree = true; };
-      };
+      markdown-preview.enable = true;
+      comment.enable = true;
+      # barbar = {
+      #   enable = true;
+      #   keymaps = {
+      #     previous = "<leader>tk";
+      #     next = "<leader>tj";
+      #     movePrevious = "<leader>th";
+      #     moveNext = "<leader>tl";
+      #     goTo1 = "<leader>t1";
+      #     goTo2 = "<leader>t2";
+      #     goTo3 = "<leader>t3";
+      #     goTo4 = "<leader>t4";
+      #     goTo5 = "<leader>t5";
+      #     goTo6 = "<leader>t6";
+      #     goTo7 = "<leader>t7";
+      #     goTo8 = "<leader>t8";
+      #     goTo9 = "<leader>t9";
+      #     last = "<leader>tL";
+      #     # close = "<leader>tq";
+      #   };
+      #   sidebarFiletypes = { NvimTree = true; };
+      # };
 
       cursorline = {
         enable = true;

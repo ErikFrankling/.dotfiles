@@ -2,9 +2,12 @@
 
 {
   imports =
-    [ # Include the results of the hardware scan.
+    [
+      # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      ../../modules/nixos/default.nix
+      ../../modules/nixos
+      ../../modules/nixos/desktop.nix
+      ../../modules/nixos/game.nix
       inputs.home-manager.nixosModules.default
     ];
 
@@ -13,8 +16,10 @@
 
   # Configure keymap in X11
   services.xserver = {
-    layout = "us";
-    xkbVariant = "";
+    xkb = {
+      variant = "";
+      layout = "us";
+    };
   };
 
   # Configure console keymap
@@ -22,7 +27,7 @@
 
   home-manager = {
     # also pass inputs to home-manager modules
-    extraSpecialArgs = {inherit inputs;};
+    extraSpecialArgs = { inherit inputs; };
     users = {
       "erikf" = import ./home.nix;
     };
@@ -31,6 +36,6 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-  #  wget
+    #  wget
   ];
 }

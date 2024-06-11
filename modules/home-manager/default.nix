@@ -68,6 +68,9 @@
     enable = true;
     userName  = "Erik Frankling";
     userEmail = "erik.frankling@frankling.se";
+    extraConfig = {
+        pull.rebase = false;
+    };
   };
 
   home.sessionVariables = {

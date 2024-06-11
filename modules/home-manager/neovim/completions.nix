@@ -1,6 +1,6 @@
 { pkgs, ... }: {
   config.programs.nixvim = { 
-      extraConfigLua = builtins.readFile ./completions.lua;
+      # extraConfigLua = builtins.readFile ./completions.lua;
 
       plugins = {
         luasnip.enable = true;
