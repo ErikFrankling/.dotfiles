@@ -14,6 +14,11 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, ... }@inputs:
@@ -27,6 +32,7 @@
           specialArgs = {inherit inputs;};
           modules = [ 
             ./hosts/default/configuration.nix
+            inputs.sops-nix.nixosModules.sops
           ];
         };
     
@@ -34,6 +40,7 @@
           specialArgs = {inherit inputs;};
           modules = [ 
             ./hosts/pc/configuration.nix
+            inputs.sops-nix.nixosModules.sops
           ];
         };
 
@@ -41,6 +48,7 @@
           specialArgs = {inherit inputs;};
           modules = [ 
             ./hosts/framework/configuration.nix
+            inputs.sops-nix.nixosModules.sops
           ];
         };
     };

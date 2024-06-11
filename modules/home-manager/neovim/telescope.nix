@@ -1,7 +1,6 @@
 { pkgs, ... }: {
   config.programs.nixvim.plugins.telescope = {
     enable = true;
-    keymapsSilent = true;
     keymaps = {
       "<leader>fb" = "buffers";
       "<leader>ff" = "find_files";
@@ -12,14 +11,14 @@
       "<leader>fci" = "lsp_incoming_calls";
       "<leader>fco" = "lsp_outgoing_calls";
       "<leader>fd" = "lsp_definitions";
-      "<leader>fD" = "lsp_diagnostics";
+      "<leader>fD" = "diagnostics";
       "<leader>fi" = "lsp_implementations";
       "<leader>fr" = "lsp_references";
       "<leader>fsd" = "lsp_document_symbols";
       "<leader>fsw" = "lsp_workspace_symbols";
       "<leader>ft" = "lsp_type_definitions";
     };
-    defaults = {
+    settings.defaults = {
       border = true;
       layout_strategy = "horizontal";
       layout_config = {

@@ -1,32 +1,31 @@
 # .dotfiles
 
 ## TODO
-- [x] vpn
-- [ ] vpn in new apartment
-- [x] vnc connection
-- [x] firefox with vertical tabs
-- [x] mbr to gpt should maybe fix rEFInd
-- [x] rEFInd config
-- [x] sway config add top bar (not sway anymore, but yes in hyperland)
-- [x] sway config workspaces with correct programs on boot needs tmux fist for nvim to work i think (not tmux but other things)
+- [ ] slicer
+- [ ] onedrive
+- [ ] thunderbird nix
+- [ ] sops **[HIGH PRIORITY]**
 - [ ] copy paste consistent (do i have to)
-- [x] automatic vnc connection on boot (not anymore but i use ssh now i think)
-- [x] greeter start sway and erikf login on boot (no greeter but it works
-- [x] fix timezones and sync on boot
-- [ ] display repo info on cd
+- [ ] automatic vnc connection on boot (not anymore but i use ssh now i think)
+- [ ] fix timezones and sync on boot
+- [x] display repo info on cd
 - [ ] audio systray mixer
-    - [ ] so i can actually se what volume i am on
-- [ ] fix broken as bluetooth
-- [ ] fix broken as bluetooth on windows probably related to arch install
+- [ ] bluetooth
 - [ ] fix firefox ram usage
+- [ ] firefox nix better
+- [ ] good cheatsheet so i can actually see all the keybinds **[2]**
+- [ ] vpn client **[HIGH PRIORITY]**
+- [ ] eww notifications
+- [ ] android intergration
 
 ### nvim
 - [ ] autostart (probably an tmux thing)
-- [x] copilot keybinds **[HIGH PRIORITY]**
-- [x] inline hints **[HIGH PRIORITY]**
+- [ ] copilot **[HIGH PRIORITY]**
+- [ ] lsp **[HIGH PRIORITY]**
+- [ ] leader key **[HIGH PRIORITY]**
+- [ ] keymaps **[HIGH PRIORITY]**
+- [ ] inline hints **[HIGH PRIORITY]**
     - [ ] make it work for rust variables
-- [ ] restructure config **[2]**
-- [ ] good cheatsheet so i can actually see all the keybinds **[2]**
 - [ ] theme integration
 - [ ] git workflow
 - [ ] spellcheckratpoison
@@ -37,15 +36,44 @@
         - [ ] show when holding mod key (maybe)
     - [ ] nvim-tree
     - [ ] file browser 
-- [x] usable tabs in insertmode unmap from copilot
 - [ ] insert brackets around selected text
 - [ ] copilot status icon
 
-### laptop install
-- [ ] install arch
-- [ ] diffrent laptop and desktop install that makes everthing use correct config with a env variable probably so i can do the same thing on pc remote by just passing env when launcing Hyprland
-- [ ] diffrent laptop and desktop config
-- [ ] make goood laptop keyboard
+### nix
+- [ ] setting upp dev env **[HIGH PRIORITY]**
+    - [ ] zig
+    - [ ] rust
+    - [ ] automate
+- [ ] wifi module
+- [ ] monitor module
+- [ ] hostname variable
+- [ ] powermanagment module
+- [ ] startup apps monitor integration
+- [ ] virtulization 
+    - [ ] windows
+    - [ ] nix
+- [ ] boot loader module
+- [ ] impermannce
+- [ ] use unstable pkgs
+
+### tmux
+- [ ] autostart **[HIGH PRIORITY]**
+- [ ] nvim integration **[HIGH PRIORITY]**
+- [ ] restore sessions **[HIGH PRIORITY]**
+- [ ] copy paste
+
+### laptop **[2]**
+- [ ] greeter on boot **[2]**
+- [ ] eduroam **[HIGH PRIORITY]**
+- [ ] genarl powermanagment server when carging sleep when not
+- [ ] screen idle
+- [ ] screen lock
+    - might just work with swayidle and swaylock
+
+### desktop
+- [ ] screen idle (needs to work with vnc)
+- [ ] screen lock (needs to work with vnc)
+    - might just work with swayidle and swaylock
 
 ### security stuff
 - [ ] secure boot
@@ -64,7 +92,6 @@
 
 ### git workflow
 - [ ] nvim integration
-- [ ] git gud
 - [ ] git indikations like in fish shell in nvim line
 
 ### kitty
@@ -75,28 +102,11 @@
 ### hyprland
 - [ ] screenshot
 - [ ] discord screen shareing
-- [ ] screen idle (needs to work with vnc)
-- [ ] screen lock (needs to work with vnc)
-    - might just work with swayidle and swaylock
 - [ ] screen saver
-- [ ] vnc testing (low priority)
 - [ ] clipboard history
 - [ ] fix window rules **[2]**
 - [ ] background changer
-
-### .dotfiles
-- [ ] make a script to install all the things
-- [ ] fiure out sym links stuff **[2]**
-- [ ] systemd services **[2]**
-- [ ] other non home dir stuff **[2]**
-- [ ] make a script to update all the things if necessary
-- [ ] package install
-
-### tmux
-- [ ] autostart **[HIGH PRIORITY]**
-- [ ] nvim integration **[HIGH PRIORITY]**
-- [ ] restore sessions **[HIGH PRIORITY]**
-- [ ] copy paste
+- [ ] eww
 
 ### themes
 - [ ] reasearch
@@ -114,16 +124,25 @@
     - [ ] will need new client problably for the best solves a lot 
 
 ### keyborad **[2]**
-- [ ] buy switches
-- [ ] buy keycaps
-- [ ] buy pcb or quick connect things
-- [ ] buy diodes
+- [x] buy switches
+- [x] buy keycaps
+- [x] buy pcb or quick connect things
+- [x] buy diodes
 - [ ] fix 3d printer
 - [ ] print case
 - [ ] solder
 - [ ] program keylayout
-- [ ] buy microcontroller
-- [ ] buy usb c cable
+- [x] buy microcontroller
+- [x] buy usb c cable
 - [ ] git gud
 - [ ] look into qmk for mobile version
 - [ ] look into ball mouse thing
+
+### router
+- [ ] maybe nix
+- [ ] pfsense
+- [ ] vm
+- [ ] pihole
+- [ ] vpn
+- [ ] website
+- [ ] ondrive local

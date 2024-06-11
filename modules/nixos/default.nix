@@ -2,8 +2,10 @@
 
 {
   imports = [
-      ./main-user.nix
-    ];
+    ./main-user.nix
+    ./fonts.nix
+    ./zig.nix
+  ];
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -13,48 +15,19 @@
     ripgrep
     wl-clipboard
     wl-clipboard-x11
+    nix-prefetch-github
+    # networkmanager-openvpn
+    # networkmanagerapplet
   ];
   main-user.enable = true;
   main-user.userName = "erikf";
 
   programs.fish.enable = true;
+  # programs.nm-applet.enable = true;
 
- # Enabling hyprlnd on NixOS
-programs.hyprland = {
-  enable = true;
-  # nvidiaPatches = true;
-  xwayland.enable = true;
-};
-
-environment.sessionVariables = {
-  # If your cursor becomes invisible
-  # WLR_NO_HARDWARE_CURSORS = "1";
-  # Hint electron apps to use wayland
-  NIXOS_OZONE_WL = "1";
-};
-
-hardware = {
-    # Opengl
-    opengl.enable = true;
-
-    # Most wayland compositors need this
-    # nvidia.modesetting.enable = true;
-};
-
-# XDG portal
-xdg.portal.enable = true;
-xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
-
-# Enable sound with pipewire.
-sound.enable = true;
-security.rtkit.enable = true;
-services.pipewire = {
-  enable = true;
-  alsa.enable = true;
-  alsa.support32Bit = true;
-  pulse.enable = true;
-  jack.enable = true;
-};
+  nix.settings.auto-optimise-store = true;
+  # nix.settings.max-jobs = 1;
+  # nix.settings.cores = 1;
 
   # Bootloader.
   # boot.loader.grub.enable = true;
@@ -107,12 +80,12 @@ services.pipewire = {
   # };
 
   # List services that you want to enable:
-
+  services.openvpn.servers.homeVPN = { config = '' config /root/nixos/openvpn/homeVPN.conf ''; };
   system.autoUpgrade.enable = true;
   system.autoUpgrade.allowReboot = true;
-    users.users."erikf".openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJXhLc3vVBQPQLGlf4kMJ/WHXPlsXWzuustUwzFj/AaX erikf"
-    ];
+  users.users."erikf".openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJXhLc3vVBQPQLGlf4kMJ/WHXPlsXWzuustUwzFj/AaX erikf"
+  ];
   # Enable the OpenSSH daemon.
   services.openssh = {
     enable = true;
@@ -132,5 +105,4 @@ services.pipewire = {
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "23.11"; # Did you read the comment?
-
 }

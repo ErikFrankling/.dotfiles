@@ -12,9 +12,12 @@
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure keymap in X11
+  # Configure keymap in X11
   services.xserver = {
-    layout = "se";
-    xkbVariant = "";
+    xkb = {
+      variant = "";
+      layout = "se";
+    };
   };
 
   # Configure console keymap
