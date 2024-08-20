@@ -3,6 +3,7 @@
 ## TODO
 - [ ] slicer
 - [ ] onedrive
+- [ ] sync thing
 - [ ] thunderbird nix
 - [ ] sops **[HIGH PRIORITY]**
 - [ ] copy paste consistent (do i have to)
@@ -24,7 +25,7 @@
 - [ ] lsp **[HIGH PRIORITY]**
 - [ ] leader key **[HIGH PRIORITY]**
 - [ ] keymaps **[HIGH PRIORITY]**
-- [ ] inline hints **[HIGH PRIORITY]**
+- [x] inline hints **[HIGH PRIORITY]**
     - [ ] make it work for rust variables
 - [ ] theme integration
 - [ ] git workflow
@@ -100,11 +101,11 @@
 - [ ] theme integration
 
 ### hyprland
-- [ ] screenshot
+- [x] screenshot
 - [ ] discord screen shareing
 - [ ] screen saver
 - [ ] clipboard history
-- [ ] fix window rules **[2]**
+- [x] fix window rules **[2]**
 - [ ] background changer
 - [ ] eww
 
@@ -128,10 +129,10 @@
 - [x] buy keycaps
 - [x] buy pcb or quick connect things
 - [x] buy diodes
-- [ ] fix 3d printer
-- [ ] print case
-- [ ] solder
-- [ ] program keylayout
+- [x] fix 3d printer
+- [x] print case
+- [x] solder
+- [x] program keylayout
 - [x] buy microcontroller
 - [x] buy usb c cable
 - [ ] git gud

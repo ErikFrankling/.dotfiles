@@ -29,31 +29,27 @@
     {
 
       nixosConfigurations.default = nixpkgs.lib.nixosSystem {
-          specialArgs = {inherit inputs;};
-          modules = [ 
-            ./hosts/default/configuration.nix
-            inputs.sops-nix.nixosModules.sops
-          ];
-        };
-    
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./hosts/default/configuration.nix
+          inputs.sops-nix.nixosModules.sops
+        ];
+      };
+
       nixosConfigurations.vm = nixpkgs.lib.nixosSystem {
-          specialArgs = {inherit inputs;};
-          modules = [ 
-<<<<<<< HEAD
-            ./hosts/pc/configuration.nix
-            inputs.sops-nix.nixosModules.sops
-=======
-            ./hosts/vm/configuration.nix
->>>>>>> 5c0c1c11b87a5d3ae28644b51cfe58270f43f7fb
-          ];
-        };
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./hosts/vm/configuration.nix
+          inputs.sops-nix.nixosModules.sops
+        ];
+      };
 
       nixosConfigurations.framework = nixpkgs.lib.nixosSystem {
-          specialArgs = {inherit inputs;};
-          modules = [ 
-            ./hosts/framework/configuration.nix
-            inputs.sops-nix.nixosModules.sops
-          ];
-        };
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./hosts/framework/configuration.nix
+          inputs.sops-nix.nixosModules.sops
+        ];
+      };
     };
 }

@@ -5,6 +5,11 @@
   services.cliphist.enable = true;
 
   home.packages = with pkgs; [
+    brightnessctl
+    playerctl
+    grim
+    swappy
+    slurp
   ];
 
   wayland.windowManager.hyprland = {
@@ -20,8 +25,8 @@
       exec-once = wl-paste --type text --watch cliphist store #Stores only text data
       exec-once = wl-paste --type image --watch cliphist store #Stores only image data
 
-      exec-once=[workspace 1 silent] kitty
-      exec-once=[workspace 2 silent] kitty
+      exec-once=[workspace 1 silent] kitty tmux
+      exec-once=[workspace 2 silent] kitty tmux
       exec-once=[workspace 3 silent] firefox
       exec-once=[workspace 4 silent] webcord
       exec-once=[workspace 4 silent] spotify-launcher
@@ -77,7 +82,12 @@
           "$mod, P, exec, hyprctl --batch \"dispatch setfloating; dispatch pin\""
           "$mod, B, fakefullscreen"
           "$mod, R, fullscreen"
+          ", Print, exec, grim -g \"\$(slurp)\" - | swappy -f -"
           # ", Print, exec, grimblast copy area"
+
+          ", XF86AudioPlay, exec, playerctl play-pause" # the stupid key is called play , but it toggles
+          ", XF86AudioNext, exec, playerctl next"
+          ", XF86AudioPrev, exec, playerctl previous"
         ] ++
         # change workspace
         (map (n: "$mod,${n},workspace,name:${n}") workspaces) ++
@@ -103,13 +113,19 @@
         "$mod, mouse:273, resizewindow"
       ];
 
+      # l -> do stuff even when locked
+      # e -> repeats when key is held 
       bindle = [
         # Example volume button that allows press and hold, volume limited to 150%
         ", XF86AudioRaiseVolume, exec, wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 2%+"
-
         # Example volume button that will activate even while an input inhibitor is active
         ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%-"
 
+        ", xf86monbrightnessup, exec, brightnessctl set 10%+"
+        ", xf86monbrightnessdown, exec, brightnessctl set 10%-"
+      ];
+
+      bindl = [
         ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
       ];
 
@@ -188,7 +204,7 @@
 
       master = {
         # See https://wiki.hyprland.org/Configuring/Master-Layout/ for more
-        new_is_master = true;
+        # new_is_master = true;
         no_gaps_when_only = 1;
       };
 
