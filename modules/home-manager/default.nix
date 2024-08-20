@@ -1,10 +1,11 @@
-{ config, pkgs, lib, ...  }:
+{ config, pkgs, lib, ... }:
 
 {
   imports = [
     ./neovim
     ./hyprland.nix
     ./fish
+    ./tmux.nix
   ];
 
   nixpkgs.config.allowUnfree = true;
@@ -51,7 +52,7 @@
     # # the Nix store. Activating the configuration will then make '~/.screenrc' a
     # # symlink to the Nix store copy.
     # ".screenrc".source = dotfiles/screenrc;
-    
+
     # ".config/nvim/" = {
     #   source = ../../nvim;
     #   recursive = true;
@@ -66,10 +67,10 @@
 
   programs.git = {
     enable = true;
-    userName  = "Erik Frankling";
+    userName = "Erik Frankling";
     userEmail = "erik.frankling@frankling.se";
     extraConfig = {
-        pull.rebase = false;
+      pull.rebase = false;
     };
   };
 

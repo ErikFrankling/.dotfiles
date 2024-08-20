@@ -76,7 +76,7 @@
     '';
 
     shellInit = ''
-      fish_add_path --path $HOME/.dotfiles/bin $HOME/Downloads/zig   
+      fish_add_path --path $HOME/.dotfiles/bin $HOME/Downloads/zig 
       set -gx EDITOR /usr/bin/nvim
       set -gx GTK_THEME Adwaita:dark
       set -gx GTK2_RC_FILES /usr/share/themes/Adwaita-dark/gtk-2.0/gtkrc
@@ -87,7 +87,9 @@
 
     loginShellInit = ''
       if not set -q SSH_TTY
+        if test -z "$DISPLAY" -a "$XDG_VTNR" = 1
           dbus-run-session Hyprland
+        end
       end
     '';
 

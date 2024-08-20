@@ -5,6 +5,7 @@
     packages = with pkgs; [
       jetbrains-mono
       nerdfonts
+      (nerdfonts.override { fonts = [ "JetBrainsMono" ]; })
       noto-fonts-color-emoji
     ];
 

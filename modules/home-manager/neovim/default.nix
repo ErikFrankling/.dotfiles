@@ -7,7 +7,7 @@
     ./keymaps.nix
     ./completions.nix
     ./telescope.nix
-    ./autoformat.nix
+    # ./autoformat.nix
   ];
 
   config.programs.nixvim = {

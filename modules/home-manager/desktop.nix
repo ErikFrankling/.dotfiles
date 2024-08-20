@@ -10,9 +10,11 @@
   home.packages = with pkgs; [
     thunderbird
     webcord
-    # spotify
+    spotifywm
+    # spotify-qt
     pavucontrol
     obs-studio
+    google-chrome
   ];
 
   programs.kitty.enable = true;

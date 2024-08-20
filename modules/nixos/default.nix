@@ -73,12 +73,9 @@
   # };
 
   # List services that you want to enable:
-  services.openvpn.servers.homeVPN = { config = '' config /root/nixos/openvpn/homeVPN.conf ''; };
   system.autoUpgrade.enable = true;
   system.autoUpgrade.allowReboot = true;
-  users.users."erikf".openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJXhLc3vVBQPQLGlf4kMJ/WHXPlsXWzuustUwzFj/AaX erikf"
-  ];
+
   # Enable the OpenSSH daemon.
   services.openssh = {
     enable = true;
@@ -86,7 +83,7 @@
   };
 
   # Open ports in the firewall.
-  networking.firewall.allowedTCPPorts = [ 22 ];
+  # networking.firewall.allowedTCPPorts = [ 22 ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
