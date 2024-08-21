@@ -44,6 +44,14 @@
         ];
       };
 
+      nixosConfigurations.pc = nixpkgs.lib.nixosSystem {
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./hosts/pc/configuration.nix
+          inputs.sops-nix.nixosModules.sops
+        ];
+      };
+
       nixosConfigurations.framework = nixpkgs.lib.nixosSystem {
         specialArgs = { inherit inputs; };
         modules = [
