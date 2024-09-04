@@ -61,6 +61,7 @@
     # };
 
     plugins = {
+      copilot-vim.enable = true;
       markdown-preview.enable = true;
       comment.enable = true;
       # barbar = {
