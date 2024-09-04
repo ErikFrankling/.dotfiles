@@ -3,7 +3,6 @@
 {
   imports = [
     ./neovim
-    ./hyprland.nix
     ./fish
     ./tmux.nix
   ];

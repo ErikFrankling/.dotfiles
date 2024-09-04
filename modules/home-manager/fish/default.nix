@@ -1,4 +1,4 @@
-{ pkgs, config, ... }:
+{ pkgs, config, hostName, ... }:
 
 {
   # home.file = {
@@ -40,7 +40,7 @@
       rebuild = ''
         cd /home/erikf/.dotfiles
         git add -A
-        sudo nixos-rebuild $argv --fast --flake /home/erikf/.dotfiles#framework
+        sudo nixos-rebuild $argv --fast --flake /home/erikf/.dotfiles#${hostName}
         echo $(hyprctl reload)
       '';
 
