@@ -27,37 +27,17 @@
       pkgs = nixpkgs.legacyPackages.${system};
     in
     {
+      nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" ]
+        (hostName:
+          nixpkgs.lib.nixosSystem
+            {
+              specialArgs = { inherit inputs hostName; };
+              modules = [
+                ./hosts/${hostName}/configuration.nix
+                inputs.sops-nix.nixosModules.sops
+              ];
+            }
+        );
 
-      nixosConfigurations.default = nixpkgs.lib.nixosSystem {
-        specialArgs = { inherit inputs; };
-        modules = [
-          ./hosts/default/configuration.nix
-          inputs.sops-nix.nixosModules.sops
-        ];
-      };
-
-      nixosConfigurations.vm = nixpkgs.lib.nixosSystem {
-        specialArgs = { inherit inputs; };
-        modules = [
-          ./hosts/vm/configuration.nix
-          inputs.sops-nix.nixosModules.sops
-        ];
-      };
-
-      nixosConfigurations.pc = nixpkgs.lib.nixosSystem {
-        specialArgs = { inherit inputs; };
-        modules = [
-          ./hosts/pc/configuration.nix
-          inputs.sops-nix.nixosModules.sops
-        ];
-      };
-
-      nixosConfigurations.framework = nixpkgs.lib.nixosSystem {
-        specialArgs = { inherit inputs; };
-        modules = [
-          ./hosts/framework/configuration.nix
-          inputs.sops-nix.nixosModules.sops
-        ];
-      };
     };
 }

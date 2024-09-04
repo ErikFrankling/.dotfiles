@@ -5,8 +5,10 @@
     ./main-user.nix
     ./fonts.nix
     ./zig.nix
+    # ./yubikey-gpg.nix
+    ./qmk.nix
   ];
-
+  nixpkgs.config.allowBroken = true;
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [

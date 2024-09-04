@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }:
+{ config, pkgs, inputs, hostName, ... }:
 
 {
   imports =
@@ -7,13 +7,13 @@
       ./hardware-configuration.nix
       ../../modules/nixos
       ../../modules/nixos/openvpn.nix
-      ../../modules/nixos/laptop.nix
+      # ../../modules/nixos/laptop.nix
       ../../modules/nixos/desktop.nix
       ../../modules/nixos/game.nix
       inputs.home-manager.nixosModules.default
     ];
 
-  networking.hostName = "framework"; # Define your hostname.
+  networking.hostName = "pc"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   boot.loader.systemd-boot.enable = true;
@@ -32,7 +32,7 @@
 
   home-manager = {
     # also pass inputs to home-manager modules
-    extraSpecialArgs = { inherit inputs; };
+    extraSpecialArgs = { inherit inputs hostName; };
     users = {
       "erikf" = import ./home.nix;
     };

@@ -4,6 +4,7 @@
   imports = [
     ./firefox.nix
     ./waybar
+    ./hyprland.nix
     # ./eww
   ];
 
@@ -15,6 +16,7 @@
     pavucontrol
     obs-studio
     google-chrome
+    gparted
   ];
 
   programs.kitty.enable = true;

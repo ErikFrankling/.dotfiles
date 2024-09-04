@@ -6,7 +6,7 @@
   };
 
   programs.waybar = {
-    enable = true;
+    enable = builtins.trace "here3" true;
     # systemd.enable = true;
 
     # settings = builtins.readFile ./config.json;
