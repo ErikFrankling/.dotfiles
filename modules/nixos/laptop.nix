@@ -13,4 +13,12 @@
       turbo = "auto";
     };
   };
+
+  # networking.wireless.networks.eduroam = {
+  #   auth = ''
+  #     key_mgmt=WPA-EAP
+  #     eap=PWD
+  #     identity="erikfran@kth.se"
+  #   '';
+  # };
 }
