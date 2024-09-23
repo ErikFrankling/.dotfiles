@@ -12,6 +12,7 @@
 
   config.programs.nixvim = {
     enable = true;
+    defaultEditor = true;
     # exstraConfigLua = builtins.readFile ./init.lua;
     autoCmd = [
       {

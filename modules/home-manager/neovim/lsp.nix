@@ -50,6 +50,11 @@
         '';
 
         servers = {
+          clangd = {
+            enable = true;
+            filetypes = [ "c" "cpp" ];
+          };
+
           lua-ls = {
             enable = true;
             settings = {

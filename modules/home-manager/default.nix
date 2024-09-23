@@ -3,7 +3,7 @@
 {
   imports = [
     ./neovim
-    ./fish
+    ./fish.nix
     ./tmux.nix
   ];
 
@@ -75,7 +75,7 @@
   };
 
   home.sessionVariables = {
-    # EDITOR = "emacs";
+    # EDITOR = lib.mkForce "/home/erikf/.nix-profile/bin/nvim";
   };
 
   # Let Home Manager install and manage itself.
