@@ -23,13 +23,6 @@
     enable = true;
 
     functions = {
-      sync = ''
-        git pull
-        git add -A
-        git commit -m "Sync"
-        git push
-      '';
-
       push = ''
         git pull
         git add -A
@@ -39,7 +32,24 @@
 
       rebuild = ''
         cd /home/erikf/.dotfiles
+
+        if [ -f /home/erikf/.ssh/id_ed25519 ]
+          if [ ! -f /home/erikf/.config/sops/age/keys.txt ]
+            echo "No age key found. Generating one..."
+            mkdir -p ~/.config/sops/age
+            nix-shell -p ssh-to-age --run "ssh-to-age -private-key -i ~/.ssh/id_ed25519 > ~/.config/sops/age/keys.txt" 
+          end
+        else
+          echo "No SSH key found. Use 
+          'scp ~/.ssh/id_ed25519.pub erikf@$pc:~/.ssh/'"
+        end
+
         git add -A
+
+        if [ -z "$argv" ]
+          set argv "switch"
+        end
+
         sudo nixos-rebuild $argv --fast --flake /home/erikf/.dotfiles#${hostName}
         echo $(hyprctl reload)
       '';
@@ -70,6 +80,8 @@
       ls = "ls -oAhp --color=auto";
       grep = "grep --color=auto";
       xclients = "xlsclients";
+      n = "nvim";
+      g = "git";
     };
 
     interactiveShellInit = ''
@@ -77,7 +89,6 @@
 
     shellInit = ''
       fish_add_path --path $HOME/.dotfiles/bin $HOME/Downloads/zig 
-      set -gx EDITOR /usr/bin/nvim
       set -gx GTK_THEME Adwaita:dark
       set -gx GTK2_RC_FILES /usr/share/themes/Adwaita-dark/gtk-2.0/gtkrc
       set -gx QT_STYLE_OVERRIDE adwaita-dark

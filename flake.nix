@@ -34,7 +34,7 @@
               specialArgs = { inherit inputs hostName; };
               modules = [
                 ./hosts/${hostName}/configuration.nix
-                inputs.sops-nix.nixosModules.sops
+                # inputs.sops-nix.nixosModules.sops
               ];
             }
         );

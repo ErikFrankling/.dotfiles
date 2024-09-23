@@ -7,6 +7,7 @@
     ./zig.nix
     # ./yubikey-gpg.nix
     ./qmk.nix
+    ./secrets.nix
   ];
   nixpkgs.config.allowBroken = true;
   # List packages installed in system profile. To search, run:
