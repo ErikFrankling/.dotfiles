@@ -4,7 +4,7 @@
 
   environment.systemPackages = with pkgs; [
     heroic
-    grapejuice
+    # grapejuice
     mangohud
   ];
 
