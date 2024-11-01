@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }:
+{ config, pkgs, inputs, hostName, ... }:
 
 {
   imports =
@@ -33,7 +33,7 @@
 
   home-manager = {
     # also pass inputs to home-manager modules
-    extraSpecialArgs = { inherit inputs; };
+    extraSpecialArgs = { inherit inputs hostName; };
     users = {
       "erikf" = import ./home.nix;
     };

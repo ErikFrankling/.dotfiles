@@ -11,11 +11,11 @@
 - [ ] fix timezones and sync on boot
 - [x] display repo info on cd
 - [ ] audio systray mixer
-- [ ] bluetooth
+- [x] bluetooth
 - [ ] fix firefox ram usage
 - [ ] firefox nix better
 - [ ] good cheatsheet so i can actually see all the keybinds **[2]**
-- [ ] vpn client **[HIGH PRIORITY]**
+- [x] vpn client **[HIGH PRIORITY]**
 - [ ] eww notifications
 - [ ] android intergration
 
@@ -47,7 +47,7 @@
     - [ ] automate
 - [ ] wifi module
 - [ ] monitor module
-- [ ] hostname variable
+- [x] hostname variable
 - [ ] powermanagment module
 - [ ] startup apps monitor integration
 - [ ] virtulization 
@@ -135,6 +135,7 @@
 - [x] program keylayout
 - [x] buy microcontroller
 - [x] buy usb c cable
+- [ ] VIA
 - [ ] git gud
 - [ ] look into qmk for mobile version
 - [ ] look into ball mouse thing
