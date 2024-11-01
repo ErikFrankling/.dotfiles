@@ -112,7 +112,7 @@
       };
 
       programs.wofi.enable = true;
-      services.cliphist.enable = true;
+      # services.cliphist.enable = true;
 
       home.packages = with pkgs; [
         brightnessctl
@@ -126,6 +126,7 @@
         # toolkit-specific scale
         GDK_SCALE = "2";
         XCURSOR_SIZE = "32";
+        XDG_SESSION_DESKTOP = "Hyprland";
 
       };
 
@@ -139,8 +140,10 @@
           # exec = eww open bar
           exec-once = waybar
 
-          exec-once = wl-paste --type text --watch cliphist store #Stores only text data
-          exec-once = wl-paste --type image --watch cliphist store #Stores only image data
+          # exec-once = wl-paste --type text --watch cliphist store #Stores only text data
+          # exec-once = wl-paste --type image --watch cliphist store #Stores only image data
+          exec-once = wl-paste --type text #Stores only text data
+          exec-once = wl-paste --type image #Stores only image data
 
           exec-once=[workspace 1 silent] kitty tmux
           exec-once=[workspace 2 silent] kitty tmux
@@ -216,7 +219,7 @@
               "$mod, F, togglefloating"
               "$mod, A, layoutmsg, preselect l"
               "$mod, P, exec, hyprctl --batch \"dispatch setfloating; dispatch pin\""
-              "$mod, B, fakefullscreen"
+              # "$mod, B, fakefullscreen"
               "$mod, R, fullscreen"
               ", Print, exec, grim -g \"\$(slurp)\" - | swappy -f -"
               # ", Print, exec, grimblast copy area"
@@ -260,7 +263,9 @@
             ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%-"
 
             ", xf86monbrightnessup, exec, brightnessctl set 10%+"
+            "$mod, U, exec, brightnessctl set 10%+"
             ", xf86monbrightnessdown, exec, brightnessctl set 10%-"
+            "$mod, I, exec, brightnessctl set 10%-"
           ];
 
           bindl = [
