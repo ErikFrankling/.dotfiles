@@ -94,6 +94,7 @@
       set -gx QT_STYLE_OVERRIDE adwaita-dark
       set -gx HISTCONTROL ignoredups
       set -gx MOZ_ENABLE_WAYLAND 1
+      set -gx NIXPKGS_ALLOW_UNFREE 1
     '';
 
     loginShellInit = ''
