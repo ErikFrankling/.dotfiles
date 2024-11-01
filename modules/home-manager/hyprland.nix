@@ -163,19 +163,19 @@
             )
             (cfg.monitors);
 
-          device = [
-            {
-              name = "tshort-dactyl-manuform-(5x6)";
-              kb_layout = "us";
-            }
-            {
-              name = "logitech-g512-carbon-tactile";
-              kb_layout = "se";
-            }
-          ];
+          # device = [
+          #   {
+          #     name = "tshort-dactyl-manuform-(5x6)";
+          #     kb_layout = "us";
+          #   }
+          #   {
+          #     name = "logitech-g512-carbon-tactile";
+          #     kb_layout = "se";
+          #   }
+          # ];
           # For all categories, see https://wiki.hyprland.org/Configuring/Variables/
           input = {
-            # kb_layout = "us,se";
+            kb_layout = "us,se";
             kb_variant = "";
             kb_model = "";
             kb_options = "caps:super";
@@ -219,7 +219,7 @@
               "$mod, F, togglefloating"
               "$mod, A, layoutmsg, preselect l"
               "$mod, P, exec, hyprctl --batch \"dispatch setfloating; dispatch pin\""
-              # "$mod, B, fakefullscreen"
+              # "$mod, B, fullscreenstate 1"
               "$mod, R, fullscreen"
               ", Print, exec, grim -g \"\$(slurp)\" - | swappy -f -"
               # ", Print, exec, grimblast copy area"

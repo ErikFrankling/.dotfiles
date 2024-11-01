@@ -2,7 +2,8 @@
 
 {
   environment.sessionVariables = {
-    XCURSOR_SIZE = "15";
+    XCURSOR_SIZE = "32";
+    GDK_SCALE = "2";
     # If your cursor becomes invisible
     # WLR_NO_HARDWARE_CURSORS = "1";
     # Hint electron apps to use wayland
@@ -17,7 +18,7 @@
   };
 
   hardware = {
-    graphics.enable = true;
+    graphics.enable = true; # only in nixos-unstable
     # Most wayland compositors need this
     # nvidia.modesetting.enable = true;
   };
