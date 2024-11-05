@@ -163,16 +163,16 @@
             )
             (cfg.monitors);
 
-          # device = [
-          #   {
-          #     name = "tshort-dactyl-manuform-(5x6)";
-          #     kb_layout = "us";
-          #   }
-          #   {
-          #     name = "logitech-g512-carbon-tactile";
-          #     kb_layout = "se";
-          #   }
-          # ];
+          device = [
+            {
+              name = "tshort-dactyl-manuform-(5x6)";
+              kb_layout = "us";
+            }
+            {
+              name = "logitech-g512-carbon-tactile";
+              kb_layout = "se";
+            }
+          ];
           # For all categories, see https://wiki.hyprland.org/Configuring/Variables/
           input = {
             kb_layout = "us,se";
