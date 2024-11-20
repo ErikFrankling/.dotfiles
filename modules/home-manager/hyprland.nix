@@ -120,6 +120,9 @@
         grim
         swappy
         slurp
+        networkmanagerapplet
+        blueman
+        spotify-tray
       ];
 
       home.sessionVariables = {
@@ -139,6 +142,10 @@
           # exec = eww daemon
           # exec = eww open bar
           exec-once = waybar
+          exec-once = nm-applet
+          exec-once = blueman-applet
+          exec-once = blueman-tray
+          exec-once = spotify-tray
 
           # exec-once = wl-paste --type text --watch cliphist store #Stores only text data
           # exec-once = wl-paste --type image --watch cliphist store #Stores only image data

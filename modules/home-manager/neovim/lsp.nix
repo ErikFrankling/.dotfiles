@@ -60,6 +60,10 @@
             filetypes = [ "clj" ];
           };
 
+          sqls = {
+            enable = true;
+            filetypes = [ ".sql" ];
+          };
           lua-ls = {
             enable = true;
             settings = {
