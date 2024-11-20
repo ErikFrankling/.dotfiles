@@ -6,10 +6,10 @@
     ./waybar
     ./hyprland.nix
     # ./eww
+    # ./thunderbird.nix
   ];
 
   home.packages = with pkgs; [
-    thunderbird
     webcord
     spotifywm
     # spotify-qt
