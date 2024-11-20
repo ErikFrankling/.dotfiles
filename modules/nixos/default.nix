@@ -8,11 +8,23 @@
     # ./yubikey-gpg.nix
     ./qmk.nix
     ./secrets.nix
+    # ./nm.nix
   ];
+
+  # Enable networking
+  networking.networkmanager.enable = true;
+  # networking.networkmanager.wifi.backend = "iwd";
+
+  programs.wireshark.enable = true;
+
+  virtualisation.docker.enable = true;
+  users.extraUsers.erikf.extraGroups = [ "docker" "wireshark" ];
+
   nixpkgs.config.allowBroken = true;
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    wireshark
     btop
     fzf
     ripgrep
@@ -34,9 +46,6 @@
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-  # Enable networking
-  networking.networkmanager.enable = true;
 
   # Set your time zone.
   time.timeZone = "Europe/Stockholm";

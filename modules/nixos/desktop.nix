@@ -13,10 +13,12 @@
     xorg.xlsclients
     # tightvnc
     # tigervnc
+    networkmanagerapplet
   ];
   nixpkgs.config.permittedInsecurePackages = [
     "tightvnc-1.3.10"
   ];
 
+  programs.nm-applet.enable = true;
   security.polkit.enable = true;
 }

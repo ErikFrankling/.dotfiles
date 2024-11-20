@@ -23,7 +23,7 @@
   # networking.networkmanager.wifi.backend = "iwd";
 
   # networking.wireless.dbusControlled = true;
-  networking.networkmanager.enable = lib.mkForce true;
+  # networking.networkmanager.enable = lib.mkForce true;
   # networking.networkmanager.enable = lib.mkForce false;
   # networking.wireless.enable = true;
   # networking.wireless.userControlled.enable = true;
