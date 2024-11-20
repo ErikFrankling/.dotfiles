@@ -14,7 +14,7 @@
         "fish"
         "git_config"
         "gitcommit"
-        "gitignroe"
+        "gitignore"
         "glsl"
         "go"
         "haskell"
