@@ -55,6 +55,10 @@
             filetypes = [ "c" "cpp" ];
           };
 
+          sqls = {
+            enable = true;
+            filetypes = [ ".sql" ];
+          };
           lua-ls = {
             enable = true;
             settings = {
