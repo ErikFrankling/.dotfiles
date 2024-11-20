@@ -55,6 +55,11 @@
             filetypes = [ "c" "cpp" ];
           };
 
+          clojure_lsp = {
+            enable = true;
+            filetypes = [ "clj" ];
+          };
+
           lua-ls = {
             enable = true;
             settings = {
