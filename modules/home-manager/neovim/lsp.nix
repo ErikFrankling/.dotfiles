@@ -19,7 +19,14 @@
     # ];
 
     plugins = {
-      lsp-format.enable = true;
+      lsp-format = {
+        enable = true;
+        settings = {
+          sql = {
+            exclude = [ "sqls" ];
+          };
+        };
+      };
 
       lsp = {
         enable = true;
@@ -62,8 +69,14 @@
 
           sqls = {
             enable = true;
-            filetypes = [ ".sql" ];
+            filetypes = [ "sql" "psql" ];
           };
+
+          # postgres_lsp = {
+          #   enable = true;
+          #   filetypes = [ "sql" "psql" ];
+          # };
+
           lua-ls = {
             enable = true;
             settings = {
