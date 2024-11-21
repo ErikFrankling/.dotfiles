@@ -279,8 +279,23 @@
             ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
           ];
 
+          windowrule = [
+            # "w[t1], gapsout:0, gapsin:0"
+            # "w[tg1], gapsout:0, gapsin:0"
+            # "f[1], gapsout:0, gapsin:0"
+          ];
+
           "$pip_size" = "40";
           windowrulev2 = [
+# Ref https://wiki.hyprland.org/Configuring/Workspace-Rules/
+# "Smart gaps" / "No gaps when only"
+# uncomment all if you wish to use that.
+          "bordersize 0, floating:0, onworkspace:w[t1]"
+          "rounding 0, floating:0, onworkspace:w[t1]"
+          "bordersize 0, floating:0, onworkspace:w[tg1]"
+          "rounding 0, floating:0, onworkspace:w[tg1]"
+          "bordersize 0, floating:0, onworkspace:f[1]"
+          "rounding 0, floating:0, onworkspace:f[1]"
             "float,title:^(Picture-in-Picture)$"
             "size $pip_size% $pip_size%,title:^(Picture-in-Picture)$"
             "move onscreen 100%-$pip_size 0,title:^(Picture-in-Picture)$"
@@ -325,10 +340,10 @@
               vibrancy = 0.1696;
             };
 
-            drop_shadow = true;
-            shadow_range = 4;
-            shadow_render_power = 3;
-            "col.shadow" = "rgba(1a1a1aee)";
+            # drop_shadow = true;
+            # shadow_range = 4;
+            # shadow_render_power = 3;
+            # "col.shadow" = "rgba(1a1a1aee)";
           };
 
           animations = {
@@ -355,13 +370,13 @@
           dwindle = {
             # See https://wiki.hyprland.org/Configuring/Dwindle-Layout/ for more
             preserve_split = true; # you probably want this
-            no_gaps_when_only = 1;
+            # no_gaps_when_only = 1;
           };
 
           master = {
             # See https://wiki.hyprland.org/Configuring/Master-Layout/ for more
             # new_is_master = true;
-            no_gaps_when_only = 1;
+            # no_gaps_when_only = 1;
           };
 
           gestures = {
