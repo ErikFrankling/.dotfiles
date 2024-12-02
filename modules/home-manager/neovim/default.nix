@@ -62,7 +62,6 @@
     # };
 
     plugins = {
-      copilot-vim.enable = true;
       markdown-preview.enable = true;
       comment.enable = true;
       # barbar = {
@@ -122,7 +121,7 @@
       packer = {
         enable = true;
         plugins =
-          [ "Mofiqul/dracula.nvim" "fneu/breezy" "hrsh7th/cmp-nvim-lsp" ];
+          [ "Mofiqul/dracula.nvim" "fneu/breezy" ];
       };
 
       which-key = {

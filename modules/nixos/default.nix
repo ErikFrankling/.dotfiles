@@ -9,6 +9,7 @@
     ./qmk.nix
     ./secrets.nix
     # ./nm.nix
+    ./projects/dtek.nix
   ];
 
   # Enable networking
