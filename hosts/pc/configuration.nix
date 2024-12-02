@@ -10,7 +10,6 @@
       # ../../modules/nixos/laptop.nix
       ../../modules/nixos/desktop.nix
       ../../modules/nixos/game.nix
-      ../../modules/nixos/dtek.nix
       inputs.home-manager.nixosModules.default
     ];
 

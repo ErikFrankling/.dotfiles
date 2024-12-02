@@ -53,7 +53,7 @@
         "zig"
       ];
       indent = true;
-      folding = true;
+      # folding = true;
     };
 
     treesitter-context = { enable = true; };
