@@ -96,6 +96,46 @@
         });
         default = [ ];
       };
+
+      initWindows = mkOption {
+        type = types.listOf (types.submodule {
+          options = {
+            exec = mkOption {
+              type = types.str;
+              example = "kitty tmux";
+            };
+            workspace = mkOption {
+              type = types.int;
+              example = 1;
+            };
+            monitor = mkOption {
+              type = types.str;
+              example = "DP-1";
+            };
+          };
+        });
+        default = [ ];
+      };
+
+      workspaces = mkOption {
+        type = types.listOf (types.submodule {
+          options = {
+            ID = mkOption {
+              type = types.int;
+              example = 1;
+            };
+            monitor = mkOption {
+              type = types.str;
+              example = "DP-1";
+            };
+            default = mkOption {
+              type = types.bool;
+              default = false;
+            };
+          };
+        });
+        default = [ ];
+      };
     };
 
   config =
@@ -152,11 +192,17 @@
           exec-once = wl-paste --type text #Stores only text data
           exec-once = wl-paste --type image #Stores only image data
 
-          exec-once=[workspace 1 silent] kitty tmux
-          exec-once=[workspace 2 silent] kitty tmux
-          exec-once=[workspace 3 silent] firefox
-          exec-once=[workspace 4 silent] webcord
-          exec-once=[workspace 4 silent] spotify-launcher
+          
+          # exec-once=[workspace 1 silent] kitty tmux
+          # exec-once=[workspace 2 silent] kitty tmux
+          # exec-once=[workspace 3 silent] firefox
+          # exec-once=[workspace 4 silent] webcord
+          # exec-once=[workspace 4 silent] spotify-launcher
+          
+          ${lib.concatStrings(
+            (map
+              (w: "exec-once=[workspace ${toString w.workspace} silent] ${w.exec}\n")
+              (cfg.initWindows)))}
         '';
 
         settings = {
@@ -279,23 +325,23 @@
             ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
           ];
 
-          windowrule = [
-            # "w[t1], gapsout:0, gapsin:0"
-            # "w[tg1], gapsout:0, gapsin:0"
-            # "f[1], gapsout:0, gapsin:0"
-          ];
+          workspace = [
+            "w[tv1], gapsout:0, gapsin:0"
+            "f[1], gapsout:0, gapsin:0"
+          ] ++
+          (map (w: "${toString w.ID}, monitor:${w.monitor}${if w.default then " default:true" else ""}")
+            cfg.workspaces);
+
 
           "$pip_size" = "40";
           windowrulev2 = [
 # Ref https://wiki.hyprland.org/Configuring/Workspace-Rules/
 # "Smart gaps" / "No gaps when only"
-# uncomment all if you wish to use that.
-          "bordersize 0, floating:0, onworkspace:w[t1]"
-          "rounding 0, floating:0, onworkspace:w[t1]"
-          "bordersize 0, floating:0, onworkspace:w[tg1]"
-          "rounding 0, floating:0, onworkspace:w[tg1]"
-          "bordersize 0, floating:0, onworkspace:f[1]"
-          "rounding 0, floating:0, onworkspace:f[1]"
+            "bordersize 0, floating:0, onworkspace:w[tv1]"
+            "rounding 0, floating:0, onworkspace:w[tv1]"
+            "bordersize 0, floating:0, onworkspace:f[1]"
+            "rounding 0, floating:0, onworkspace:f[1]"
+
             "float,title:^(Picture-in-Picture)$"
             "size $pip_size% $pip_size%,title:^(Picture-in-Picture)$"
             "move onscreen 100%-$pip_size 0,title:^(Picture-in-Picture)$"
@@ -308,10 +354,6 @@
 
             "rounding 10,floating:1"
           ];
-
-          # windowrulev2 = [
-          #     "rounding 10,floating:1"
-          # ];
 
           general = {
             # See https://wiki.hyprland.org/Configuring/Variables/ for more
