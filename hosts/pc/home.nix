@@ -32,5 +32,52 @@
       sensitivity = "0.2";
       scroll_factor = "0.5";
     };
+    initWindows = [
+      {
+        exec = "kitty tmux";
+        monitor = "DP-1";
+        workspace = 1;
+      }
+      {
+        exec = "kitty tmux";
+        monitor = "DP-1";
+        workspace = 2;
+      }
+      {
+        exec = "firefox";
+        monitor = "DP-1"; 
+        workspace = 3;
+      }
+      {
+        exec = "webcord";
+        monitor = "HDMI-A-1";
+        workspace = 10;
+      }
+      {
+        exec = "spotify";
+        monitor = "HDMI-A-1";
+        workspace = 10;
+      }
+    ];
+
+    workspaces = [
+      {
+        ID = 1;
+        monitor = "DP-1";
+        default = true;
+      }
+      {
+        ID = 2;
+        monitor = "DP-1";
+      }
+      {
+        ID = 3;
+        monitor = "DP-1";
+      }
+      {
+        ID = 10;
+        monitor = "HDMI-A-1";
+      }
+    ];
   };
 }

@@ -16,6 +16,7 @@
 
   environment.systemPackages = with pkgs; [
     killall
-    quartus-prime-lite
+    # TODO: Needs older version
+    # quartus-prime-lite 
   ];
 }
