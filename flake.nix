@@ -16,6 +16,11 @@
     xremap-flake.url = "github:xremap/nix-flake";
     xremap-flake.inputs.nixpkgs.follows = "nixpkgs";
 
+    fw-fanctrl = {
+      url = "github:TamtamHero/fw-fanctrl/packaging/nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs = { self, nixpkgs, ... }@inputs:
@@ -32,6 +37,7 @@
               modules = [
                 ./hosts/${hostName}/configuration.nix
                 # inputs.sops-nix.nixosModules.sops
+                # inputs.fw-fanctrl.nixosModules.default
               ];
             }
         );

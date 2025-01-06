@@ -141,7 +141,8 @@
           # exec = pkill eww
           # exec = eww daemon
           # exec = eww open bar
-          exec-once = waybar
+          # exec = pkill waybar
+          exec-once = waybar --config .config/waybar/cofig.jsonc
           exec-once = nm-applet
           exec-once = blueman-applet
           exec-once = blueman-tray

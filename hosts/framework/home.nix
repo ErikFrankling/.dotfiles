@@ -6,4 +6,21 @@
     ../../modules/home-manager/desktop.nix
     ../../modules/home-manager/print
   ];
+
+
+  hyprland = {
+    monitors = [
+      {
+        name = "eDP-1";
+        width = 2880;
+        height = 1920;
+        scale = "2";
+        refreshRate = 120;
+      }
+    ];
+    # mouse = {
+    #   sensitivity = "0.2";
+    #   scroll_factor = "0.5";
+    # };
+  };
 }

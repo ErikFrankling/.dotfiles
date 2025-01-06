@@ -17,6 +17,7 @@
     obs-studio
     google-chrome
     gparted
+    virtualbox
   ];
 
   programs.kitty.enable = true;

@@ -1,7 +1,8 @@
 { config, pkgs, lib, ... }: {
 
-  environment.systemPackages = [
-    pkgs.wpa_supplicant_gui
+  environment.systemPackages = with pkgs; [
+    # pkgs.wpa_supplicant_gui
+    powertop
   ];
 
   powerManagement.enable = true;

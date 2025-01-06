@@ -11,10 +11,35 @@
       ../../modules/nixos/desktop.nix
       ../../modules/nixos/game.nix
       inputs.home-manager.nixosModules.default
+      inputs.fw-fanctrl.nixosModules.default
     ];
 
   networking.hostName = "framework"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+
+  # Enable fw-fanctrl
+  programs.fw-fanctrl.enable = true;
+
+  # Add a custom config
+  programs.fw-fanctrl.config = {
+    defaultStrategy = "lazy";
+    strategies = {
+      "lazy" = {
+        fanSpeedUpdateFrequency = 5;
+        movingAverageInterval = 15;
+        speedCurve = [
+          { temp = 0; speed = 15; }
+          { temp = 50; speed = 15; }
+          { temp = 65; speed = 25; }
+          { temp = 70; speed = 35; }
+          { temp = 75; speed = 50; }
+          { temp = 85; speed = 100; }
+        ];
+      };
+    };
+  };
+  # enables updating firmware without booting to bios
+  services.fwupd.enable = true;
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -43,5 +68,6 @@
   environment.systemPackages = with pkgs; [
     #  wget
     swiPrologWithGui
+    fw-ectool
   ];
 }
