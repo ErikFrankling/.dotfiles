@@ -6,10 +6,10 @@
   };
 
   programs.waybar = {
-    enable = builtins.trace "here3" true;
+    enable = true;
     # systemd.enable = true;
 
-    # settings = builtins.readFile ./config.json;
     style = ./style.css;
+    # settings = builtins.readFile ./config.jsonc;
   };
 }
