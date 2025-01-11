@@ -22,17 +22,17 @@
 
   # Add a custom config
   programs.fw-fanctrl.config = {
-    defaultStrategy = "lazy";
+    defaultStrategy = "very-agile";
     strategies = {
-      "lazy" = {
-        fanSpeedUpdateFrequency = 5;
-        movingAverageInterval = 15;
+      "very-agile" = {
+        fanSpeedUpdateFrequency = 1;
+        movingAverageInterval = 1;
         speedCurve = [
           { temp = 0; speed = 15; }
           { temp = 50; speed = 15; }
-          { temp = 65; speed = 25; }
-          { temp = 70; speed = 35; }
-          { temp = 75; speed = 50; }
+          { temp = 65; speed = 40; }
+          { temp = 70; speed = 60; }
+          { temp = 75; speed = 80; }
           { temp = 85; speed = 100; }
         ];
       };
