@@ -18,8 +18,10 @@
 
   programs.wireshark.enable = true;
 
-  virtualisation.docker.enable = true;
-  users.extraUsers.erikf.extraGroups = [ "docker" "wireshark" ];
+  # virtualisation.docker.enable = true;
+  # users.extraUsers.erikf.extraGroups = [ "docker" "wireshark" ];
+  users.extraUsers.erikf.extraGroups = [ "wireshark" ];
+
 
   nixpkgs.config.allowBroken = true;
   # List packages installed in system profile. To search, run:

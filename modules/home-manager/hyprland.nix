@@ -265,7 +265,7 @@
               };
             in
             [
-              "$mod, L, Exec, hyprctl switchxkblayout at-translated-set-2-keyboard next"
+              "$mod, O, Exec, hyprctl switchxkblayout at-translated-set-2-keyboard next"
               "$mod, Return, Exec, ${terminal}"
               "$mod, D, Exec, ${menu}"
               "$mod, Q, killactive"
@@ -336,8 +336,8 @@
 
           "$pip_size" = "40";
           windowrulev2 = [
-# Ref https://wiki.hyprland.org/Configuring/Workspace-Rules/
-# "Smart gaps" / "No gaps when only"
+            # Ref https://wiki.hyprland.org/Configuring/Workspace-Rules/
+            # "Smart gaps" / "No gaps when only"
             "bordersize 0, floating:0, onworkspace:w[tv1]"
             "rounding 0, floating:0, onworkspace:w[tv1]"
             "bordersize 0, floating:0, onworkspace:f[1]"
@@ -426,6 +426,7 @@
             # See https://wiki.hyprland.org/Configuring/Variables/ for more
             workspace_swipe = true;
             workspace_swipe_distance = 150;
+            workspace_swipe_use_r = true;
           };
 
           misc = {

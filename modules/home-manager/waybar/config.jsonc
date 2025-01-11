@@ -20,7 +20,7 @@
 
     "modules-left": [
         "hyprland/workspaces",
-        "sway/mode"
+        "hyprland/mode"
     ],
     "modules-center": [
         
@@ -30,6 +30,7 @@
         "memory",
         "cpu",
         "temperature", 
+        "custom/fan", 
         "battery",
         "tray",
         "clock#date",
@@ -48,7 +49,7 @@
             "critical": 15
         },
         // Connected to AC
-        "format": "  {icon}  {capacity}%", // Icon: bolt
+        "format": " {icon}  {capacity}%", // Icon: bolt
         // Not connected to AC
         "format-discharging": "{icon}  {capacity}%",
         "format-icons": [
@@ -63,7 +64,7 @@
 
     "clock#time": {
         "interval": 1,
-        "format": "{:%H:%M:%S}",
+        "format": "{:%H:%M}",
         "tooltip": false
     },
 
@@ -94,7 +95,7 @@
 
     "memory": {
         "interval": 5,
-        "format": "  {}%", // Icon: memory
+        "format": "  {}%", // Icon: memory
         "states": {
             "warning": 70,
             "critical": 90
@@ -104,32 +105,32 @@
     "network": {
         "interval": 5,
         "format-wifi": "  {essid} ({signalStrength}%)", // Icon: wifi
-        "format-ethernet": "  {ifname}: {ipaddr}/{cidr}", // Icon: ethernet
+        "format-ethernet": "  {ifname}: {ipaddr}/{cidr}", // Icon: ethernet
         "format-disconnected": "⚠  Disconnected",
         "tooltip-format": "{ifname}: {ipaddr}"
     },
 
-    "hyprland/mode": {
-        "format": "<span style=\"italic\">  {}</span>", // Icon: expand-arrows-alt
-        "tooltip": false
-    },
+    // "hyprland/mode": 
+    //     "format": "<span style=\"italic\">  {}</span>", // Icon: expand-arrows-alt
+    //     "tooltip": false
+    // },
 
-    "hyprland/window": {
-        "format": "{}",
-        "max-length": 120
-    },
+    // "hyprland/window": {
+    //     "format": "{}",
+    //     "max-length": 120
+    // },
 
     "hyprland/workspaces": {
         "all-outputs": false,
         "disable-scroll": true,
         "format": "{icon} {name}",
         "format-icons": {
-	    "1:editor": "", // Icon: code
-            "2:terminals": "", // Icon: terminal
-            "3:www": "龜", // Icon: firefox-browser
-            "5:mail": "", // Icon: mail
+	        "1": "", // Icon: code
+            "2": "", // Icon: terminal
+            "3": "󰈹", // Icon: firefox-browser
+            // "5:mail": "", // Icon: mail
             "urgent": "",
-            "focused": "",
+            "active": "",
             "default": ""
         }
     },
@@ -140,9 +141,9 @@
         "format-bluetooth": "{icon}  {volume}%",
         "format-muted": "",
         "format-icons": {
-            "headphones": "",
-            "handsfree": "",
-            "headset": "",
+            "headphones": "󰋋",
+            "handsfree": "󰋎",
+            "headset": "󰋎",
             "phone": "",
             "portable": "",
             "car": "",
@@ -152,11 +153,11 @@
     },
 
     "temperature": {
-      // "hwmon-path-abs": "/sys/devices/pci0000:00/0000:00:18.3/hwmon",
-      // "input-filename": "temp1_input",
-      "thermal-zone": 3,
+      "hwmon-path-abs": "/sys/devices/pci0000:00/0000:00:18.3/hwmon",
+      "input-filename": "temp1_input",
+      // "thermal-zone": 3,
       "critical-threshold": 80,
-      "interval": 5,
+      "interval": 1,
       "format": "{icon}  {temperatureC}°C",
       "format-icons": [
           "", // Icon: temperature-empty
@@ -166,6 +167,12 @@
           ""  // Icon: temperature-full
       ],
       "tooltip": true
+    },
+
+    "custom/fan": {
+        "exec": "fw-fanctrl print speed",
+        "format": "󰈐 {}",
+        "interval": 1,
     },
 
     "tray": {

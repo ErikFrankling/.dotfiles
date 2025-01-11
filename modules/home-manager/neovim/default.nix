@@ -8,6 +8,7 @@
     ./completions.nix
     ./telescope.nix
     # ./autoformat.nix
+    ./latex.nix
   ];
 
   config.programs.nixvim = {
