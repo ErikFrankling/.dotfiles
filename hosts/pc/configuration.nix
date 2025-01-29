@@ -6,7 +6,7 @@
       # Include the results of the hardware scan.
       ./hardware-configuration.nix
       ../../modules/nixos
-      ../../modules/nixos/openvpn.nix
+      # ../../modules/nixos/openvpn.nix
       # ../../modules/nixos/laptop.nix
       ../../modules/nixos/desktop.nix
       ../../modules/nixos/game.nix
