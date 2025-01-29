@@ -163,6 +163,7 @@
         networkmanagerapplet
         blueman
         spotify-tray
+        wmname
       ];
 
       home.sessionVariables = {
@@ -187,6 +188,7 @@
           exec-once = blueman-applet
           exec-once = blueman-tray
           exec-once = spotify-tray
+          exec-once = wmname LG3D
 
           # exec-once = wl-paste --type text --watch cliphist store #Stores only text data
           # exec-once = wl-paste --type image --watch cliphist store #Stores only image data
@@ -232,7 +234,7 @@
             kb_layout = "us,se";
             kb_variant = "";
             kb_model = "";
-            kb_options = "caps:super";
+            kb_options = "caps:hyper";
             kb_rules = "";
 
             follow_mouse = 1;
@@ -245,7 +247,7 @@
             scroll_factor = cfg.mouse.scroll_factor;
           };
 
-          "$mod" = "SUPER";
+          "$mod" = "Mod3";
           bind =
             let
               terminal = builtins.trace "here" "kitty";
