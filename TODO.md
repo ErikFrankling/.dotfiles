@@ -21,9 +21,9 @@
 
 ### nvim
 - [ ] autostart (probably an tmux thing)
-- [ ] copilot **[HIGH PRIORITY]**
+- [x] copilot **[HIGH PRIORITY]**
 - [ ] lsp **[HIGH PRIORITY]**
-- [ ] leader key **[HIGH PRIORITY]**
+- [x] leader key **[HIGH PRIORITY]**
 - [ ] keymaps **[HIGH PRIORITY]**
 - [x] inline hints **[HIGH PRIORITY]**
     - [ ] make it work for rust variables
