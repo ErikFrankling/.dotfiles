@@ -18,6 +18,9 @@
 # Follow these instructions to install matlab has to be done imperatively on every machine:
 # https://gitlab.com/doronbehar/nix-matlab
 #
+# Run matlab for the first time ligin in the terminal with:
+# matlab -nodisplay
+#
 # run in matlab to scale the UI:
 # >> s = settings;s.matlab.desktop.DisplayScaleFactor
 # >> s.matlab.desktop.DisplayScaleFactor.PersonalValue = 2.0
