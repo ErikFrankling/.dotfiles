@@ -96,8 +96,20 @@
 
           zls = {
             enable = true;
-            filetypes = [ "zls" ];
+            # filetypes = [ "zls" ];
             settings = { };
+          };
+
+          gopls = {
+            enable = true;
+            # filetypes = [ "zls" ];
+            settings = { };
+          };
+
+          ts_ls = {
+            enable = true;
+            # filetypes = [ "zls" ];
+            # settings = { };
           };
 
           # rust-analyzer = {

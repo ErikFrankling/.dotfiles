@@ -13,6 +13,11 @@
       inputs.home-manager.nixosModules.default
       inputs.fw-fanctrl.nixosModules.default
     ];
+  # Open ports in the firewall.
+  networking.firewall.allowedTCPPorts = [ 8080 ];
+  # networking.firewall.allowedUDPPorts = [ ... ];
+  # Or disable the firewall altogether.
+  # networking.firewall.enable = false;
 
   networking.hostName = "framework"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -22,17 +27,18 @@
 
   # Add a custom config
   programs.fw-fanctrl.config = {
-    defaultStrategy = "very-agile";
+    # defaultStrategy = "very-agile";
     strategies = {
       "very-agile" = {
-        fanSpeedUpdateFrequency = 1;
-        movingAverageInterval = 1;
+        fanSpeedUpdateFrequency = 5;
+        movingAverageInterval = 30;
         speedCurve = [
           { temp = 0; speed = 15; }
           { temp = 50; speed = 15; }
-          { temp = 65; speed = 40; }
-          { temp = 70; speed = 60; }
-          { temp = 75; speed = 80; }
+          { temp = 65; speed = 35; }
+          { temp = 70; speed = 40; }
+          { temp = 75; speed = 50; }
+          { temp = 80; speed = 80; }
           { temp = 85; speed = 100; }
         ];
       };
