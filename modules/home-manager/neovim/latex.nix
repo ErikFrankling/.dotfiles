@@ -1,5 +1,9 @@
 { pkgs, ... }: {
-  config.programs.nixvim.plugins.vimtex = {
-    enable = true;
+  config.programs.nixvim.plugins = {
+    cmp-vimtex.enable = true;
+    cmp-latex-symbols.enable = true;
+    vimtex = {
+      enable = true;
+    };
   };
 }
