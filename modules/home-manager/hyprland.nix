@@ -234,7 +234,7 @@
             kb_layout = "us,se";
             kb_variant = "";
             kb_model = "";
-            kb_options = "caps:hyper";
+            kb_options = "caps:super";
             kb_rules = "";
 
             follow_mouse = 1;
@@ -247,7 +247,7 @@
             scroll_factor = cfg.mouse.scroll_factor;
           };
 
-          "$mod" = "Mod3";
+          "$mod" = "SUPER";
           bind =
             let
               terminal = builtins.trace "here" "kitty";
