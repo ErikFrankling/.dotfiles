@@ -118,6 +118,13 @@
             # settings = { };
           };
 
+          # Haskell
+          hls = {
+            enable = true;
+            # filetypes = [ "m" ];
+            # settings = { };
+          };
+
           # rust-analyzer = {
           #   enable = true;
           #   settings = { diagnostics.enable = true; };

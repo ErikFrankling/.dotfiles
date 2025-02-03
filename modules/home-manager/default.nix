@@ -65,14 +65,24 @@
     # '';
   };
 
-  programs.git = {
-    enable = true;
-    userName = "Erik Frankling";
-    userEmail = "erik.frankling@frankling.se";
-    extraConfig = {
-      pull.rebase = false;
+  programs = {
+    git = {
+      enable = true;
+      userName = "Erik Frankling";
+      userEmail = "erik.frankling@frankling.se";
+      extraConfig = {
+        pull.rebase = false;
+      };
+    };
+
+    direnv = {
+      enable = true;
+      # enableFishIntegration = true;
+      nix-direnv.enable = true;
     };
   };
+
+
 
   home.sessionVariables = {
     # EDITOR = lib.mkForce "/home/erikf/.nix-profile/bin/nvim";
