@@ -45,7 +45,7 @@
       }
       {
         exec = "firefox";
-        monitor = "DP-1"; 
+        monitor = "DP-1";
         workspace = 3;
       }
       {
