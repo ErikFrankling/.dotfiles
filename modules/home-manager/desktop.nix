@@ -14,7 +14,6 @@
     spotifywm
     # spotify-qt
     pavucontrol
-    obs-studio
     google-chrome
     gparted
     # virtualbox
