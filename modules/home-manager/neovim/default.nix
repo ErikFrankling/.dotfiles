@@ -1,136 +1,52 @@
-{ pkgs, inputs, ... }: {
+{ config, pkgs, lib, ... }:
+
+{
   imports = [
-    # For home-manager
-    inputs.nixvim.homeManagerModules.nixvim
-    ./lsp.nix
-    ./treesitter.nix
-    ./keymaps.nix
-    ./completions.nix
-    ./telescope.nix
-    # ./autoformat.nix
-    ./latex.nix
   ];
 
-  config.programs.nixvim = {
+  home.packages = with pkgs; [
+  ];
+
+  programs.neovim = {
     enable = true;
     defaultEditor = true;
-    # exstraConfigLua = builtins.readFile ./init.lua;
-    autoCmd = [
-      {
-        event = "FileType";
-        pattern = "nix";
-        command = "setlocal tabstop=2 shiftwidth=2";
-      }
-    ];
-    clipboard.register = "unnamedplus";
+    vimAlias = true;
+    viAlias = true;
+    vimdiffAlias = true;
 
-    globals = {
-      mapleader = " ";
-      maplocalleader = " ";
-    };
+    extraLuaConfig = lib.fileContents ./init.lua;
 
-    # keymaps = [
-    #   {
-    #     action = "<cmd>w<CR>";
-    #     key = "<C-a>";
-    #     options = {
-    #       # silent = true;
-    #     };
-    #   }
-    # ];
+    plugins =
+      with pkgs.vimPlugins; [
+        # yankring
+        # vim-nix
+        # {
+        #   plugin = vim-startify;
+        #   config = "let g:startify_change_to_vcs_root = 0";
+        # }
+      ];
+  };
 
-    opts = {
+  home.file = {
+    # # Building this configuration will create a copy of 'dotfiles/screenrc' in
+    # # the Nix store. Activating the configuration will then make '~/.screenrc' a
+    # # symlink to the Nix store copy.
+    # ".screenrc".source = dotfiles/screenrc;
 
-      background = "dark";
-      number = true;
-      relativenumber = true;
-
-      tabstop = 4;
-      softtabstop = -1;
-      shiftwidth = 4;
-      expandtab = true;
-
-      foldmethod = "expr";
-      foldlevelstart = 99;
-    };
-
-    colorschemes.onedark.enable = true;
-
-    # colorschemes.base16 = {
-    #   enable = true;
-    #   options.termguicolors = true;
-    #   colorscheme = "material-darker";
+    # ".config/nvim/" = {
+    #   source = ../../nvim;
+    #   recursive = true;
     # };
 
-    plugins = {
-      markdown-preview.enable = true;
-      comment.enable = true;
-      # barbar = {
-      #   enable = true;
-      #   keymaps = {
-      #     previous = "<leader>tk";
-      #     next = "<leader>tj";
-      #     movePrevious = "<leader>th";
-      #     moveNext = "<leader>tl";
-      #     goTo1 = "<leader>t1";
-      #     goTo2 = "<leader>t2";
-      #     goTo3 = "<leader>t3";
-      #     goTo4 = "<leader>t4";
-      #     goTo5 = "<leader>t5";
-      #     goTo6 = "<leader>t6";
-      #     goTo7 = "<leader>t7";
-      #     goTo8 = "<leader>t8";
-      #     goTo9 = "<leader>t9";
-      #     last = "<leader>tL";
-      #     # close = "<leader>tq";
-      #   };
-      #   sidebarFiletypes = { NvimTree = true; };
-      # };
+    # # You can also set the file content immediately.
+    # ".gradle/gradle.properties".text = ''
+    #   org.gradle.console=verbose
+    #   org.gradle.daemon.idletimeout=3600000
+    # '';
+  };
 
-      cursorline = {
-        enable = true;
-        cursorline = {
-          enable = true;
-          timeout = 0;
-          number = true;
-        };
-        cursorword = {
-          enable = true;
-          hl = { underline = true; };
-        };
-      };
 
-      gitgutter.enable = true;
-
-      lualine = {
-        enable = true;
-        iconsEnabled = true;
-        extensions = [ "nvim-tree" ];
-      };
-
-      noice = {
-        enable = true;
-        presets = {
-          bottom_search = true;
-          command_palette = true;
-          lsp_doc_border = true;
-        };
-      };
-      nvim-autopairs.enable = true;
-      nvim-tree.enable = true;
-
-      packer = {
-        enable = true;
-        plugins =
-          [ "Mofiqul/dracula.nvim" "fneu/breezy" ];
-      };
-
-      which-key = {
-        enable = true;
-        showKeys = true;
-      };
-    };
-
-    extraPlugins = with pkgs.vimPlugins; [ ];
+  home.sessionVariables = {
+    # EDITOR = lib.mkForce "/home/erikf/.nix-profile/bin/nvim";
   };
 }

@@ -27,7 +27,7 @@
 
   # Add a custom config
   programs.fw-fanctrl.config = {
-    # defaultStrategy = "very-agile";
+    defaultStrategy = "very-agile";
     strategies = {
       "very-agile" = {
         fanSpeedUpdateFrequency = 5;
