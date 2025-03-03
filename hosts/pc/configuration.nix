@@ -10,6 +10,7 @@
       # ../../modules/nixos/laptop.nix
       ../../modules/nixos/desktop.nix
       ../../modules/nixos/game.nix
+      ../../modules/nixos/ollama.nix
       inputs.home-manager.nixosModules.default
     ];
 
@@ -37,6 +38,12 @@
       "erikf" = import ./home.nix;
     };
   };
+
+  # Open ports in the firewall.
+  networking.firewall.allowedTCPPorts = [ 8080 8081 ];
+  # networking.firewall.allowedUDPPorts = [ ... ];
+  # Or disable the firewall altogether.
+  # networking.firewall.enable = false;
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget

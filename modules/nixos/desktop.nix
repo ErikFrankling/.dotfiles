@@ -6,6 +6,7 @@
     ./sound.nix
     ./hyprland.nix
     ./projects/matlab.nix
+    ./obs.nix
   ];
 
   environment.systemPackages = with pkgs; [
