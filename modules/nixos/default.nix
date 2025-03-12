@@ -12,6 +12,21 @@
     ./projects/dtek.nix
   ];
 
+  nix = {
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 30d";
+    };
+
+    extraOptions = ''
+      min-free = ${toString (1024 * 1024 * 1024 * 10)} # will run GC if less than 10GB is free
+    '';
+
+    optimise.automatic = true;
+    optimise.dates = [ "05:00" ]; # Optional; allows customizing optimisation schedule
+  };
+
   # Enable networking
   networking.networkmanager.enable = true;
   # networking.networkmanager.wifi.backend = "iwd";
@@ -27,6 +42,7 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    inputs.nvim.packages.${system}.nvim
     wireshark
     btop
     fzf
@@ -42,7 +58,6 @@
 
   programs.fish.enable = true;
 
-  nix.settings.auto-optimise-store = true;
   # nix.settings.max-jobs = 1;
   # nix.settings.cores = 1;
 
