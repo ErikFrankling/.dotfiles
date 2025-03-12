@@ -228,7 +228,6 @@
           windowrulev2 = noblur, tag:rtr
           windowrulev2 = noshadow, tag:rtr
           windowrulev2 = noborder, tag:rtr
-          windowrulev2 = keepaspectratio, tag:rtr
           # override rounded corners
           windowrulev2 = rounding 0, tag:rtr
           windowrulev2 = opacity 1.0 override, tag:rtr
