@@ -23,8 +23,8 @@
       min-free = ${toString (1024 * 1024 * 1024 * 10)} # will run GC if less than 10GB is free
     '';
 
-    nix.optimise.automatic = true;
-    nix.optimise.dates = [ "05:00" ]; # Optional; allows customizing optimisation schedule
+    optimise.automatic = true;
+    optimise.dates = [ "05:00" ]; # Optional; allows customizing optimisation schedule
   };
 
   # Enable networking
@@ -42,6 +42,7 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+    inputs.nvim.packages.${system}.nvim
     wireshark
     btop
     fzf

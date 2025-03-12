@@ -21,6 +21,9 @@
 
     nix-matlab.url = "gitlab:doronbehar/nix-matlab";
     nix-matlab.inputs.nixpkgs.follows = "nixpkgs";
+
+    nvim.url = "github:ErikFrankling/nvim";
+    nvim.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = { self, nixpkgs, ... }@inputs:
