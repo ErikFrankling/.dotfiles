@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ./nixvim
+    # ./nixvim
     ./fish.nix
     ./tmux.nix
   ];

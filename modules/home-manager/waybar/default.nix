@@ -1,6 +1,10 @@
-{ ... }:
+{ pkgs, ... }:
 
 {
+  home.packages = with pkgs; [
+    jq
+  ];
+
   home.file = {
     ".config/waybar/cofig.jsonc".source = ./config.jsonc;
   };

@@ -170,8 +170,8 @@
     },
 
     "custom/fan": {
-        "exec": "fw-fanctrl print speed",
-        "format": "󰈐 {}",
+        "exec": "fw-fanctrl --output-format JSON print speed | jq -r .speed ",
+        "format": "󰈐 {}%",
         "interval": 1,
     },
 
