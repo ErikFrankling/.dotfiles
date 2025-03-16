@@ -53,6 +53,11 @@
         sudo nixos-rebuild $argv --fast --flake /home/erikf/.dotfiles#${hostName}
         echo $(hyprctl reload)
       '';
+      eww_reload = ''
+        pkill eww
+        eww daemon --config /home/erikf/.dotfiles/modules/home-manager/eww/ 
+        eww open bar --config /home/erikf/.dotfiles/modules/home-manager/eww/ 
+      '';
 
       fish_greeting = ''
         fastfetch

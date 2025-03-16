@@ -1,47 +1,31 @@
-(defwidget bar []
-  (centerbox :orientation "h"
-    (workspaces)
-    (music)
-    (sidestuff)))
-
 (defwidget sidestuff []
   (box :class "sidestuff" :orientation "h" :space-evenly false :halign "end"
-  (metric :label "🔊"
+  (metric :label ""
             :value volume
             :onchange "amixer -D pulse sset Master {}%")
-    (metric :label ""
+    (metric :label ""
             :value {EWW_RAM.used_mem_perc}
             :onchange "")
-    (metric :label "💾"
+    (metric :label "󰋊"
             :value {round((1 - (EWW_DISK["/"].free / EWW_DISK["/"].total)) * 100, 0)}
             :onchange "")
-    time))
+    (systray :spacing 3
+             :icon-size 18
+             :space-evenly false)
+    (box :width 10)
+  time))
 
-;; (defwidget workspaces []
-;;   (box :class "workspaces"
-;;        :orientation "h"
-;;        :space-evenly true
-;;        :halign "start"
-;;        :spacing 10
-;;     (button :onclick "wmctrl -s 0" 1)
-;;     (button :onclick "wmctrl -s 1" 2)
-;;     (button :onclick "wmctrl -s 2" 3)
-;;     (button :onclick "wmctrl -s 3" 4)
-;;     (button :onclick "wmctrl -s 4" 5)
-;;     (button :onclick "wmctrl -s 5" 6)
-;;     (button :onclick "wmctrl -s 6" 7)
-;;     (button :onclick "wmctrl -s 7" 8)
-;;     (button :onclick "wmctrl -s 8" 9)))
 
 (deflisten workspaces :initial "[]" "bash ~/.config/eww/scripts/get-workspaces")
 (deflisten current_workspace :initial "1" "bash ~/.config/eww/scripts/get-active-workspace")
 (defwidget workspaces []
   (eventbox :onscroll "bash ~/.config/eww/scripts/change-active-workspace {} ${current_workspace}" :class "workspaces-widget"
-    (box :space-evenly true
+    (box :space-evenly false
          :spacing 10
       (label :text "${workspaces}${current_workspace}" :visible false)
       (for workspace in workspaces
         (eventbox :onclick "hyprctl dispatch workspace ${workspace.id}"
+                  :halign "end"
           (box :class "workspace-entry ${workspace.id == current_workspace ? "current" : ""} ${workspace.windows > 0 ? "occupied" : "empty"}"
             (label :text "${workspace.id}")
             )
@@ -56,7 +40,20 @@
        :orientation "h"
        :space-evenly false
        :halign "center"
-    {music != "" ? "🎵${music}" : ""}))
+       :visible {music == "" ? false : true}
+    (button :onclick "playerctl --player=spotify previous"
+      (label :text ""))
+    (box :width 9)
+    (label :text "" :css "label { color: #1ED760; }")
+    (box :width 5)
+    (label :text "${music}")
+    (box :width 5)
+    (button :onclick "playerctl --player=spotify play-pause"
+      (label :text {playing == "Playing" ? "" : ""}))
+    (box :width 5)
+    (button :onclick "playerctl --player=spotify next"
+      (label :text ""))
+    ))
 
 
 (defwidget metric [label value onchange]
@@ -70,7 +67,7 @@
            :value value
            :onchange onchange)))
 
-
+(deflisten playing :initial "false" "playerctl --follow --player=spotify status")
 
 (deflisten music :initial ""
   "playerctl --follow metadata --format '{{ artist }} - {{ title }}' || true")
@@ -81,13 +78,20 @@
 (defpoll time :interval "10s"
   "date '+%H:%M %b %d, %Y'")
 
+
+(defwidget bar []
+  (centerbox :orientation "h"
+    (workspaces)
+    (music)
+    (sidestuff)))
+
 (defwindow bar
   :monitor 0
   :windowtype "dock"
   :geometry (geometry :x "0%"
                       :y "0%"
                       :width "100%"
-                      :height "2%"
+                      :height "1%"
                       :anchor "top center")
   ;; :reserve (struts :side "top" :distance "4%")
   :exclusive true
