@@ -748,11 +748,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1742054599,
-        "narHash": "sha256-0XkXDy8f0zPzidUiLgzTnnM03GNOK9vDwg/HqMWGKBQ=",
+        "lastModified": 1742093159,
+        "narHash": "sha256-WSiY5CGj1noX0HAPwc/ukbTc7EH1OyqZYj8CMkcyP3A=",
         "owner": "ErikFrankling",
         "repo": "nvim",
-        "rev": "6ae6015354f90b40b0803ff26f12a9bb501a0f81",
+        "rev": "75494962ade8f8988edb6674331c3cbc668b5535",
         "type": "github"
       },
       "original": {
