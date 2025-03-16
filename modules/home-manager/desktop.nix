@@ -3,9 +3,9 @@
 {
   imports = [
     ./firefox.nix
-    ./waybar
+    # ./waybar
     ./hyprland.nix
-    # ./eww
+    ./eww
     # ./thunderbird.nix
   ];
 
