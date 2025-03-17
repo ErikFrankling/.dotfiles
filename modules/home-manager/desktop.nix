@@ -6,6 +6,7 @@
     # ./waybar
     ./hyprland.nix
     ./eww
+    ./ags
     # ./thunderbird.nix
   ];
 
@@ -18,6 +19,6 @@
     gparted
     # virtualbox
   ];
-
+  
   programs.kitty.enable = true;
 }

@@ -24,6 +24,9 @@
 
     nvim.url = "github:ErikFrankling/nvim";
     nvim.inputs.nixpkgs.follows = "nixpkgs";
+
+    ags.url = "github:Aylur/ags";
+    ags.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = { self, nixpkgs, ... }@inputs:
