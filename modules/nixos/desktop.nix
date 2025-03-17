@@ -21,6 +21,7 @@
     "tightvnc-1.3.10"
   ];
 
+  programs.ladybird.enable = true;
   virtualisation.vmware.host.enable = true;
   programs.nm-applet.enable = true;
   security.polkit.enable = true;
