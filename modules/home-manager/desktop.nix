@@ -4,7 +4,7 @@
   imports = [
     ./firefox.nix
     ./waybar
-    ./hyprland.nix
+    ./hyprland
     # ./eww
     ./ags
     # ./thunderbird.nix

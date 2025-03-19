@@ -166,6 +166,10 @@
         wmname
       ];
 
+      home.file = {
+        ".config/hypr/import_env".source = ./import_env;
+      };
+
       home.sessionVariables = {
         # toolkit-specific scale
         GDK_SCALE = "2";
@@ -182,13 +186,15 @@
           # exec = pkill eww
           # exec = eww daemon
           # exec = eww open bar
-          exec = pkill waybar
+          # exec = pkill waybar
           exec-once = waybar --config .config/waybar/cofig.jsonc
           exec-once = nm-applet
           exec-once = blueman-applet
           exec-once = blueman-tray
           exec-once = spotify-tray
           exec-once = wmname LG3D
+          exec-once = $HOME/.config/hypr/import_env tmux
+          exec-once = $HOME/.config/hypr/import_env system
 
           # exec-once = wl-paste --type text --watch cliphist store #Stores only text data
           # exec-once = wl-paste --type image --watch cliphist store #Stores only image data
