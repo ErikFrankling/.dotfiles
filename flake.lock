@@ -609,6 +609,22 @@
         "type": "github"
       }
     },
+    "lualine-lsp-progress": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1645625191,
+        "narHash": "sha256-xlfjqMXBlcveCPY4FCyIyBj1QHYFifLnDYzQA93OPCM=",
+        "owner": "bercly0b",
+        "repo": "lualine-lsp-progress",
+        "rev": "931e11d2ad4f9a43216e150bd7e8c770a01a5b20",
+        "type": "github"
+      },
+      "original": {
+        "owner": "bercly0b",
+        "repo": "lualine-lsp-progress",
+        "type": "github"
+      }
+    },
     "nix-matlab": {
       "inputs": {
         "flake-compat": "flake-compat_2",
@@ -632,11 +648,11 @@
     },
     "nixCats": {
       "locked": {
-        "lastModified": 1742344062,
-        "narHash": "sha256-glG1YAzD7AXHA4MltZs5iPMQm+PqyHr5Gjob/89HOwQ=",
+        "lastModified": 1742479173,
+        "narHash": "sha256-gllPoqPdAOwIuAQbJ5PQaKAjYMIp2qWySJEYq2vW4ro=",
         "owner": "BirdeeHub",
         "repo": "nixCats-nvim",
-        "rev": "26592c43c179c396bed96992bd26da2ad683caa2",
+        "rev": "49d84b23d0e324d923a4e0068b1ab1ebadba54ec",
         "type": "github"
       },
       "original": {
@@ -784,17 +800,18 @@
     },
     "nvim": {
       "inputs": {
+        "lualine-lsp-progress": "lualine-lsp-progress",
         "nixCats": "nixCats",
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1742393995,
-        "narHash": "sha256-VuywO0qyaTHOK4OxroZVVsXd6uOLFWtGZpjuN6AcA2Q=",
+        "lastModified": 1743000880,
+        "narHash": "sha256-tMBm1e5lCh7NvkkKo5lXdRR0Zzn6QmarW2GDQh3RBl8=",
         "owner": "ErikFrankling",
         "repo": "nvim",
-        "rev": "ff84fc73a99eae36d4f90e985a893ac0621b4eb4",
+        "rev": "f166e0c7bc276ccb421940f7bd73ebfbaa4ed494",
         "type": "github"
       },
       "original": {
