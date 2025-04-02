@@ -1,6 +1,7 @@
 import { App } from "astal/gtk3"
 import style from "./style.scss"
 import Bar from "./widget/Bar"
+import NotificationPopups from "./notifications/NotificationPopups"
 
 App.start({
     css: style,
@@ -9,5 +10,6 @@ App.start({
         print(request)
         res("ok")
     },
-    main: () => App.get_monitors().map(Bar),
+    // App.get_monitors().map(NotificationPopups),
+    main: () => App.get_monitors().map(Bar).push(App.get_monitors().map(NotificationPopups)),
 })
