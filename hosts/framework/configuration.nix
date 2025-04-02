@@ -13,6 +13,15 @@
       inputs.home-manager.nixosModules.default
       inputs.fw-fanctrl.nixosModules.default
     ];
+
+
+  sops.defaultSopsFile = ./secrets.yaml;
+  sops.defaultSopsFormat = "yaml";
+
+  sops.secrets.syncthing-cert = { };
+  sops.secrets.syncthing-key = { };
+
+
   # Open ports in the firewall.
   networking.firewall.allowedTCPPorts = [ 8080 ];
   # networking.firewall.allowedUDPPorts = [ ... ];
@@ -49,6 +58,9 @@
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+
+  # fix for amdgpu kernel bug https://gitlab.freedesktop.org/drm/amd/-/issues/3388
+  boot.kernelParams = [ "amdgpu.dcdebugmask=0x10" ];
 
   # Configure keymap in X11
   services.xserver = {

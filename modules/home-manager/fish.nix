@@ -59,6 +59,27 @@
         eww open bar --config /home/erikf/.dotfiles/modules/home-manager/eww/ 
       '';
 
+      nvim-update = ''
+        cd /home/erikf/projects/personal/nvim/
+        git pull
+        git add -A
+
+        if [ -z "$argv" ]
+          set argv "Update"
+        end
+
+        git commit -am "$argv"
+        git push
+
+        cd /home/erikf/.dotfiles
+        git pull
+        nix flake update nvim
+        rebuild
+        git add flake.lock
+        git commit -am "Update nvim"
+        git push
+      '';
+
       fish_greeting = ''
         fastfetch
       '';
