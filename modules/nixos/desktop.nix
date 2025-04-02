@@ -22,7 +22,7 @@
   ];
 
   programs.ladybird.enable = true;
-  virtualisation.vmware.host.enable = true;
+  # virtualisation.vmware.host.enable = true;
   programs.nm-applet.enable = true;
   security.polkit.enable = true;
 }
