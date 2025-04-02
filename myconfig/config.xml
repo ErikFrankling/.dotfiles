@@ -1,7 +1,7 @@
 <configuration version="37">
     <folder id="default" label="Default Folder" path="/home/erikf/Sync" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" fsWatcherTimeoutS="0" ignorePerms="false" autoNormalize="true">
         <filesystemType>basic</filesystemType>
-        <device id="N3IDYYF-3ZANKMD-NIQN2ZJ-HKTS2OP-HVKYCZY-SF7XB6G-7U2DWTD-YIHHJQI" introducedBy="">
+        <device id="K5DEIGZ-CITG2IN-INC6HIG-23BMQE7-E7IRNNG-3T7OHHZ-LG5GYHX-T5ICNAT" introducedBy="">
             <encryptionPassword></encryptionPassword>
         </device>
         <minDiskFree unit="%">1</minDiskFree>
@@ -40,7 +40,7 @@
             <maxTotalSize>4096</maxTotalSize>
         </xattrFilter>
     </folder>
-    <device id="N3IDYYF-3ZANKMD-NIQN2ZJ-HKTS2OP-HVKYCZY-SF7XB6G-7U2DWTD-YIHHJQI" name="framework" compression="metadata" introducer="false" skipIntroductionRemovals="false" introducedBy="">
+    <device id="K5DEIGZ-CITG2IN-INC6HIG-23BMQE7-E7IRNNG-3T7OHHZ-LG5GYHX-T5ICNAT" name="pc" compression="metadata" introducer="false" skipIntroductionRemovals="false" introducedBy="">
         <address>dynamic</address>
         <paused>false</paused>
         <autoAcceptFolders>false</autoAcceptFolders>
@@ -52,15 +52,15 @@
         <numConnections>0</numConnections>
     </device>
     <gui enabled="true" tls="false" debugging="false" sendBasicAuthPrompt="false">
-        <address>127.0.0.1:34081</address>
-        <apikey>eQjGKwuYTbHpucpHjGMiyhFts6p2VcYa</apikey>
+        <address>127.0.0.1:38965</address>
+        <apikey>APTPKuGjuGmTNhLeEwTd7HZehTX2ARft</apikey>
         <theme>default</theme>
     </gui>
     <ldap></ldap>
     <options>
-        <listenAddress>tcp://0.0.0.0:34713</listenAddress>
+        <listenAddress>tcp://0.0.0.0:38263</listenAddress>
         <listenAddress>dynamic+https://relays.syncthing.net/endpoint</listenAddress>
-        <listenAddress>quic://0.0.0.0:34713</listenAddress>
+        <listenAddress>quic://0.0.0.0:38263</listenAddress>
         <globalAnnounceServer>default</globalAnnounceServer>
         <globalAnnounceEnabled>true</globalAnnounceEnabled>
         <localAnnounceEnabled>true</localAnnounceEnabled>
@@ -118,7 +118,7 @@
     <defaults>
         <folder id="" label="" path="~" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" fsWatcherTimeoutS="0" ignorePerms="false" autoNormalize="true">
             <filesystemType>basic</filesystemType>
-            <device id="N3IDYYF-3ZANKMD-NIQN2ZJ-HKTS2OP-HVKYCZY-SF7XB6G-7U2DWTD-YIHHJQI" introducedBy="">
+            <device id="K5DEIGZ-CITG2IN-INC6HIG-23BMQE7-E7IRNNG-3T7OHHZ-LG5GYHX-T5ICNAT" introducedBy="">
                 <encryptionPassword></encryptionPassword>
             </device>
             <minDiskFree unit="%">1</minDiskFree>
