@@ -33,19 +33,20 @@
         "ubuntu-hp" = { id = "J6ZOL7B-OJY3YCW-FXJIFME-LTCOXSW-4VMXDWZ-ISUONNV-Z4W4ZMU-63YDKA2"; };
         "framework" = { id = "N3IDYYF-3ZANKMD-NIQN2ZJ-HKTS2OP-HVKYCZY-SF7XB6G-7U2DWTD-YIHHJQI"; };
         "SM-S901B" = { id = "6N4J2HT-JPZLVQF-RSHUGEA-G6YV2YP-CEPIAL2-Q2TTTUX-KUZ36BR-Z5RJEQY"; };
+        "pc" = { id = "K5DEIGZ-CITG2IN-INC6HIG-23BMQE7-E7IRNNG-3T7OHHZ-LG5GYHX-T5ICNAT"; };
       };
       folders = {
         "obsidian" = {
           path = "~/obsidian";
           id = "obsidian";
-          devices = [ "ubuntu-hp" "framework" "SM-S901B" ];
+          devices = [ "ubuntu-hp" "framework" "SM-S901B" "pc" ];
           versioning.type = "staggered";
           type = "sendreceive";
         };
         "sync" = {
           path = "~/sync";
           id = "sync";
-          devices = [ "ubuntu-hp" "framework" ];
+          devices = [ "ubuntu-hp" "framework" "pc" ];
           versioning.type = "staggered";
           type = "sendreceive";
         };
