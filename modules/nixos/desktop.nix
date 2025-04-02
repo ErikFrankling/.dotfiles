@@ -16,6 +16,7 @@
     # tightvnc
     # tigervnc
     networkmanagerapplet
+    obsidian
   ];
   nixpkgs.config.permittedInsecurePackages = [
     "tightvnc-1.3.10"

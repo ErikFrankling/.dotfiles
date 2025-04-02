@@ -18,7 +18,9 @@
     google-chrome
     gparted
     # virtualbox
+    syncthingtray-minimal
   ];
   
+  services.syncthing.tray.enable = true;
   programs.kitty.enable = true;
 }

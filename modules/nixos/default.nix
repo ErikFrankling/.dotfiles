@@ -10,6 +10,7 @@
     ./secrets.nix
     # ./nm.nix
     ./projects/dtek.nix
+    ./syncthing.nix
   ];
 
   nix = {
