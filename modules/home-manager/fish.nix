@@ -121,6 +121,7 @@
       set -gx HISTCONTROL ignoredups
       set -gx MOZ_ENABLE_WAYLAND 1
       set -gx NIXPKGS_ALLOW_UNFREE 1
+      set -gx EDITOR nvim
     '';
 
     loginShellInit = ''
