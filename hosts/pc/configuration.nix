@@ -14,6 +14,13 @@
       inputs.home-manager.nixosModules.default
     ];
 
+
+  sops.defaultSopsFile = ./secrets.yaml;
+  sops.defaultSopsFormat = "yaml";
+
+  sops.secrets.syncthing-cert = { };
+  sops.secrets.syncthing-key = { };
+
   networking.hostName = "pc"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
