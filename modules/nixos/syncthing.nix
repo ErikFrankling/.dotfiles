@@ -49,11 +49,12 @@
           versioning.type = "staggered";
           type = "sendreceive";
         };
-        # "Camera" = {
-        #   path = "~/Camera";
-        #   id = "sm-s901b_ud9q-photos";
-        #   devices = [ "ubuntu-hp" "framework" "SM-S901B" ];
-        # };
+        "Camera" = {
+          path = "~/Camera";
+          id = "sm-s901b_ud9q-photos";
+          devices = [ "ubuntu-hp" "framework" "SM-S901B" ];
+          type = "sendreceive";
+        };
       };
     };
   };
