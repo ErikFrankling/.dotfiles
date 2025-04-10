@@ -201,6 +201,8 @@
           exec-once = wl-paste --type text #Stores only text data
           exec-once = wl-paste --type image #Stores only image data
 
+          exec-once = lxqt-policykit-agent
+
           
           # exec-once=[workspace 1 silent] kitty tmux
           # exec-once=[workspace 2 silent] kitty tmux
