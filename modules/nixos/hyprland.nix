@@ -1,6 +1,11 @@
 { pkgs, ... }:
 
 {
+  # Package set
+  environment.systemPackages = with pkgs; [
+    lxqt.lxqt-policykit
+  ];
+
   environment.sessionVariables = {
     XCURSOR_SIZE = "32";
     GDK_SCALE = "2";
