@@ -10,6 +10,8 @@ App.start({
         print(request)
         res("ok")
     },
-    // App.get_monitors().map(NotificationPopups),
-    main: () => App.get_monitors().map(Bar).push(App.get_monitors().map(NotificationPopups)),
+    main: () => {
+        NotificationPopups(App.get_monitors()[0])
+        // App.get_monitors().map(Bar)
+    }
 })

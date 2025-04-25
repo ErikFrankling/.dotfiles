@@ -187,11 +187,15 @@
           # exec = eww daemon
           # exec = eww open bar
           # exec = pkill waybar
+          exec-once = ags run
           exec-once = waybar --config .config/waybar/cofig.jsonc
           exec-once = nm-applet
           exec-once = blueman-applet
           exec-once = blueman-tray
           exec-once = spotify-tray
+          exec-once = /usr/lib/kdeconnectd 
+          exec-once = kdeconnect-indicator
+
           exec-once = wmname LG3D
           exec-once = $HOME/.config/hypr/import_env tmux
           exec-once = $HOME/.config/hypr/import_env system
