@@ -3,9 +3,10 @@
   # add the home manager module
   imports = [ inputs.ags.homeManagerModules.default ];
 
-  home.packages = [
+  home.packages = with pkgs; [
     inputs.ags.packages.${pkgs.system}.io
     inputs.ags.packages.${pkgs.system}.notifd
+    libnotify
   ];
 
   programs.ags = {
