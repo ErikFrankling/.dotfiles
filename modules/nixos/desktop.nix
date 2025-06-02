@@ -5,7 +5,7 @@
     ./bluetooth.nix
     ./sound.nix
     ./hyprland.nix
-    ./projects/matlab.nix
+    # ./projects/matlab.nix
     ./obs.nix
   ];
 

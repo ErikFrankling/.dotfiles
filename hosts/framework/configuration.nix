@@ -23,7 +23,7 @@
 
 
   # Open ports in the firewall.
-  networking.firewall.allowedTCPPorts = [ 8080 ];
+  networking.firewall.allowedTCPPorts = [ 8083 ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
@@ -85,7 +85,7 @@
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     #  wget
-    swiPrologWithGui
+    # swi-prolog-gui 
     fw-ectool
   ];
 }
