@@ -11,7 +11,8 @@ App.start({
         res("ok")
     },
     main: () => {
-        NotificationPopups(App.get_monitors()[0])
+        // NotificationPopups(App.get_monitors()[0])
         // App.get_monitors().map(Bar)
+        App.get_monitors().map(NotificationPopups)
     }
 })

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 perf record -g "$@"
 perf script | stackcollapse-perf.pl | flamegraph.pl > out.svg
 firefox out.svg

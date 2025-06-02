@@ -12,6 +12,6 @@
     enable = true;
   };
 
-  hardware.opengl.driSupport32Bit = true;
+  hardware.graphics.enable32Bit = true;
   programs.steam.gamescopeSession.enable = true;
 }

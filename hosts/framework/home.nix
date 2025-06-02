@@ -18,9 +18,9 @@
         refreshRate = 120;
       }
     ];
-    # mouse = {
-    #   sensitivity = "0.2";
-    #   scroll_factor = "0.5";
-    # };
+    mouse = {
+      sensitivity = "1.0";
+      scroll_factor = "1.0";
+    };
   };
 }
