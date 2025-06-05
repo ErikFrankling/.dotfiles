@@ -6,7 +6,11 @@
   environment.systemPackages = with pkgs; [
     via
     qmk
+    vial
   ];
 
-  services.udev.packages = [ pkgs.via ];
+  services.udev.packages = with pkgs; [
+    via
+    vial
+  ];
 }
