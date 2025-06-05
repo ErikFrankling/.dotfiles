@@ -811,11 +811,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1748878097,
-        "narHash": "sha256-Yheywu0gX4dzPDsHh3z1Bp6VejxO750XTo88FIqH+k8=",
+        "lastModified": 1749107572,
+        "narHash": "sha256-6viBG/g7rXk3GOfMVqVrWAWedotXjFDBXoji7BAJqV8=",
         "owner": "ErikFrankling",
         "repo": "nvim",
-        "rev": "db8ca748cce9cc68520efeef1c3bac48acca5816",
+        "rev": "79ee2ac780baac6ed3e337f23785bc1d3134eb45",
         "type": "github"
       },
       "original": {
