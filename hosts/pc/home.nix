@@ -11,6 +11,24 @@
     prismlauncher
   ];
 
+  wayland.windowManager.hyprland.settings = {
+    mouse = {
+      sensitivity = "0.2";
+      scroll_factor = "0.5";
+    };
+
+    device = [
+      {
+        name = "tshort-dactyl-manuform-(5x6)";
+        kb_layout = "us";
+      }
+      {
+        name = "logitech-g512-carbon-tactile";
+        kb_layout = "se";
+      }
+    ];
+  };
+
   hyprland = {
     monitors = [
       {
@@ -28,10 +46,6 @@
         scale = "1";
       }
     ];
-    mouse = {
-      sensitivity = "0.2";
-      scroll_factor = "0.5";
-    };
     initWindows = [
       {
         exec = "kitty tmux";
