@@ -63,6 +63,11 @@
         workspace = 3;
       }
       {
+        exec = "obsidian";
+        monitor = "HDMI-A-1";
+        workspace = 9;
+      }
+      {
         exec = "webcord";
         monitor = "HDMI-A-1";
         workspace = 10;
@@ -87,6 +92,10 @@
       {
         ID = 3;
         monitor = "DP-1";
+      }
+      {
+        ID = 9;
+        monitor = "HDMI-A-1";
       }
       {
         ID = 10;

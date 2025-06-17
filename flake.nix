@@ -29,6 +29,9 @@
 
     ags.url = "github:Aylur/ags";
     ags.inputs.nixpkgs.follows = "nixpkgs";
+
+    nixos-wsl.url = "github:nix-community/NixOS-WSL/main";
+    nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = { self, nixpkgs, ... }@inputs:
@@ -37,7 +40,7 @@
       pkgs = nixpkgs.legacyPackages.${system};
     in
     {
-      nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" ]
+      nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" "wsl" ]
         (hostName:
           nixpkgs.lib.nixosSystem
             {
@@ -45,7 +48,14 @@
               modules = [
                 ./hosts/${hostName}/configuration.nix
                 # inputs.sops-nix.nixosModules.sops
-              ];
+              ] ++ (
+                if hostName == "wsl" then
+                  [ 
+                    inputs.nixos-wsl.nixosModules.default
+                  ]
+                else
+                  []
+              );
             }
         );
 
