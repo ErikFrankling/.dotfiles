@@ -34,8 +34,6 @@
 
   programs.wireshark.enable = true;
 
-  virtualisation.docker.enable = true;
-  users.extraUsers.erikf.extraGroups = [ "docker" "wireshark" ];
   # users.extraUsers.erikf.extraGroups = [ "wireshark" ];
 
 
