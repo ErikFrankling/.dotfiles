@@ -42,8 +42,8 @@
   # virtualisation.libvirtd.enable = true;
   # virtualisation.spiceUSBRedirection.enable = true;
 
-  virtualisation.docker.enable = true;
-  users.extraUsers.erikf.extraGroups = [ "docker" ];
+  # virtualisation.docker.enable = true;
+  # users.extraUsers.erikf.extraGroups = [ "docker" ];
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ 8083 ];
