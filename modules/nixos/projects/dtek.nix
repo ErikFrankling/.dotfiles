@@ -1,8 +1,7 @@
 { config, pkgs, inputs, ... }:
 
 {
-  imports = [
-  ];
+  imports = [ ];
 
   services.udev.extraRules = ''
     # USB-Blaster
@@ -14,9 +13,10 @@
     SUBSYSTEM=="usb", ATTRS{idVendor}=="09fb", ATTRS{idProduct}=="6810", MODE="0666"
   '';
 
-  environment.systemPackages = with pkgs; [
-    killall
-    # TODO: Needs older version
-    # quartus-prime-lite 
-  ];
+  environment.systemPackages = with pkgs;
+    [
+      killall
+      # TODO: Needs older version
+      # quartus-prime-lite 
+    ];
 }

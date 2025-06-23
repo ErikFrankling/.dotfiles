@@ -1,5 +1,4 @@
-{ config, pkgs, options, lib, inputs, ... }:
-{
+{ config, pkgs, options, lib, inputs, ... }: {
   nixpkgs.overlays = [
     # (
     #   final: prev: {
@@ -9,10 +8,7 @@
     inputs.nix-matlab.overlay
   ];
 
-  environment.systemPackages = with pkgs;
-    [
-      matlab
-    ];
+  environment.systemPackages = with pkgs; [ matlab ];
 }
 
 # Follow these instructions to install matlab has to be done imperatively on every machine:

@@ -8,9 +8,7 @@
     mangohud
   ];
 
-  programs.steam = {
-    enable = true;
-  };
+  programs.steam = { enable = true; };
 
   hardware.graphics.enable32Bit = true;
   programs.steam.gamescopeSession.enable = true;

@@ -1,19 +1,17 @@
 { config, pkgs, inputs, hostName, ... }:
 
 {
-  imports =
-    [
-      # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-      ../../modules/nixos
-      # ../../modules/nixos/openvpn.nix
-      # ../../modules/nixos/laptop.nix
-      ../../modules/nixos/desktop.nix
-      ../../modules/nixos/game.nix
-      ../../modules/nixos/ollama.nix
-      inputs.home-manager.nixosModules.default
-    ];
-
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+    ../../modules/nixos
+    # ../../modules/nixos/openvpn.nix
+    # ../../modules/nixos/laptop.nix
+    ../../modules/nixos/desktop.nix
+    ../../modules/nixos/game.nix
+    ../../modules/nixos/ollama.nix
+    inputs.home-manager.nixosModules.default
+  ];
 
   sops.defaultSopsFile = ./secrets.yaml;
   sops.defaultSopsFormat = "yaml";
@@ -41,9 +39,7 @@
   home-manager = {
     # also pass inputs to home-manager modules
     extraSpecialArgs = { inherit inputs hostName; };
-    users = {
-      "erikf" = import ./home.nix;
-    };
+    users = { "erikf" = import ./home.nix; };
   };
 
   # Open ports in the firewall.
@@ -54,7 +50,8 @@
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  environment.systemPackages = with pkgs; [
-    #  wget
-  ];
+  environment.systemPackages = with pkgs;
+    [
+      #  wget
+    ];
 }

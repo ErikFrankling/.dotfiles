@@ -2,9 +2,7 @@
 
 {
 
-  environment.systemPackages = [
-    pkgs.wpa_supplicant_gui
-  ];
+  environment.systemPackages = [ pkgs.wpa_supplicant_gui ];
   # networking.wireless.dbusControlled = true;
   networking.networkmanager.enable = lib.mkForce false;
   networking.wireless.enable = true;
@@ -86,8 +84,4 @@
 #     };
 #   };
 # }
-
-
-
-
 

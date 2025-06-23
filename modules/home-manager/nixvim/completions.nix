@@ -26,33 +26,22 @@
 
       luasnip.enable = true;
 
-      cmp-buffer = {
-        enable = true;
-      };
+      cmp-buffer = { enable = true; };
 
-      cmp-emoji = {
-        enable = true;
-      };
+      cmp-emoji = { enable = true; };
 
-      cmp-nvim-lsp = {
-        enable = true;
-      };
+      cmp-nvim-lsp = { enable = true; };
 
-      cmp-path = {
-        enable = true;
-      };
+      cmp-path = { enable = true; };
 
-      cmp_luasnip = {
-        enable = true;
-      };
+      cmp_luasnip = { enable = true; };
 
       cmp = {
         enable = true;
         autoEnableSources = true;
         settings = {
-          completion.autocomplete = [
-            "require('cmp.types').cmp.TriggerEvent.TextChanged"
-          ];
+          completion.autocomplete =
+            [ "require('cmp.types').cmp.TriggerEvent.TextChanged" ];
           mapping = {
             __raw = ''
               cmp.mapping.preset.insert({ 
@@ -89,12 +78,15 @@
             '';
           };
           snippet = {
-            expand = "function(args) require('luasnip').lsp_expand(args.body) end";
+            expand =
+              "function(args) require('luasnip').lsp_expand(args.body) end";
           };
           sources = [
             { name = "luasnip"; }
             { name = "path"; }
-            { name = "spell"; }
+            {
+              name = "spell";
+            }
             # { name = "zsh"; }
             # { name = "crates"; }
             # { name = "buffer"; }

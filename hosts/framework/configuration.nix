@@ -1,19 +1,17 @@
 { config, pkgs, inputs, hostName, ... }:
 
 {
-  imports =
-    [
-      # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-      ../../modules/nixos
-      ../../modules/nixos/openvpn.nix
-      ../../modules/nixos/laptop.nix
-      ../../modules/nixos/desktop.nix
-      ../../modules/nixos/game.nix
-      inputs.home-manager.nixosModules.default
-      inputs.fw-fanctrl.nixosModules.default
-    ];
-
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+    ../../modules/nixos
+    ../../modules/nixos/openvpn.nix
+    ../../modules/nixos/laptop.nix
+    ../../modules/nixos/desktop.nix
+    ../../modules/nixos/game.nix
+    inputs.home-manager.nixosModules.default
+    inputs.fw-fanctrl.nixosModules.default
+  ];
 
   sops.defaultSopsFile = ./secrets.yaml;
   sops.defaultSopsFormat = "yaml";
@@ -55,13 +53,34 @@
         fanSpeedUpdateFrequency = 5;
         movingAverageInterval = 30;
         speedCurve = [
-          { temp = 0; speed = 15; }
-          { temp = 50; speed = 15; }
-          { temp = 65; speed = 35; }
-          { temp = 70; speed = 40; }
-          { temp = 75; speed = 50; }
-          { temp = 80; speed = 80; }
-          { temp = 85; speed = 100; }
+          {
+            temp = 0;
+            speed = 15;
+          }
+          {
+            temp = 50;
+            speed = 15;
+          }
+          {
+            temp = 65;
+            speed = 35;
+          }
+          {
+            temp = 70;
+            speed = 40;
+          }
+          {
+            temp = 75;
+            speed = 50;
+          }
+          {
+            temp = 80;
+            speed = 80;
+          }
+          {
+            temp = 85;
+            speed = 100;
+          }
         ];
       };
     };
@@ -89,16 +108,15 @@
   home-manager = {
     # also pass inputs to home-manager modules
     extraSpecialArgs = { inherit inputs hostName; };
-    users = {
-      "erikf" = import ./home.nix;
-    };
+    users = { "erikf" = import ./home.nix; };
   };
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  environment.systemPackages = with pkgs; [
-    #  wget
-    # swi-prolog-gui 
-    fw-ectool
-  ];
+  environment.systemPackages = with pkgs;
+    [
+      #  wget
+      # swi-prolog-gui 
+      fw-ectool
+    ];
 }

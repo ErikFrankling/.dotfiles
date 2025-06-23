@@ -1,29 +1,26 @@
 { config, pkgs, inputs, hostName, lib, ... }:
 
 {
-  imports =
-    [
-      # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-      ../../modules/nixos
-      # ../../modules/nixos/openvpn.nix
-      #../../modules/nixos/laptop.nix
-      ../../modules/nixos/desktop.nix
-      #../../modules/nixos/game.nix
-      inputs.home-manager.nixosModules.default
-      inputs.fw-fanctrl.nixosModules.default
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+    ../../modules/nixos
+    # ../../modules/nixos/openvpn.nix
+    #../../modules/nixos/laptop.nix
+    ../../modules/nixos/desktop.nix
+    #../../modules/nixos/game.nix
+    inputs.home-manager.nixosModules.default
+    inputs.fw-fanctrl.nixosModules.default
+  ];
 
   wsl = {
     enable = true;
     defaultUser = "erikf";
     startMenuLaunchers = true;
   };
-  
+
   # Override common settings that don't work well in WSL
-  services = {
-    pipewire.enable = lib.mkForce false;
-  };	
+  services = { pipewire.enable = lib.mkForce false; };
 
   sops.defaultSopsFile = ./secrets.yaml;
   sops.defaultSopsFormat = "yaml";
@@ -70,13 +67,10 @@
   home-manager = {
     # also pass inputs to home-manager modules
     extraSpecialArgs = { inherit inputs hostName; };
-    users = {
-      "erikf" = import ./home.nix;
-    };
+    users = { "erikf" = import ./home.nix; };
   };
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  environment.systemPackages = with pkgs; [
-  ];
+  environment.systemPackages = with pkgs; [ ];
 }

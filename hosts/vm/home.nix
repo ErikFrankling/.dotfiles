@@ -1,8 +1,6 @@
-{ ...  }:
+{ ... }:
 
 {
-  imports = [
-    ../../modules/home-manager
-    ../../modules/home-manager/desktop.nix
-  ];
+  imports =
+    [ ../../modules/home-manager ../../modules/home-manager/desktop.nix ];
 }

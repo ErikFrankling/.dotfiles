@@ -7,9 +7,7 @@
     ../../modules/home-manager/print
   ];
 
-  home.packages = with pkgs; [
-    prismlauncher
-  ];
+  home.packages = with pkgs; [ prismlauncher ];
 
   wayland.windowManager.hyprland.settings = {
     mouse = {
