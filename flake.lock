@@ -120,11 +120,11 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1750336318,
-        "narHash": "sha256-496tcAJdUeLXPO0B/XZXCbvTYc9qofi2PJc+hylJPcQ=",
+        "lastModified": 1750689642,
+        "narHash": "sha256-Un+AbgZzvsI5HyPhi8kgo0JtS19Qq/KVY2Y920vwF8o=",
         "ref": "refs/heads/main",
-        "rev": "ae67580ab2eb6d17ffd0f8f4b328345609154a18",
-        "revCount": 2,
+        "rev": "d23ac9f6c2e17bb1170d7db721aeefe1427d7534",
+        "revCount": 4,
         "type": "git",
         "url": "ssh://git@github.com/ErikFrankling/ericsson-tools.git"
       },
@@ -685,11 +685,11 @@
     },
     "nixCats": {
       "locked": {
-        "lastModified": 1748760778,
-        "narHash": "sha256-i0xBOGCDtrJ29sIelwbSATUJK4AP6McPMxBA0dthK0o=",
+        "lastModified": 1749615682,
+        "narHash": "sha256-3T2Yl+xSnx7snXZkMaQNHCvlj0CB+lyAj+Q/+eeh+Ns=",
         "owner": "BirdeeHub",
         "repo": "nixCats-nvim",
-        "rev": "88cde33af841e2aa1ea0c83c4d9dcfefdde54fb3",
+        "rev": "c0148957e961100bff3fd213b8a4bc5f669f3028",
         "type": "github"
       },
       "original": {
@@ -870,11 +870,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1749107572,
-        "narHash": "sha256-6viBG/g7rXk3GOfMVqVrWAWedotXjFDBXoji7BAJqV8=",
+        "lastModified": 1750689419,
+        "narHash": "sha256-VzdixeZaLRcYSn1u/dYkYRJ9VAlj/Izx0t7rDbfVn8k=",
         "owner": "ErikFrankling",
         "repo": "nvim",
-        "rev": "79ee2ac780baac6ed3e337f23785bc1d3134eb45",
+        "rev": "ae2e8c542cee555821a95eb12a3e680d96df2b0c",
         "type": "github"
       },
       "original": {
