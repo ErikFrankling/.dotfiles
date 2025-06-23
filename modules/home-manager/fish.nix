@@ -122,6 +122,8 @@
       set -gx MOZ_ENABLE_WAYLAND 1
       set -gx NIXPKGS_ALLOW_UNFREE 1
       set -gx EDITOR nvim
+      set -gx LIBGL_ALWAYS_SOFTWARE 1
+      set -gx LIBGL_ALWAYS_INDIRECT 0
     '';
 
     loginShellInit = ''

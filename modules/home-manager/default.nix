@@ -43,6 +43,8 @@
     #   echo "Hello, ${config.home.username}!"
     # '')
     age
+    dos2unix
+    wget
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
@@ -68,10 +70,14 @@
   programs = {
     git = {
       enable = true;
+      package = pkgs.gitFull;
+
       userName = "Erik Frankling";
       userEmail = "erik.frankling@frankling.se";
+
       extraConfig = {
         pull.rebase = false;
+        credential.helper = "libsecret";
       };
     };
 

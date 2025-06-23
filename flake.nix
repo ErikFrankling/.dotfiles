@@ -32,6 +32,11 @@
 
     nixos-wsl.url = "github:nix-community/NixOS-WSL/main";
     nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
+
+    ericsson-tools.url = "git+file:/home/erikf/work/ericsson-tools/";
+    # ericsson-tools.url = "git+ssh://git@github.com/ErikFrankling/ericsson-tools.git";
+    # ericsson-tools.url = "git+https://github.com/ErikFrankling/ericsson-tools.git";
+    ericsson-tools.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = { self, nixpkgs, ... }@inputs:
