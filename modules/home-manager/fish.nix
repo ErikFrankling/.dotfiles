@@ -14,10 +14,7 @@
 
   # xdg.configFile."fish/fish_variables".source = config.lib.file.mkOutOfStoreSymlink ./fish_variables;
 
-  home.packages = with pkgs; [
-    fastfetch
-    onefetch
-  ];
+  home.packages = with pkgs; [ fastfetch onefetch ];
 
   programs.fish = {
     enable = true;
@@ -110,8 +107,7 @@
       g = "git";
     };
 
-    interactiveShellInit = ''
-    '';
+    interactiveShellInit = "";
 
     shellInit = ''
       fish_add_path --path $HOME/.dotfiles/bin $HOME/Downloads/zig 
@@ -136,7 +132,10 @@
 
     plugins = [
       # Enable a plugin (here grc for colorized command output) from nixpkgs
-      { name = "bobthefish"; src = pkgs.fishPlugins.bobthefish.src; }
+      {
+        name = "bobthefish";
+        src = pkgs.fishPlugins.bobthefish.src;
+      }
       # Manually packaging and enable a plugin
       {
         name = "z";

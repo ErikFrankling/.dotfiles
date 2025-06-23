@@ -15,13 +15,11 @@
     enable = true;
     defaultEditor = true;
     # exstraConfigLua = builtins.readFile ./init.lua;
-    autoCmd = [
-      {
-        event = "FileType";
-        pattern = "nix";
-        command = "setlocal tabstop=2 shiftwidth=2";
-      }
-    ];
+    autoCmd = [{
+      event = "FileType";
+      pattern = "nix";
+      command = "setlocal tabstop=2 shiftwidth=2";
+    }];
     clipboard.register = "unnamedplus";
 
     globals = {
@@ -121,8 +119,7 @@
 
       packer = {
         enable = true;
-        plugins =
-          [ "Mofiqul/dracula.nvim" "fneu/breezy" ];
+        plugins = [ "Mofiqul/dracula.nvim" "fneu/breezy" ];
       };
 
       which-key = {

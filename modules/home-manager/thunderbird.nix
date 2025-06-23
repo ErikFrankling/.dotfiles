@@ -5,8 +5,7 @@ let
     text = "Mvh Erik Frankling";
     showSignature = "append";
   };
-in
-{
+in {
   programs.thunderbird = {
     enable = true;
     # profiles.erikf = {
@@ -31,11 +30,9 @@ in
     inherit signature;
   };
 
-  imports = [
-  ];
+  imports = [ ];
 
-  home.packages = with pkgs; [
-  ];
+  home.packages = with pkgs; [ ];
 
   home.file = {
     # # Building this configuration will create a copy of 'dotfiles/screenrc' in

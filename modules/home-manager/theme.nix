@@ -7,7 +7,6 @@
     bibata-cursors
   ];
 
-
   qt.enable = true;
 
   # platform theme "gtk" or "gnome"

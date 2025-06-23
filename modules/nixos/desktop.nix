@@ -18,9 +18,7 @@
     networkmanagerapplet
     obsidian
   ];
-  nixpkgs.config.permittedInsecurePackages = [
-    "tightvnc-1.3.10"
-  ];
+  nixpkgs.config.permittedInsecurePackages = [ "tightvnc-1.3.10" ];
 
   programs.kdeconnect.enable = true;
   # programs.ladybird.enable = true;

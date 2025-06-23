@@ -88,8 +88,6 @@
     };
   };
 
-
-
   home.sessionVariables = {
     # EDITOR = lib.mkForce "/home/erikf/.nix-profile/bin/nvim";
   };

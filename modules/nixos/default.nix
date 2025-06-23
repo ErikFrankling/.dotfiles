@@ -21,21 +21,23 @@
     };
 
     extraOptions = ''
-      min-free = ${toString (1024 * 1024 * 1024 * 10)} # will run GC if less than 10GB is free
+      min-free = ${
+        toString (1024 * 1024 * 1024 * 10)
+      } # will run GC if less than 10GB is free
     '';
 
     optimise.automatic = true;
-    optimise.dates = [ "05:00" ]; # Optional; allows customizing optimisation schedule
+    optimise.dates =
+      [ "05:00" ]; # Optional; allows customizing optimisation schedule
 
     registry = {
       nixpkgs.to = {
         type = "path";
         path = pkgs.path;
         # narHash = pkgs.narHash;
-        narHash = builtins.readFile
-            (pkgs.runCommandLocal "get-nixpkgs-hash"
-              { nativeBuildInputs = [ pkgs.nix ]; }
-              "nix-hash --type sha256 --sri ${pkgs.path} > $out");
+        narHash = builtins.readFile (pkgs.runCommandLocal "get-nixpkgs-hash" {
+          nativeBuildInputs = [ pkgs.nix ];
+        } "nix-hash --type sha256 --sri ${pkgs.path} > $out");
       };
     };
   };
@@ -47,7 +49,6 @@
   programs.wireshark.enable = true;
 
   # users.extraUsers.erikf.extraGroups = [ "wireshark" ];
-
 
   nixpkgs.config.allowBroken = true;
   # List packages installed in system profile. To search, run:

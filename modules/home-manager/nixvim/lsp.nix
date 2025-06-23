@@ -1,7 +1,5 @@
 { pkgs, ... }: {
-  home.packages = with pkgs; [
-    nixpkgs-fmt
-  ];
+  home.packages = with pkgs; [ nixpkgs-fmt ];
 
   programs.nixvim = {
     extraPlugins = [ pkgs.vimPlugins.yuck-vim ];
@@ -21,11 +19,7 @@
     plugins = {
       lsp-format = {
         enable = true;
-        settings = {
-          sql = {
-            exclude = [ "sqls" ];
-          };
-        };
+        settings = { sql = { exclude = [ "sqls" ]; }; };
       };
 
       lsp = {
@@ -89,9 +83,7 @@
           nil_ls = {
             enable = true;
             filetypes = [ "nix" ];
-            settings = {
-              formatting.command = [ "nixpkgs-fmt" ];
-            };
+            settings = { formatting.command = [ "nixpkgs-fmt" ]; };
           };
 
           zls = {

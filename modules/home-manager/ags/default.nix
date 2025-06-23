@@ -1,5 +1,4 @@
-{ inputs, pkgs, ... }:
-{
+{ inputs, pkgs, ... }: {
   # add the home manager module
   imports = [ inputs.ags.homeManagerModules.default ];
 
@@ -16,28 +15,26 @@
     configDir = ../ags;
 
     # additional packages to add to gjs's runtime
-    extraPackages = with pkgs; [
-      fzf
-    ] ++ 
-    ( with inputs.ags.packages.${pkgs.system}; [
-      hyprland
-      battery
-      mpris
-      network
-      tray
-      wireplumber
-      notifd
-    ]);
+    extraPackages = with pkgs;
+      [ fzf ] ++ (with inputs.ags.packages.${pkgs.system}; [
+        hyprland
+        battery
+        mpris
+        network
+        tray
+        wireplumber
+        notifd
+      ]);
   };
 }
 
 # deps:
-    # Battery library.
-    # Hyprland library.
-    # Mpris library.
-    # Network library.
-    # Tray library.
-    # WirePlumber library.
+# Battery library.
+# Hyprland library.
+# Mpris library.
+# Network library.
+# Tray library.
+# WirePlumber library.
 
 # ags flake package outputs:
 # │   └───x86_64-linux

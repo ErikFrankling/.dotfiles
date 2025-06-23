@@ -34,37 +34,29 @@
     nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
 
     # ericsson-tools.url = "git+file:/home/erikf/work/ericsson-tools/";
-    ericsson-tools.url = "git+ssh://git@github.com/ErikFrankling/ericsson-tools.git";
+    ericsson-tools.url =
+      "git+ssh://git@github.com/ErikFrankling/ericsson-tools.git";
     # ericsson-tools.url = "git+https://github.com/ErikFrankling/ericsson-tools.git";
     ericsson-tools.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs =
-    { self, nixpkgs, ... }@inputs:
+  outputs = { self, nixpkgs, ... }@inputs:
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
-    in
-    {
-      nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" "wsl" ] (
-        hostName:
-        nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs hostName; };
-          modules =
-            [
+    in {
+      nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" "wsl" ]
+        (hostName:
+          nixpkgs.lib.nixosSystem {
+            specialArgs = { inherit inputs hostName; };
+            modules = [
               ./hosts/${hostName}/configuration.nix
               # inputs.sops-nix.nixosModules.sops
-            ]
-            ++ (
-              if hostName == "wsl" then
-                [
-                  inputs.nixos-wsl.nixosModules.default
-                ]
-              else
-                [ ]
-            );
-        }
-      );
+            ] ++ (if hostName == "wsl" then
+              [ inputs.nixos-wsl.nixosModules.default ]
+            else
+              [ ]);
+          });
 
     };
 }

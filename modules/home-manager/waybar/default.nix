@@ -1,13 +1,9 @@
 { pkgs, ... }:
 
 {
-  home.packages = with pkgs; [
-    jq
-  ];
+  home.packages = with pkgs; [ jq ];
 
-  home.file = {
-    ".config/waybar/cofig.jsonc".source = ./config.jsonc;
-  };
+  home.file = { ".config/waybar/cofig.jsonc".source = ./config.jsonc; };
 
   programs.waybar = {
     enable = true;

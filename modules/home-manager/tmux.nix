@@ -48,9 +48,7 @@ let
   #     };
   #   };
 
-
-in
-{
+in {
   # TODO: what if this is defined in another file? Merge it!
   # programs.fish = {
   #   shellInit = ''
@@ -184,7 +182,6 @@ in
     '';
   };
 }
-
 
 #t-smart-manager = pkgs.tmuxPlugins.mkTmuxPlugin
 #  {

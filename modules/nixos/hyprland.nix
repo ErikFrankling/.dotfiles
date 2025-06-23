@@ -2,9 +2,7 @@
 
 {
   # Package set
-  environment.systemPackages = with pkgs; [
-    lxqt.lxqt-policykit
-  ];
+  environment.systemPackages = with pkgs; [ lxqt.lxqt-policykit ];
 
   environment.sessionVariables = {
     XCURSOR_SIZE = "32";

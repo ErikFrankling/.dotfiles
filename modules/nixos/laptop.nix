@@ -1,13 +1,14 @@
 { config, pkgs, lib, ... }: {
 
-  environment.systemPackages = with pkgs; [
-    # pkgs.wpa_supplicant_gui
-    powertop
-  ];
+  environment.systemPackages = with pkgs;
+    [
+      # pkgs.wpa_supplicant_gui
+      powertop
+    ];
 
   powerManagement.enable = true;
   # powerManagement.powertop.enable = true;
-  
+
   # services.tlp = {
   #   enable = true;
   #   settings = {

@@ -1,7 +1,5 @@
 { pkgs, ... }:
 
 {
-  environment.systemPackages = with pkgs; [
-    unzip
-  ];
+  environment.systemPackages = with pkgs; [ unzip ];
 }

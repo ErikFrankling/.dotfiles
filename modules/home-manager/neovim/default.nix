@@ -1,11 +1,9 @@
 { config, pkgs, lib, ... }:
 
 {
-  imports = [
-  ];
+  imports = [ ];
 
-  home.packages = with pkgs; [
-  ];
+  home.packages = with pkgs; [ ];
 
   programs.neovim = {
     enable = true;
@@ -16,8 +14,8 @@
 
     extraLuaConfig = lib.fileContents ./init.lua;
 
-    plugins =
-      with pkgs.vimPlugins; [
+    plugins = with pkgs.vimPlugins;
+      [
         # yankring
         # vim-nix
         # {
@@ -44,7 +42,6 @@
     #   org.gradle.daemon.idletimeout=3600000
     # '';
   };
-
 
   home.sessionVariables = {
     # EDITOR = lib.mkForce "/home/erikf/.nix-profile/bin/nvim";
