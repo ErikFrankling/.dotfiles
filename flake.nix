@@ -34,29 +34,60 @@
     nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
 
     # ericsson-tools.url = "git+file:/home/erikf/work/ericsson-tools/";
-    ericsson-tools.url =
-      "git+ssh://git@github.com/ErikFrankling/ericsson-tools.git";
+    ericsson-tools.url = "git+ssh://git@github.com/ErikFrankling/ericsson-tools.git";
     # ericsson-tools.url = "git+https://github.com/ErikFrankling/ericsson-tools.git";
     ericsson-tools.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, ... }@inputs:
+  outputs =
+    { self, nixpkgs, ... }@inputs:
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
-    in {
-      nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" "wsl" ]
-        (hostName:
-          nixpkgs.lib.nixosSystem {
-            specialArgs = { inherit inputs hostName; };
-            modules = [
-              ./hosts/${hostName}/configuration.nix
-              # inputs.sops-nix.nixosModules.sops
-            ] ++ (if hostName == "wsl" then
-              [ inputs.nixos-wsl.nixosModules.default ]
-            else
-              [ ]);
-          });
+    in
+    {
+      nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" "wsl" ] (
+        hostName:
+        nixpkgs.lib.nixosSystem {
+          specialArgs = { inherit inputs hostName; };
+          modules = [
+            ./hosts/${hostName}/configuration.nix
+            # inputs.sops-nix.nixosModules.sops
+          ] ++ (if hostName == "wsl" then [ inputs.nixos-wsl.nixosModules.default ] else [ ]);
+        }
+      );
 
+      homeConfigurations =
+        let
+          username = "erikf";
+          homeDirectory = "/home/${username}";
+          configHome = "${homeDirectory}/.config";
+
+          # pkgs = import nixpkgs {
+          #   inherit system;
+          #   config.allowUnfree = true;
+          #   # config.xdg.configHome = configHome;
+          #   # overlays = [ ];
+          # };
+
+        in
+        {
+          "erikf" = inputs.home-manager.lib.homeManagerConfiguration {
+            inherit
+              pkgs
+              system
+              username
+              homeDirectory
+              ;
+            extraSpecialArgs = {
+              inherit inputs;
+              hostName = "hm";
+            };
+
+            stateVersion = "25.05";
+            configuration = import ./host/hm/home.nix;
+          };
+        };
     };
+
 }
