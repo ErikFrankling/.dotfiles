@@ -75,17 +75,17 @@
           "erikf" = inputs.home-manager.lib.homeManagerConfiguration {
             inherit
               pkgs
-              system
-              username
-              homeDirectory
+              #system
+              #username
+              #homeDirectory
               ;
             extraSpecialArgs = {
               inherit inputs;
               hostName = "hm";
             };
 
-            stateVersion = "25.05";
-            configuration = import ./host/hm/home.nix;
+            #stateVersion = "25.05";
+            modules = [ ./hosts/hm/home.nix ];
           };
         };
     };
