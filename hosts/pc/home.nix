@@ -10,10 +10,10 @@
   home.packages = with pkgs; [ prismlauncher ];
 
   wayland.windowManager.hyprland.settings = {
-    mouse = {
-      sensitivity = "0.2";
-      scroll_factor = "0.5";
-    };
+    # mouse = {
+    #   sensitivity = "0.2";
+    #   scroll_factor = "0.5";
+    # };
 
     device = [
       {
@@ -37,42 +37,43 @@
         scale = "2";
       }
       {
-        name = "HDMI-A-1";
-        width = 1920;
-        height = 1080;
-        x = -1920;
-        scale = "1";
+        name = "DP-2";
+        width = 3840;
+        height = 2160;
+        refreshRate = 60;
+        x = 1920;
+        scale = "2";
       }
     ];
     initWindows = [
       {
-        exec = "kitty tmux";
-        monitor = "DP-1";
+        exec = "kitty";
+        monitor = "DP-2";
         workspace = 1;
       }
       {
-        exec = "kitty tmux";
-        monitor = "DP-1";
+        exec = "kitty";
+        monitor = "DP-2";
         workspace = 2;
       }
       {
         exec = "firefox";
-        monitor = "DP-1";
+        monitor = "DP-2";
         workspace = 3;
       }
       {
         exec = "obsidian";
-        monitor = "HDMI-A-1";
+        monitor = "DP-1";
         workspace = 9;
       }
       {
         exec = "webcord";
-        monitor = "HDMI-A-1";
+        monitor = "DP-1";
         workspace = 10;
       }
       {
         exec = "spotify";
-        monitor = "HDMI-A-1";
+        monitor = "DP-1";
         workspace = 10;
       }
     ];
@@ -80,24 +81,24 @@
     workspaces = [
       {
         ID = 1;
-        monitor = "DP-1";
+        monitor = "DP-2";
         default = true;
       }
       {
         ID = 2;
-        monitor = "DP-1";
+        monitor = "DP-2";
       }
       {
         ID = 3;
-        monitor = "DP-1";
+        monitor = "DP-2";
       }
       {
         ID = 9;
-        monitor = "HDMI-A-1";
+        monitor = "DP-1";
       }
       {
         ID = 10;
-        monitor = "HDMI-A-1";
+        monitor = "DP-1";
       }
     ];
   };
