@@ -2,8 +2,20 @@
   description = "Nixos config flake";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    # nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    # nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs?ref=nixos-unstable";
+    # nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs/refs/tags/nixos-unstable";
+    # nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs.git";
     # nixpkgs.url = "github:nixos/nixpkgs/release-25.05";
+    nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs.git?ref=refs/heads/nixos-unstable";
+    #nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs.git";
+
+    # nixpkgs = {
+    #   type = "git+ssh";
+    #   owner = "NixOS";
+    #   repo = "nixpkgs";
+    #   # ref = "nixos-unstable";
+    # };
 
     nixvim.url = "github:nix-community/nixvim";
     nixvim.inputs.nixpkgs.follows = "nixpkgs";

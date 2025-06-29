@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, inputs, ... }:
 
 {
   imports = [
@@ -45,6 +45,11 @@
     age
     dos2unix
     wget
+    inputs.nvim.packages.${system}.nvim
+    btop
+    fzf
+    ripgrep
+    nix-prefetch-github
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
