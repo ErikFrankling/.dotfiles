@@ -1,10 +1,16 @@
-{ config, pkgs, lib, ... }: {
+{
+  config,
+  pkgs,
+  lib,
+  username,
+  ...
+}:
+{
 
-  environment.systemPackages = with pkgs;
-    [
-      # pkgs.wpa_supplicant_gui
-      powertop
-    ];
+  environment.systemPackages = with pkgs; [
+    # pkgs.wpa_supplicant_gui
+    powertop
+  ];
 
   powerManagement.enable = true;
   # powerManagement.powertop.enable = true;
@@ -45,7 +51,7 @@
   # };
 
   # services.udev.extraRules = ''
-  #   # The example is enabling autosuspend for all USB devices except for keyboards and mice: 
+  #   # The example is enabling autosuspend for all USB devices except for keyboards and mice:
   #   ACTION=="add", SUBSYSTEM=="usb", ATTR{product}!="*Mouse", ATTR{product}!="*Keyboard", TEST=="power/control", ATTR{power/control}="auto"
   # '';
 
@@ -57,7 +63,7 @@
   # networking.networkmanager.enable = lib.mkForce false;
   # networking.wireless.enable = true;
   # networking.wireless.userControlled.enable = true;
-  # users.extraUsers.erikf.extraGroups = [ "wheel" ];
+  # users.extraUsers."${username}".extraGroups = [ "wheel" ];
   #
   # sops.secrets."wireless.env" = { };
   # networking.wireless.secretsFile = config.sops.secrets."wireless.env".path;

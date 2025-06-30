@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   imports = [ ];
@@ -14,15 +19,14 @@
 
     extraLuaConfig = lib.fileContents ./init.lua;
 
-    plugins = with pkgs.vimPlugins;
-      [
-        # yankring
-        # vim-nix
-        # {
-        #   plugin = vim-startify;
-        #   config = "let g:startify_change_to_vcs_root = 0";
-        # }
-      ];
+    plugins = with pkgs.vimPlugins; [
+      # yankring
+      # vim-nix
+      # {
+      #   plugin = vim-startify;
+      #   config = "let g:startify_change_to_vcs_root = 0";
+      # }
+    ];
   };
 
   home.file = {
@@ -44,6 +48,6 @@
   };
 
   home.sessionVariables = {
-    # EDITOR = lib.mkForce "/home/erikf/.nix-profile/bin/nvim";
+    # EDITOR = lib.mkForce "/home/${username}/.nix-profile/bin/nvim";
   };
 }

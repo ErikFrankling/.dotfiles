@@ -1,4 +1,11 @@
-{ config, pkgs, inputs, hostName, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  hostName,
+  username,
+  ...
+}:
 
 {
   imports = [
@@ -23,15 +30,15 @@
   # virtualisation.virtualbox.host.enable = true;
   # virtualisation.virtualbox.host.enableKvm = true;
   # virtualisation.virtualbox.host.addNetworkInterface = false;
-  # users.extraGroups.vboxusers.members = [ "erikf" ];
+  # users.extraGroups.vboxusers.members = [ "${username}" ];
 
   programs.virt-manager.enable = true;
-  users.groups.libvirtd.members = [ "erikf" ];
+  users.groups.libvirtd.members = [ "${username}" ];
   virtualisation.libvirtd.enable = true;
   virtualisation.spiceUSBRedirection.enable = true;
 
   # virtualisation.docker.enable = true;
-  # users.extraUsers.erikf.extraGroups = [ "docker" ];
+  # users.extraUsers."${username}".extraGroups = [ "docker" ];
 
   # Open ports in the firewall.
   networking.firewall.allowedTCPPorts = [ 8083 ];
@@ -107,16 +114,17 @@
 
   home-manager = {
     # also pass inputs to home-manager modules
-    extraSpecialArgs = { inherit inputs hostName; };
-    users = { "erikf" = import ./home.nix; };
+    extraSpecialArgs = { inherit inputs hostName username; };
+    users = {
+      "${username}" = import ./home.nix;
+    };
   };
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  environment.systemPackages = with pkgs;
-    [
-      #  wget
-      # swi-prolog-gui 
-      fw-ectool
-    ];
+  environment.systemPackages = with pkgs; [
+    #  wget
+    # swi-prolog-gui
+    fw-ectool
+  ];
 }

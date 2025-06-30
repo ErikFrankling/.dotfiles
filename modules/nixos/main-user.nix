@@ -1,7 +1,14 @@
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 
-let cfg = config.main-user;
-in {
+let
+  cfg = config.main-user;
+in
+{
   options.main-user = {
     enable = lib.mkEnableOption "enable user module";
 
@@ -19,7 +26,10 @@ in {
       initialPassword = "12345";
       description = "main user";
       shell = pkgs.fish;
-      extraGroups = [ "wheel" "networkmanager" ];
+      extraGroups = [
+        "wheel"
+        "networkmanager"
+      ];
     };
   };
 }

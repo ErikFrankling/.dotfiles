@@ -1,4 +1,8 @@
-{ pkgs, inputs, ... }:
+{
+  pkgs,
+  inputs,
+  ...
+}:
 
 {
   imports = [
@@ -17,7 +21,10 @@
       inputs.ericsson-tools.overlays.default
     ];
 
-    home.packages = with pkgs; [ ericsson-rcli cloudflared ];
+    home.packages = with pkgs; [
+      ericsson-rcli
+      cloudflared
+    ];
     # home.packages = [
     #   inputs.ericsson-tools.packages.${pkgs.system}.rcli
     #   inputs.ericsson-tools.packages.${pkgs.system}.packages.cloudflared

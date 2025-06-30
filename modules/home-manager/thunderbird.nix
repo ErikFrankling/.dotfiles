@@ -1,11 +1,18 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  username,
+  ...
+}:
 
 let
   signature = {
     text = "Mvh Erik Frankling";
     showSignature = "append";
   };
-in {
+in
+{
   programs.thunderbird = {
     enable = true;
     # profiles.erikf = {
@@ -53,6 +60,6 @@ in {
   };
 
   home.sessionVariables = {
-    # EDITOR = lib.mkForce "/home/erikf/.nix-profile/bin/nvim";
+    # EDITOR = lib.mkForce "/home/${username}/.nix-profile/bin/nvim";
   };
 }
