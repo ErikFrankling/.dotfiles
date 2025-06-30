@@ -8,19 +8,6 @@
 }:
 
 {
-<<<<<<< Updated upstream
-  imports = [
-    # Include the results of the hardware scan.
-    ./hardware-configuration.nix
-    ../../modules/nixos
-    # ../../modules/nixos/openvpn.nix
-    # ../../modules/nixos/laptop.nix
-    ../../modules/nixos/desktop.nix
-    ../../modules/nixos/game.nix
-    ../../modules/nixos/ollama.nix
-    inputs.home-manager.nixosModules.default
-  ];
-=======
   imports =
     [
       # Include the results of the hardware scan.
@@ -36,7 +23,6 @@
 
   # fix for amdgpu kernel bug https://gitlab.freedesktop.org/drm/amd/-/issues/3388
   boot.kernelParams = [ "amdgpu.dcdebugmask=0x10" ];
->>>>>>> Stashed changes
 
   sops.defaultSopsFile = ./secrets.yaml;
   sops.defaultSopsFormat = "yaml";
