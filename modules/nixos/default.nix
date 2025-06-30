@@ -1,4 +1,10 @@
-{ config, pkgs, inputs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  username,
+  ...
+}:
 
 {
   imports = [
@@ -21,23 +27,22 @@
     };
 
     extraOptions = ''
-      min-free = ${
-        toString (1024 * 1024 * 1024 * 10)
-      } # will run GC if less than 10GB is free
+      min-free = ${toString (1024 * 1024 * 1024 * 10)} # will run GC if less than 10GB is free
     '';
 
     optimise.automatic = true;
-    optimise.dates =
-      [ "05:00" ]; # Optional; allows customizing optimisation schedule
+    optimise.dates = [ "05:00" ]; # Optional; allows customizing optimisation schedule
 
     registry = {
       nixpkgs.to = {
         type = "path";
         path = pkgs.path;
         # narHash = pkgs.narHash;
-        narHash = builtins.readFile (pkgs.runCommandLocal "get-nixpkgs-hash" {
-          nativeBuildInputs = [ pkgs.nix ];
-        } "nix-hash --type sha256 --sri ${pkgs.path} > $out");
+        narHash = builtins.readFile (
+          pkgs.runCommandLocal "get-nixpkgs-hash" {
+            nativeBuildInputs = [ pkgs.nix ];
+          } "nix-hash --type sha256 --sri ${pkgs.path} > $out"
+        );
       };
     };
   };
@@ -48,7 +53,7 @@
 
   programs.wireshark.enable = true;
 
-  # users.extraUsers.erikf.extraGroups = [ "wireshark" ];
+  # users.extraUsers.${username}.extraGroups = [ "wireshark" ];
 
   nixpkgs.config.allowBroken = true;
   # List packages installed in system profile. To search, run:
@@ -66,7 +71,7 @@
     # networkmanagerapplet
   ];
   main-user.enable = true;
-  main-user.userName = "erikf";
+  main-user.userName = "${username}";
 
   programs.fish.enable = true;
 
@@ -98,9 +103,12 @@
   security.sudo.wheelNeedsPassword = false;
 
   # Enable automatic login for the user.
-  services.getty.autologinUser = "erikf";
+  services.getty.autologinUser = "${username}";
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;

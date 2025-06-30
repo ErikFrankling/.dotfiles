@@ -1,4 +1,10 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  username,
+  ...
+}:
 
 {
 
@@ -7,7 +13,7 @@
   networking.networkmanager.enable = lib.mkForce false;
   networking.wireless.enable = true;
   networking.wireless.userControlled.enable = true;
-  users.extraUsers.erikf.extraGroups = [ "wheel" ];
+  users.extraUsers."${username}".extraGroups = [ "wheel" ];
   #
   # sops.secrets."wireless.env" = { };
   # networking.wireless.secretsFile = config.sops.secrets."wireless.env".path;
@@ -84,4 +90,3 @@
 #     };
 #   };
 # }
-

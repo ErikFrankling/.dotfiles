@@ -1,4 +1,10 @@
-{ pkgs, config, hostName, ... }:
+{
+  pkgs,
+  config,
+  hostName,
+  username,
+  ...
+}:
 
 {
   # home.file = {
@@ -14,7 +20,10 @@
 
   # xdg.configFile."fish/fish_variables".source = config.lib.file.mkOutOfStoreSymlink ./fish_variables;
 
-  home.packages = with pkgs; [ fastfetch onefetch ];
+  home.packages = with pkgs; [
+    fastfetch
+    onefetch
+  ];
 
   programs.fish = {
     enable = true;
@@ -28,10 +37,10 @@
       '';
 
       rebuild = ''
-        cd /home/erikf/.dotfiles
+        cd /home/${username}/.dotfiles
 
-        if [ -f /home/erikf/.ssh/id_ed25519 ]
-          if [ ! -f /home/erikf/.config/sops/age/keys.txt ]
+        if [ -f /home/${username}/.ssh/id_ed25519 ]
+          if [ ! -f /home/${username}/.config/sops/age/keys.txt ]
             echo "No age key found. Generating one..."
             mkdir -p ~/.config/sops/age
             nix-shell -p ssh-to-age --run "ssh-to-age -private-key -i ~/.ssh/id_ed25519 > ~/.config/sops/age/keys.txt" 
@@ -47,17 +56,17 @@
           set argv "switch"
         end
 
-        sudo nixos-rebuild $argv --fast --flake /home/erikf/.dotfiles#${hostName}
+        sudo nixos-rebuild $argv --fast --flake /home/${username}/.dotfiles#${hostName}
         echo $(hyprctl reload)
       '';
       eww_reload = ''
         pkill eww
-        eww daemon --config /home/erikf/.dotfiles/modules/home-manager/eww/ 
-        eww open bar --config /home/erikf/.dotfiles/modules/home-manager/eww/ 
+        eww daemon --config /home/${username}/.dotfiles/modules/home-manager/eww/ 
+        eww open bar --config /home/${username}/.dotfiles/modules/home-manager/eww/ 
       '';
 
       nvim-update = ''
-        cd /home/erikf/projects/personal/nvim/
+        cd /home/${username}/projects/personal/nvim/
         git pull
         git add -A
 
@@ -68,7 +77,7 @@
         git commit -am "$argv"
         git push
 
-        cd /home/erikf/.dotfiles
+        cd /home/${username}/.dotfiles
         git pull
         nix flake update nvim
         rebuild

@@ -1,4 +1,12 @@
-{ config, pkgs, inputs, hostName, lib, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  hostName,
+  lib,
+  username,
+  ...
+}:
 
 {
   imports = [
@@ -15,12 +23,14 @@
 
   wsl = {
     enable = true;
-    defaultUser = "erikf";
+    defaultUser = "${username}";
     startMenuLaunchers = true;
   };
 
   # Override common settings that don't work well in WSL
-  services = { pipewire.enable = lib.mkForce false; };
+  services = {
+    pipewire.enable = lib.mkForce false;
+  };
 
   sops.defaultSopsFile = ./secrets.yaml;
   sops.defaultSopsFormat = "yaml";
@@ -32,15 +42,15 @@
   # virtualisation.virtualbox.host.enable = true;
   # virtualisation.virtualbox.host.enableKvm = true;
   # virtualisation.virtualbox.host.addNetworkInterface = false;
-  # users.extraGroups.vboxusers.members = [ "erikf" ];
+  # users.extraGroups.vboxusers.members = [ "${username}" ];
 
   # programs.virt-manager.enable = true;
-  # users.groups.libvirtd.members = [ "erikf" ];
+  # users.groups.libvirtd.members = [ "${username}" ];
   # virtualisation.libvirtd.enable = true;
   # virtualisation.spiceUSBRedirection.enable = true;
 
   # virtualisation.docker.enable = true;
-  # users.extraUsers.erikf.extraGroups = [ "docker" ];
+  # users.extraUsers."${username}".extraGroups = [ "docker" ];
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ 8083 ];
@@ -48,7 +58,7 @@
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
-  networking.hostName = "wsl"; # Define your hostname.
+  networking.hostName = "${hostName}"; # Define your hostname.
 
   # boot.loader.systemd-boot.enable = true;
   # boot.loader.efi.canTouchEfiVariables = true;
@@ -66,8 +76,10 @@
 
   home-manager = {
     # also pass inputs to home-manager modules
-    extraSpecialArgs = { inherit inputs hostName; };
-    users = { "erikf" = import ./home.nix; };
+    extraSpecialArgs = { inherit inputs hostName username; };
+    users = {
+      "${username}" = import ./home.nix;
+    };
   };
 
   # List packages installed in system profile. To search, run:

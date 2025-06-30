@@ -1,7 +1,15 @@
-{ config, pkgs, inputs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  hostName,
+  username,
+  ...
+}:
 
 {
-  imports = [ # Include the results of the hardware scan.
+  imports = [
+    # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ../../modules/nixos
     inputs.home-manager.nixosModules.default
@@ -30,14 +38,15 @@
 
   home-manager = {
     # also pass inputs to home-manager modules
-    extraSpecialArgs = { inherit inputs; };
-    users = { "erikf" = import ./home.nix; };
+    extraSpecialArgs = { inherit inputs hostName username; };
+    users = {
+      "${username}" = import ./home.nix;
+    };
   };
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  environment.systemPackages = with pkgs;
-    [
-      #  wget
-    ];
+  environment.systemPackages = with pkgs; [
+    #  wget
+  ];
 }
