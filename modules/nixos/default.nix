@@ -59,14 +59,9 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    inputs.nvim.packages.${system}.nvim
     wireshark
-    btop
-    fzf
-    ripgrep
     wl-clipboard
     wl-clipboard-x11
-    nix-prefetch-github
     # networkmanager-openvpn
     # networkmanagerapplet
   ];

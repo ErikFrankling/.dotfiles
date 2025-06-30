@@ -4,7 +4,19 @@
   inputs = {
     # nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nixpkgs.url = "git+ssh://git@github.com/nixos/nixpkgs?ref=nixos-unstable&shallow=1";
+    # nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs?ref=nixos-unstable";
+    # nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs/refs/tags/nixos-unstable";
+    # nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs.git";
     # nixpkgs.url = "github:nixos/nixpkgs/release-25.05";
+    # nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs.git?ref=refs/heads/nixos-unstable";
+    #nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs.git";
+
+    # nixpkgs = {
+    #   type = "git+ssh";
+    #   owner = "NixOS";
+    #   repo = "nixpkgs";
+    #   # ref = "nixos-unstable";
+    # };
 
     nixvim.url = "github:nix-community/nixvim";
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
@@ -79,17 +91,18 @@
         inputs.home-manager.lib.homeManagerConfiguration {
           inherit
             pkgs
-            system
-            username
-            homeDirectory
+            # system
+            # username
+            # homeDirectory
             ;
           extraSpecialArgs = {
             inherit inputs username;
             hostName = "hm";
           };
 
-          stateVersion = "25.05";
-          configuration = import ./host/hm/home.nix;
+          # stateVersion = "25.05";
+          # configuration = import ./host/hm/home.nix;
+          modules = [ ./hosts/hm/home.nix ];
         }
       );
     };
