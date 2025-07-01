@@ -20,6 +20,28 @@
     inputs.home-manager.nixosModules.default
   ];
 
+  # nixpkgs.config.permittedInsecurePackages = [
+  #   "electron-33.4.11"
+  # ];
+
+  # boot.kernelPackages = pkgs.linuxPackages_6_12;
+
+  # boot.kernelPackages =
+  #   let
+  #     version = "6.12.31";
+  #     kernel = pkgs.linuxKernel.kernels.linux_6_12.override {
+  #       argsOverride = {
+  #         inherit version;
+  #         src = pkgs.fetchurl {
+  #           url = "mirror://kernel/linux/kernel/v6.x/linux-${version}.tar.xz";
+  #           hash = "sha256-sExbPl324KpenNHv5Sf6yZ+d05pDuX8Tsi+MqT5SS6c="; # to be filled in
+  #         };
+  #         modDirVersion = null; # https://github.com/NixOS/nixpkgs/blob/007e91615b8127deb57ba0b08e12542abaea1c3f/pkgs/os-specific/linux/kernel/generic.nix#L44
+  #       };
+  #     };
+  #   in
+  #   pkgs.linuxKernel.packagesFor kernel;
+
   # fix for amdgpu kernel bug https://gitlab.freedesktop.org/drm/amd/-/issues/3388
   boot.kernelParams = [ "amdgpu.dcdebugmask=0x10" ];
 
