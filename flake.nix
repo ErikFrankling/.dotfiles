@@ -2,12 +2,14 @@
   description = "Nixos config flake";
 
   inputs = {
-    # nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs.url = "git+ssh://git@github.com/nixos/nixpkgs?ref=nixos-unstable&shallow=1";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    # nixpkgs.url = "github:nixos/nixpkgs?rev=77b584d61ff80b4cef9245829a6f1dfad5afdfa3";
+    # nixpkgs.url = "git+ssh://git@github.com/nixos/nixpkgs?ref=nixos-unstable&shallow=1";
     # nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs?ref=nixos-unstable";
     # nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs/refs/tags/nixos-unstable";
     # nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs.git";
     # nixpkgs.url = "github:nixos/nixpkgs/release-25.05";
+    # nixpkgs.url = "github:nixos/nixpkgs/release-24.11";
     # nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs.git?ref=refs/heads/nixos-unstable";
     #nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs.git";
 
@@ -22,6 +24,7 @@
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
 
     home-manager.url = "github:nix-community/home-manager";
+    # home-manager.url = "github:nix-community/home-manager/release-24.11";
     # home-manager.url = "github:nix-community/home-manager/release-25.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
