@@ -15,10 +15,13 @@
     # ../../modules/nixos/openvpn.nix
     # ../../modules/nixos/laptop.nix
     ../../modules/nixos/desktop.nix
-    ../../modules/nixos/game.nix
-    ../../modules/nixos/ollama.nix
+    # ../../modules/nixos/game.nix
+    # ../../modules/nixos/ollama.nix
     inputs.home-manager.nixosModules.default
   ];
+
+  # boot.kernelParams = [ "acpi_backlight=none" ];
+  # boot.kernelParams = [ "amdgpu.backlight=0" "acpi_backlight=none" ];
 
   # nixpkgs.config.permittedInsecurePackages = [
   #   "electron-33.4.11"
@@ -51,7 +54,7 @@
   sops.secrets.syncthing-cert = { };
   sops.secrets.syncthing-key = { };
 
-  networking.hostName = "pc"; # Define your hostname.
+  networking.hostName = "${hostName}"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   boot.loader.systemd-boot.enable = true;

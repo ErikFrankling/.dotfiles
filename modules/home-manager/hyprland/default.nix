@@ -46,6 +46,10 @@
         XCURSOR_SIZE = "32";
         XDG_SESSION_DESKTOP = "Hyprland";
 
+        # If your cursor becomes invisible
+        # WLR_NO_HARDWARE_CURSORS = "1";
+        # Hint electron apps to use wayland
+        NIXOS_OZONE_WL = "1";
       };
 
       wayland.windowManager.hyprland = {
@@ -67,8 +71,8 @@
           exec-once = kdeconnect-indicator
 
           exec-once = wmname LG3D
-          exec-once = $HOME/.config/hypr/import_env tmux
-          exec-once = $HOME/.config/hypr/import_env system
+          # exec-once = $HOME/.config/hypr/import_env tmux
+          # exec-once = $HOME/.config/hypr/import_env system
 
           # exec-once = wl-paste --type text --watch cliphist store #Stores only text data
           # exec-once = wl-paste --type image --watch cliphist store #Stores only image data
@@ -131,16 +135,16 @@
           ) (cfg.monitors);
           # ++ "DP-1, addreserved, , 296, , ";
 
-          device = [
-            {
-              name = "tshort-dactyl-manuform-(5x6)";
-              kb_layout = "us";
-            }
-            {
-              name = "logitech-g512-carbon-tactile";
-              kb_layout = "se";
-            }
-          ];
+          # device = [
+          #   {
+          #     name = "tshort-dactyl-manuform-(5x6)";
+          #     kb_layout = "us";
+          #   }
+          #   {
+          #     name = "logitech-g512-carbon-tactile";
+          #     kb_layout = "se";
+          #   }
+          # ];
           # For all categories, see https://wiki.hyprland.org/Configuring/Variables/
           input = {
             kb_layout = "us,se";

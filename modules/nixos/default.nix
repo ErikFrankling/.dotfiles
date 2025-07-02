@@ -15,7 +15,7 @@
     ./qmk.nix
     ./secrets.nix
     # ./nm.nix
-    ./projects/dtek.nix
+    # ./projects/dtek.nix
     ./syncthing.nix
   ];
 
