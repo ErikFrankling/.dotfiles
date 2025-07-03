@@ -100,6 +100,12 @@
     };
   };
 
+  nix.package = pkgs.nix;
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
+
   home.sessionVariables = {
     # EDITOR = lib.mkForce "/home/${username}/.nix-profile/bin/nvim";
   };

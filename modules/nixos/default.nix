@@ -100,11 +100,6 @@
   # Enable automatic login for the user.
   services.getty.autologinUser = "${username}";
 
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
-
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
