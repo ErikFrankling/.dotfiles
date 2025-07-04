@@ -11,6 +11,11 @@
     ../../modules/home-manager/print
   ];
 
+  home.sessionVariables = {
+    LIBGL_ALWAYS_SOFTWARE = "1";
+    LIBGL_ALWAYS_INDIRECT = "0";
+  };
+
   config = {
     nixpkgs.overlays = [
       # (

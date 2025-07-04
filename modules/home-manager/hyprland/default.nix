@@ -71,8 +71,8 @@
           exec-once = kdeconnect-indicator
 
           exec-once = wmname LG3D
-          # exec-once = $HOME/.config/hypr/import_env tmux
-          # exec-once = $HOME/.config/hypr/import_env system
+          exec-once = $HOME/.config/hypr/import_env tmux
+          exec-once = $HOME/.config/hypr/import_env system
 
           # exec-once = wl-paste --type text --watch cliphist store #Stores only text data
           # exec-once = wl-paste --type image --watch cliphist store #Stores only image data
@@ -121,6 +121,9 @@
 
           # rules for having it on the right side
           # windowrulev2 = size 296 100%, tag:rtr_right 
+
+          exec-once = hyprctl workspace 10
+          exec-once = hyprctl workspace 1
 
         '';
 
