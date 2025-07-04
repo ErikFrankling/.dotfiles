@@ -91,6 +91,15 @@
         pull.rebase = false;
         credential.helper = "libsecret";
       };
+
+      includes = [
+        {
+          condition = "gitdir:~/work/**";
+          contents = {
+            user.email = "erik.frankling@ericsson.com";
+          };
+        }
+      ];
     };
 
     direnv = {
@@ -99,6 +108,12 @@
       nix-direnv.enable = true;
     };
   };
+
+  nix.package = pkgs.nix;
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
   home.sessionVariables = {
     # EDITOR = lib.mkForce "/home/${username}/.nix-profile/bin/nvim";
