@@ -11,7 +11,7 @@
   imports = [
     # ./nixvim
     ./fish.nix
-    # ./tmux.nix
+    ./tmux.nix
   ];
 
   nixpkgs.config.allowUnfree = true;
