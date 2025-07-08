@@ -20,6 +20,9 @@
     inputs.home-manager.nixosModules.default
   ];
 
+  virtualisation.docker.enable = true;
+  users.extraUsers."${username}".extraGroups = [ "docker" ];
+
   # boot.kernelParams = [ "acpi_backlight=none" ];
   # boot.kernelParams = [ "amdgpu.backlight=0" "acpi_backlight=none" ];
 

@@ -109,7 +109,7 @@
     };
   };
 
-  nix.package = pkgs.nix;
+  nix.package = lib.mkForce pkgs.nix;
   nix.settings.experimental-features = [
     "nix-command"
     "flakes"
