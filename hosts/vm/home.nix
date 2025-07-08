@@ -55,62 +55,62 @@
       #   scale = "2";
       # }
     ];
-    initWindows = [
-      {
-        exec = "kitty";
-        # monitor = "DP-1";
-        workspace = 1;
-      }
-      {
-        exec = "kitty";
-        # monitor = "DP-1";
-        workspace = 2;
-      }
-      {
-        exec = "firefox";
-        # monitor = "DP-1";
-        workspace = 3;
-      }
-      {
-        exec = "obsidian";
-        # monitor = "DP-2";
-        workspace = 9;
-      }
-      {
-        exec = "webcord";
-        # monitor = "DP-2";
-        workspace = 10;
-      }
-      {
-        exec = "spotify";
-        # monitor = "DP-2";
-        workspace = 10;
-      }
-    ];
-
-    workspaces = [
-      {
-        ID = 1;
-        # monitor = "DP-1";
-        default = true;
-      }
-      {
-        ID = 2;
-        # monitor = "DP-1";
-      }
-      {
-        ID = 3;
-        # monitor = "DP-1";
-      }
-      {
-        ID = 9;
-        # monitor = "DP-2";
-      }
-      {
-        ID = 10;
-        # monitor = "DP-2";
-        # default = true;
-      }
-    ];
+    # initWindows = [
+    #   {
+    #     exec = "kitty";
+    #     monitor = "DP-1";
+    #     workspace = 1;
+    #   }
+    #   {
+    #     exec = "kitty";
+    #     monitor = "DP-1";
+    #     workspace = 2;
+    #   }
+    #   {
+    #     exec = "firefox";
+    #     monitor = "DP-1";
+    #     workspace = 3;
+    #   }
+    #   {
+    #     exec = "obsidian";
+    #     monitor = "DP-2";
+    #     workspace = 9;
+    #   }
+    #   {
+    #     exec = "webcord";
+    #     monitor = "DP-2";
+    #     workspace = 10;
+    #   }
+    #   {
+    #     exec = "spotify";
+    #     monitor = "DP-2";
+    #     workspace = 10;
+    #   }
+    # ];
+    #
+    # workspaces = [
+    #   {
+    #     ID = 1;
+    #     monitor = "DP-1";
+    #     default = true;
+    #   }
+    #   {
+    #     ID = 2;
+    #     monitor = "DP-1";
+    #   }
+    #   {
+    #     ID = 3;
+    #     monitor = "DP-1";
+    #   }
+    #   {
+    #     ID = 9;
+    #     monitor = "DP-2";
+    #   }
+    #   {
+    #     ID = 10;
+    #     monitor = "DP-2";
+    #     # default = true;
+    #   }
+    # ];
   };
 }
