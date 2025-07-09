@@ -19,6 +19,7 @@
     ./syncthing.nix
   ];
 
+  nix.settings.download-buffer-size = 524288000;
   nix = {
     gc = {
       automatic = true;
