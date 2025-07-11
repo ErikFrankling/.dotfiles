@@ -15,8 +15,8 @@
     spotifywm
     # spotify-qt
     pavucontrol
-    google-chrome
-    gparted
+    # google-chrome
+    # gparted
     # virtualbox
     syncthingtray-minimal
   ];

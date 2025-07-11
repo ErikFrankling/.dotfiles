@@ -14,17 +14,17 @@
     ../../modules/nixos
     # ../../modules/nixos/openvpn.nix
     # ../../modules/nixos/laptop.nix
-    ../../modules/nixos/desktop.nix
+    # ../../modules/nixos/desktop.nix
     # ../../modules/nixos/game.nix
     # ../../modules/nixos/ollama.nix
     inputs.home-manager.nixosModules.default
   ];
 
   # # Bootloader.
-  # boot.loader.grub.enable = true;
-  # boot.loader.grub.device = "/dev/sda";
+  boot.loader.grub.enable = true;
+  boot.loader.grub.device = "/dev/sda";
   # # boot.loader.grub.device = "/dev/nvme0n1";
-  # boot.loader.grub.useOSProber = true;
+  boot.loader.grub.useOSProber = true;
 
   virtualisation.docker.enable = true;
   users.extraUsers."${username}".extraGroups = [ "docker" ];
@@ -72,7 +72,7 @@
   };
 
   # Configure console keymap
-  # console.keyMap = "sv-latin1";
+  console.keyMap = "sv-latin1";
 
   home-manager = {
     # also pass inputs to home-manager modules
