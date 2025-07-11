@@ -12,6 +12,7 @@
     # ./nixvim
     ./fish.nix
     ./tmux.nix
+    ./scripts
   ];
 
   nixpkgs.config.allowUnfree = true;
