@@ -50,22 +50,22 @@
 
   # virtualisation.docker.enable = true;
 
-  virtualisation.docker = {
-    enable = true; # start the system‐wide Docker service
-    rootless = {
-      # make absolutely sure rootless is OFF
-      enable = false;
-      setSocketVariable = false;
-    };
-    daemon.settings = {
-      # 2) Turn _on_ the userland proxy so Docker will bind ports <1024
-      #    (SSH:22, HTTPS:443, etc.) on 127.0.0.1, instead of doing iptables magic
-      "userland-proxy" = true;
-      # ... you can also add other daemon settings here if you like
-    };
-  };
-
-  users.extraUsers."${username}".extraGroups = [ "docker" ];
+  # virtualisation.docker = {
+  #   enable = true; # start the system‐wide Docker service
+  #   rootless = {
+  #     # make absolutely sure rootless is OFF
+  #     enable = true;
+  #     setSocketVariable = true;
+  #   };
+  #   # daemon.settings = {
+  #   #   # 2) Turn _on_ the userland proxy so Docker will bind ports <1024
+  #   #   #    (SSH:22, HTTPS:443, etc.) on 127.0.0.1, instead of doing iptables magic
+  #   #   "userland-proxy" = true;
+  #   #   # ... you can also add other daemon settings here if you like
+  #   # };
+  # };
+  #
+  # users.extraUsers."${username}".extraGroups = [ "docker" ];
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ 8083 ];

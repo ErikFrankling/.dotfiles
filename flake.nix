@@ -59,7 +59,12 @@
   };
 
   outputs =
-    { self, nixpkgs, ... }@inputs:
+    {
+      self,
+      nixpkgs,
+      # utils,
+      ...
+    }@inputs:
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
@@ -111,6 +116,7 @@
           modules = [ ./hosts/hm/home.nix ];
         }
       );
+
     };
 
 }
