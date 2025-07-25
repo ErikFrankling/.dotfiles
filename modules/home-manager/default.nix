@@ -13,6 +13,7 @@
     ./fish.nix
     ./tmux.nix
     ./scripts
+    ./zellij
   ];
 
   nixpkgs.config.allowUnfree = true;
