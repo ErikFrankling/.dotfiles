@@ -12,6 +12,8 @@
     # ./nixvim
     ./fish.nix
     ./tmux.nix
+    ./scripts
+    ./zellij
   ];
 
   nixpkgs.config.allowUnfree = true;
@@ -57,6 +59,8 @@
     fzf
     ripgrep
     nix-prefetch-github
+    jq
+    tree
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
