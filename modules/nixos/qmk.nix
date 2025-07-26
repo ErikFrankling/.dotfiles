@@ -7,15 +7,15 @@
     via
     qmk
     vial
-    qmk-udev-rules # the only relevant
-    qmk_hid
+    # qmk-udev-rules # the only relevant
+    # qmk_hid
   ];
 
   services.udev.packages = with pkgs; [
-    qmk
+    # qmk
     qmk-udev-rules # the only relevant
-    qmk_hid
-    via
-    vial
+    # qmk_hid
+    # via
+    # vial
   ];
 }
