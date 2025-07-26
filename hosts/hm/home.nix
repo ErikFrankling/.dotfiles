@@ -1,97 +1,120 @@
-{ ... }:
+{ pkgs, inputs, ... }:
 
 {
   imports = [
     ../../modules/home-manager
-    #../../modules/home-manager/desktop.nix
+    ../../modules/home-manager/desktop.nix
     #../../modules/home-manager/print
   ];
 
   targets.genericLinux.enable = true;
 
- #wayland.windowManager.hyprland.settings = {
- #  device = [{
- #    name = "pixa3854:00-093a:0274-touchpad";
- #    sensitivity = "0.2";
- #  }];
- #};
+  nixpkgs.overlays = [
+    # (
+    #   final: prev: {
+    #     # Your own overlays...
+    #   }
+    # )
+    inputs.ericsson-tools.overlays.default
+  ];
 
- #hyprland = {
- #  monitors = [
- #    {
- #      name = "eDP-1";
- #      width = 2880;
- #      height = 1920;
- #      scale = "2";
- #      refreshRate = 120;
- #    }
- #    {
- #      name = "DP-4";
- #      width = 3840;
- #      height = 2160;
- #      scale = "2";
- #      refreshRate = 60;
- #      x = 1440;
- #      y = 0;
- #      # enabled = true;
- #    }
- #  ];
+  home.packages = with pkgs; [
+    ericsson-rcli
+    cloudflared
+    waypipe
+    rustdesk
+    powershell
+  ];
+  wayland.windowManager.hyprland.settings = {
+    #  device = [{
+    #    name = "pixa3854:00-093a:0274-touchpad";
+    #    sensitivity = "0.2";
+    #  }];
+  };
 
- #  initWindows = [
- #    {
- #      exec = "kitty";
- #      monitor = "eDP-1";
- #      workspace = 1;
- #    }
- #    {
- #      exec = "kitty";
- #      monitor = "eDP-1";
- #      workspace = 2;
- #    }
- #    {
- #      exec = "firefox";
- #      monitor = "eDP-1";
- #      workspace = 3;
- #    }
- #    {
- #      exec = "obsidian";
- #      monitor = "eDP-1";
- #      workspace = 4;
- #    }
- #    {
- #      exec = "webcord";
- #      monitor = "eDP-1";
- #      workspace = 10;
- #    }
- #    {
- #      exec = "spotify";
- #      monitor = "eDP-1";
- #      workspace = 10;
- #    }
- #  ];
+  hyprland = {
+    monitors = [
+      {
+        name = "Headless-1";
+        width = 1080;
+        height = 720;
+        scale = "1";
+        refreshRate = 1;
+      }
+      # {
+      #   name = "eDP-1";
+      #   width = 2880;
+      #   height = 1920;
+      #   scale = "2";
+      #   refreshRate = 120;
+      # }
+      # {
+      #   name = "DP-4";
+      #   width = 3840;
+      #   height = 2160;
+      #   scale = "2";
+      #   refreshRate = 60;
+      #   x = 1440;
+      #   y = 0;
+      #   # enabled = true;
+      # }
+    ];
 
- #  # workspaces = [
- #  #   {
- #  #     ID = 1;
- #  #     monitor = "eDP-1";
- #  #     default = true;
- #  #   }
- #  #   {
- #  #     ID = 2;
- #  #     monitor = "eDP-1";
- #  #   }
- #  #   {
- #  #     ID = 3;
- #  #     monitor = "eDP-1";
- #  #   }
- #  #   {
- #  #     ID = 4;
- #  #     monitor = "eDP-1";
- #  #   }
- #  #   {
- #  #     ID = 10;
- #  #     monitor = "eDP-1";
- #  #   }
- #  # ];
- #};
+    #  initWindows = [
+    #    {
+    #      exec = "kitty";
+    #      monitor = "eDP-1";
+    #      workspace = 1;
+    #    }
+    #    {
+    #      exec = "kitty";
+    #      monitor = "eDP-1";
+    #      workspace = 2;
+    #    }
+    #    {
+    #      exec = "firefox";
+    #      monitor = "eDP-1";
+    #      workspace = 3;
+    #    }
+    #    {
+    #      exec = "obsidian";
+    #      monitor = "eDP-1";
+    #      workspace = 4;
+    #    }
+    #    {
+    #      exec = "webcord";
+    #      monitor = "eDP-1";
+    #      workspace = 10;
+    #    }
+    #    {
+    #      exec = "spotify";
+    #      monitor = "eDP-1";
+    #      workspace = 10;
+    #    }
+    #  ];
+
+    #  # workspaces = [
+    #  #   {
+    #  #     ID = 1;
+    #  #     monitor = "eDP-1";
+    #  #     default = true;
+    #  #   }
+    #  #   {
+    #  #     ID = 2;
+    #  #     monitor = "eDP-1";
+    #  #   }
+    #  #   {
+    #  #     ID = 3;
+    #  #     monitor = "eDP-1";
+    #  #   }
+    #  #   {
+    #  #     ID = 4;
+    #  #     monitor = "eDP-1";
+    #  #   }
+    #  #   {
+    #  #     ID = 10;
+    #  #     monitor = "eDP-1";
+    #  #   }
+    #  # ];
+  };
 }
