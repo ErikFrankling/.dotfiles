@@ -20,10 +20,10 @@
 
   home.packages = with pkgs; [
     prusa-slicer
-    openscad
+    # openscad
     # openscad-2024
     # TODO: use openscad-unstable when it is no longer broken. it has much faster rendering
-    # openscad-unstable
+    openscad-unstable
   ];
   # home.file = {
   #   ".config/PrusaSlicer/" = {
