@@ -61,6 +61,7 @@
     nix-prefetch-github
     jq
     tree
+    powershell
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
