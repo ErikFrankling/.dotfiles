@@ -5,11 +5,15 @@
   #   fzf
   # ];
 
+  xdg.configFile."zellij/config.kdl".source = ./config.kdl;
+
   programs.zellij = {
     enable = true;
     enableFishIntegration = true;
 
-    # exitShellOnExit = true;
+    # attachExistingSession = true;
+
+    exitShellOnExit = true;
     # themes = true;
 
     # Configuration written to
