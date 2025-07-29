@@ -1219,11 +1219,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1753607963,
-        "narHash": "sha256-jAt0GGeQtpo2Ric10zzExTDwl2kvmxKkuqApDkB2Vn0=",
+        "lastModified": 1753790349,
+        "narHash": "sha256-1FoMFi6gRyGbzBccsvey0tfZ5t2wRd6z6oc3Ds1IEKU=",
         "owner": "ErikFrankling",
         "repo": "nvim",
-        "rev": "3e839eb7c8993f9985c87cac05fc4d5725849fb3",
+        "rev": "06700566be473261401062166fce16073e8ea496",
         "type": "github"
       },
       "original": {
