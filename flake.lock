@@ -1219,17 +1219,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1753790349,
-        "narHash": "sha256-1FoMFi6gRyGbzBccsvey0tfZ5t2wRd6z6oc3Ds1IEKU=",
-        "owner": "ErikFrankling",
-        "repo": "nvim",
-        "rev": "06700566be473261401062166fce16073e8ea496",
-        "type": "github"
+        "lastModified": 1753876054,
+        "narHash": "sha256-iLOwRUCHsxeC8cV6juWqlAKuCENstcXFyTwp/ISLXgY=",
+        "ref": "refs/heads/main",
+        "rev": "42cbc9d7d8c9a77ad1b80971b4c74e129d3f4952",
+        "revCount": 45,
+        "type": "git",
+        "url": "ssh://git@github.com/ErikFrankling/nvim.git"
       },
       "original": {
-        "owner": "ErikFrankling",
-        "repo": "nvim",
-        "type": "github"
+        "type": "git",
+        "url": "ssh://git@github.com/ErikFrankling/nvim.git"
       }
     },
     "pre-commit-hooks": {

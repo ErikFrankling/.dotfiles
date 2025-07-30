@@ -43,7 +43,8 @@
     nix-matlab.url = "gitlab:doronbehar/nix-matlab";
     nix-matlab.inputs.nixpkgs.follows = "nixpkgs";
 
-    nvim.url = "github:ErikFrankling/nvim";
+    # nvim.url = "github:ErikFrankling/nvim";
+    nvim.url = "git+ssh://git@github.com/ErikFrankling/nvim.git";
     nvim.inputs.nixpkgs.follows = "nixpkgs";
 
     ags.url = "github:Aylur/ags";
