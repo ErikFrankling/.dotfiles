@@ -16,7 +16,7 @@
     # ../../modules/nixos/laptop.nix
     ../../modules/nixos/desktop.nix
     ../../modules/nixos/game.nix
-    ../../modules/nixos/ollama.nix
+    # ../../modules/nixos/ollama.nix
     inputs.home-manager.nixosModules.default
   ];
 
