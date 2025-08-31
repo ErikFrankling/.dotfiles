@@ -95,6 +95,7 @@
       extraConfig = {
         pull.rebase = false;
         credential.helper = "libsecret";
+        init.defaultBranch = "main";
       };
 
       includes = [
