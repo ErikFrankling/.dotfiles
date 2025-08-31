@@ -62,6 +62,8 @@
     jq
     tree
     powershell
+    sshfs
+    kubernetes-helm
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage

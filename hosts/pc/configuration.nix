@@ -16,12 +16,14 @@
     # ../../modules/nixos/laptop.nix
     ../../modules/nixos/desktop.nix
     ../../modules/nixos/game.nix
-    # ../../modules/nixos/ollama.nix
+    ../../modules/nixos/ollama.nix
     inputs.home-manager.nixosModules.default
+    ../../modules/nixos/secure-boot.nix
   ];
 
   virtualisation.docker.enable = true;
   users.extraUsers."${username}".extraGroups = [ "docker" ];
+  virtualisation.vmware.host.enable = true;
 
   # boot.kernelParams = [ "acpi_backlight=none" ];
   # boot.kernelParams = [ "amdgpu.backlight=0" "acpi_backlight=none" ];
@@ -62,6 +64,8 @@
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+
+  time.hardwareClockInLocalTime = true;
 
   # Configure keymap in X11
   services.xserver = {

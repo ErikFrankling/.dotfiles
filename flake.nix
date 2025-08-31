@@ -2,6 +2,7 @@
   description = "Nixos config flake";
 
   inputs = {
+    # nixpkgs.url = "github:nixos/nixpkgs/master";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     # nixpkgs.url = "github:nixos/nixpkgs?rev=77b584d61ff80b4cef9245829a6f1dfad5afdfa3";
     # nixpkgs.url = "git+ssh://git@github.com/nixos/nixpkgs?ref=nixos-unstable&shallow=1";
@@ -20,6 +21,8 @@
     #   # ref = "nixos-unstable";
     # };
 
+    nixpkgs_master.url = "github:nixos/nixpkgs/master";
+
     nixvim.url = "github:nix-community/nixvim";
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -28,8 +31,8 @@
     # home-manager.url = "github:nix-community/home-manager/release-25.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
-    hyprland.url = "github:hyprwm/Hyprland";
-    hyprland.inputs.nixpkgs.follows = "nixpkgs";
+    # hyprland.url = "github:hyprwm/Hyprland";
+    # hyprland.inputs.nixpkgs.follows = "nixpkgs";
 
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -57,6 +60,9 @@
     ericsson-tools.url = "git+ssh://git@github.com/ErikFrankling/ericsson-tools.git";
     # ericsson-tools.url = "git+https://github.com/ErikFrankling/ericsson-tools.git";
     ericsson-tools.inputs.nixpkgs.follows = "nixpkgs";
+
+    lanzaboote.url = "github:nix-community/lanzaboote/v0.4.2";
+    lanzaboote.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -69,6 +75,7 @@
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
+      pkgsMaster = inputs.nixpkgs_master.legacyPackages.${system};
     in
     {
       nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" "wsl" ] (
@@ -77,11 +84,19 @@
           username = "erikf";
         in
         nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs hostName username; };
+          specialArgs = {
+            inherit
+              inputs
+              hostName
+              username
+              pkgsMaster
+              ;
+          };
           modules = [
             ./hosts/${hostName}/configuration.nix
             # inputs.sops-nix.nixosModules.sops
-          ] ++ (if hostName == "wsl" then [ inputs.nixos-wsl.nixosModules.default ] else [ ]);
+          ]
+          ++ (if hostName == "wsl" then [ inputs.nixos-wsl.nixosModules.default ] else [ ]);
         }
       );
 

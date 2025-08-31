@@ -15,10 +15,11 @@
     spotifywm
     # spotify-qt
     pavucontrol
-    # google-chrome
+    google-chrome
     # gparted
     # virtualbox
     syncthingtray-minimal
+    obsidian
   ];
 
   services.syncthing.tray.enable = true;
