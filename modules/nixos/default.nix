@@ -52,15 +52,10 @@
   networking.networkmanager.enable = true;
   # networking.networkmanager.wifi.backend = "iwd";
 
-  programs.wireshark.enable = true;
-
-  # users.extraUsers.${username}.extraGroups = [ "wireshark" ];
-
   nixpkgs.config.allowBroken = true;
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    wireshark
     wl-clipboard
     wl-clipboard-x11
     # networkmanager-openvpn
