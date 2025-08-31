@@ -58,7 +58,7 @@
 
         extraConfig = ''
           exec-once = hyprctl output create headless
-          exec-once = hyprctl keyword monitor HEADLESS-1,1920x1080@60,0x0,1
+          # exec-once = hyprctl keyword monitor HEADLESS-1,1920x1080@60,0x0,1
 
 
           # exec = pkill eww
@@ -197,6 +197,7 @@
               ''$mod, P, exec, hyprctl --batch "dispatch setfloating; dispatch pin"''
               # "$mod, B, fullscreenstate 1"
               "$mod, R, fullscreen"
+              # Screeenshot
               '', Print, exec, grim -g "$(slurp)" - | swappy -f -''
               # ", Print, exec, grimblast copy area"
 
@@ -255,14 +256,13 @@
             ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
           ];
 
-          workspace =
-            [
-              "w[tv1], gapsout:0, gapsin:0"
-              "f[1], gapsout:0, gapsin:0"
-            ]
-            ++ (map (
-              w: "${toString w.ID}, monitor:${w.monitor}${if w.default then " default:true" else ""}"
-            ) cfg.workspaces);
+          workspace = [
+            "w[tv1], gapsout:0, gapsin:0"
+            "f[1], gapsout:0, gapsin:0"
+          ]
+          ++ (map (
+            w: "${toString w.ID}, monitor:${w.monitor}${if w.default then " default:true" else ""}"
+          ) cfg.workspaces);
 
           "$pip_size" = "40";
           windowrulev2 = [
