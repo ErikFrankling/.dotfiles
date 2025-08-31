@@ -37,80 +37,91 @@
     ];
   };
 
-  hyprland = {
-    monitors = [
-      {
-        name = "DP-1";
-        width = 3840;
-        height = 2160;
-        x = 1920;
-        scale = "2";
-      }
-      {
-        name = "DP-2";
-        width = 3840;
-        height = 2160;
-        refreshRate = 60;
-        x = 0;
-        scale = "2";
-      }
-    ];
-    initWindows = [
-      {
-        exec = "kitty";
-        monitor = "DP-1";
-        workspace = 1;
-      }
-      {
-        exec = "kitty";
-        monitor = "DP-1";
-        workspace = 2;
-      }
-      {
-        exec = "firefox";
-        monitor = "DP-1";
-        workspace = 3;
-      }
-      {
-        exec = "obsidian";
-        monitor = "DP-2";
-        workspace = 9;
-      }
-      {
-        exec = "webcord";
-        monitor = "DP-2";
-        workspace = 10;
-      }
-      {
-        exec = "spotify";
-        monitor = "DP-2";
-        workspace = 10;
-      }
-    ];
+  hyprland =
+    let
+      monitor_1 = "DP-3";
+      monitor_2 = "HDMI-A-1";
+    in
+    {
+      monitors = [
+        {
+          name = monitor_1;
+          width = 3840;
+          height = 2160;
+          # width = 2560;
+          # height = 1440;
+          refreshRate = 60;
+          x = 1920;
+          # x = 2560;
+          scale = "2";
+        }
+        {
+          name = monitor_2;
+          width = 3840;
+          height = 2160;
+          # width = 2560;
+          # height = 1440;
+          refreshRate = 60;
+          x = 0;
+          scale = "2";
+        }
+      ];
+      initWindows = [
+        {
+          exec = "kitty";
+          monitor = monitor_1;
+          workspace = 1;
+        }
+        {
+          exec = "kitty";
+          monitor = monitor_1;
+          workspace = 2;
+        }
+        {
+          exec = "firefox";
+          monitor = monitor_1;
+          workspace = 3;
+        }
+        {
+          exec = "obsidian";
+          monitor = monitor_2;
+          workspace = 9;
+        }
+        {
+          exec = "webcord";
+          monitor = monitor_2;
+          workspace = 10;
+        }
+        {
+          exec = "spotify";
+          monitor = monitor_2;
+          workspace = 10;
+        }
+      ];
 
-    workspaces = [
-      {
-        ID = 1;
-        monitor = "DP-1";
-        default = true;
-      }
-      {
-        ID = 2;
-        monitor = "DP-1";
-      }
-      {
-        ID = 3;
-        monitor = "DP-1";
-      }
-      {
-        ID = 9;
-        monitor = "DP-2";
-      }
-      {
-        ID = 10;
-        monitor = "DP-2";
-        # default = true;
-      }
-    ];
-  };
+      workspaces = [
+        {
+          ID = 1;
+          monitor = monitor_1;
+          default = true;
+        }
+        {
+          ID = 2;
+          monitor = monitor_1;
+        }
+        {
+          ID = 3;
+          monitor = monitor_1;
+        }
+        {
+          ID = 9;
+          monitor = monitor_2;
+        }
+        {
+          ID = 10;
+          monitor = monitor_2;
+          # default = true;
+        }
+      ];
+    };
 }
