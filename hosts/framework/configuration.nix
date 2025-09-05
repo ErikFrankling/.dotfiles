@@ -20,21 +20,21 @@
     inputs.fw-fanctrl.nixosModules.default
   ];
 
-  boot.kernelPackages = 
-    let
-      version = "6.12.31";
-      kernel = pkgs.linuxKernel.kernels.linux_6_12.override {
-        argsOverride = {
-          inherit version;
-          src = pkgs.fetchurl {
-            url = "mirror://kernel/linux/kernel/v6.x/linux-${version}.tar.xz";
-            hash = "sha256-sExbPl324KpenNHv5Sf6yZ+d05pDuX8Tsi+MqT5SS6c="; # to be filled in
-          };
-          modDirVersion = null; # https://github.com/NixOS/nixpkgs/blob/007e91615b8127deb57ba0b08e12542abaea1c3f/pkgs/os-specific/linux/kernel/generic.nix#L44
-        };
-      };
-    in
-    pkgs.linuxKernel.packagesFor kernel;
+  # boot.kernelPackages =
+  #   let
+  #     version = "6.12.31";
+  #     kernel = pkgs.linuxKernel.kernels.linux_6_12.override {
+  #       argsOverride = {
+  #         inherit version;
+  #         src = pkgs.fetchurl {
+  #           url = "mirror://kernel/linux/kernel/v6.x/linux-${version}.tar.xz";
+  #           hash = "sha256-sExbPl324KpenNHv5Sf6yZ+d05pDuX8Tsi+MqT5SS6c="; # to be filled in
+  #         };
+  #         modDirVersion = null; # https://github.com/NixOS/nixpkgs/blob/007e91615b8127deb57ba0b08e12542abaea1c3f/pkgs/os-specific/linux/kernel/generic.nix#L44
+  #       };
+  #     };
+  #   in
+  #   pkgs.linuxKernel.packagesFor kernel;
 
   sops.defaultSopsFile = ./secrets.yaml;
   sops.defaultSopsFormat = "yaml";
