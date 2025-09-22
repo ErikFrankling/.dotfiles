@@ -1002,11 +1002,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1756200002,
-        "narHash": "sha256-CruYm1Flefp4dhw6wDDJnxbdqcvo5+iixFmWMghPhuE=",
+        "lastModified": 1757987124,
+        "narHash": "sha256-Arrx6LrvC7PbqnTW3hVKb7QQ8L1iBAUUDUctVcUQutM=",
         "ref": "refs/heads/main",
-        "rev": "de98520f63475899f8b2f8d641d786fbb97f5e2a",
-        "revCount": 48,
+        "rev": "996f099e7ee6f31f81bd0cfab7506a7d09577795",
+        "revCount": 52,
         "type": "git",
         "url": "ssh://git@github.com/ErikFrankling/nvim.git"
       },

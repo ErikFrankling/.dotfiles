@@ -167,6 +167,12 @@
             };
           };
 
+          # device = builtins.trace "${builtins.toString cfg.keyboards}" map (k: {
+          device = lib.debug.traceSeq cfg.keyboards map (k: {
+            name = k.name;
+            kb_layout = k.kb_layout;
+          }) (cfg.keyboards);
+
           "$mod" = "SUPER";
           bind =
             let
@@ -187,7 +193,7 @@
               };
             in
             [
-              "$mod, O, Exec, hyprctl switchxkblayout at-translated-set-2-keyboard next"
+              # "$mod, O, Exec, hyprctl switchxkblayout at-translated-set-2-keyboard next"
               "$mod, Return, Exec, ${terminal}"
               "$mod, D, Exec, ${menu}"
               "$mod, Q, killactive"
@@ -211,6 +217,11 @@
               "$mod, Y, tagwindow, -rtr_right title:(Rusty's Retirement)"
               "$mod, Y, exec, hyprctl monitor DP-1,addreserved,0,296,0,0"
             ]
+            ++
+              # keyboard layout switching
+              (map (k: "$mod, O, Exec, hyprctl switchxkblayout ${k.name} next") (
+                builtins.filter (k: k.multilang) cfg.keyboards
+              ))
             ++
               # change workspace
               (map (n: "$mod,${n},workspace,name:${n}") workspaces)
