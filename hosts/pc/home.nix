@@ -19,23 +19,23 @@
     # WLR_NO_HARDWARE_CURSORS="1";
   };
 
-  wayland.windowManager.hyprland.settings = {
-    # mouse = {
-    #   sensitivity = "0.2";
-    #   scroll_factor = "0.5";
-    # };
-
-    device = [
-      {
-        name = "tshort-dactyl-manuform-(5x6)";
-        kb_layout = "us";
-      }
-      {
-        name = "logitech-g512-carbon-tactile";
-        kb_layout = "se";
-      }
-    ];
-  };
+  # wayland.windowManager.hyprland.settings = {
+  #   # mouse = {
+  #   #   sensitivity = "0.2";
+  #   #   scroll_factor = "0.5";
+  #   # };
+  #
+  #   device = [
+  #     {
+  #       name = "tshort-dactyl-manuform-(5x6)";
+  #       kb_layout = "us";
+  #     }
+  #     {
+  #       name = "logitech-g512-carbon-tactile";
+  #       kb_layout = "se";
+  #     }
+  #   ];
+  # };
 
   hyprland =
     let
@@ -43,6 +43,18 @@
       monitor_2 = "HDMI-A-1";
     in
     {
+      keyboards = [
+        {
+          name = "erik-frankling-dactyl_manuform_5x6_64";
+          kb_layout = "us, se";
+          multilang = true;
+        }
+        {
+          name = "logitech-g512-carbon-tactile";
+          kb_layout = "se";
+          multilang = false;
+        }
+      ];
       monitors = [
         {
           name = monitor_1;
