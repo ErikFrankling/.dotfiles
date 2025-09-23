@@ -5,6 +5,7 @@
   hostName,
   lib,
   username,
+  pkgsMaster,
   ...
 }:
 
@@ -13,6 +14,7 @@
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ../../modules/nixos
+    ../../modules/nixos/wsl-vpnkit.nix
     # ../../modules/nixos/openvpn.nix
     #../../modules/nixos/laptop.nix
     # ../../modules/nixos/desktop.nix
@@ -23,8 +25,15 @@
   wsl = {
     enable = true;
     defaultUser = "${username}";
-    startMenuLaunchers = true;
+    # startMenuLaunchers = true;
   };
+
+  wsl-vpnkit = {
+    autoVPN = true;
+    checkURL = "172.17.22.200";
+  };
+
+  nix.settings.auto-optimise-store = true;
 
   # Override common settings that don't work well in WSL
   services = {
@@ -91,7 +100,14 @@
 
   home-manager = {
     # also pass inputs to home-manager modules
-    extraSpecialArgs = { inherit inputs hostName username; };
+    extraSpecialArgs = {
+      inherit
+        inputs
+        hostName
+        username
+        pkgsMaster
+        ;
+    };
     users = {
       "${username}" = import ./home.nix;
     };

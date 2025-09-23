@@ -7,6 +7,7 @@
     ./hyprland.nix
     # ./projects/matlab.nix
     ./obs.nix
+    ./firefox.nix
   ];
 
   environment.systemPackages = with pkgs; [

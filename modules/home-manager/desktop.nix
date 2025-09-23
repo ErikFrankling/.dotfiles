@@ -1,8 +1,8 @@
-{ pkgs, ... }:
+{ pkgs, pkgsMaster, ... }:
 
 {
   imports = [
-    ./firefox.nix
+    # ./firefox.nix
     ./waybar
     ./hyprland
     # ./eww
@@ -12,7 +12,7 @@
 
   home.packages = with pkgs; [
     webcord
-    spotifywm
+    pkgsMaster.spotifywm
     # spotify-qt
     pavucontrol
     google-chrome
