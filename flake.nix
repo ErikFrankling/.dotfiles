@@ -75,7 +75,10 @@
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
-      pkgsMaster = inputs.nixpkgs_master.legacyPackages.${system};
+      pkgsMaster = import inputs.nixpkgs_master {
+        inherit system;
+        config.allowUnfree = true;
+      };
     in
     {
       nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" "wsl" ] (

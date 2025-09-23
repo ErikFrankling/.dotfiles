@@ -4,6 +4,7 @@
   inputs,
   hostName,
   username,
+  pkgsMaster,
   ...
 }:
 
@@ -80,7 +81,14 @@
 
   home-manager = {
     # also pass inputs to home-manager modules
-    extraSpecialArgs = { inherit inputs hostName username; };
+    extraSpecialArgs = {
+      inherit
+        inputs
+        hostName
+        username
+        pkgsMaster
+        ;
+    };
     users = {
       "${username}" = import ./home.nix;
     };
