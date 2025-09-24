@@ -368,12 +368,12 @@
             # no_gaps_when_only = 1;
           };
 
-          gestures = {
-            # See https://wiki.hyprland.org/Configuring/Variables/ for more
-            workspace_swipe = true;
-            workspace_swipe_distance = 150;
-            workspace_swipe_use_r = true;
-          };
+          # gestures = {
+          #   # See https://wiki.hyprland.org/Configuring/Variables/ for more
+          #   workspace_swipe = true;
+          #   workspace_swipe_distance = 150;
+          #   workspace_swipe_use_r = true;
+          # };
 
           misc = {
             # See https://wiki.hyprland.org/Configuring/Variables/ for more

@@ -27,7 +27,7 @@
     extraFlags = [
       # "-gui-user=erikf"
       # "-gui-password=$2a$10$37qLqbmVQzZdNUkYUeVOgeRuMKtXlJSQRwBouCvJvsXRoi53Ggc3."
-      "-no-default-folder" # Don't create default ~/Sync folder
+      # "--no-default-folder" # Don't create default ~/Sync folder
     ];
 
     settings = {
