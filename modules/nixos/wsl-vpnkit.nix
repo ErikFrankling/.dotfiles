@@ -72,7 +72,7 @@
             while :
             do
               main
-              sleep 5
+              sleep 30
             done
           '';
 
