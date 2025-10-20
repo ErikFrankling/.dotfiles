@@ -1,22 +1,24 @@
-{ pkgs, pkgsMaster, ... }:
+{ pkgs, otherPkgs, ... }:
 
 {
   environment.systemPackages = with pkgs; [
     nvtopPackages.amd
   ];
 
-  services.open-webui = {
-    enable = true;
-    stateDir = "/var/lib/open-webui";
-    environment = {
-      # Disable authentication
-      WEBUI_AUTH = "False";
-      ENABLE_PERSISTENT_CONFIG = "False"; # force env vars to always win
-    };
-  };
+  # services.open-webui = {
+  #   enable = true;
+  #   stateDir = "/var/lib/open-webui";
+  #   environment = {
+  #     # Disable authentication
+  #     WEBUI_AUTH = "False";
+  #     ENABLE_PERSISTENT_CONFIG = "False"; # force env vars to always win
+  #   };
+  # };
 
   services.ollama = {
-    package = pkgsMaster.ollama-rocm;
+    # package = otherPkgs.pkgsMaster.ollama-rocm;
+    package = otherPkgs.pkgsStable.ollama-rocm;
+    # package = pkgs.ollama-rocm;
     enable = true;
     acceleration = "rocm";
 

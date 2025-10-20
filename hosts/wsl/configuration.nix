@@ -5,7 +5,7 @@
   hostName,
   lib,
   username,
-  pkgsMaster,
+  otherPkgs,
   ...
 }:
 
@@ -123,7 +123,7 @@
         inputs
         hostName
         username
-        pkgsMaster
+        otherPkgs
         ;
     };
     users = {

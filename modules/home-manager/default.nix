@@ -4,7 +4,7 @@
   lib,
   username,
   inputs,
-  pkgsMaster,
+  otherPkgs,
   ...
 }:
 

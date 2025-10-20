@@ -1,4 +1,4 @@
-{ pkgs, pkgsMaster, ... }:
+{ pkgs, otherPkgs, ... }:
 
 {
   imports = [
@@ -12,7 +12,7 @@
 
   home.packages = with pkgs; [
     webcord
-    pkgsMaster.spotifywm
+    otherPkgs.pkgsMaster.spotifywm
     # spotify-qt
     pavucontrol
     google-chrome
