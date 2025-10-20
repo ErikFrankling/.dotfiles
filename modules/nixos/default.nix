@@ -17,6 +17,7 @@
     # ./nm.nix
     # ./projects/dtek.nix
     ./syncthing.nix
+    ./ibus.nix
   ];
 
   nix.settings.download-buffer-size = 524288000;
