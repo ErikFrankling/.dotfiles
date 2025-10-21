@@ -50,6 +50,20 @@ in
         # Check about:support for extension/add-on ID strings.
         # Valid strings for installation_mode are "allowed", "blocked",
         # "force_installed" and "normal_installed".
+        # the url should match the url when searching for the addon on like this https://addons.mozilla.org/en-US/firefox/addon/<addon-name>/
+
+        # extracted from about:support:
+        # AI Grammar Checker & Paraphraser – LanguageTool	extension	9.0.1	true	app-profile	languagetool-webextension@languagetool.org
+        # DeArrow	extension	2.1.10	true	app-profile	deArrow@ajay.app
+        # React Developer Tools	extension	6.1.1	true	app-profile	@react-devtools
+        # Read Aloud: A Text to Speech Voice Reader	extension	1.80.0	true	app-profile	{ddc62400-f22d-4dd3-8b4a-05837de53c2e}
+        # Return YouTube Dislike	extension	3.0.0.18	true	app-profile	{762f9885-5a13-4abd-9c77-433dcd38b8fd}
+        # SponsorBlock for YouTube - Skip Sponsorships	extension	6.0	true	app-profile	sponsorBlocker@ajay.app
+        # To Google Translate	extension	4.2.0	true	app-profile	jid1-93WyvpgvxzGATw@jetpack
+        # Unhook - Remove YouTube Recommended & Shorts	extension	1.6.7	true	app-profile	myallychou@gmail.com
+        # User-Agent Switcher and Manager	extension	0.6.5.1	true	app-profile	{a6c4a591-f1b2-4f03-b3ff-767e5bedf4e7}
+        # Youtube-shorts block	extension	1.5.3	true	app-profile	{34daeb50-c2d2-4f14-886a-7160b24d66a4}
+        # Block Site	extension	0.5.6	false	app-profile	{54e2eb33-18eb-46ad-a4e4-1329c29f6e17}
         ExtensionSettings = {
           # "*".installation_mode = "blocked"; # blocks all addons except the ones specified below
           # uBlock Origin:
@@ -62,6 +76,67 @@ in
             install_url = "https://addons.mozilla.org/firefox/downloads/latest/privacy-badger17/latest.xpi";
             installation_mode = "force_installed";
           };
+          # LastPass:
+          "support@lastpass.com" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/lastpass-password-manager/latest.xpi";
+            installation_mode = "force_installed";
+          };
+          # LanguageTool:
+          "languagetool-webextension@languagetool.org" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/languagetool/latest.xpi";
+            installation_mode = "force_installed";
+          };
+          # DeArrow:
+          "deArrow@ajay.app" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/dearrow/latest.xpi";
+            installation_mode = "force_installed";
+          };
+          # React Developer Tools:
+          "@react-devtools" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/react-devtools/latest.xpi";
+            installation_mode = "force_installed";
+          };
+          # Read Aloud:
+          "{ddc62400-f22d-4dd3-8b4a-05837de53c2e}" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/read-aloud/latest.xpi";
+            installation_mode = "force_installed";
+          };
+          # Return YouTube Dislike:
+          "{762f9885-5a13-4abd-9c77-433dcd38b8fd}" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/return-youtube-dislikes/latest.xpi";
+            installation_mode = "force_installed";
+          };
+          # SponsorBlock:
+          "sponsorBlocker@ajay.app" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/sponsorblock/latest.xpi";
+            installation_mode = "force_installed";
+          };
+          # To Google Translate:
+          "jid1-93WyvpgvxzGATw@jetpack" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/to-google-translate/latest.xpi";
+            installation_mode = "force_installed";
+          };
+          # Unhook:
+          "myallychou@gmail.com" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/youtube-recommended-videos/latest.xpi";
+            installation_mode = "force_installed";
+          };
+          # User-Agent Switcher:
+          "{a6c4a591-f1b2-4f03-b3ff-767e5bedf4e7}" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/user-agent-string-switcher/latest.xpi";
+            installation_mode = "force_installed";
+          };
+          # Youtube-shorts block:
+          "{34daeb50-c2d2-4f14-886a-7160b24d66a4}" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/youtube-shorts-block/latest.xpi";
+            installation_mode = "force_installed";
+          };
+          # Block Site:
+          "{54e2eb33-18eb-46ad-a4e4-1329c29f6e17}" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/block-website/latest.xpi";
+            installation_mode = "force_installed";
+          };
+
           # 1Password:
           # "{d634138d-c276-4fc8-924b-40a0ea21d284}" = {
           #   install_url = "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager/latest.xpi";

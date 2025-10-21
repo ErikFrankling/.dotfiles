@@ -23,6 +23,8 @@
 
     nixpkgs_master.url = "github:nixos/nixpkgs/master";
 
+    nixpkgs_stable.url = "github:nixos/nixpkgs/release-25.05";
+
     nixvim.url = "github:nix-community/nixvim";
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -79,6 +81,16 @@
         inherit system;
         config.allowUnfree = true;
       };
+      pkgsStable = import inputs.nixpkgs_stable {
+        inherit system;
+        config.allowUnfree = true;
+      };
+      otherPkgs = {
+        inherit
+          pkgsMaster
+          pkgsStable
+          ;
+      };
     in
     {
       nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" "wsl" ] (
@@ -92,7 +104,7 @@
               inputs
               hostName
               username
-              pkgsMaster
+              otherPkgs
               ;
           };
           modules = [
