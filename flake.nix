@@ -48,8 +48,8 @@
     nix-matlab.url = "gitlab:doronbehar/nix-matlab";
     nix-matlab.inputs.nixpkgs.follows = "nixpkgs";
 
-    # nvim.url = "github:ErikFrankling/nvim";
-    nvim.url = "git+ssh://git@github.com/ErikFrankling/nvim.git";
+    nvim.url = "github:ErikFrankling/nvim";
+    # nvim.url = "git+ssh://git@github.com/ErikFrankling/nvim.git";
     nvim.inputs.nixpkgs.follows = "nixpkgs";
 
     ags.url = "github:Aylur/ags";
@@ -59,9 +59,9 @@
     nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
 
     # ericsson-tools.url = "git+file:/home/erikf/work/ericsson-tools/";
-    ericsson-tools.url = "git+ssh://git@github.com/ErikFrankling/ericsson-tools.git";
+    # ericsson-tools.url = "git+ssh://git@github.com/ErikFrankling/ericsson-tools.git";
     # ericsson-tools.url = "git+https://github.com/ErikFrankling/ericsson-tools.git";
-    ericsson-tools.inputs.nixpkgs.follows = "nixpkgs";
+    # ericsson-tools.inputs.nixpkgs.follows = "nixpkgs";
 
     lanzaboote.url = "github:nix-community/lanzaboote/v0.4.2";
     lanzaboote.inputs.nixpkgs.follows = "nixpkgs";

@@ -15,12 +15,12 @@
     #     # Your own overlays...
     #   }
     # )
-    inputs.ericsson-tools.overlays.default
+    # inputs.ericsson-tools.overlays.default
   ];
 
   home.packages = with pkgs; [
-    ericsson-rcli
-    cloudflared
+    # ericsson-rcli
+    # cloudflared
     waypipe
     rustdesk
     powershell

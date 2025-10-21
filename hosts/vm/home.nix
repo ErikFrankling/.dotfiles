@@ -17,14 +17,14 @@
     #     # Your own overlays...
     #   }
     # )
-    inputs.ericsson-tools.overlays.default
+    # inputs.ericsson-tools.overlays.default
   ];
 
   home.packages = with pkgs; [
     alacritty
     foot
-    ericsson-rcli
-    cloudflared
+    # ericsson-rcli
+    # cloudflared
   ];
 
   # home.sessionVariables = {

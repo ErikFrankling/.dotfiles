@@ -57,7 +57,7 @@
         xwayland.enable = true;
 
         extraConfig = ''
-          exec-once = hyprctl output create headless
+          # exec-once = hyprctl output create headless
           # exec-once = hyprctl keyword monitor HEADLESS-1,1920x1080@60,0x0,1
 
 

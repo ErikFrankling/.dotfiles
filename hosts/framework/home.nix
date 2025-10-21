@@ -8,13 +8,27 @@
   ];
 
   wayland.windowManager.hyprland.settings = {
-    device = [{
-      name = "pixa3854:00-093a:0274-touchpad";
-      sensitivity = "0.2";
-    }];
+    device = [
+      {
+        name = "pixa3854:00-093a:0274-touchpad";
+        sensitivity = "0.2";
+      }
+    ];
   };
 
   hyprland = {
+    keyboards = [
+      {
+        name = "erik-frankling-dactyl_manuform_5x6_64";
+        kb_layout = "us, se";
+        multilang = true;
+      }
+      {
+        name = "at-translated-set-2-keyboard";
+        kb_layout = "us, se";
+        multilang = true;
+      }
+    ];
     monitors = [
       {
         name = "eDP-1";
