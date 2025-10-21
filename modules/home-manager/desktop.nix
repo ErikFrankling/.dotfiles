@@ -8,6 +8,7 @@
     # ./eww
     ./ags
     # ./thunderbird.nix
+    ./zen.nix
   ];
 
   home.packages = with pkgs; [
