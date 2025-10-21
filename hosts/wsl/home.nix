@@ -23,12 +23,12 @@
       #     # Your own overlays...
       #   }
       # )
-      inputs.ericsson-tools.overlays.default
+      # inputs.ericsson-tools.overlays.default
     ];
 
     home.packages = with pkgs; [
-      ericsson-rcli
-      cloudflared
+      # ericsson-rcli
+      # cloudflared
     ];
     # home.packages = [
     #   inputs.ericsson-tools.packages.${pkgs.system}.rcli

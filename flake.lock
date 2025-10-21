@@ -127,27 +127,6 @@
         "type": "github"
       }
     },
-    "ericsson-tools": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "utils": "utils"
-      },
-      "locked": {
-        "lastModified": 1750689642,
-        "narHash": "sha256-Un+AbgZzvsI5HyPhi8kgo0JtS19Qq/KVY2Y920vwF8o=",
-        "ref": "refs/heads/main",
-        "rev": "d23ac9f6c2e17bb1170d7db721aeefe1427d7534",
-        "revCount": 4,
-        "type": "git",
-        "url": "ssh://git@github.com/ErikFrankling/ericsson-tools.git"
-      },
-      "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/ErikFrankling/ericsson-tools.git"
-      }
-    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -290,7 +269,7 @@
     },
     "flake-utils": {
       "inputs": {
-        "systems": "systems_2"
+        "systems": "systems"
       },
       "locked": {
         "lastModified": 1731533236,
@@ -314,11 +293,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1743661097,
-        "narHash": "sha256-ZSx9BdbW+/4k3Pmecl7ZhpHXnpreuAgYxrRaJC8VmuU=",
+        "lastModified": 1758797049,
+        "narHash": "sha256-+7U2+A7saK1M6TWYJTtey4IX49SMOPlxpLnEBxJ7TtM=",
         "owner": "TamtamHero",
         "repo": "fw-fanctrl",
-        "rev": "473575cd1753cb4ec429ea085975e48d32970894",
+        "rev": "310c98e64f7a824454727e7608c68a02123e251b",
         "type": "github"
       },
       "original": {
@@ -487,7 +466,7 @@
         "hyprwayland-scanner": "hyprwayland-scanner",
         "nixpkgs": "nixpkgs_4",
         "pre-commit-hooks": "pre-commit-hooks",
-        "systems": "systems_4",
+        "systems": "systems_3",
         "xdph": "xdph"
       },
       "locked": {
@@ -954,7 +933,7 @@
           "nixpkgs"
         ],
         "nuschtosSearch": "nuschtosSearch",
-        "systems": "systems_3"
+        "systems": "systems_2"
       },
       "locked": {
         "lastModified": 1758551108,
@@ -1002,17 +981,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1757987124,
-        "narHash": "sha256-Arrx6LrvC7PbqnTW3hVKb7QQ8L1iBAUUDUctVcUQutM=",
-        "ref": "refs/heads/main",
-        "rev": "996f099e7ee6f31f81bd0cfab7506a7d09577795",
-        "revCount": 52,
-        "type": "git",
-        "url": "ssh://git@github.com/ErikFrankling/nvim.git"
+        "lastModified": 1759962470,
+        "narHash": "sha256-vwk6jwl7oavfhG8lyWqhyWjqhsrIVl344CNxI2s0Bl0=",
+        "owner": "ErikFrankling",
+        "repo": "nvim",
+        "rev": "42cef871f48563ee92f4b21f515b76a81fa11878",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/ErikFrankling/nvim.git"
+        "owner": "ErikFrankling",
+        "repo": "nvim",
+        "type": "github"
       }
     },
     "pre-commit-hooks": {
@@ -1069,7 +1048,6 @@
     "root": {
       "inputs": {
         "ags": "ags",
-        "ericsson-tools": "ericsson-tools",
         "fw-fanctrl": "fw-fanctrl",
         "home-manager": "home-manager",
         "lanzaboote": "lanzaboote",
@@ -1156,21 +1134,6 @@
     },
     "systems_3": {
       "locked": {
-        "lastModified": 1681028828,
-        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
-        "owner": "nix-systems",
-        "repo": "default",
-        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-systems",
-        "repo": "default",
-        "type": "github"
-      }
-    },
-    "systems_4": {
-      "locked": {
         "lastModified": 1689347949,
         "narHash": "sha256-12tWmuL2zgBgZkdoB6qXZsgJEH9LR3oUgpaQq2RbI80=",
         "owner": "nix-systems",
@@ -1199,24 +1162,6 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
-        "type": "github"
-      }
-    },
-    "utils": {
-      "inputs": {
-        "systems": "systems"
-      },
-      "locked": {
-        "lastModified": 1731533236,
-        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "flake-utils",
         "type": "github"
       }
     },
