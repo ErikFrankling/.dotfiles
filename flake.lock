@@ -390,6 +390,27 @@
         "type": "github"
       }
     },
+    "home-manager_3": {
+      "inputs": {
+        "nixpkgs": [
+          "zen-browser",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1752603129,
+        "narHash": "sha256-S+wmHhwNQ5Ru689L2Gu8n1OD6s9eU9n9mD827JNR+kw=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "e8c19a3cec2814c754f031ab3ae7316b64da085b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "type": "github"
+      }
+    },
     "hyprcursor": {
       "inputs": {
         "hyprlang": [
@@ -997,11 +1018,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1759962470,
-        "narHash": "sha256-vwk6jwl7oavfhG8lyWqhyWjqhsrIVl344CNxI2s0Bl0=",
+        "lastModified": 1761079681,
+        "narHash": "sha256-tl0VjoCy9ksTCW8X+oB4YYGAEL9ywqQBdeqbmuQBfEM=",
         "owner": "ErikFrankling",
         "repo": "nvim",
-        "rev": "42cef871f48563ee92f4b21f515b76a81fa11878",
+        "rev": "0472530c29910700bc8f4c653fe4e5c5d7f9dd19",
         "type": "github"
       },
       "original": {
@@ -1075,7 +1096,8 @@
         "nixvim": "nixvim",
         "nvim": "nvim",
         "sops-nix": "sops-nix",
-        "xremap-flake": "xremap-flake"
+        "xremap-flake": "xremap-flake",
+        "zen-browser": "zen-browser"
       }
     },
     "rust-overlay": {
@@ -1270,6 +1292,27 @@
       "original": {
         "owner": "xremap",
         "repo": "nix-flake",
+        "type": "github"
+      }
+    },
+    "zen-browser": {
+      "inputs": {
+        "home-manager": "home-manager_3",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1761020606,
+        "narHash": "sha256-XdDpTJHjFqZJ3ss6xzTWYyi3PEObX2fs+kW0Wg/rNDk=",
+        "owner": "0xc000022070",
+        "repo": "zen-browser-flake",
+        "rev": "637cb6167da4dbf8ef7f5a50e69933c4f9796095",
+        "type": "github"
+      },
+      "original": {
+        "owner": "0xc000022070",
+        "repo": "zen-browser-flake",
         "type": "github"
       }
     }
