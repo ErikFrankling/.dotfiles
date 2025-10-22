@@ -65,7 +65,8 @@
           # exec = eww daemon
           # exec = eww open bar
           # exec = pkill waybar
-          exec-once = ags run
+          # exec-once = ags run
+          exec-once = my-shell
           exec-once = waybar --config .config/waybar/cofig.jsonc
           exec-once = nm-applet
           exec-once = blueman-applet
@@ -98,8 +99,8 @@
             '') (cfg.initWindows))
           )}
 
-          exec-once = hyprctl workspace DP-1~1
-          exec-once = hyprctl workspace HDMI-1~10
+          # exec-once = hyprctl workspace DP-1~1
+          # exec-once = hyprctl workspace HDMI-1~10
 
 
           # Rusty Retirement Game Overlay

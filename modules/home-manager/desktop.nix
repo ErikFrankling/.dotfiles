@@ -1,4 +1,10 @@
-{ pkgs, otherPkgs, ... }:
+{
+  pkgs,
+  otherPkgs,
+  inputs,
+  # system,
+  ...
+}:
 
 {
   imports = [
@@ -6,7 +12,7 @@
     ./waybar
     ./hyprland
     # ./eww
-    ./ags
+    # ./ags
     # ./thunderbird.nix
     ./zen.nix
   ];
@@ -21,6 +27,8 @@
     # virtualbox
     syncthingtray-minimal
     obsidian
+    # (inputs.ags-shell.packages.${system}.my-shell)
+    inputs.ags-shell.packages."x86_64-linux".default
   ];
 
   services.syncthing.tray.enable = true;
