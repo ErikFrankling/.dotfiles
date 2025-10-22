@@ -72,6 +72,10 @@
       # to have it up-to-date or simply don't specify the nixpkgs input
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    ags-shell.url = "github:ErikFrankling/AGS";
+    # ags-shell.url = "/home/erikf/projects/personal/AGS";
+    # ags-shell.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -112,6 +116,7 @@
               hostName
               username
               otherPkgs
+              # system
               ;
           };
           modules = [
