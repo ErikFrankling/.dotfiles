@@ -18,6 +18,7 @@
     # ./projects/dtek.nix
     ./syncthing.nix
     ./ibus.nix
+    ./krb5.nix
   ];
 
   nix.settings.download-buffer-size = 524288000;
