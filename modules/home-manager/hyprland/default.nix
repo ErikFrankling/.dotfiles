@@ -169,7 +169,7 @@
           };
 
           # device = builtins.trace "${builtins.toString cfg.keyboards}" map (k: {
-          device = lib.debug.traceSeq cfg.keyboards map (k: {
+          device = map (k: {
             name = k.name;
             kb_layout = k.kb_layout;
           }) (cfg.keyboards);
