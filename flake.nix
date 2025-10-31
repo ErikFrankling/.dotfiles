@@ -42,9 +42,6 @@
     xremap-flake.url = "github:xremap/nix-flake";
     xremap-flake.inputs.nixpkgs.follows = "nixpkgs";
 
-    fw-fanctrl.url = "github:TamtamHero/fw-fanctrl/packaging/nix";
-    fw-fanctrl.inputs.nixpkgs.follows = "nixpkgs";
-
     nix-matlab.url = "gitlab:doronbehar/nix-matlab";
     nix-matlab.inputs.nixpkgs.follows = "nixpkgs";
 
