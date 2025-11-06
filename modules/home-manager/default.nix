@@ -91,11 +91,11 @@
     git = {
       enable = true;
       package = pkgs.gitFull;
-
-      userName = "Erik Frankling";
-      userEmail = "erik.frankling@frankling.se";
-
-      extraConfig = {
+      settings = {
+        user = {
+          email = "Erik Frankling";
+          name = "erik.frankling@frankling.se";
+        };
         pull.rebase = false;
         credential.helper = "libsecret";
         init.defaultBranch = "main";
