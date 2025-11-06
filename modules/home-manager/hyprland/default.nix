@@ -34,6 +34,7 @@
         blueman
         spotify-tray
         wmname
+        ibus
       ];
 
       home.file = {
@@ -83,6 +84,12 @@
           # exec-once = wl-paste --type image --watch cliphist store #Stores only image data
           exec-once = wl-paste --type text #Stores only text data
           exec-once = wl-paste --type image #Stores only image data
+
+          # exec-once = ibus-daemon -drx --panel=/dev/null
+          # exec-once = ibus-daemon -dr
+          # exec-once = ${pkgs.ibus}/bin/ibus-daemon --daemonize --xim 
+          # exec-once = ${pkgs.ibus}/libexec/ibus-ui-gtk3 --panel
+          exec-once = ibus start --type wayland
 
           exec-once = lxqt-policykit-agent
 

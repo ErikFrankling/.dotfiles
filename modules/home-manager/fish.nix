@@ -119,6 +119,10 @@
     interactiveShellInit = "";
 
     shellInit = ''
+
+      if test "$TERM_PROGRAM" = "kiro"
+          exec /bin/env bash --login
+      end
       fish_add_path --path $HOME/.dotfiles/bin $HOME/Downloads/zig 
       set -gx GTK_THEME Adwaita:dark
       set -gx GTK2_RC_FILES /usr/share/themes/Adwaita-dark/gtk-2.0/gtkrc
