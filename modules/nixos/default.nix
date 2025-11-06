@@ -21,6 +21,7 @@
     ./krb5.nix
   ];
 
+  programs.nix-ld.enable = true;
   nix.settings.download-buffer-size = 524288000;
   nix = {
     gc = {

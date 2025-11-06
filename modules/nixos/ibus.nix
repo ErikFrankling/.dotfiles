@@ -1,18 +1,29 @@
 {
+  pkgs,
   ...
 }:
 
 {
-  i18n.inputMethod = {
-    enable = true;
-    type = "ibus";
-    # ibus.engines = with pkgs.ibus-engines; [ ];
-    # ibus.panel
-  };
+  # i18n.inputMethod = {
+  #   enable = true;
+  #   type = "ibus";
+  #   # ibus.engines = with pkgs.ibus-engines; [ ];
+  #   # ibus.panel
+  # };
 
-  environment.sessionVariables = {
-    GTK_IM_MODULE = "ibus";
-    QT_IM_MODULE = "ibus";
-    XMODIFIERS = "@im=ibus";
-  };
+  # environment.sessionVariables = {
+  #   GTK_IM_MODULE = "ibus";
+  #   QT_IM_MODULE = "ibus";
+  #   XMODIFIERS = "@im=ibus";
+  # };
+  #
+  # systemd.user.services.ibus-daemon = {
+  #   enable = true;
+  #   description = "IBus Daemon";
+  #   serviceConfig = {
+  #     ExecStart = "${pkgs.ibus}/bin/ibus-daemon -drx";
+  #     Restart = "on-failure";
+  #   };
+  #   # wantedBy = [ "graphical-session.target" ];
+  # };
 }

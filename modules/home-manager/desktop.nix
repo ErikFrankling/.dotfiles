@@ -15,6 +15,8 @@
     # ./ags
     # ./thunderbird.nix
     ./zen.nix
+    ./kitty.nix
+    ./ai.nix
   ];
 
   home.packages = with pkgs; [
@@ -32,5 +34,4 @@
   ];
 
   services.syncthing.tray.enable = true;
-  programs.kitty.enable = true;
 }
