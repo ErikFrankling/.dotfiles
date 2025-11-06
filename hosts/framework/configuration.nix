@@ -18,7 +18,6 @@
     ../../modules/nixos/desktop.nix
     ../../modules/nixos/game.nix
     inputs.home-manager.nixosModules.default
-    inputs.fw-fanctrl.nixosModules.default
   ];
 
   # boot.kernelPackages =
@@ -67,10 +66,10 @@
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Enable fw-fanctrl
-  programs.fw-fanctrl.enable = true;
+  hardware.fw-fanctrl.enable = true;
 
   # Add a custom config
-  programs.fw-fanctrl.config = {
+  hardware.fw-fanctrl.config = {
     defaultStrategy = "very-agile";
     strategies = {
       "very-agile" = {
