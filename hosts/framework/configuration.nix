@@ -70,8 +70,50 @@
 
   # Add a custom config
   hardware.fw-fanctrl.config = {
-    defaultStrategy = "very-agile";
+    defaultStrategy = "slow";
     strategies = {
+      "slow" = {
+        fanSpeedUpdateFrequency = 2;
+        movingAverageInterval = 100;
+        speedCurve = [
+          {
+            temp = 0;
+            speed = 0;
+          }
+          {
+            temp = 50;
+            speed = 0;
+          }
+          {
+            temp = 65;
+            speed = 0;
+          }
+          {
+            temp = 70;
+            speed = 15;
+          }
+          {
+            temp = 75;
+            speed = 25;
+          }
+          {
+            temp = 80;
+            speed = 30;
+          }
+          {
+            temp = 85;
+            speed = 50;
+          }
+          {
+            temp = 90;
+            speed = 70;
+          }
+          {
+            temp = 95;
+            speed = 100;
+          }
+        ];
+      };
       "very-agile" = {
         fanSpeedUpdateFrequency = 5;
         movingAverageInterval = 30;
