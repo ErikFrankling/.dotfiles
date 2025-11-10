@@ -4,7 +4,7 @@ keys:
   - &primary age1jygscgy2z5d33m3k5h7yu39e25t9r4m46pj4fehz4cshsnaxtvts30cyzf
   - &wsl age1yhgc7njna8cgdp7z50zw0wkpdvnd2cmluyg2f8k68nz0686zngms2cu6tv
 creation_rules:
-  - path_regex: hosts/[^/]+/[^/]+\.yaml$
+  - path_regex: hosts/[^/]+/secrets/.*\.(yaml|json|ovpn)$
     key_groups:
     - age:
       - *primary

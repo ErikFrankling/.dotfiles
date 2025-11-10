@@ -36,11 +36,17 @@
   #   in
   #   pkgs.linuxKernel.packagesFor kernel;
 
-  sops.defaultSopsFile = ./secrets.yaml;
+  sops.defaultSopsFile = ./secrets/secrets.yaml;
   sops.defaultSopsFormat = "yaml";
 
   sops.secrets.syncthing-cert = { };
   sops.secrets.syncthing-key = { };
+
+  sops.secrets.openvpn = {
+    format = "binary";
+    # can be also set per secret
+    sopsFile = ./secrets/client.ovpn;
+  };
 
   # virtualisation.vmware.host.enable = true;
   # virtualisation.virtualbox.host.enable = true;
