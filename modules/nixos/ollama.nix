@@ -27,6 +27,9 @@
       OLLAMA_DEBUG = "1";
       OLLAMA_LOG_LEVEL = "debug";
       HCC_AMDGPU_TARGET = "gfx1100"; # used to be necessary, but doesn't seem to anymore
+      # Optional: ensure ROCm is initialized before Ollama
+      ROC_ENABLE_PRE_VEGA = "1";
+      OLLAMA_NO_CPU_FALLBACK = "1";
     };
     rocmOverrideGfx = "11.0.0";
   };
