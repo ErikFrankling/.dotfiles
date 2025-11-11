@@ -3,7 +3,7 @@
 
   inputs = {
     # nixpkgs.url = "github:nixos/nixpkgs/master";
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/master";
     # nixpkgs.url = "github:nixos/nixpkgs?rev=77b584d61ff80b4cef9245829a6f1dfad5afdfa3";
     # nixpkgs.url = "git+ssh://git@github.com/nixos/nixpkgs?ref=nixos-unstable&shallow=1";
     # nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs?ref=nixos-unstable";
@@ -60,8 +60,13 @@
     # ericsson-tools.url = "git+https://github.com/ErikFrankling/ericsson-tools.git";
     # ericsson-tools.inputs.nixpkgs.follows = "nixpkgs";
 
-    lanzaboote.url = "github:nix-community/lanzaboote/v0.4.2";
-    lanzaboote.inputs.nixpkgs.follows = "nixpkgs";
+    lanzaboote = {
+      url = "github:nix-community/lanzaboote/v0.4.3";
+      # url = "github:nix-community/lanzaboote";
+
+      # Optional but recommended to limit the size of your system closure.
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";
@@ -84,7 +89,10 @@
     }@inputs:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
       pkgsMaster = import inputs.nixpkgs_master {
         inherit system;
         config.allowUnfree = true;
@@ -118,9 +126,7 @@
           };
           modules = [
             ./hosts/${hostName}/configuration.nix
-            # inputs.sops-nix.nixosModules.sops
-          ]
-          ++ (if hostName == "wsl" then [ inputs.nixos-wsl.nixosModules.default ] else [ ]);
+          ];
         }
       );
 
@@ -147,7 +153,7 @@
             # homeDirectory
             ;
           extraSpecialArgs = {
-            inherit inputs username;
+            inherit inputs username otherPkgs;
             hostName = "hm";
           };
 
