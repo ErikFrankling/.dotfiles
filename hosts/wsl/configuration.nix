@@ -20,6 +20,7 @@
     # ../../modules/nixos/desktop.nix
     #../../modules/nixos/game.nix
     inputs.home-manager.nixosModules.default
+    inputs.nixos-wsl.nixosModules.default
   ];
 
   wsl = {

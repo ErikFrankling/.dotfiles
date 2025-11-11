@@ -38,18 +38,18 @@
     optimise.automatic = true;
     optimise.dates = [ "05:00" ]; # Optional; allows customizing optimisation schedule
 
-    registry = {
-      nixpkgs.to = {
-        type = "path";
-        path = pkgs.path;
-        # narHash = pkgs.narHash;
-        narHash = builtins.readFile (
-          pkgs.runCommandLocal "get-nixpkgs-hash" {
-            nativeBuildInputs = [ pkgs.nix ];
-          } "nix-hash --type sha256 --sri ${pkgs.path} > $out"
-        );
-      };
-    };
+    # registry = {
+    #   nixpkgs.to = {
+    #     type = "path";
+    #     path = pkgs.path;
+    #     # narHash = pkgs.narHash;
+    #     narHash = builtins.readFile (
+    #       pkgs.runCommandLocal "get-nixpkgs-hash" {
+    #         nativeBuildInputs = [ pkgs.nix ];
+    #       } "nix-hash --type sha256 --sri ${pkgs.path} > $out"
+    #     );
+    #   };
+    # };
   };
 
   # Enable networking
