@@ -1,9 +1,11 @@
-{ pkgs, ... }:
+{ pkgs, otherPkgs, ... }:
 
 {
 
   environment.systemPackages = with pkgs; [
-    heroic
+    # FIX: role this back. was causing electron rebuild.
+    otherPkgs.pkgsStable.heroic
+    # heroic
     # grapejuice
     mangohud
     gamemode
