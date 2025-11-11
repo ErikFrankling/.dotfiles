@@ -48,6 +48,11 @@
     sopsFile = ./secrets/client.ovpn;
   };
 
+  sops.secrets.openvpn-auth = {
+    format = "binary";
+    sopsFile = ./secrets/openvpn-auth.txt;
+  };
+
   # virtualisation.vmware.host.enable = true;
   # virtualisation.virtualbox.host.enable = true;
   # virtualisation.virtualbox.host.enableKvm = true;
