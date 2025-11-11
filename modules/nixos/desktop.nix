@@ -21,7 +21,11 @@
     gthumb
     vlc
   ];
-  nixpkgs.config.permittedInsecurePackages = [ "tightvnc-1.3.10" ];
+  # nixpkgs.config.permittedInsecurePackages = [ "tightvnc-1.3.10" ];
+
+  nixpkgs.config.permittedInsecurePackages = [
+    "electron-36.9.5"
+  ];
 
   programs.kdeconnect.enable = true;
   # programs.ladybird.enable = true;
