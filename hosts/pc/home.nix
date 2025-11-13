@@ -5,6 +5,7 @@
     ../../modules/home-manager
     ../../modules/home-manager/desktop.nix
     ../../modules/home-manager/print
+    ../../modules/home-manager/ai-server.nix
   ];
 
   home.packages = with pkgs; [ prismlauncher ];

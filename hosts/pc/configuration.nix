@@ -20,6 +20,7 @@
     ../../modules/nixos/ollama.nix
     inputs.home-manager.nixosModules.default
     ../../modules/nixos/secure-boot.nix
+    ../../modules/nixos/ai-server.nix
   ];
 
   virtualisation.docker.enable = true;
