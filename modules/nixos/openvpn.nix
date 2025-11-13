@@ -2,9 +2,9 @@
 {
   services.openvpn.servers.homeVPN = {
     autoStart = true;
-    # config = "config /root/nixos/openvpn/homeVPN.conf ";
     config = ''
       config ${config.sops.secrets.openvpn.path}
+      auth-user-pass ${config.sops.secrets.openvpn-auth.path}
     '';
   };
   users.users."${username}".openssh.authorizedKeys.keys = [
