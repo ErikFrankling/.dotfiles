@@ -23,6 +23,10 @@
     ../../modules/nixos/ai-server.nix
   ];
 
+  services.openssh = {
+    settings.PasswordAuthentication = true;
+  };
+
   virtualisation.docker.enable = true;
   users.extraUsers."${username}".extraGroups = [ "docker" ];
   virtualisation.vmware.host.enable = true;
