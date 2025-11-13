@@ -3,6 +3,7 @@
   pkgs,
   inputs,
   username,
+  lib,
   ...
 }:
 
@@ -119,7 +120,23 @@
   # Enable the OpenSSH daemon.
   services.openssh = {
     enable = true;
-    settings.PasswordAuthentication = true;
+    settings.PasswordAuthentication = lib.mkDefault false;
+  };
+
+  programs.ssh = {
+    extraConfig = "
+      Host student-shell
+        HostName student-shell.sys.kth.se
+        User erikfran
+        PreferredAuthentications gssapi-with-mic
+        GSSAPIAuthentication yes
+        GSSAPIDelegateCredentials yes
+        # GSSAPIKeyExchange yes
+      Host pc
+        Hostname 192.168.50.232
+        Port 22
+        User erikf
+    ";
   };
 
   # Open ports in the firewall.
