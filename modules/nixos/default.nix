@@ -134,7 +134,15 @@
         # GSSAPIKeyExchange yes
       Host pc
         Hostname 192.168.50.232
-        Port 22
+        User erikf
+      Host framework
+        Hostname 192.168.50.137
+        User erikf
+      Host octopi
+        Hostname 192.168.50.162
+        User pi
+      Host ubuntu-hp
+        Hostname 192.168.50.169
         User erikf
     ";
   };
