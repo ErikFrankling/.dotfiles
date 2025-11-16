@@ -70,56 +70,56 @@ in
   ];
 
   # --- 7. llama.cpp systemd Service ---
-  systemd.services.llama-cpp-server = {
-    description = "llama.cpp OpenAI-compatible API server";
-    wantedBy = [ "multi-user.target" ];
-    after = [
-      "network.target"
-      "systemd-tmpfiles-setup.service"
-    ];
-
-    # This ensures the model directory is created before starting
-    requires = [ "systemd-tmpfiles-setup.service" ];
-
-    serviceConfig = {
-      Type = "simple";
-      User = "llama";
-      Group = "llama";
-
-      # Only for rocm
-      # Environment = "HSA_OVERRIDE_GFX_VERSION=11.0.0";
-
-      # ${llama-cpp-vulkan-pkg}/bin/llama-server \
-      # max context 262144
-      # min context  32768
-      ExecStart = ''
-        ${pkgs.llama-cpp-vulkan}/bin/llama-server \
-          -m "${modelPath}" \
-          --alias "${modelAlias}" \
-          --host 0.0.0.0 \
-          --port 8000 \
-          -c 262144 \
-          --n-gpu-layers 999 \
-          --no-kv-offload \
-          --jinja \
-          # --hugging-face \
-          # --verbose
-      '';
-
-      # Restart policy
-      Restart = "always";
-      RestartSec = 10;
-
-      # Explicitly grant the service access to the AMD GPU devices for ROCm
-      # DeviceAllow = [
-      #   "/dev/kfd rw"
-      #   "/dev/dri/ rw"
-      # ];
-      # DeviceAllow = [
-      #   "/dev/dri/ rw"
-      # ];
-    };
-  };
+  # systemd.services.llama-cpp-server = {
+  #   description = "llama.cpp OpenAI-compatible API server";
+  #   wantedBy = [ "multi-user.target" ];
+  #   after = [
+  #     "network.target"
+  #     "systemd-tmpfiles-setup.service"
+  #   ];
+  #
+  #   # This ensures the model directory is created before starting
+  #   requires = [ "systemd-tmpfiles-setup.service" ];
+  #
+  #   serviceConfig = {
+  #     Type = "simple";
+  #     User = "llama";
+  #     Group = "llama";
+  #
+  #     # Only for rocm
+  #     # Environment = "HSA_OVERRIDE_GFX_VERSION=11.0.0";
+  #
+  #     # ${llama-cpp-vulkan-pkg}/bin/llama-server \
+  #     # max context 262144
+  #     # min context  32768
+  #     ExecStart = ''
+  #       ${pkgs.llama-cpp-vulkan}/bin/llama-server \
+  #         -m "${modelPath}" \
+  #         --alias "${modelAlias}" \
+  #         --host 0.0.0.0 \
+  #         --port 8000 \
+  #         -c 262144 \
+  #         --n-gpu-layers 999 \
+  #         --no-kv-offload \
+  #         --jinja \
+  #         # --hugging-face \
+  #         # --verbose
+  #     '';
+  #
+  #     # Restart policy
+  #     Restart = "always";
+  #     RestartSec = 10;
+  #
+  #     # Explicitly grant the service access to the AMD GPU devices for ROCm
+  #     # DeviceAllow = [
+  #     #   "/dev/kfd rw"
+  #     #   "/dev/dri/ rw"
+  #     # ];
+  #     # DeviceAllow = [
+  #     #   "/dev/dri/ rw"
+  #     # ];
+  #   };
+  # };
 
   # 1. Enable OCI containers (Podman recommended for rootless)
   # virtualisation.oci-containers = {
