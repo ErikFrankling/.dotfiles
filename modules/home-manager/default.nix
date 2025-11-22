@@ -68,6 +68,7 @@
     powershell
     sshfs
     kubernetes-helm
+    typst
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
