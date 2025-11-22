@@ -78,6 +78,8 @@
     ags-shell.url = "github:ErikFrankling/AGS";
     # ags-shell.url = "/home/erikf/projects/personal/AGS";
     # ags-shell.inputs.nixpkgs.follows = "nixpkgs";
+
+    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
   };
 
   outputs =
@@ -126,6 +128,7 @@
           };
           modules = [
             ./hosts/${hostName}/configuration.nix
+            inputs.determinate.nixosModules.default
           ];
         }
       );

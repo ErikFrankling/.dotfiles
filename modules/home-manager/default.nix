@@ -19,6 +19,9 @@
 
   nixpkgs.config.allowUnfree = true;
 
+  # Fish enables this by default. It make rebuilds slow
+  programs.man.generateCaches = false;
+
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
   home.username = "${username}";
