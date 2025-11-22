@@ -20,17 +20,25 @@
     ./syncthing.nix
     ./ibus.nix
     ./krb5.nix
+    ./nh.nix
   ];
 
   programs.nix-ld.enable = true;
 
-  nix.settings.download-buffer-size = 524288000;
+  # Fish enables this by default. It make rebuilds slow
+  documentation.man.generateCaches = false;
+
+  environment.etc."nix/nix.custom.conf".text = ''
+    eval-cores = 0
+  '';
+
   nix = {
-    gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 10d";
-    };
+    # nh clean is better
+    # gc = {
+    #   automatic = true;
+    #   dates = "weekly";
+    #   options = "--delete-older-than 10d";
+    # };
 
     extraOptions = ''
       min-free = ${toString (1024 * 1024 * 1024 * 10)} # will run GC if less than 10GB is free
@@ -38,6 +46,14 @@
 
     optimise.automatic = true;
     optimise.dates = [ "05:00" ]; # Optional; allows customizing optimisation schedule
+
+    settings = {
+      auto-optimise-store = false;
+      experimental-features = "nix-command flakes";
+      download-buffer-size = 524288000;
+      substituters = [ "https://install.determinate.systems" ];
+      trusted-public-keys = [ "cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM=" ];
+    };
 
     # registry = {
     #   nixpkgs.to = {

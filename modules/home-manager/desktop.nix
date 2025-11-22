@@ -20,12 +20,12 @@
   ];
 
   home.packages = with pkgs; [
-    webcord
+    otherPkgs.pkgsStable.webcord
     # otherPkgs.pkgsMaster.spotifywm
     spotifywm
     # spotify-qt
     pavucontrol
-    google-chrome
+    otherPkgs.pkgsStable.google-chrome
     # gparted
     # virtualbox
     syncthingtray-minimal

@@ -56,7 +56,8 @@
           set argv "switch"
         end
 
-        sudo nixos-rebuild $argv --fast --flake /home/${username}/.dotfiles#${hostName}
+        # sudo nixos-rebuild $argv --fast --flake /home/${username}/.dotfiles#${hostName}
+        nh os $argv /home/${username}/.dotfiles --hostname ${hostName}
         echo $(hyprctl reload)
       '';
       eww_reload = ''
