@@ -13,12 +13,12 @@
 
   home.packages = with pkgs; [
     claude-code
-    code-cursor-fhs
+    # code-cursor-fhs
     # opencode
-    codex
-    kiro-fhs
-    vscode-fhs
-    windsurf
+    # codex
+    # kiro-fhs
+    # vscode-fhs
+    # windsurf
     lmstudio
   ];
 
