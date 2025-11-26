@@ -1,4 +1,9 @@
-{ pkgs, inputs, ... }:
+{
+  pkgs,
+  inputs,
+  otherPkgs,
+  ...
+}:
 
 # let
 #     # pkgs = import (builtins.fetchTarball {
@@ -19,7 +24,8 @@
 {
 
   home.packages = with pkgs; [
-    prusa-slicer
+    otherPkgs.pkgsStable.prusa-slicer
+    # prusa-slicer
     # openscad
     # openscad-2024
     # TODO: use openscad-unstable when it is no longer broken. it has much faster rendering
