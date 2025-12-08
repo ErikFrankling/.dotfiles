@@ -97,8 +97,8 @@
       package = pkgs.gitFull;
       settings = {
         user = {
-          email = "Erik Frankling";
-          name = "erik.frankling@frankling.se";
+          name = "Erik Frankling";
+          email = "erik.frankling@frankling.se";
         };
         pull.rebase = false;
         credential.helper = "libsecret";

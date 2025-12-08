@@ -4,7 +4,10 @@
   ...
 }:
 {
-  programs.ssh.package = lib.mkForce pkgs.openssh_gssapi;
+  programs.ssh = {
+    package = lib.mkForce pkgs.openssh_gssapi;
+    extraConfig = "IgnoreUnknown gssapikexalgorithms,gssapiauthentication,gssapidelegatecredentials";
+  };
 
   security.krb5 = {
     enable = true;
