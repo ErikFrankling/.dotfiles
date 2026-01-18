@@ -16,6 +16,40 @@
     ];
   };
 
+  services.kanshi = {
+    enable = true;
+    systemdTarget = "hyprland-session.target";
+
+    settings = [
+      {
+        profile.name = "undocked";
+        profile.outputs = [
+          {
+            criteria = "eDP-1";
+            status = "enable";
+          }
+        ];
+      }
+      {
+        profile.name = "docked";
+        profile.outputs = [
+          {
+            criteria = "eDP-1";
+            status = "disable";
+          }
+          {
+            criteria = "DP-9"; # Change to your monitor name
+            status = "enable";
+          }
+          {
+            criteria = "DP-10"; # Change to your second monitor name
+            status = "enable";
+          }
+        ];
+      }
+    ];
+  };
+
   hyprland = {
     keyboards = [
       {
@@ -38,7 +72,17 @@
         refreshRate = 120;
       }
       {
-        name = "DP-4";
+        name = "DP-9";
+        width = 3840;
+        height = 2160;
+        scale = "2";
+        refreshRate = 60;
+        x = 1440;
+        y = 0;
+        # enabled = true;
+      }
+      {
+        name = "DP-10";
         width = 3840;
         height = 2160;
         scale = "2";

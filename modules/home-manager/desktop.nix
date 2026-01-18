@@ -29,11 +29,10 @@
     # gparted
     # virtualbox
     syncthingtray-minimal
-    # FIX: role this back. was causing electron rebuild.
-    # otherPkgs.pkgsStable.obsidian
     obsidian
     # (inputs.ags-shell.packages.${system}.my-shell)
     inputs.ags-shell.packages."x86_64-linux".default
+    mattermost-desktop
   ];
 
   nixpkgs.config.permittedInsecurePackages = [
