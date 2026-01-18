@@ -5,6 +5,8 @@
     nvtopPackages.amd
   ];
 
+  networking.firewall.allowedTCPPorts = [ 11434 ];
+
   services.open-webui = {
     enable = true;
     package = otherPkgs.pkgsStable.open-webui;
@@ -22,6 +24,7 @@
     package = pkgs.ollama-rocm;
     enable = true;
     acceleration = "rocm";
+    host = "0.0.0.0";
 
     environmentVariables = {
       OLLAMA_CONTEXT_LENGTH = "4194304";
@@ -31,6 +34,7 @@
       # Optional: ensure ROCm is initialized before Ollama
       ROC_ENABLE_PRE_VEGA = "1";
       OLLAMA_NO_CPU_FALLBACK = "1";
+      # OLLAMA_HOST = "0.0.0.0:11434";
     };
     rocmOverrideGfx = "11.0.0";
   };
