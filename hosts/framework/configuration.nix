@@ -18,6 +18,7 @@
     ../../modules/nixos/desktop.nix
     ../../modules/nixos/game.nix
     inputs.home-manager.nixosModules.default
+    ../../modules/nixos/vm-host.nix
   ];
 
   # boot.kernelPackages =
@@ -64,8 +65,14 @@
   virtualisation.libvirtd.enable = true;
   virtualisation.spiceUSBRedirection.enable = true;
 
-  # virtualisation.docker.enable = true;
-  # users.extraUsers."${username}".extraGroups = [ "docker" ];
+  virtualisation.docker.enable = true;
+  users.extraUsers."${username}".extraGroups = [ "docker" ];
+
+  virtualisation.podman = {
+    enable = true;
+    dockerCompat = false;
+    defaultNetwork.settings.dns_enabled = true;
+  };
 
   # Open ports in the firewall.
   networking.firewall.allowedTCPPorts = [ 8083 ];

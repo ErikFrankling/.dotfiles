@@ -77,7 +77,7 @@
         height = 2160;
         scale = "2";
         refreshRate = 60;
-        x = 1440;
+        x = 1920;
         y = 0;
         # enabled = true;
       }
@@ -87,7 +87,7 @@
         height = 2160;
         scale = "2";
         refreshRate = 60;
-        x = 1440;
+        x = 0;
         y = 0;
         # enabled = true;
       }
