@@ -21,6 +21,8 @@
     inputs.home-manager.nixosModules.default
     ../../modules/nixos/secure-boot.nix
     ../../modules/nixos/ai-server.nix
+    # ../../modules/nixos/vm-host.nix
+    ../../modules/nixos/vm-host-simple.nix
   ];
 
   services.openssh = {

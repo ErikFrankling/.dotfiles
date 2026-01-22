@@ -80,6 +80,9 @@
     # ags-shell.inputs.nixpkgs.follows = "nixpkgs";
 
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
+
+    nixvirt.url = "https://flakehub.com/f/AshleyYakeley/NixVirt/*.tar.gz";
+    nixvirt.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
