@@ -35,6 +35,7 @@
     qemu
     OVMF
     spice-gtk # For USB redirection in virt-viewer
+    virtio-win # This provides the ISO at a known path
   ];
 
   # Enable the default NAT network
