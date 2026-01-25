@@ -105,14 +105,20 @@
         init.defaultBranch = "main";
       };
 
-      # includes = [
-      #   {
-      #     condition = "gitdir:~/work/**";
-      #     contents = {
-      #       user.email = "erik.frankling@ericsson.com";
-      #     };
-      #   }
-      # ];
+      includes = [
+        {
+          condition = "gitdir:~/work/**";
+          contents = {
+            user.email = "erik.frankling@ericsson.com";
+          };
+        }
+        {
+          condition = "gitdir:~/kth/**";
+          contents = {
+            user.email = "erikfran@kth.se";
+          };
+        }
+      ];
     };
 
     direnv = {
