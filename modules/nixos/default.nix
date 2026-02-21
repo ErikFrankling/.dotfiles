@@ -21,12 +21,23 @@
     ./ibus.nix
     ./krb5.nix
     ./nh.nix
+    ./windows-vm
   ];
 
   programs.nix-ld.enable = true;
 
+  # virtualisation.podman = {
+  #   enable = true;
+  #   dockerCompat = true;
+  # };
+
   # Fish enables this by default. It make rebuilds slow
-  documentation.man.generateCaches = false;
+  documentation = {
+    man.generateCaches = false;
+    # dev.enable = true;
+    # man.generateCaches = true;
+    # nixos.includeAllModules = true;
+  };
 
   environment.etc."nix/nix.custom.conf".text = ''
     eval-cores = 0
@@ -81,6 +92,7 @@
     wl-clipboard-x11
     # networkmanager-openvpn
     # networkmanagerapplet
+    distrobox
   ];
   main-user.enable = true;
   main-user.userName = "${username}";
@@ -157,9 +169,9 @@
       Host octopi
         Hostname 192.168.50.162
         User pi
-      Host ubuntu-hp
+      Host proxmox
         Hostname 192.168.50.169
-        User erikf
+        User root
     ";
   };
 

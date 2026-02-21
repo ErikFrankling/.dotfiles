@@ -20,7 +20,8 @@
   ];
 
   home.packages = with pkgs; [
-    otherPkgs.pkgsStable.webcord
+    webcord
+    # otherPkgs.pkgsStable.webcord
     # otherPkgs.pkgsMaster.spotifywm
     spotifywm
     # spotify-qt
@@ -30,6 +31,8 @@
     # virtualbox
     syncthingtray-minimal
     obsidian
+    # otherPkgs.pkgsStable.obsidian
+    # otherPkgs.pkgsMaster.obsidian
     # (inputs.ags-shell.packages.${system}.my-shell)
     inputs.ags-shell.packages."x86_64-linux".default
     mattermost-desktop

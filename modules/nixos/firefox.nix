@@ -189,9 +189,9 @@ in
           # "dom.ipc.processCount.webIsolated" = lock-value 4; # Lower process count if you wish
 
           # from: https://www.reddit.com/r/firefox/comments/17hlkhp/comment/k8db8s5/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
-          "pdfjs.forcePageColors" = lock-value true;
-          "pdfjs.pageColorsBackground" = lock-value "#202020";
-          "pdfjs.pageColorsForeground" = lock-value "#d1d1d1";
+          # "pdfjs.forcePageColors" = lock-value true;
+          # "pdfjs.pageColorsBackground" = lock-value "#202020";
+          # "pdfjs.pageColorsForeground" = lock-value "#d1d1d1";
         };
       };
     };

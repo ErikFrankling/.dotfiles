@@ -4,8 +4,8 @@
 
   environment.systemPackages = with pkgs; [
     # FIX: role this back. was causing electron rebuild.
-    otherPkgs.pkgsStable.heroic
-    # heroic
+    # otherPkgs.pkgsStable.heroic
+    heroic
     # grapejuice
     mangohud
     gamemode

@@ -51,6 +51,7 @@
         # WLR_NO_HARDWARE_CURSORS = "1";
         # Hint electron apps to use wayland
         NIXOS_OZONE_WL = "1";
+        MOZ_ENABLE_WAYLAND = "1";
       };
 
       wayland.windowManager.hyprland = {
@@ -111,28 +112,28 @@
 
 
           # Rusty Retirement Game Overlay
-          windowrulev2 = tag +rtr, title:(Rusty's Retirement)
-          windowrulev2 = float, tag:rtr
+          windowrule = tag +rtr, match:title (Rusty's Retirement)
+          windowrule = float 1, tag rtr
 
           # Remove this if you don't want rtr to appear in all workspaces
-          windowrulev2 = pin, tag:rtr
+          windowrule = pin 1, tag rtr
 
-          # windowrulev2 = size 100% 350, tag:rtr
-          windowrulev2 = size 100% 296, tag:rtr
+          # windowrule = size 100% 350, tag rtr
+          windowrule = size 100% 296, tag rtr
 
           # Move rtr to buttom of the screen
-          # windowrulev2 = move 0 730, tag:rtr
-          windowrulev2 = move 0 784, tag:rtr
+          # windowrule = move 0 730, tag rtr
+          windowrule = move 0 784, tag rtr
 
-          windowrulev2 = noblur, tag:rtr
-          windowrulev2 = noshadow, tag:rtr
-          windowrulev2 = noborder, tag:rtr
+          windowrule = no_blur 1, tag rtr
+          windowrule = no_shadow 1, tag rtr
+          windowrule = border_size 0, tag rtr
           # override rounded corners
-          windowrulev2 = rounding 0, tag:rtr
-          windowrulev2 = opacity 1.0 override, tag:rtr
+          windowrule = rounding 0, tag rtr
+          windowrule = opacity 1.0 override, tag rtr
 
           # rules for having it on the right side
-          # windowrulev2 = size 296 100%, tag:rtr_right 
+          # windowrule = size 296 100%, tag rtr_right 
 
           exec-once = hyprctl workspace 10
           exec-once = hyprctl workspace 1
@@ -284,25 +285,25 @@
           ) cfg.workspaces);
 
           "$pip_size" = "40";
-          windowrulev2 = [
+          windowrule = [
             # Ref https://wiki.hyprland.org/Configuring/Workspace-Rules/
             # "Smart gaps" / "No gaps when only"
-            "bordersize 0, floating:0, onworkspace:w[tv1]"
-            "rounding 0, floating:0, onworkspace:w[tv1]"
-            "bordersize 0, floating:0, onworkspace:f[1]"
-            "rounding 0, floating:0, onworkspace:f[1]"
+            "border_size 0, match:float 0, match:workspace w[tv1]"
+            "rounding 0, match:float 0, match:workspace w[tv1]"
+            "border_size 0, match:float 0, match:workspace f[1]"
+            "rounding 0, match:float 0, match:workspace f[1]"
 
-            "float,title:^(Picture-in-Picture)$"
-            "size $pip_size% $pip_size%,title:^(Picture-in-Picture)$"
-            "move onscreen 100%-$pip_size 0,title:^(Picture-in-Picture)$"
-            "pin,title:^(Picture-in-Picture)$"
-            "noborder,title:^(Picture-in-Picture)$,floating:1"
-            "keepaspectratio,title:^(Picture-in-Picture)$,floating:1"
-            "opacity 0.3 1.0,title:^(Picture-in-Picture)$,floating:1"
+            "float 1,match:title ^(Picture-in-Picture)$"
+            "size $pip_size% $pip_size%,match:title ^(Picture-in-Picture)$"
+            "move 100 100-$pip_size 0,match:title ^(Picture-in-Picture)$"
+            "pin 1,match:title ^(Picture-in-Picture)$"
+            "border_size 0,match:title ^(Picture-in-Picture)$,float 1"
+            "keep_aspect_ratio 1,match:title ^(Picture-in-Picture)$,float 1"
+            "opacity 0.3 1.0,match:title ^(Picture-in-Picture)$,float 1"
 
             # "suppressevent fullscreen, class:.*" # You'll probably like this.
 
-            "rounding 10,floating:1"
+            "rounding 10,match:float 1"
           ];
 
           general = {
