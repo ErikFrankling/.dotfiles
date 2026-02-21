@@ -22,7 +22,8 @@
     ../../modules/nixos/secure-boot.nix
     ../../modules/nixos/ai-server.nix
     # ../../modules/nixos/vm-host.nix
-    ../../modules/nixos/vm-host-simple.nix
+    # ../../modules/nixos/vm-host-simple.nix
+    # ./windows-vm.nix # Disabled - nixvirt hanging issue
   ];
 
   services.openssh = {

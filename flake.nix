@@ -3,7 +3,7 @@
 
   inputs = {
     # nixpkgs.url = "github:nixos/nixpkgs/master";
-    nixpkgs.url = "github:nixos/nixpkgs/master";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     # nixpkgs.url = "github:nixos/nixpkgs?rev=77b584d61ff80b4cef9245829a6f1dfad5afdfa3";
     # nixpkgs.url = "git+ssh://git@github.com/nixos/nixpkgs?ref=nixos-unstable&shallow=1";
     # nixpkgs.url = "git+ssh://git@github.com/NixOS/nixpkgs?ref=nixos-unstable";
@@ -83,6 +83,11 @@
 
     nixvirt.url = "https://flakehub.com/f/AshleyYakeley/NixVirt/*.tar.gz";
     nixvirt.inputs.nixpkgs.follows = "nixpkgs";
+
+    llm-agents.url = "github:numtide/llm-agents.nix";
+
+    helium.url = "github:AlvaroParker/helium-nix";
+    helium.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =

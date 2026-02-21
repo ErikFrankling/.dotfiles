@@ -13,7 +13,7 @@
 
   home.sessionVariables = {
     # LIBSEAT_BACKEND = "logind";
-    AQ_DRM_DEVICES = "/dev/dri/card1";
+    # AQ_DRM_DEVICES = "/dev/dri/card1"; # Disabled: crashes when card1 is missing
     # HYPRLAND_TRACE = "1";
     # AQ_TRACE = "1";
     # MESA_LOADER_DRIVER_OVERRIDE="radeonsi";

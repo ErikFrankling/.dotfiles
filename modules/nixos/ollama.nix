@@ -23,7 +23,6 @@
     # package = otherPkgs.pkgsStable.ollama-rocm;
     package = pkgs.ollama-rocm;
     enable = true;
-    acceleration = "rocm";
     host = "0.0.0.0";
 
     environmentVariables = {

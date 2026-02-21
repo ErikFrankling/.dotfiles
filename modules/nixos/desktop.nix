@@ -1,4 +1,9 @@
-{ pkgs, username, ... }:
+{
+  pkgs,
+  username,
+  inputs,
+  ...
+}:
 
 {
   imports = [
@@ -20,6 +25,7 @@
     gparted
     gthumb
     vlc
+    inputs.helium.packages.${pkgs.system}.default
   ];
   # nixpkgs.config.permittedInsecurePackages = [ "tightvnc-1.3.10" ];
 

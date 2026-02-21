@@ -129,16 +129,17 @@
       set -gx GTK2_RC_FILES /usr/share/themes/Adwaita-dark/gtk-2.0/gtkrc
       set -gx QT_STYLE_OVERRIDE adwaita-dark
       set -gx HISTCONTROL ignoredups
-      set -gx MOZ_ENABLE_WAYLAND 1
       set -gx MOZ_USE_XINPUT2 1
       set -gx NIXPKGS_ALLOW_UNFREE 1
       set -gx EDITOR nvim
+      set -gx NIXPKGS_ALLOW_INSECURE 1
+      set -gx LIBVIRT_DEFAULT_URI qemu:///system
     '';
 
     loginShellInit = ''
       if not set -q SSH_TTY
         if test -z "$DISPLAY" -a "$XDG_VTNR" = 1
-          dbus-run-session Hyprland
+          start-hyprland
         end
       end
     '';
