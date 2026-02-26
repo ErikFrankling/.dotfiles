@@ -450,11 +450,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1771307942,
-        "narHash": "sha256-cLPcsMe4nX1yZT63fHZZA5NEDesR3dvxqo9D/W7Mcko=",
+        "lastModified": 1771659291,
+        "narHash": "sha256-HXCH93T+knqog/boANaS20xjM92q47iyKIKXsfHhK30=",
         "owner": "AlvaroParker",
         "repo": "helium-nix",
-        "rev": "8d4fe1c248ca2bb9fa98da7c6938f8a8d825669a",
+        "rev": "dcbc50a79e33969c34bffdc1917fc50a28cb19eb",
         "type": "github"
       },
       "original": {
@@ -470,11 +470,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1771625283,
-        "narHash": "sha256-1T88/PSNKpRNtaiXATTae0hpRnBpjmIL0b1QfGO6HBA=",
+        "lastModified": 1771647911,
+        "narHash": "sha256-18liNHHwOmcaKCpOptE3wLW97fm5v7RTLiZBecX7km0=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "a913ae61bf3b9f4312f6097b68cdf0a0fa699279",
+        "rev": "436b27742c996b75e2baf8e835e3b3eae0c9fbd4",
         "type": "github"
       },
       "original": {
@@ -537,11 +537,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1771627137,
-        "narHash": "sha256-KS5RwfY5jYxfUSEk7Rm9GJE95nKnBT4l9gTAB48nD2Q=",
+        "lastModified": 1771655593,
+        "narHash": "sha256-kfIFP4n4MmOMXyvnnGIfLy+XNx4BfrcbAP5Own3fNDc=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "cc09466a29eafbb98e014a9c700074512f869821",
+        "rev": "9c7605aa0c6a7652781108d254fb4f64830d8572",
         "type": "github"
       },
       "original": {
@@ -610,11 +610,11 @@
     },
     "nixCats": {
       "locked": {
-        "lastModified": 1763330129,
-        "narHash": "sha256-KbOeWIF52SV53BOeETGO2C5ewaV2Ex9iaXH7G72gOr8=",
+        "lastModified": 1770584904,
+        "narHash": "sha256-9Zaz8lbKF2W9pwXZEnbiGsicHdBoU+dHt3Wv3mCJoZ8=",
         "owner": "BirdeeHub",
         "repo": "nixCats-nvim",
-        "rev": "c81551ed87db2aefab30a12cf7425ff94dc0ad64",
+        "rev": "538fdde784d2909700d97a8ef307783b33a86fb1",
         "type": "github"
       },
       "original": {
@@ -770,11 +770,11 @@
     },
     "nixpkgs_6": {
       "locked": {
-        "lastModified": 1763618868,
-        "narHash": "sha256-v5afmLjn/uyD9EQuPBn7nZuaZVV9r+JerayK/4wvdWA=",
+        "lastModified": 1771207753,
+        "narHash": "sha256-b9uG8yN50DRQ6A7JdZBfzq718ryYrlmGgqkRm9OOwCE=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "a8d610af3f1a5fb71e23e08434d8d61a466fc942",
+        "rev": "d1c15b7d5806069da59e819999d70e1cec0760bf",
         "type": "github"
       },
       "original": {
@@ -786,11 +786,11 @@
     },
     "nixpkgs_master": {
       "locked": {
-        "lastModified": 1771634332,
-        "narHash": "sha256-xrlVkhkdFjv81Znsu4b1qYzUEIEK4UwFc+eLZURBE3Y=",
+        "lastModified": 1771666164,
+        "narHash": "sha256-wLueSLiYmZgNXUhVfxjcU0dH3WQkrxK2Oqe7Vrveh9Q=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "7dbf6e6ef95031598982fa0e29fa0120072b8d95",
+        "rev": "054a330ccd5cbb7eeddf571d0552b3534ebfdd41",
         "type": "github"
       },
       "original": {
@@ -857,6 +857,26 @@
         "url": "https://flakehub.com/f/AshleyYakeley/NixVirt/%2A.tar.gz"
       }
     },
+    "noctalia": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1771872869,
+        "narHash": "sha256-evn+p0+T9yNtjdRr5UnYwXnhlHgFB8ilzhGQoYvgXhs=",
+        "owner": "noctalia-dev",
+        "repo": "noctalia-shell",
+        "rev": "90e44d6edd604a0877310b01ff20006abcf67e77",
+        "type": "github"
+      },
+      "original": {
+        "owner": "noctalia-dev",
+        "repo": "noctalia-shell",
+        "type": "github"
+      }
+    },
     "nvim": {
       "inputs": {
         "lualine-lsp-progress": "lualine-lsp-progress",
@@ -864,11 +884,11 @@
         "nixpkgs": "nixpkgs_6"
       },
       "locked": {
-        "lastModified": 1763933858,
-        "narHash": "sha256-kU1PvG8oZsayRNNElf+tlzQXRccKgGacb57f2uh3hKk=",
+        "lastModified": 1772097586,
+        "narHash": "sha256-NSAY8kRyAs9/itYCi/K/EKjoarcXBvI3bdGflPtUcHE=",
         "owner": "ErikFrankling",
         "repo": "nvim",
-        "rev": "d7fe8ec82caf51b3e4d0fb421c853ca516d93cae",
+        "rev": "f29e5d07add30e10ff3f3c38c2620e5915589cd0",
         "type": "github"
       },
       "original": {
@@ -919,6 +939,7 @@
         "nixpkgs_stable": "nixpkgs_stable",
         "nixvim": "nixvim",
         "nixvirt": "nixvirt",
+        "noctalia": "noctalia",
         "nvim": "nvim",
         "sops-nix": "sops-nix",
         "xremap-flake": "xremap-flake",
