@@ -42,6 +42,7 @@
   environment.etc."nix/nix.custom.conf".text = ''
     eval-cores = 0
   '';
+  environment.etc."dict.conf".text = "server dict.org";
 
   nix = {
     # nh clean is better
@@ -93,6 +94,7 @@
     # networkmanager-openvpn
     # networkmanagerapplet
     distrobox
+    dict
   ];
   main-user.enable = true;
   main-user.userName = "${username}";
@@ -172,6 +174,9 @@
       Host proxmox
         Hostname 192.168.50.169
         User root
+      Host docker
+        Hostname 192.168.50.100
+        User debian
     ";
   };
 
