@@ -293,13 +293,17 @@
             "border_size 0, match:float 0, match:workspace f[1]"
             "rounding 0, match:float 0, match:workspace f[1]"
 
-            "float 1,match:title ^(Picture-in-Picture)$"
-            "size $pip_size% $pip_size%,match:title ^(Picture-in-Picture)$"
-            "move 100 100-$pip_size 0,match:title ^(Picture-in-Picture)$"
-            "pin 1,match:title ^(Picture-in-Picture)$"
-            "border_size 0,match:title ^(Picture-in-Picture)$,float 1"
-            "keep_aspect_ratio 1,match:title ^(Picture-in-Picture)$,float 1"
-            "opacity 0.3 1.0,match:title ^(Picture-in-Picture)$,float 1"
+            # "float 1,match:title ^(Picture-in-Picture)$"
+            # # "size $pip_size% $pip_size%,match:title ^(Picture-in-Picture)$"
+            # # "move 100 100-$pip_size 0,match:title ^(Picture-in-Picture)$"
+            # "pin 1,match:title ^(Picture-in-Picture)$"
+            # "border_size 0,match:title ^(Picture-in-Picture)$,float 1"
+            # "keep_aspect_ratio 1,match:title ^(Picture-in-Picture)$,float 1"
+            # "opacity 0.3 1.0,match:title ^(Picture-in-Picture)$,float 1"
+            #
+            # "size monitor_w*($pip_size/100) monitor_h*($pip_size/100), match:title ^(Picture-in-Picture)$"
+            # "move 10 10, match:title ^(Picture-in-Picture)$"
+            "float true, pin true, keep_aspect_ratio true, border_size 0, rounding 0, size monitor_w*($pip_size/100) monitor_h*($pip_size/100), move 0 30, match:title .*Picture.in.Picture.*"
 
             # "suppressevent fullscreen, class:.*" # You'll probably like this.
 
