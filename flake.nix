@@ -25,6 +25,8 @@
 
     nixpkgs_stable.url = "github:nixos/nixpkgs/release-25.05";
 
+    flake-utils.url = "github:numtide/flake-utils";
+
     nixvim.url = "github:nix-community/nixvim";
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -91,6 +93,10 @@
 
     noctalia.url = "github:noctalia-dev/noctalia-shell";
     noctalia.inputs.nixpkgs.follows = "nixpkgs";
+
+    claude-desktop.url = "github:k3d3/claude-desktop-linux-flake";
+    claude-desktop.inputs.nixpkgs.follows = "nixpkgs";
+    claude-desktop.inputs.flake-utils.follows = "flake-utils";
   };
 
   outputs =
