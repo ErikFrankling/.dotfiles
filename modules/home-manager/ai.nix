@@ -20,6 +20,7 @@
     # kiro-fhs
     # vscode-fhs
     # windsurf
+    opencode-desktop
     lmstudio
     inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.pi
   ];

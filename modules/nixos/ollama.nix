@@ -9,7 +9,7 @@
 
   services.open-webui = {
     enable = true;
-    package = otherPkgs.pkgsStable.open-webui;
+    # package = otherPkgs.pkgsStable.open-webui;
     stateDir = "/var/lib/open-webui";
     environment = {
       # Disable authentication
