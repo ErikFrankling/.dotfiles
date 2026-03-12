@@ -58,7 +58,7 @@
     age
     dos2unix
     wget
-    inputs.nvim.packages.${system}.nvim
+    inputs.nvim.packages.${pkgs.stdenv.hostPlatform.system}.nvim
     btop
     fzf
     ripgrep
