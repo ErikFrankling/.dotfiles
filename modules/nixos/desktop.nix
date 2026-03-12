@@ -18,14 +18,14 @@
   environment.systemPackages = with pkgs; [
     xdg-utils
     wlvncc
-    xorg.xlsclients
+    xlsclients
     # tightvnc
     # tigervnc
     networkmanagerapplet
     gparted
     gthumb
     vlc
-    inputs.helium.packages.${pkgs.system}.default
+    inputs.helium.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
   # nixpkgs.config.permittedInsecurePackages = [ "tightvnc-1.3.10" ];
 

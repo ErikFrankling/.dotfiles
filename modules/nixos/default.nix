@@ -33,7 +33,7 @@
 
   # Fish enables this by default. It make rebuilds slow
   documentation = {
-    man.generateCaches = false;
+    man.cache.enable = false;
     # dev.enable = true;
     # man.generateCaches = true;
     # nixos.includeAllModules = true;
