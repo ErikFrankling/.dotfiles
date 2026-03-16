@@ -13,7 +13,7 @@
     ./hyprland
     # ./eww
     # ./ags
-    # ./thunderbird.nix
+    ./thunderbird.nix
     ./zen.nix
     ./kitty.nix
     ./ai.nix
