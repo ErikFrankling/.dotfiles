@@ -43,6 +43,8 @@
   sops.secrets.syncthing-cert = { };
   sops.secrets.syncthing-key = { };
 
+  sops.secrets.kth-password = { owner = username; };
+
   sops.secrets.openvpn = {
     format = "binary";
     # can be also set per secret

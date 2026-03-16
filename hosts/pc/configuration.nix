@@ -65,11 +65,12 @@
   # fix for amdgpu kernel bug https://gitlab.freedesktop.org/drm/amd/-/issues/3388
   boot.kernelParams = [ "amdgpu.dcdebugmask=0x10" ];
 
-  sops.defaultSopsFile = ./secrets.yaml;
+  sops.defaultSopsFile = ./secrets/secrets.yaml;
   sops.defaultSopsFormat = "yaml";
 
   sops.secrets.syncthing-cert = { };
   sops.secrets.syncthing-key = { };
+  sops.secrets.kth-password = { owner = username; };
 
   networking.hostName = "${hostName}"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
