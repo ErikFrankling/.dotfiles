@@ -36,6 +36,7 @@
     # (inputs.ags-shell.packages.${system}.my-shell)
     inputs.ags-shell.packages."x86_64-linux".default
     mattermost-desktop
+    thunderbird
   ];
 
   nixpkgs.config.permittedInsecurePackages = [
