@@ -40,7 +40,7 @@ in
   # --- 4. Host GPU Configuration ---
   # Ensures the host system has the necessary ROCm drivers
   # and kernel modules loaded. This is safer than the container.
-  hardware.opengl.enable = true;
+  hardware.graphics.enable = true;
 
   boot.kernelModules = [ "amdgpu" ];
   environment.systemPackages = with pkgs; [

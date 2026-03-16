@@ -13,7 +13,7 @@
     ./hyprland
     # ./eww
     # ./ags
-    # ./thunderbird.nix
+    ./thunderbird.nix
     ./zen.nix
     ./kitty.nix
     ./ai.nix
@@ -36,7 +36,7 @@
     # (inputs.ags-shell.packages.${system}.my-shell)
     inputs.ags-shell.packages."x86_64-linux".default
     mattermost-desktop
-    thunderbird
+    inputs.claude-desktop.packages.${system}.claude-desktop-with-fhs
   ];
 
   nixpkgs.config.permittedInsecurePackages = [
