@@ -26,6 +26,7 @@
     gthumb
     vlc
     inputs.helium.packages.${pkgs.system}.default
+    xrdb
   ];
   # nixpkgs.config.permittedInsecurePackages = [ "tightvnc-1.3.10" ];
 
