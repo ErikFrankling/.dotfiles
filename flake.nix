@@ -97,6 +97,9 @@
     claude-desktop.url = "github:k3d3/claude-desktop-linux-flake";
     claude-desktop.inputs.nixpkgs.follows = "nixpkgs";
     claude-desktop.inputs.flake-utils.follows = "flake-utils";
+
+    llamacpp-rocm.url = "github:hellas-ai/nix-strix-halo/feat/bootable-usb";
+    llamacpp-rocm.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
