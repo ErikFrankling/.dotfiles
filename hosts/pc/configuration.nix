@@ -17,14 +17,20 @@
     # ../../modules/nixos/laptop.nix
     ../../modules/nixos/desktop.nix
     ../../modules/nixos/game.nix
-    ../../modules/nixos/ollama.nix
+    # ../../modules/nixos/ollama.nix
     inputs.home-manager.nixosModules.default
     ../../modules/nixos/secure-boot.nix
     ../../modules/nixos/ai-server.nix
     # ../../modules/nixos/vm-host.nix
     # ../../modules/nixos/vm-host-simple.nix
-    # ./windows-vm.nix # Disabled - nixvirt hanging issue
+    # ./windows-vm.nix
   ];
+
+  # fix for gpu not using max memmory clock speeds
+  hardware.enableRedistributableFirmware = true;
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="drm", DRIVERS=="amdgpu", KERNEL=="card1", ATTR{device/power_dpm_force_performance_level}="profile_peak"
+  '';
 
   services.mullvad-vpn.enable = true;
   services.mullvad-vpn.package = pkgs.mullvad-vpn;
@@ -63,14 +69,19 @@
   #   pkgs.linuxKernel.packagesFor kernel;
 
   # fix for amdgpu kernel bug https://gitlab.freedesktop.org/drm/amd/-/issues/3388
-  boot.kernelParams = [ "amdgpu.dcdebugmask=0x10" ];
+  boot.kernelParams = [
+    "amdgpu.dcdebugmask=0x10"
+    "amdgpu.runpm=0" # fix for amdgpu gpu not using max memmory clock speeds
+  ];
 
   sops.defaultSopsFile = ./secrets/secrets.yaml;
   sops.defaultSopsFormat = "yaml";
 
   sops.secrets.syncthing-cert = { };
   sops.secrets.syncthing-key = { };
-  sops.secrets.kth-password = { owner = username; };
+  sops.secrets.kth-password = {
+    owner = username;
+  };
 
   networking.hostName = "${hostName}"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.

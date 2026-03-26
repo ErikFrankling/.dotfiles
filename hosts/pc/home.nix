@@ -5,9 +5,8 @@
     ../../modules/home-manager
     ../../modules/home-manager/desktop.nix
     ../../modules/home-manager/print
-    ../../modules/home-manager/ai-server.nix
     ../../modules/home-manager/vm-host.nix
-    ../../modules/home-manager/noctalia.nix
+    # ../../modules/home-manager/noctalia.nix
   ];
 
   home.packages = with pkgs; [ prismlauncher ];
