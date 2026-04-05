@@ -13,7 +13,7 @@
   nixpkgs.config.allowBroken = true;
 
   home.packages = with pkgs; [
-    claude-code
+    # claude-code  # Disabled - npm package 404 error blocking build
     # code-cursor-fhs
     # opencode
     # codex
@@ -32,6 +32,22 @@
         edit = "allow";
         bash = "allow";
       };
+
+      provider = {
+        llama = {
+          npm = "@ai-sdk/openai-compatible";
+          name = "Llama.cpp (self-hosted)";
+          options = {
+            baseURL = "http://192.168.50.232:8000/v1";
+          };
+          models = {
+            "qwen3.5-27b" = {
+              name = "Qwen3.5-27B (local)";
+            };
+          };
+        };
+      };
+
       # model = "ollama/gpt-oss:20b";
       # model = "localai/qwen3-30b-a3b-thinking-2507"; # default model shown in UI
       # provider = {
@@ -71,6 +87,7 @@
       #     };
       #   };
       # };
+
     };
   };
 }

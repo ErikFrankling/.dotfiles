@@ -84,6 +84,17 @@
 }:
 
 {
+  services.open-webui = {
+    enable = true;
+    # package = otherPkgs.pkgsStable.open-webui;
+    stateDir = "/var/lib/open-webui";
+    environment = {
+      # Disable authentication
+      WEBUI_AUTH = "False";
+      ENABLE_PERSISTENT_CONFIG = "False"; # force env vars to always win
+    };
+  };
+
   networking.firewall.allowedTCPPorts = [ 8000 ];
 
   hardware.graphics.enable = true;
@@ -159,8 +170,9 @@
         # The model reloads automatically on the next request.
         # This frees the GPU for gaming/other use when the server is idle.
         "--sleep-idle-seconds"
+        "10800" # 3h
         # "3600"
-        "600"
+        # "600"
 
         # ── Performance ───────────────────────────────────────────────────────
         # FA must be forced on (not auto) for quantized cache to work
@@ -219,6 +231,13 @@
         # "256"
 
         "--verbose-prompt"
+
+        # avoid repeting output
+        "--repeat-penalty"
+        "1.1"
+        # "1.3"
+        "--repeat-last-n"
+        "64"
       ];
     };
 

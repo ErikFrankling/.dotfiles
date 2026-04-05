@@ -94,12 +94,14 @@
     noctalia.url = "github:noctalia-dev/noctalia-shell";
     noctalia.inputs.nixpkgs.follows = "nixpkgs";
 
-    claude-desktop.url = "github:k3d3/claude-desktop-linux-flake";
-    claude-desktop.inputs.nixpkgs.follows = "nixpkgs";
-    claude-desktop.inputs.flake-utils.follows = "flake-utils";
+    # claude-desktop.url = "github:k3d3/claude-desktop-linux-flake";
+    # claude-desktop.inputs.nixpkgs.follows = "nixpkgs";
+    # claude-desktop.inputs.flake-utils.follows = "flake-utils";
 
     llamacpp-rocm.url = "github:hellas-ai/nix-strix-halo/feat/bootable-usb";
     llamacpp-rocm.inputs.nixpkgs.follows = "nixpkgs";
+
+    llama-cpp-flake.url = "github:ggml-org/llama.cpp";
   };
 
   outputs =
@@ -111,9 +113,15 @@
     }@inputs:
     let
       system = "x86_64-linux";
+      llama-cpp-vulkan = inputs.llama-cpp-flake.packages.${system}.vulkan;
+      pkgsOverlay = final: prev: {
+        # Use nixpkgs_master for pkgs.llama-cpp-vulkan to avoid the custom one
+        llama-cpp-vulkan = prev.llama-cpp-vulkan;
+      };
       pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
+        overlays = [ pkgsOverlay ];
       };
       pkgsMaster = import inputs.nixpkgs_master {
         inherit system;
@@ -127,7 +135,7 @@
         inherit
           pkgsMaster
           pkgsStable
-          ;
+          llama-cpp-vulkan;
       };
     in
     {
@@ -143,6 +151,7 @@
               hostName
               username
               otherPkgs
+              llama-cpp-vulkan
               # system
               ;
           };
