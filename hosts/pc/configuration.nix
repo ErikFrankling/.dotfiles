@@ -20,7 +20,9 @@
     # ../../modules/nixos/ollama.nix
     inputs.home-manager.nixosModules.default
     ../../modules/nixos/secure-boot.nix
-    ../../modules/nixos/ai-server.nix
+    ../../modules/nixos/llama-swap.nix
+    # ../../modules/nixos/llama-cpp.nix
+    # ../../modules/nixos/ai-server.nix
     # ../../modules/nixos/vm-host.nix
     # ../../modules/nixos/vm-host-simple.nix
     # ./windows-vm.nix

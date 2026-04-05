@@ -7,17 +7,6 @@
 
   networking.firewall.allowedTCPPorts = [ 11434 ];
 
-  services.open-webui = {
-    enable = true;
-    # package = otherPkgs.pkgsStable.open-webui;
-    stateDir = "/var/lib/open-webui";
-    environment = {
-      # Disable authentication
-      WEBUI_AUTH = "False";
-      ENABLE_PERSISTENT_CONFIG = "False"; # force env vars to always win
-    };
-  };
-
   services.ollama = {
     # package = otherPkgs.pkgsMaster.ollama-rocm;
     # package = otherPkgs.pkgsStable.ollama-rocm;
