@@ -14,6 +14,19 @@
 
 ---
 
+## Git Protocol
+
+**NEVER commit, push, or pull unless explicitly told to do so.**
+
+- Only commit when the user explicitly asks you to
+- Never push to remote unless explicitly instructed
+- Never pull or fetch unless explicitly instructed
+- If you're unsure, ask first
+
+This is critical — the user wants full control over when changes are committed and synchronized.
+
+---
+
 ## NixOS Configuration Structure
 
 ### File Structure Overview
