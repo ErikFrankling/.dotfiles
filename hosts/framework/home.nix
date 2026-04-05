@@ -47,6 +47,19 @@
           }
         ];
       }
+      {
+        profile.name = "hack";
+        profile.outputs = [
+          {
+            criteria = "eDP-1";
+            status = "disable";
+          }
+          {
+            criteria = "DP-4"; # Change to your monitor name
+            status = "enable";
+          }
+        ];
+      }
     ];
   };
 
@@ -70,6 +83,8 @@
         height = 1920;
         scale = "2";
         refreshRate = 120;
+        x = 0;
+        y = 0;
       }
       {
         name = "DP-9";
@@ -87,6 +102,18 @@
         height = 2160;
         scale = "2";
         refreshRate = 60;
+        x = 0;
+        y = 0;
+        # enabled = true;
+      }
+      {
+        name = "DP-4";
+        width = 1920;
+        height = 1080;
+        scale = "1";
+        refreshRate = 60;
+        # x = 1920;
+        # y = 1080;
         x = 0;
         y = 0;
         # enabled = true;

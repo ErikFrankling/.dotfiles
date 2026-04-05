@@ -25,6 +25,7 @@
     gparted
     gthumb
     vlc
+    xrdb
     inputs.helium.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
   # nixpkgs.config.permittedInsecurePackages = [ "tightvnc-1.3.10" ];
