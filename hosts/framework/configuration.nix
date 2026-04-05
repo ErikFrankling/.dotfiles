@@ -43,7 +43,9 @@
   sops.secrets.syncthing-cert = { };
   sops.secrets.syncthing-key = { };
 
-  sops.secrets.kth-password = { owner = username; };
+  sops.secrets.kth-password = {
+    owner = username;
+  };
 
   sops.secrets.openvpn = {
     format = "binary";
@@ -56,7 +58,7 @@
     sopsFile = ./secrets/openvpn-auth.txt;
   };
 
-  virtualisation.vmware.host.enable = true;
+  # virtualisation.vmware.host.enable = true;
   # virtualisation.virtualbox.host.enable = true;
   # virtualisation.virtualbox.host.enableKvm = true;
   # virtualisation.virtualbox.host.addNetworkInterface = false;
