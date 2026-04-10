@@ -13,7 +13,7 @@
   nixpkgs.config.allowBroken = true;
 
   home.packages = with pkgs; [
-    # claude-code  # Disabled - npm package 404 error blocking build
+    claude-code # Disabled - npm package 404 error blocking build
     # code-cursor-fhs
     # opencode
     # codex
@@ -34,15 +34,21 @@
       };
 
       provider = {
-        llama = {
+        llama-swap = {
           npm = "@ai-sdk/openai-compatible";
-          name = "Llama.cpp (self-hosted)";
+          name = "Llama Swap (local)";
           options = {
             baseURL = "http://192.168.50.232:8000/v1";
           };
           models = {
             "qwen3.5-27b" = {
-              name = "Qwen3.5-27B (local)";
+              name = "Qwen3.5-27B IQ4_NL (local)";
+            };
+            "qwen3.5-opus" = {
+              name = "Qwen3.5-27B Opus (local)";
+            };
+            "qwen3.5-a3b" = {
+              name = "Qwen3.5-35B-A3B MoE (local)";
             };
           };
         };

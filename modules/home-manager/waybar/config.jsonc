@@ -18,6 +18,8 @@
     // If height property would be not present, it'd be calculated dynamically
     "height": 30,
 
+    "spacing": 4,
+
     "modules-left": [
         "hyprland/workspaces",
         "hyprland/mode"
@@ -30,6 +32,8 @@
         "memory",
         "cpu",
         "temperature", 
+        "custom/gpu-util",
+        "custom/gpu-vram",
         "custom/fan", 
         "battery",
         "tray",
@@ -70,12 +74,13 @@
 
     "clock#date": {
       "interval": 12,
-      "format": "  {:%e %b %Y}", // Icon: calendar-alt
+      "format": "  {:%e %b %Y}",
       "tooltip-format": "{:%e %B %Y}"
     },
 
     "cpu": {
         "interval": 5,
+        
         "format": "  {usage}% ({load})", // Icon: microchip
         "states": {
           "warning": 70,
@@ -95,6 +100,7 @@
 
     "memory": {
         "interval": 5,
+        
         "format": "  {}%", // Icon: memory
         "states": {
             "warning": 70,
@@ -158,6 +164,7 @@
       // "thermal-zone": 3,
       "critical-threshold": 80,
       "interval": 1,
+      
       "format": "{icon}  {temperatureC}°C",
       "format-icons": [
           "", // Icon: temperature-empty
@@ -173,11 +180,26 @@
         "exec": "fw-fanctrl --output-format JSON print speed | jq -r .speed ",
         "format": "󰈐 {}%",
         "interval": 1,
+        
+    },
+
+    "custom/gpu-util": {
+        "exec": "~/.local/bin/gpu-util.sh",
+        "return-type": "json",
+        "interval": 2,
+        "spacing": 4
+    },
+
+    "custom/gpu-vram": {
+        "exec": "~/.local/bin/gpu-vram.sh",
+        "return-type": "json",
+        "interval": 2,
+        "spacing": 4
     },
 
     "tray": {
         "icon-size": 21,
-        "spacing": 10
+        "spacing": 4
     }
 
 }

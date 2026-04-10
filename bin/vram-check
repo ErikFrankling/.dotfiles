@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Check VRAM usage in GB
+
+vram_raw=$(rocm-smi --showmeminfo vram 2>/dev/null)
+
+# Parse GPU[0] lines - extract bytes after the colon
+vram_total=$(echo "$vram_raw" | grep 'GPU\[0\]' | grep 'Total Memory' | sed 's/.*: *//' | tr -d 'B')
+vram_used=$(echo "$vram_raw" | grep 'GPU\[0\]' | grep 'Used Memory' | sed 's/.*: *//' | tr -d 'B')
+
+# Use awk for floating point
+result=$(awk -F/ -v t="$vram_total" -v u="$vram_used" 'BEGIN {
+  total_gb = t / 1024 / 1024 / 1024
+  used_gb = u / 1024 / 1024 / 1024
+  free_gb = (t - u) / 1024 / 1024 / 1024
+  printf "VRAM: %.1fGB / %.1fGB (%.1fGB free)\n", used_gb, total_gb, free_gb
+}')
+echo "$result"

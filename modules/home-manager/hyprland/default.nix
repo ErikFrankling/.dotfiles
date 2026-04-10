@@ -35,6 +35,8 @@
         spotify-tray
         wmname
         ibus
+        grimblast
+        satty
       ];
 
       home.file = {
@@ -213,7 +215,8 @@
               # "$mod, B, fullscreenstate 1"
               "$mod, R, fullscreen"
               # Screeenshot
-              '', Print, exec, grim -g "$(slurp)" - | swappy -f -''
+              ", Print, exec, grimblast save area /tmp/screenshot.png && satty -f /tmp/screenshot.png"
+              # '', Print, exec, grim -g "$(slurp)" - | swappy -f -''
               # ", Print, exec, grimblast copy area"
 
               ", XF86AudioPlay, exec, playerctl play-pause" # the stupid key is called play , but it toggles
