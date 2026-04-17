@@ -57,6 +57,44 @@
     format = "binary";
     sopsFile = ./secrets/openvpn-auth.txt;
   };
+  
+  sops.secrets."wireless.env" = { };
+
+  networking.networkmanager.ensureProfiles = {
+    environmentFiles = [ config.sops.secrets."wireless.env".path ];
+    profiles.eduroam = {
+      connection = {
+        id = "eduroam";
+        type = "wifi";
+      };
+      wifi = {
+        mode = "infrastructure";
+        ssid = "eduroam";
+      };
+      wifi-security = {
+        key-mgmt = "wpa-eap";
+      };
+      "802-1x" = {
+        eap = "peap";
+        identity = "$eduroam_identity";
+        phase2-auth = "mschapv2";
+        anonymous-identity = "anonymous@kth.se";
+        ca-cert = "/home/erikf/.config/cat_installer/ca.pem";
+        altsubject-matches = "DNS:radius-wpa-1.lan.kth.se";
+      };
+      ipv4.method = "auto";
+      ipv6.method = "auto";
+    };
+    secrets.entries = [
+      {
+        matchId = "eduroam";
+        matchType = "wifi";
+        matchSetting = "802-1x";
+        key = "password";
+        file = config.sops.secrets."wireless.env".path;
+      }
+    ];
+  };
 
   # virtualisation.vmware.host.enable = true;
   # virtualisation.virtualbox.host.enable = true;
