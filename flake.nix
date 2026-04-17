@@ -94,9 +94,14 @@
     noctalia.url = "github:noctalia-dev/noctalia-shell";
     noctalia.inputs.nixpkgs.follows = "nixpkgs";
 
-    # claude-desktop.url = "github:k3d3/claude-desktop-linux-flake";
-    # claude-desktop.inputs.nixpkgs.follows = "nixpkgs";
-    # claude-desktop.inputs.flake-utils.follows = "flake-utils";
+    claude-desktop.url = "github:aaddrick/claude-desktop-debian";
+    claude-desktop.inputs.nixpkgs.follows = "nixpkgs";
+
+    t3code-nix.url = "github:Sawrz/t3code-nix";
+    t3code-nix.inputs.nixpkgs.follows = "nixpkgs";
+
+    opencode-desktop-nix.url = "github:tomsch/opencode-desktop-nix";
+    opencode-desktop-nix.inputs.nixpkgs.follows = "nixpkgs";
 
     # llamacpp-rocm.url = "github:hellas-ai/nix-strix-halo/feat/bootable-usb";
     # llamacpp-rocm.inputs.nixpkgs.follows = "nixpkgs";
@@ -126,7 +131,8 @@
       otherPkgs = {
         inherit
           pkgsMaster
-          pkgsStable;
+          pkgsStable
+          ;
       };
     in
     {

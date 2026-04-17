@@ -15,6 +15,8 @@
     ./firefox.nix
   ];
 
+  nixpkgs.overlays = [ inputs.claude-desktop.overlays.default ];
+
   environment.systemPackages = with pkgs; [
     xdg-utils
     wlvncc
@@ -27,6 +29,8 @@
     vlc
     xrdb
     inputs.helium.packages.${pkgs.stdenv.hostPlatform.system}.default
+    # inputs.claude-desktop.packages.${system}.claude-desktop-fhs
+    pkgs.claude-desktop-fhs
   ];
   # nixpkgs.config.permittedInsecurePackages = [ "tightvnc-1.3.10" ];
 

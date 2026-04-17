@@ -5,7 +5,6 @@
   inputs,
   ...
 }:
-
 {
   imports = [
   ];
@@ -16,11 +15,12 @@
     claude-code # Disabled - npm package 404 error blocking build
     # code-cursor-fhs
     # opencode
-    # codex
+    codex
+    inputs.t3code-nix.packages.${pkgs.stdenv.hostPlatform.system}.t3code
     # kiro-fhs
     # vscode-fhs
     # windsurf
-    opencode-desktop
+    inputs.opencode-desktop-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
     lmstudio
     inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.pi
   ];

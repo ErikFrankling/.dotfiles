@@ -54,6 +54,8 @@
         # Hint electron apps to use wayland
         NIXOS_OZONE_WL = "1";
         MOZ_ENABLE_WAYLAND = "1";
+        # Force Claude Desktop to use native Wayland (sharp HiDPI text)
+        CLAUDE_USE_WAYLAND = "1";
       };
 
       wayland.windowManager.hyprland = {
