@@ -96,6 +96,7 @@
     git = {
       enable = true;
       package = pkgs.gitFull;
+      lfs.enable = true;
       settings = {
         user = {
           name = "Erik Frankling";
@@ -130,10 +131,14 @@
   };
 
   nix.package = lib.mkForce pkgs.nix;
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
+  nix.settings = {
+    cores = 0;
+    max-jobs = "auto";
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
+  };
 
   home.sessionVariables = {
     # EDITOR = lib.mkForce "/home/${username}/.nix-profile/bin/nvim";

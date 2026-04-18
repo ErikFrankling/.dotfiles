@@ -35,6 +35,8 @@
         spotify-tray
         wmname
         ibus
+        grimblast
+        satty
       ];
 
       home.file = {
@@ -52,6 +54,8 @@
         # Hint electron apps to use wayland
         NIXOS_OZONE_WL = "1";
         MOZ_ENABLE_WAYLAND = "1";
+        # Force Claude Desktop to use native Wayland (sharp HiDPI text)
+        CLAUDE_USE_WAYLAND = "1";
       };
 
       wayland.windowManager.hyprland = {
@@ -213,7 +217,8 @@
               # "$mod, B, fullscreenstate 1"
               "$mod, R, fullscreen"
               # Screeenshot
-              '', Print, exec, grim -g "$(slurp)" - | swappy -f -''
+              ", Print, exec, grimblast save area /tmp/screenshot.png && satty -f /tmp/screenshot.png"
+              # '', Print, exec, grim -g "$(slurp)" - | swappy -f -''
               # ", Print, exec, grimblast copy area"
 
               ", XF86AudioPlay, exec, playerctl play-pause" # the stupid key is called play , but it toggles

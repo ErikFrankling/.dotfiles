@@ -1,4 +1,9 @@
-{ pkgs, lib, llama-cpp-vulkan, ... }:
+{
+  pkgs,
+  lib,
+  llama-cpp-vulkan,
+  ...
+}:
 
 {
   services.llama-swap = {
@@ -23,7 +28,7 @@
             --port 5800 \
             --model /var/lib/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-IQ4_NL.gguf \
             --n-gpu-layers 999 \
-            -c 4096 \
+            -c 131072 \
             --sleep-idle-seconds 10800 \
             --flash-attn on \
             --cache-type-k q8_0 \
@@ -39,40 +44,74 @@
 
           proxy = "http://127.0.0.1:5800";
           ttl = 10800;
-          aliases = [ "qwen" "qwen3.5" ];
+          aliases = [
+            "qwen"
+            "qwen3.5"
+          ];
         };
 
-        "gemma4-26b" = {
-          name = "Gemma 4 26B A4B IT IQ2_XXS";
-          description = "Gemma 4 26B with Unsloth 2-bit IQ2_XXS quantization (9.3GB)";
+        "qwen3.5-opus" = {
+          name = "Qwen3.5 27B Claude 4.6 Opus Reasoning Distilled";
+          description = "Qwen3.5-27B distilled from Claude 4.6 Opus - Q4_K_S imatrix quant";
 
+          # --model /var/lib/llama-cpp/models/mradermacher/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-i1-GGUF/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled.i1-IQ4_XS.gguf \
           cmd = ''
-            ${llama-cpp-vulkan}/bin/llama-server \
+            ${pkgs.llama-cpp-vulkan}/bin/llama-server \
             --port 5802 \
-            --model /var/lib/llama-cpp/models/unsloth/gemma-4-26B-A4B-it-GGUF/gemma-4-26B-A4B-it-UD-IQ2_XXS.gguf \
+            --model /var/lib/llama-cpp/models/mradermacher/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-i1-GGUF/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-heretic-v2.i1-Q4_K_S.gguf \
             --n-gpu-layers 999 \
-            -c 4096 \
-            --fit off \
+            -c 131072 \
+            --sleep-idle-seconds 10800 \
             --flash-attn on \
             --cache-type-k q8_0 \
             --cache-type-v q8_0 \
-            --alias gemma4-26b \
+            --alias qwen3.5-opus \
             --jinja \
+            --reasoning on \
+            --cache-ram 0 \
             --parallel 1 \
             --repeat-penalty 1.1 \
             --repeat-last-n 64
           '';
 
-          # env vars for custom llama-cpp with gemma4 support
           proxy = "http://127.0.0.1:5802";
           ttl = 10800;
-          aliases = [ "gemma" "gemma4" ];
+          aliases = [
+            "opus"
+            "qwopus"
+          ];
+        };
 
-          env = [
-            "LD_LIBRARY_PATH=${llama-cpp-vulkan}/lib"
-            "GGML_VK_VISIBLE_DEVICES=0"
-            "XDG_CACHE_HOME=/var/lib/llama-cpp/.cache"
-            "RADV_PERFTEST=bfloat16,nogttspill"
+        "qwen3.5-a3b" = {
+          name = "Qwen3.5 35B A3B MoE UD-IQ4_NL";
+          description = "Qwen3.5-35B-A3B MoE with Unsloth UD-IQ4_NL (17.8GB) - 3B active params";
+
+          cmd = ''
+            ${pkgs.llama-cpp-vulkan}/bin/llama-server \
+            --port 5803 \
+            --model /var/lib/llama-cpp/models/unsloth/Qwen3.5-35B-A3B-GGUF/Qwen3.5-35B-A3B-UD-IQ4_NL.gguf \
+            --n-gpu-layers 999 \
+            -c 131072 \
+            --fit off \
+            --sleep-idle-seconds 10800 \
+            --flash-attn on \
+            --cache-type-k q8_0 \
+            --cache-type-v q8_0 \
+            --alias qwen3.5-a3b \
+            --jinja \
+            --reasoning on \
+            --cache-ram 0 \
+            --parallel 1 \
+            --repeat-penalty 1.1 \
+            --repeat-last-n 64
+          '';
+
+          proxy = "http://127.0.0.1:5803";
+          ttl = 10800;
+          aliases = [
+            "a3b"
+            "moe"
+            "qwen-moe"
           ];
         };
       };
@@ -93,7 +132,10 @@
       User = "llama-cpp";
       Group = "llama-cpp";
       WorkingDirectory = lib.mkForce "/var/lib/llama-cpp";
-      SupplementaryGroups = [ "video" "render" ];
+      SupplementaryGroups = [
+        "video"
+        "render"
+      ];
       DevicePolicy = lib.mkForce "closed";
       DeviceAllow = [ "char-drm" ];
       LimitMEMLOCK = "infinity";
@@ -112,7 +154,10 @@
   users.users.llama-cpp = {
     isSystemUser = true;
     group = "llama-cpp";
-    extraGroups = [ "video" "render" ];
+    extraGroups = [
+      "video"
+      "render"
+    ];
     home = "/var/lib/llama-cpp";
     createHome = true;
   };

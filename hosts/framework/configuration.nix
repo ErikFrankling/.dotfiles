@@ -57,7 +57,7 @@
     format = "binary";
     sopsFile = ./secrets/openvpn-auth.txt;
   };
-  
+
   sops.secrets."wireless.env" = { };
 
   networking.networkmanager.ensureProfiles = {

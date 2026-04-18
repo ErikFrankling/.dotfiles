@@ -7,177 +7,189 @@
 // =============================================================================
 
 {
-    // -------------------------------------------------------------------------
-    // Global configuration
-    // -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
+  // Global configuration
+  // -------------------------------------------------------------------------
 
-    "layer": "top",
+  "layer": "top",
 
-    "position": "top",
+  "position": "top",
 
-    // If height property would be not present, it'd be calculated dynamically
-    "height": 30,
+  // If height property would be not present, it'd be calculated dynamically
+  "height": 30,
 
-    "modules-left": [
-        "hyprland/workspaces",
-        "hyprland/mode"
+  "spacing": 4,
+
+  "modules-left": ["hyprland/workspaces", "hyprland/mode"],
+  "modules-center": [],
+  "modules-right": [
+    "network",
+    "memory",
+    "cpu",
+    "temperature",
+    "custom/gpu-util",
+    "custom/gpu-vram",
+    "custom/fan",
+    "battery",
+    "tray",
+    "clock#date",
+    "clock#time",
+  ],
+
+  // -------------------------------------------------------------------------
+  // Modules
+  // -------------------------------------------------------------------------
+
+  "battery": {
+    "interval": 10,
+    "states": {
+      "warning": 30,
+      "critical": 15,
+    },
+    // Connected to AC
+    "format": " {icon}  {capacity}%", // Icon: bolt
+    // Not connected to AC
+    "format-discharging": "{icon}  {capacity}%",
+    "format-icons": [
+      "", // Icon: battery-full
+      "", // Icon: battery-three-quarters
+      "", // Icon: battery-half
+      "", // Icon: battery-quarter
+      "", // Icon: battery-empty
     ],
-    "modules-center": [
-        
+    "tooltip": true,
+  },
+
+  "clock#time": {
+    "interval": 1,
+    "format": "{:%H:%M}",
+    "tooltip": false,
+  },
+
+  "clock#date": {
+    "interval": 12,
+    "format": "  {:%e %b %Y}",
+    "tooltip-format": "{:%e %B %Y}",
+  },
+
+  "cpu": {
+    "interval": 5,
+
+    "format": "  {usage}% ({load})", // Icon: microchip
+    "states": {
+      "warning": 70,
+      "critical": 90,
+    },
+  },
+
+  "custom/keyboard-layout": {
+    "exec": "swaymsg -t get_inputs | grep -m1 'xkb_active_layout_name' | cut -d '\"' -f4",
+    // Interval set only as a fallback, as the value is updated by signal
+    "interval": 30,
+    "format": "  {}", // Icon: keyboard
+    // Signal sent by Sway key binding (~/.config/sway/key-bindings)
+    "signal": 1, // SIGHUP
+    "tooltip": false,
+  },
+
+  "memory": {
+    "interval": 5,
+    "format": "  {}%", // Icon: memory
+    "states": {
+      "warning": 70,
+      "critical": 90,
+    },
+  },
+
+  "network": {
+    "interval": 5,
+    "format-wifi": "  {essid} ({signalStrength}%)", // Icon: wifi
+    "format-ethernet": "  {ifname}: {ipaddr}/{cidr}", // Icon: ethernet
+    "format-disconnected": "⚠  Disconnected",
+    "tooltip-format": "{ifname}: {ipaddr}",
+  },
+
+  // "hyprland/mode":
+  //     "format": "<span style=\"italic\">  {}</span>", // Icon: expand-arrows-alt
+  //     "tooltip": false
+  // },
+
+  // "hyprland/window": {
+  //     "format": "{}",
+  //     "max-length": 120
+  // },
+
+  "hyprland/workspaces": {
+    "all-outputs": false,
+    "disable-scroll": true,
+    "format": "{icon} {name}",
+    "format-icons": {
+      "1": "", // Icon: code
+      "2": "", // Icon: terminal
+      "3": "󰈹", // Icon: firefox-browser
+      // "5:mail": "", // Icon: mail
+      "urgent": "",
+      "active": "",
+      "default": "",
+    },
+  },
+
+  "pulseaudio": {
+    //"scroll-step": 1,
+    "format": "{icon}  {volume}%",
+    "format-bluetooth": "{icon}  {volume}%",
+    "format-muted": "",
+    "format-icons": {
+      "headphones": "󰋋",
+      "handsfree": "󰋎",
+      "headset": "󰋎",
+      "phone": "",
+      "portable": "",
+      "car": "",
+      "default": ["", ""],
+    },
+    "on-click": "pavucontrol",
+  },
+
+  "temperature": {
+    "hwmon-path-abs": "/sys/devices/pci0000:00/0000:00:18.3/hwmon",
+    "input-filename": "temp1_input",
+    // "thermal-zone": 3,
+    "critical-threshold": 80,
+    "interval": 1,
+    "format": "{icon}  {temperatureC}°C",
+    "format-icons": [
+      "", // Icon: temperature-empty
+      "", // Icon: temperature-quarter
+      "", // Icon: temperature-half
+      "", // Icon: temperature-three-quarters
+      "", // Icon: temperature-full
     ],
-    "modules-right": [
-        "network",
-        "memory",
-        "cpu",
-        "temperature", 
-        "custom/fan", 
-        "battery",
-        "tray",
-        "clock#date",
-        "clock#time"
-    ],
+    "tooltip": true,
+  },
 
+  "custom/fan": {
+    "exec": "fw-fanctrl --output-format JSON print speed | jq -r .speed ",
+    "format": "󰈐 {}%",
+    "interval": 1,
+  },
 
-    // -------------------------------------------------------------------------
-    // Modules
-    // -------------------------------------------------------------------------
+  "custom/gpu-util": {
+    "exec": "~/.local/bin/gpu-util.sh",
+    "return-type": "json",
+    "interval": 2,
+    "spacing": 4,
+  },
 
-    "battery": {
-        "interval": 10,
-        "states": {
-            "warning": 30,
-            "critical": 15
-        },
-        // Connected to AC
-        "format": " {icon}  {capacity}%", // Icon: bolt
-        // Not connected to AC
-        "format-discharging": "{icon}  {capacity}%",
-        "format-icons": [
-            "", // Icon: battery-full
-            "", // Icon: battery-three-quarters
-            "", // Icon: battery-half
-            "", // Icon: battery-quarter
-            ""  // Icon: battery-empty
-        ],
-        "tooltip": true
-    },
+  "custom/gpu-vram": {
+    "exec": "~/.local/bin/gpu-vram.sh",
+    "return-type": "json",
+    "interval": 2,
+    "spacing": 4,
+  },
 
-    "clock#time": {
-        "interval": 1,
-        "format": "{:%H:%M}",
-        "tooltip": false
-    },
-
-    "clock#date": {
-      "interval": 12,
-      "format": "  {:%e %b %Y}", // Icon: calendar-alt
-      "tooltip-format": "{:%e %B %Y}"
-    },
-
-    "cpu": {
-        "interval": 5,
-        "format": "  {usage}% ({load})", // Icon: microchip
-        "states": {
-          "warning": 70,
-          "critical": 90
-        }
-    },
-
-    "custom/keyboard-layout": {
-      "exec": "swaymsg -t get_inputs | grep -m1 'xkb_active_layout_name' | cut -d '\"' -f4",
-      // Interval set only as a fallback, as the value is updated by signal
-      "interval": 30,
-      "format": "  {}", // Icon: keyboard
-      // Signal sent by Sway key binding (~/.config/sway/key-bindings)
-      "signal": 1, // SIGHUP
-      "tooltip": false
-    },
-
-    "memory": {
-        "interval": 5,
-        "format": "  {}%", // Icon: memory
-        "states": {
-            "warning": 70,
-            "critical": 90
-        }
-    },
-
-    "network": {
-        "interval": 5,
-        "format-wifi": "  {essid} ({signalStrength}%)", // Icon: wifi
-        "format-ethernet": "  {ifname}: {ipaddr}/{cidr}", // Icon: ethernet
-        "format-disconnected": "⚠  Disconnected",
-        "tooltip-format": "{ifname}: {ipaddr}"
-    },
-
-    // "hyprland/mode": 
-    //     "format": "<span style=\"italic\">  {}</span>", // Icon: expand-arrows-alt
-    //     "tooltip": false
-    // },
-
-    // "hyprland/window": {
-    //     "format": "{}",
-    //     "max-length": 120
-    // },
-
-    "hyprland/workspaces": {
-        "all-outputs": false,
-        "disable-scroll": true,
-        "format": "{icon} {name}",
-        "format-icons": {
-	        "1": "", // Icon: code
-            "2": "", // Icon: terminal
-            "3": "󰈹", // Icon: firefox-browser
-            // "5:mail": "", // Icon: mail
-            "urgent": "",
-            "active": "",
-            "default": ""
-        }
-    },
-
-    "pulseaudio": {
-        //"scroll-step": 1,
-        "format": "{icon}  {volume}%",
-        "format-bluetooth": "{icon}  {volume}%",
-        "format-muted": "",
-        "format-icons": {
-            "headphones": "󰋋",
-            "handsfree": "󰋎",
-            "headset": "󰋎",
-            "phone": "",
-            "portable": "",
-            "car": "",
-            "default": ["", ""]
-        },
-        "on-click": "pavucontrol"
-    },
-
-    "temperature": {
-      "hwmon-path-abs": "/sys/devices/pci0000:00/0000:00:18.3/hwmon",
-      "input-filename": "temp1_input",
-      // "thermal-zone": 3,
-      "critical-threshold": 80,
-      "interval": 1,
-      "format": "{icon}  {temperatureC}°C",
-      "format-icons": [
-          "", // Icon: temperature-empty
-          "", // Icon: temperature-quarter
-          "", // Icon: temperature-half
-          "", // Icon: temperature-three-quarters
-          ""  // Icon: temperature-full
-      ],
-      "tooltip": true
-    },
-
-    "custom/fan": {
-        "exec": "fw-fanctrl --output-format JSON print speed | jq -r .speed ",
-        "format": "󰈐 {}%",
-        "interval": 1,
-    },
-
-    "tray": {
-        "icon-size": 21,
-        "spacing": 10
-    }
-
+  "tray": {
+    "icon-size": 21,
+    "spacing": 4,
+  },
 }

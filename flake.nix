@@ -102,6 +102,17 @@
     llamacpp-rocm.inputs.nixpkgs.follows = "nixpkgs";
 
     llama-cpp-flake.url = "github:ggml-org/llama.cpp";
+    claude-desktop.url = "github:aaddrick/claude-desktop-debian";
+    claude-desktop.inputs.nixpkgs.follows = "nixpkgs";
+
+    t3code-nix.url = "github:Sawrz/t3code-nix";
+    t3code-nix.inputs.nixpkgs.follows = "nixpkgs";
+
+    opencode-desktop-nix.url = "github:tomsch/opencode-desktop-nix";
+    opencode-desktop-nix.inputs.nixpkgs.follows = "nixpkgs";
+
+    # llamacpp-rocm.url = "github:hellas-ai/nix-strix-halo/feat/bootable-usb";
+    # llamacpp-rocm.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -135,7 +146,8 @@
         inherit
           pkgsMaster
           pkgsStable
-          llama-cpp-vulkan;
+          llama-cpp-vulkan
+          ;
       };
     in
     {
