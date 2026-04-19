@@ -113,6 +113,8 @@
 
     # llamacpp-rocm.url = "github:hellas-ai/nix-strix-halo/feat/bootable-usb";
     # llamacpp-rocm.inputs.nixpkgs.follows = "nixpkgs";
+
+    batmon.url = "github:ErikFrankling/nvim";
   };
 
   outputs =

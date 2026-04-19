@@ -105,6 +105,26 @@
         "type": "github"
       }
     },
+    "batmon": {
+      "inputs": {
+        "lualine-lsp-progress": "lualine-lsp-progress",
+        "nixCats": "nixCats",
+        "nixpkgs": "nixpkgs_2"
+      },
+      "locked": {
+        "lastModified": 1773292868,
+        "narHash": "sha256-ak83/vC/Q2CdIzXJzaqXBebDW2Scv7ppE8amH3uKg14=",
+        "owner": "ErikFrankling",
+        "repo": "nvim",
+        "rev": "211184e3cda26827f3fa8b5e9e63f533fd221bd1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ErikFrankling",
+        "repo": "nvim",
+        "type": "github"
+      }
+    },
     "blueprint": {
       "inputs": {
         "nixpkgs": [
@@ -222,7 +242,7 @@
         "determinate-nixd-aarch64-linux": "determinate-nixd-aarch64-linux",
         "determinate-nixd-x86_64-linux": "determinate-nixd-x86_64-linux",
         "nix": "nix",
-        "nixpkgs": "nixpkgs_3"
+        "nixpkgs": "nixpkgs_4"
       },
       "locked": {
         "lastModified": 1775584659,
@@ -771,7 +791,7 @@
     "llama-cpp-flake": {
       "inputs": {
         "flake-parts": "flake-parts_4",
-        "nixpkgs": "nixpkgs_4"
+        "nixpkgs": "nixpkgs_5"
       },
       "locked": {
         "lastModified": 1776442631,
@@ -818,7 +838,7 @@
         "blueprint": "blueprint",
         "bun2nix": "bun2nix",
         "flake-parts": "flake-parts_5",
-        "nixpkgs": "nixpkgs_5",
+        "nixpkgs": "nixpkgs_6",
         "systems": "systems_4",
         "treefmt-nix": "treefmt-nix"
       },
@@ -852,11 +872,27 @@
         "type": "github"
       }
     },
+    "lualine-lsp-progress_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1645625191,
+        "narHash": "sha256-xlfjqMXBlcveCPY4FCyIyBj1QHYFifLnDYzQA93OPCM=",
+        "owner": "bercly0b",
+        "repo": "lualine-lsp-progress",
+        "rev": "931e11d2ad4f9a43216e150bd7e8c770a01a5b20",
+        "type": "github"
+      },
+      "original": {
+        "owner": "bercly0b",
+        "repo": "lualine-lsp-progress",
+        "type": "github"
+      }
+    },
     "nix": {
       "inputs": {
         "flake-parts": "flake-parts_2",
         "git-hooks-nix": "git-hooks-nix",
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": "nixpkgs_3",
         "nixpkgs-23-11": "nixpkgs-23-11",
         "nixpkgs-regression": "nixpkgs-regression"
       },
@@ -895,6 +931,21 @@
       }
     },
     "nixCats": {
+      "locked": {
+        "lastModified": 1770584904,
+        "narHash": "sha256-9Zaz8lbKF2W9pwXZEnbiGsicHdBoU+dHt3Wv3mCJoZ8=",
+        "owner": "BirdeeHub",
+        "repo": "nixCats-nvim",
+        "rev": "538fdde784d2909700d97a8ef307783b33a86fb1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "BirdeeHub",
+        "repo": "nixCats-nvim",
+        "type": "github"
+      }
+    },
+    "nixCats_2": {
       "locked": {
         "lastModified": 1770584904,
         "narHash": "sha256-9Zaz8lbKF2W9pwXZEnbiGsicHdBoU+dHt3Wv3mCJoZ8=",
@@ -1023,6 +1074,22 @@
     },
     "nixpkgs_2": {
       "locked": {
+        "lastModified": 1772956932,
+        "narHash": "sha256-M0yS4AafhKxPPmOHGqIV0iKxgNO8bHDWdl1kOwGBwRY=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "608d0cadfed240589a7eea422407a547ad626a14",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_3": {
+      "locked": {
         "lastModified": 1761597516,
         "narHash": "sha256-wxX7u6D2rpkJLWkZ2E932SIvDJW8+ON/0Yy8+a5vsDU=",
         "rev": "daf6dc47aa4b44791372d6139ab7b25269184d55",
@@ -1035,7 +1102,7 @@
         "url": "https://flakehub.com/f/NixOS/nixpkgs/0.2505"
       }
     },
-    "nixpkgs_3": {
+    "nixpkgs_4": {
       "locked": {
         "lastModified": 1775464765,
         "narHash": "sha256-nex6TL2x1/sVHCyDWcvl1t/dbTedb9bAGC4DLf/pmYk=",
@@ -1049,7 +1116,7 @@
         "url": "https://flakehub.com/f/DeterminateSystems/nixpkgs-weekly/0.1"
       }
     },
-    "nixpkgs_4": {
+    "nixpkgs_5": {
       "locked": {
         "lastModified": 1732014248,
         "narHash": "sha256-y/MEyuJ5oBWrWAic/14LaIr/u5E0wRVzyYsouYY3W6w=",
@@ -1065,7 +1132,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_5": {
+    "nixpkgs_6": {
       "locked": {
         "lastModified": 1776255774,
         "narHash": "sha256-psVTpH6PK3q1htMJpmdz1hLF5pQgEshu7gQWgKO6t6Y=",
@@ -1081,7 +1148,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_6": {
+    "nixpkgs_7": {
       "locked": {
         "lastModified": 1776169885,
         "narHash": "sha256-l/iNYDZ4bGOAFQY2q8y5OAfBBtrDAaPuRQqWaFHVRXM=",
@@ -1097,7 +1164,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_7": {
+    "nixpkgs_8": {
       "locked": {
         "lastModified": 1772956932,
         "narHash": "sha256-M0yS4AafhKxPPmOHGqIV0iKxgNO8bHDWdl1kOwGBwRY=",
@@ -1232,9 +1299,9 @@
     },
     "nvim": {
       "inputs": {
-        "lualine-lsp-progress": "lualine-lsp-progress",
-        "nixCats": "nixCats",
-        "nixpkgs": "nixpkgs_7"
+        "lualine-lsp-progress": "lualine-lsp-progress_2",
+        "nixCats": "nixCats_2",
+        "nixpkgs": "nixpkgs_8"
       },
       "locked": {
         "lastModified": 1773292868,
@@ -1316,6 +1383,7 @@
       "inputs": {
         "ags": "ags",
         "ags-shell": "ags-shell",
+        "batmon": "batmon",
         "claude-desktop": "claude-desktop",
         "determinate": "determinate",
         "flake-utils": "flake-utils",
@@ -1327,7 +1395,7 @@
         "llm-agents": "llm-agents",
         "nix-matlab": "nix-matlab",
         "nixos-wsl": "nixos-wsl",
-        "nixpkgs": "nixpkgs_6",
+        "nixpkgs": "nixpkgs_7",
         "nixpkgs_master": "nixpkgs_master",
         "nixpkgs_stable": "nixpkgs_stable",
         "nixvim": "nixvim",
