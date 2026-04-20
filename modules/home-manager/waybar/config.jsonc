@@ -33,7 +33,7 @@
     "battery",
     "tray",
     "clock#date",
-    "clock#time",
+    "clock#time"
   ],
 
   // -------------------------------------------------------------------------
@@ -44,7 +44,7 @@
     "interval": 10,
     "states": {
       "warning": 30,
-      "critical": 15,
+      "critical": 15
     },
     // Connected to AC
     "format": " {icon}  {capacity}%", // Icon: bolt
@@ -55,7 +55,7 @@
       "", // Icon: battery-three-quarters
       "", // Icon: battery-half
       "", // Icon: battery-quarter
-      "", // Icon: battery-empty
+      "" // Icon: battery-empty
     ],
     "tooltip": true,
   },
@@ -63,13 +63,13 @@
   "clock#time": {
     "interval": 1,
     "format": "{:%H:%M}",
-    "tooltip": false,
+    "tooltip": false
   },
 
   "clock#date": {
     "interval": 12,
     "format": "  {:%e %b %Y}",
-    "tooltip-format": "{:%e %B %Y}",
+    "tooltip-format": "{:%e %B %Y}"
   },
 
   "cpu": {
@@ -78,7 +78,7 @@
     "format": "  {usage}% ({load})", // Icon: microchip
     "states": {
       "warning": 70,
-      "critical": 90,
+      "critical": 90
     },
   },
 
@@ -89,7 +89,7 @@
     "format": "  {}", // Icon: keyboard
     // Signal sent by Sway key binding (~/.config/sway/key-bindings)
     "signal": 1, // SIGHUP
-    "tooltip": false,
+    "tooltip": false
   },
 
   "memory": {
@@ -97,7 +97,7 @@
     "format": "  {}%", // Icon: memory
     "states": {
       "warning": 70,
-      "critical": 90,
+      "critical": 90
     },
   },
 
@@ -106,7 +106,7 @@
     "format-wifi": "  {essid} ({signalStrength}%)", // Icon: wifi
     "format-ethernet": "  {ifname}: {ipaddr}/{cidr}", // Icon: ethernet
     "format-disconnected": "⚠  Disconnected",
-    "tooltip-format": "{ifname}: {ipaddr}",
+    "tooltip-format": "{ifname}: {ipaddr}"
   },
 
   // "hyprland/mode":
@@ -130,7 +130,7 @@
       // "5:mail": "", // Icon: mail
       "urgent": "",
       "active": "",
-      "default": "",
+      "default": ""
     },
   },
 
@@ -146,7 +146,7 @@
       "phone": "",
       "portable": "",
       "car": "",
-      "default": ["", ""],
+      "default": ["", ""]
     },
     "on-click": "pavucontrol",
   },
@@ -163,7 +163,7 @@
       "", // Icon: temperature-quarter
       "", // Icon: temperature-half
       "", // Icon: temperature-three-quarters
-      "", // Icon: temperature-full
+      "" // Icon: temperature-full
     ],
     "tooltip": true,
   },
@@ -171,25 +171,25 @@
   "custom/fan": {
     "exec": "fw-fanctrl --output-format JSON print speed | jq -r .speed ",
     "format": "󰈐 {}%",
-    "interval": 1,
+    "interval": 1
   },
 
   "custom/gpu-util": {
     "exec": "~/.local/bin/gpu-util.sh",
     "return-type": "json",
     "interval": 2,
-    "spacing": 4,
+    "spacing": 4
   },
 
   "custom/gpu-vram": {
     "exec": "~/.local/bin/gpu-vram.sh",
     "return-type": "json",
     "interval": 2,
-    "spacing": 4,
+    "spacing": 4
   },
 
   "tray": {
     "icon-size": 21,
-    "spacing": 4,
+    "spacing": 4
   },
 }
