@@ -19,6 +19,7 @@
     ../../modules/nixos/game.nix
     inputs.home-manager.nixosModules.default
     ../../modules/nixos/vm-host.nix
+    inputs.batmon.nixosModules.default
   ];
 
   # boot.kernelPackages =
@@ -251,5 +252,6 @@
     #  wget
     # swi-prolog-gui
     fw-ectool
+    batmon
   ];
 }
