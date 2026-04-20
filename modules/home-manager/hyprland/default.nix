@@ -73,7 +73,7 @@
           # exec = pkill waybar
           # exec-once = ags run
           exec-once = my-shell
-          exec-once = waybar --config .config/waybar/cofig.jsonc
+          # Waybar is managed by Home Manager systemd integration.
           exec-once = nm-applet
           exec-once = blueman-applet
           exec-once = blueman-tray

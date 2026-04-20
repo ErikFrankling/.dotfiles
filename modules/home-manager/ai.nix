@@ -23,7 +23,7 @@
     # windsurf
     inputs.opencode-desktop-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
     lmstudio
-    inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.pi
+    # inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.pi # Disabled - npm registry 500 blocking rebuild
   ];
 
   programs.opencode = {
