@@ -12,6 +12,21 @@
 
   nixpkgs.config.allowBroken = true;
 
+  home.file.".codex/config.toml" = {
+    force = true;
+    text = ''
+      approval_policy = "never"
+      approvals_reviewer = "user"
+      sandbox_mode = "danger-full-access"
+
+      [notice]
+      hide_full_access_warning = true
+
+      [projects."/home/erikf/.dotfiles"]
+      trust_level = "trusted"
+    '';
+  };
+
   home.packages = with pkgs; [
     claude-code # Disabled - npm package 404 error blocking build
     # code-cursor-fhs

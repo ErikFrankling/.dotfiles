@@ -61,6 +61,8 @@
 
   sops.secrets."wireless.env" = { };
 
+  environment.etc."eduroam/ca.pem".source = ./eduroam-ca.pem;
+
   networking.networkmanager.ensureProfiles = {
     environmentFiles = [ config.sops.secrets."wireless.env".path ];
     profiles.eduroam = {
@@ -78,24 +80,59 @@
       "802-1x" = {
         eap = "peap";
         identity = "$eduroam_identity";
+        password = "$eduroam_psk";
         phase2-auth = "mschapv2";
-        anonymous-identity = "anonymous@kth.se";
-        ca-cert = "/home/erikf/.config/cat_installer/ca.pem";
-        altsubject-matches = "DNS:radius-wpa-1.lan.kth.se";
+        anonymous-identity = "$eduroam_identity";
+        ca-cert = "/etc/eduroam/ca.pem";
+        subject-match = "lan.kth.se";
       };
       ipv4.method = "auto";
       ipv6.method = "auto";
     };
-    secrets.entries = [
-      {
-        matchId = "eduroam";
-        matchType = "wifi";
-        matchSetting = "802-1x";
-        key = "password";
-        file = config.sops.secrets."wireless.env".path;
-      }
-    ];
   };
+
+  networking.networkmanager.dispatcherScripts = [
+    {
+      source = pkgs.writeShellScript "framework-disable-wifi-on-ethernet" ''
+        set -eu
+
+        interface="''${1:-}"
+        action="''${2:-}"
+        nmcli="${pkgs.networkmanager}/bin/nmcli"
+        logger="${pkgs.util-linux}/bin/logger"
+
+        # NetworkManager triggers this dispatcher for many device types and events.
+        # Keep the policy simple for this laptop: if any Ethernet link is connected,
+        # Wi-Fi should be disabled so the router only sees the wired MAC.
+        case "$action" in
+          up|down|dhcp4-change|dhcp6-change|connectivity-change)
+            ;;
+          *)
+            exit 0
+            ;;
+        esac
+
+        ethernet_connected="$(
+          "$nmcli" --terse --fields TYPE,STATE device status \
+            | ${pkgs.gnugrep}/bin/grep -q '^ethernet:connected$' && printf yes || printf no
+        )"
+
+        wifi_enabled="$("$nmcli" --terse radio wifi)"
+
+        if [ "$ethernet_connected" = "yes" ] && [ "$wifi_enabled" = "enabled" ]; then
+          "$logger" -t framework-network "Ethernet is connected on $interface ($action); disabling Wi-Fi"
+          "$nmcli" radio wifi off
+          exit 0
+        fi
+
+        if [ "$ethernet_connected" = "no" ] && [ "$wifi_enabled" = "disabled" ]; then
+          "$logger" -t framework-network "No Ethernet links remain after $interface ($action); enabling Wi-Fi"
+          "$nmcli" radio wifi on
+        fi
+      '';
+      type = "basic";
+    }
+  ];
 
   # virtualisation.vmware.host.enable = true;
   # virtualisation.virtualbox.host.enable = true;

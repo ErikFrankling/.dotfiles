@@ -30,7 +30,9 @@
     "custom/gpu-util",
     "custom/gpu-vram",
     "custom/fan",
+    "backlight",
     "battery",
+    "pulseaudio",
     "tray",
     "clock#date",
     "clock#time"
@@ -58,6 +60,12 @@
       "" // Icon: battery-empty
     ],
     "tooltip": true,
+  },
+
+  "backlight": {
+    "device": "amdgpu_bl1",
+    "format": "󰃠  {percent}%",
+    "tooltip": false,
   },
 
   "clock#time": {
