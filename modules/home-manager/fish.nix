@@ -117,7 +117,9 @@
       g = "git";
     };
 
-    interactiveShellInit = "";
+    interactiveShellInit = ''
+      set -g theme_display_date no
+    '';
 
     shellInit = ''
 
