@@ -37,6 +37,8 @@
     inputs.ags-shell.packages."x86_64-linux".default
     mattermost-desktop
     # inputs.claude-desktop.packages.${system}.claude-desktop-with-fhs
+    ghostty
+    code-cursor
   ];
 
   nixpkgs.config.permittedInsecurePackages = [
