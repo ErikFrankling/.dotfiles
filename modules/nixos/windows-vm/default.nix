@@ -13,7 +13,8 @@ let
 
   # Simple conversion of GPU devices to hostdev format
   # Each device needs: type, managed, source.address with domain/bus/slot/function
-  gpuHostdevs = map (dev: 
+  gpuHostdevs = map (
+    dev:
     let
       isVga = dev.function == 0;
     in
@@ -33,7 +34,8 @@ let
         # Use extracted VBIOS for Ryzen 7000 iGPU to fix Error 43
         file = "${cfg.storagePath}/vbios_7800x3d.bin";
       };
-    } // lib.optionalAttrs isVga {
+    }
+    // lib.optionalAttrs isVga {
       # Add x-vga attribute for primary GPU passthrough
       # This tells QEMU this is the primary VGA device
       "x-vga" = "on";
@@ -117,19 +119,19 @@ let
         };
       };
 
-    # QEMU command line to disable default video
-    qemu = {
-      commandline = {
-        arg = [
-          {
-            value = "-vga";
-          }
-          {
-            value = "none";
-          }
-        ];
+      # QEMU command line to disable default video
+      qemu = {
+        commandline = {
+          arg = [
+            {
+              value = "-vga";
+            }
+            {
+              value = "none";
+            }
+          ];
+        };
       };
-    };
 
       # Looking Glass shared memory
       shmem = {

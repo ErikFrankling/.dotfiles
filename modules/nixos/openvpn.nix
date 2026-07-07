@@ -2,6 +2,7 @@
 {
   services.openvpn.servers.homeVPN = {
     autoStart = true;
+    updateResolvConf = true;
     config = ''
       config ${config.sops.secrets.openvpn.path}
       auth-user-pass ${config.sops.secrets.openvpn-auth.path}

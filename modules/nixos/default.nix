@@ -24,6 +24,22 @@
     ./windows-vm
   ];
 
+  boot.kernel.sysctl = {
+    "fs.inotify.max_user_watches" = 524288;
+    "fs.inotify.max_user_instances" = 1024;
+    # Avoid swapping to the (slow) disk swap until RAM is genuinely tight.
+    # With zram below, the kernel prefers fast compressed-RAM swap first.
+    "vm.swappiness" = 10;
+  };
+
+  # Compressed swap in RAM. Much faster than the disk swap partition, so heavy
+  # memory pressure (big builds, local LLMs) degrades gracefully instead of
+  # thrashing /dev/sdb3. Sits at higher priority than disk swap automatically.
+  zramSwap = {
+    enable = true;
+    memoryPercent = 50;
+  };
+
   programs.nix-ld.enable = true;
 
   # virtualisation.podman = {
@@ -63,8 +79,16 @@
       auto-optimise-store = false;
       experimental-features = "nix-command flakes";
       download-buffer-size = 524288000;
-      substituters = [ "https://install.determinate.systems" ];
-      trusted-public-keys = [ "cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM=" ];
+      substituters = [
+        "https://install.determinate.systems"
+        "https://cache.numtide.com" # prebuilt llm-agents.nix binaries (codex, etc.) — avoids compiling
+        "https://nix-community.cachix.org" # community-built packages
+      ];
+      trusted-public-keys = [
+        "cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM="
+        "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
+        "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+      ];
     };
 
     # registry = {
@@ -177,6 +201,9 @@
       Host docker
         Hostname 192.168.50.100
         User debian
+      Host naiaclaw
+        Hostname 192.168.50.200
+        User ubuntu
     ";
   };
 

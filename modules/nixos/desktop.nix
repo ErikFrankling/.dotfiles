@@ -10,9 +10,10 @@
     ./bluetooth.nix
     ./sound.nix
     ./hyprland.nix
-    # ./projects/matlab.nix
+    ./projects/matlab.nix
     ./obs.nix
     ./firefox.nix
+    ./ai.nix
   ];
 
   nixpkgs.overlays = [ inputs.claude-desktop.overlays.default ];
@@ -30,7 +31,20 @@
     xrdb
     inputs.helium.packages.${pkgs.stdenv.hostPlatform.system}.default
     # inputs.claude-desktop.packages.${system}.claude-desktop-fhs
-    # pkgs.claude-desktop-fhs
+    # Claude Desktop (FHS variant — needed for MCP servers: npx/uvx/docker),
+    # wrapped to force 2x scaling. Electron ignores GDK_SCALE / the Hyprland
+    # monitor scale, so we force it here. The Nix launcher forwards "$@" to
+    # Electron (run_electron_and_cleanup), and the .desktop Exec is a bare
+    # `claude-desktop` resolved from PATH, so this wrapper applies everywhere.
+    (pkgs.symlinkJoin {
+      name = "claude-desktop-fhs-scaled";
+      paths = [ pkgs.claude-desktop-fhs ];
+      nativeBuildInputs = [ pkgs.makeWrapper ];
+      postBuild = ''
+        wrapProgram $out/bin/claude-desktop \
+          --add-flags "--force-device-scale-factor=2"
+      '';
+    })
   ];
   # nixpkgs.config.permittedInsecurePackages = [ "tightvnc-1.3.10" ];
 
@@ -39,7 +53,6 @@
   ];
 
   programs.kdeconnect.enable = true;
-  # programs.ladybird.enable = true;
   # virtualisation.vmware.host.enable = true;
   programs.nm-applet.enable = true;
   security.polkit.enable = true;

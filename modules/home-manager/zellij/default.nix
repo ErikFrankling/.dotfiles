@@ -9,11 +9,11 @@
 
   programs.zellij = {
     enable = true;
-    enableFishIntegration = true;
+    enableFishIntegration = false;
 
     # attachExistingSession = true;
 
-    exitShellOnExit = true;
+    exitShellOnExit = false;
     # themes = true;
 
     # Configuration written to

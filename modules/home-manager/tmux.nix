@@ -48,7 +48,8 @@ let
   #     };
   #   };
 
-in {
+in
+{
   # TODO: what if this is defined in another file? Merge it!
   # programs.fish = {
   #   shellInit = ''
@@ -95,7 +96,7 @@ in {
       # must be before continuum edits right status bar
       # {
       #   plugin = tmuxPlugins.catppuccin;
-      #   extraConfig = '' 
+      #   extraConfig = ''
       #     set -g @catppuccin_flavour 'frappe'
       #     set -g @catppuccin_window_tabs_enabled on
       #     set -g @catppuccin_date_time "%H:%M"
@@ -229,4 +230,3 @@ in {
 #      sha256 = "sha256-cPZCV8xk9QpU49/7H8iGhQYK6JwWjviL29eWabuqruc=";
 #    };
 #  };
-

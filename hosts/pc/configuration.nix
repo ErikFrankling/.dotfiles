@@ -20,6 +20,7 @@
     # ../../modules/nixos/ollama.nix
     inputs.home-manager.nixosModules.default
     ../../modules/nixos/secure-boot.nix
+    ../../modules/nixos/neptune.nix
     ../../modules/nixos/llama-swap.nix
     # ../../modules/nixos/llama-cpp.nix
     # ../../modules/nixos/ai-server.nix
@@ -27,6 +28,8 @@
     # ../../modules/nixos/vm-host-simple.nix
     # ./windows-vm.nix
   ];
+
+  # programs.ladybird.enable = true;
 
   # fix for gpu not using max memmory clock speeds
   hardware.enableRedistributableFirmware = true;
@@ -91,6 +94,32 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  fileSystems."/mnt/data" = {
+    device = "/dev/disk/by-uuid/351d9367-1202-419d-bb5a-e828913e6d7c";
+    fsType = "ext4";
+  };
+
+  systemd.tmpfiles.rules = [
+    "d /mnt/data 0750 root root -"
+  ];
+
+  systemd.services.data-drive-permissions = {
+    description = "Set permissions for /mnt/data";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "mnt-data.mount" ];
+    requires = [ "mnt-data.mount" ];
+
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+
+    script = ''
+      chown ${username}:users /mnt/data
+      chmod 0750 /mnt/data
+    '';
+  };
+
   time.hardwareClockInLocalTime = true;
 
   # Configure keymap in X11
@@ -120,10 +149,9 @@
   };
 
   # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [
-  #   8080
-  #   8081
-  # ];
+  networking.firewall.allowedTCPPorts = [
+    6789 # husk localhost web UI — reachable on the LAN for dev review
+  ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;

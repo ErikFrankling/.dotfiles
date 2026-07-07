@@ -25,6 +25,10 @@
   "modules-right": [
     "network",
     "memory",
+    "custom/swap-activity",
+    "custom/swap",
+    "disk#root",
+    "disk#data",
     "cpu",
     "temperature",
     "custom/gpu-util",
@@ -102,10 +106,48 @@
 
   "memory": {
     "interval": 5,
-    "format": "  {}%", // Icon: memory
+    "format": "  {used:0.1f}/{total:0.1f}GB", // Icon: memory
     "states": {
       "warning": 70,
       "critical": 90
+    },
+  },
+
+  "custom/swap-activity": {
+    "exec": "~/.local/bin/swap-usage.sh activity",
+    "return-type": "json",
+    "interval": 2,
+    "tooltip": true,
+  },
+
+  "custom/swap": {
+    "exec": "~/.local/bin/swap-usage.sh usage",
+    "return-type": "json",
+    "interval": 5,
+    "tooltip": true,
+  },
+
+  "disk#root": {
+    "path": "/",
+    "interval": 30,
+    "format": "  {specific_used:0.1f}/{specific_total:0.1f}GB",
+    "tooltip-format": "/: {used}/{total} used ({percentage_used}%)",
+    "unit": "GB",
+    "states": {
+      "warning": 90,
+      "critical": 95
+    },
+  },
+
+  "disk#data": {
+    "path": "/mnt/data",
+    "interval": 30,
+    "format": "  {specific_used:0.1f}/{specific_total:0.1f}TB",
+    "tooltip-format": "/mnt/data: {used}/{total} used ({percentage_used}%)",
+    "unit": "TB",
+    "states": {
+      "warning": 90,
+      "critical": 95
     },
   },
 
@@ -163,7 +205,7 @@
     "hwmon-path-abs": "/sys/devices/pci0000:00/0000:00:18.3/hwmon",
     "input-filename": "temp1_input",
     // "thermal-zone": 3,
-    "critical-threshold": 80,
+    "critical-threshold": 83,
     "interval": 1,
     "format": "{icon}  {temperatureC}°C",
     "format-icons": [

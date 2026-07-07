@@ -30,6 +30,7 @@
         grim
         swappy
         slurp
+        wl-clipboard
         networkmanagerapplet
         blueman
         spotify-tray
@@ -142,6 +143,15 @@
           exec-once = hyprctl workspace 10
           exec-once = hyprctl workspace 1
 
+          # Voxtype switches into this submap (via [output] pre_output_command)
+          # for the instant it injects each chunk of streamed text, then leaves
+          # it again (post_output_command -> reset). It is intentionally EMPTY:
+          # with no binds active, voxtype's synthetic keystrokes can't trigger
+          # any window shortcut or stop/cancel the session. Text input itself
+          # still passes through — submaps only gate keybinds, not typing.
+          submap = voxtype_suppress
+          submap = reset
+
         '';
 
         settings = {
@@ -210,16 +220,17 @@
               "$mod, Return, Exec, ${terminal}"
               "$mod, D, Exec, ${menu}"
               "$mod, Q, killactive"
-              "$mod, E, exit"
+              "$mod SHIFT, G, exit"
               "$mod, F, togglefloating"
               "$mod, A, layoutmsg, preselect l"
               ''$mod, P, exec, hyprctl --batch "dispatch setfloating; dispatch pin"''
               # "$mod, B, fullscreenstate 1"
               "$mod, R, fullscreen"
-              # Screeenshot
-              ", Print, exec, grimblast save area /tmp/screenshot.png && satty -f /tmp/screenshot.png"
+              # Screenshot selected area to clipboard.
+              ", Print, exec, grimblast copy area"
+              "$mod, S, exec, grimblast copy area"
+              # ", Print, exec, grimblast save area /tmp/screenshot.png && satty -f /tmp/screenshot.png"
               # '', Print, exec, grim -g "$(slurp)" - | swappy -f -''
-              # ", Print, exec, grimblast copy area"
 
               ", XF86AudioPlay, exec, playerctl play-pause" # the stupid key is called play , but it toggles
               ", XF86AudioNext, exec, playerctl next"
@@ -230,6 +241,13 @@
 
               "$mod, Y, tagwindow, -rtr_right title:(Rusty's Retirement)"
               "$mod, Y, exec, hyprctl monitor DP-1,addreserved,0,296,0,0"
+
+              # Toggle dictation. Voxtype drops the compositor into the empty
+              # `voxtype_suppress` submap for the instant it injects each chunk
+              # of streamed text (via [output] pre/post_output_command in
+              # voxtype.nix), so its synthetic keystrokes — letters, BackSpace,
+              # etc. — can't trigger any window bind. See submap in extraConfig.
+              "$mod, E, exec, voxtype record toggle"
             ]
             ++
               # keyboard layout switching
@@ -371,7 +389,7 @@
           };
           # unscale XWayland
           xwayland = {
-            force_zero_scaling = false;
+            force_zero_scaling = true;
           };
 
           dwindle = {

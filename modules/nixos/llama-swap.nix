@@ -1,10 +1,17 @@
 {
   pkgs,
   lib,
-  llama-cpp-vulkan,
+  # llama-cpp-vulkan,
+  otherPkgs,
   ...
 }:
 
+let
+  llama-cpp = pkgs.llama-cpp-vulkan;
+  # llama-cpp = otherPkgs.pkgsStable.llama-cpp-vulkan;
+  # llama-cpp = pkgs.llama-cpp-rocm;
+  # llama-cpp = llama-cpp-vulkan;
+in
 {
   services.llama-swap = {
     enable = true;
@@ -24,7 +31,7 @@
           description = "Qwen3.5 27B with Unsloth IQ4_NL quantization";
 
           cmd = ''
-            ${pkgs.llama-cpp-vulkan}/bin/llama-server \
+            ${llama-cpp}/bin/llama-server \
             --port 5800 \
             --model /var/lib/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-IQ4_NL.gguf \
             --n-gpu-layers 999 \
@@ -56,7 +63,7 @@
 
           # --model /var/lib/llama-cpp/models/mradermacher/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-i1-GGUF/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled.i1-IQ4_XS.gguf \
           cmd = ''
-            ${pkgs.llama-cpp-vulkan}/bin/llama-server \
+            ${llama-cpp}/bin/llama-server \
             --port 5802 \
             --model /var/lib/llama-cpp/models/mradermacher/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-i1-GGUF/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-heretic-v2.i1-Q4_K_S.gguf \
             --n-gpu-layers 999 \
@@ -87,7 +94,7 @@
           description = "Qwen3.5-35B-A3B MoE with Unsloth UD-IQ4_NL (17.8GB) - 3B active params";
 
           cmd = ''
-            ${pkgs.llama-cpp-vulkan}/bin/llama-server \
+            ${llama-cpp}/bin/llama-server \
             --port 5803 \
             --model /var/lib/llama-cpp/models/unsloth/Qwen3.5-35B-A3B-GGUF/Qwen3.5-35B-A3B-UD-IQ4_NL.gguf \
             --n-gpu-layers 999 \
@@ -120,7 +127,7 @@
 
   systemd.services.llama-swap = {
     environment = {
-      LD_LIBRARY_PATH = "${llama-cpp-vulkan}/lib";
+      LD_LIBRARY_PATH = "${llama-cpp}/lib";
       GGML_VK_VISIBLE_DEVICES = "0";
       XDG_CACHE_HOME = "/var/lib/llama-cpp/.cache";
       RADV_PERFTEST = "bfloat16,nogttspill";

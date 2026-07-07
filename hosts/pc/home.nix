@@ -41,8 +41,8 @@
 
   hyprland =
     let
-      monitor_1 = "DP-3";
-      monitor_2 = "HDMI-A-1";
+      monitor_1 = "HDMI-A-1";
+      monitor_2 = "DP-3";
     in
     {
       keyboards = [

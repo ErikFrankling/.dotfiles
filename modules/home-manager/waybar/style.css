@@ -60,14 +60,18 @@
 #battery,
 #clock,
 #cpu,
+#disk,
 #custom-keyboard-layout,
 #custom-gpu-util,
 #custom-gpu-vram,
+#custom-swap,
+#custom-swap-activity,
 #memory,
 #mode,
 #network,
 #pulseaudio,
 #temperature,
+#custom-fan,
 #fan,
 #tray {
   padding-left: 4px;
@@ -130,8 +134,31 @@
 
 #memory.critical {
   color: red;
-  animation-name: blink-critical;
-  animation-duration: 2s;
+}
+
+#custom-swap.warning,
+#custom-swap-activity.warning,
+#disk.warning,
+#temperature.warning {
+  color: orange;
+}
+
+#custom-swap.critical,
+#custom-swap-activity.critical,
+#disk.critical,
+#temperature.critical {
+  color: red;
+}
+
+#custom-swap-activity.warning {
+  color: yellow;
+  animation: blink-warning 1s linear infinite alternate;
+}
+
+#custom-swap-activity.critical {
+  color: white;
+  background-color: red;
+  animation: blink-critical 0.5s linear infinite alternate;
 }
 
 #mode {
@@ -163,10 +190,6 @@
 
 #temperature {
   /* No styles */
-}
-
-#temperature.critical {
-  color: red;
 }
 
 #fan {

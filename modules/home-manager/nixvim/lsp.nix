@@ -19,7 +19,11 @@
     plugins = {
       lsp-format = {
         enable = true;
-        settings = { sql = { exclude = [ "sqls" ]; }; };
+        settings = {
+          sql = {
+            exclude = [ "sqls" ];
+          };
+        };
       };
 
       lsp = {
@@ -53,7 +57,10 @@
         servers = {
           clangd = {
             enable = true;
-            filetypes = [ "c" "cpp" ];
+            filetypes = [
+              "c"
+              "cpp"
+            ];
           };
 
           clojure_lsp = {
@@ -63,7 +70,10 @@
 
           sqls = {
             enable = true;
-            filetypes = [ "sql" "psql" ];
+            filetypes = [
+              "sql"
+              "psql"
+            ];
           };
 
           # postgres_lsp = {
@@ -83,7 +93,9 @@
           nil_ls = {
             enable = true;
             filetypes = [ "nix" ];
-            settings = { formatting.command = [ "nixpkgs-fmt" ]; };
+            settings = {
+              formatting.command = [ "nixpkgs-fmt" ];
+            };
           };
 
           zls = {

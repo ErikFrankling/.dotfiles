@@ -11,6 +11,15 @@
 - **Search before acting** — Use the web to find how Nix users solve problems. There likely already exists a declarative solution.
 - **No imperative commands** — Avoid `systemctl enable`, `systemctl start`, `pip install`, etc. Use Nix options instead.
 - **When in doubt, search** — If you don't know the Nix option for something, search for it.
+- **Never leave Nix `result` symlinks** — Do not run `nix build` in a way that creates `./result`. Use `nix build --no-link ...` or `nix build --dry-run ...` for checks, and delete any accidental `result` symlink before yielding.
+
+### Rebuilds and Applying Changes
+
+- **Agents are allowed to run a real rebuild** when Erik asks to apply, switch, rebuild, or otherwise validate a NixOS/Home Manager change on the machine. This is the correct way to activate the declarative config; it is not the same as ad hoc imperative service/package mutation.
+- **Use the `rebuild` command for real rebuilds.** Do not bypass it with raw `nixos-rebuild`, `home-manager switch`, or hand-written `nh os ...` commands unless Erik explicitly asks for that.
+- `rebuild` is a real executable on `PATH`, defined in `modules/home-manager/fish.nix` as `rebuildScript`. It is intentionally a Fish script containing Erik's rebuild code. If the behavior matters, read that file instead of guessing what the command does.
+- `rebuild` with no arguments defaults to `switch`. Pass arguments through when needed, e.g. `rebuild test`, `rebuild boot`, or `rebuild switch`.
+- After changing this NixOS/Home Manager configuration, always run a real rebuild with `rebuild` before yielding unless Erik explicitly says not to apply the change.
 
 ---
 

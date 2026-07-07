@@ -35,10 +35,16 @@
       action = "v<Cmd>noh<CR><C-[>";
     }
     {
-      mode = [ "n" "v" "i" ];
+      mode = [
+        "n"
+        "v"
+        "i"
+      ];
       key = "<C-s>";
       action = "<Cmd>w<CR>";
-      options = { desc = "Save"; };
+      options = {
+        desc = "Save";
+      };
     }
     # {
     #     mode = [ "i" ];
@@ -74,14 +80,18 @@
       mode = [ "n" ];
       key = "<leader>e";
       action = "vim.diagnostic.open_float";
-      options = { desc = "Open floating diagnostic message"; };
+      options = {
+        desc = "Open floating diagnostic message";
+      };
       lua = true;
     }
     {
       mode = [ "n" ];
       key = "<leader>q";
       action = "vim.diagnostic.setloclist";
-      options = { desc = "Open diagnostics list"; };
+      options = {
+        desc = "Open diagnostics list";
+      };
       lua = true;
     }
   ];

@@ -1,0 +1,10 @@
+setupVersion: 1
+symbolPreset: nerd
+theme:
+  dark: titanium
+providers:
+  webSearch: auto
+completion:
+  notify: off
+ask:
+  notify: off

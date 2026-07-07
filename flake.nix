@@ -63,7 +63,8 @@
     # ericsson-tools.inputs.nixpkgs.follows = "nixpkgs";
 
     lanzaboote = {
-      url = "github:nix-community/lanzaboote/v0.4.3";
+      url = "github:nix-community/lanzaboote/v1.1.0";
+      # url = "github:nix-community/lanzaboote/v0.4.3"; # broke: sets boot.bootspec.enable, removed in recent nixpkgs
       # url = "github:nix-community/lanzaboote";
 
       # Optional but recommended to limit the size of your system closure.
@@ -98,10 +99,11 @@
     # claude-desktop.inputs.nixpkgs.follows = "nixpkgs";
     # claude-desktop.inputs.flake-utils.follows = "flake-utils";
 
-    llamacpp-rocm.url = "github:hellas-ai/nix-strix-halo/feat/bootable-usb";
-    llamacpp-rocm.inputs.nixpkgs.follows = "nixpkgs";
+    # llamacpp-rocm.url = "github:hellas-ai/nix-strix-halo/feat/bootable-usb";
+    # llamacpp-rocm.inputs.nixpkgs.follows = "nixpkgs";
+    #
+    # llama-cpp-flake.url = "github:ggml-org/llama.cpp";
 
-    llama-cpp-flake.url = "github:ggml-org/llama.cpp";
     claude-desktop.url = "github:aaddrick/claude-desktop-debian";
     claude-desktop.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -111,10 +113,20 @@
     opencode-desktop-nix.url = "github:tomsch/opencode-desktop-nix";
     opencode-desktop-nix.inputs.nixpkgs.follows = "nixpkgs";
 
+    codex-desktop-linux.url = "github:ilysenko/codex-desktop-linux";
+    codex-desktop-linux.inputs.nixpkgs.follows = "nixpkgs";
+    codex-desktop-linux.inputs.flake-utils.follows = "flake-utils";
+
     # llamacpp-rocm.url = "github:hellas-ai/nix-strix-halo/feat/bootable-usb";
     # llamacpp-rocm.inputs.nixpkgs.follows = "nixpkgs";
 
     batmon.url = "github:ErikFrankling/nvim";
+
+    voxtype.url = "github:peteonrails/voxtype";
+    # Do NOT follow nixpkgs: voxtype's vulkan build needs its own pinned nixpkgs
+    # (shaderc 2026.1 + vendored whisper.cpp w/ llama.cpp#15352). Forcing our
+    # Oct-2025 nixpkgs (shaderc 2025.3) breaks the vulkan shader link.
+    # voxtype.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -126,10 +138,10 @@
     }@inputs:
     let
       system = "x86_64-linux";
-      llama-cpp-vulkan = inputs.llama-cpp-flake.packages.${system}.vulkan;
+      # llama-cpp-vulkan = inputs.llama-cpp-flake.packages.${system}.vulkan;
       pkgsOverlay = final: prev: {
         # Use nixpkgs_master for pkgs.llama-cpp-vulkan to avoid the custom one
-        llama-cpp-vulkan = prev.llama-cpp-vulkan;
+        # llama-cpp-vulkan = prev.llama-cpp-vulkan;
       };
       pkgs = import nixpkgs {
         inherit system;
@@ -148,11 +160,28 @@
         inherit
           pkgsMaster
           pkgsStable
-          llama-cpp-vulkan
+          # llama-cpp-vulkan
           ;
+      };
+      nixFormatter = pkgs.writeShellApplication {
+        name = "dotfiles-nix-fmt";
+        runtimeInputs = with pkgs; [
+          findutils
+          git
+          nixfmt
+        ];
+        text = ''
+          if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+            git ls-files -z -- '*.nix' | xargs -0 --no-run-if-empty nixfmt
+          else
+            find . -type f -name '*.nix' -print0 | xargs -0 --no-run-if-empty nixfmt
+          fi
+        '';
       };
     in
     {
+      formatter.${system} = nixFormatter;
+
       nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" "wsl" ] (
         hostName:
         let
@@ -165,7 +194,7 @@
               hostName
               username
               otherPkgs
-              llama-cpp-vulkan
+              # llama-cpp-vulkan
               # system
               ;
           };

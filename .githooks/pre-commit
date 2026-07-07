@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+nix fmt
+
+if ! git diff --quiet -- .; then
+  cat >&2 <<'EOF'
+nix fmt changed files.
+Review the formatting changes, stage them, and commit again.
+EOF
+  exit 1
+fi

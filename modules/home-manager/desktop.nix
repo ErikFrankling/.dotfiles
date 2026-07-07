@@ -17,6 +17,7 @@
     ./zen.nix
     ./kitty.nix
     ./ai.nix
+    ./voxtype.nix
   ];
 
   home.packages = with pkgs; [
@@ -39,6 +40,7 @@
     # inputs.claude-desktop.packages.${system}.claude-desktop-with-fhs
     ghostty
     code-cursor
+    zed-editor
   ];
 
   nixpkgs.config.permittedInsecurePackages = [

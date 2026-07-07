@@ -77,7 +77,10 @@ in
     gpuVendorIds = mkOption {
       type = types.listOf types.str;
       default = [ ];
-      example = [ "1002:164e" "1002:1640" ];
+      example = [
+        "1002:164e"
+        "1002:1640"
+      ];
       description = "GPU vendor:device IDs for VFIO driver binding (from lspci -nn)";
     };
 
@@ -92,9 +95,18 @@ in
       type = types.listOf (
         types.submodule {
           options = {
-            bus = mkOption { type = types.int; description = "PCI bus (decimal)"; };
-            slot = mkOption { type = types.int; description = "PCI slot (decimal)"; };
-            function = mkOption { type = types.int; description = "PCI function (decimal)"; };
+            bus = mkOption {
+              type = types.int;
+              description = "PCI bus (decimal)";
+            };
+            slot = mkOption {
+              type = types.int;
+              description = "PCI slot (decimal)";
+            };
+            function = mkOption {
+              type = types.int;
+              description = "PCI function (decimal)";
+            };
           };
         }
       );
@@ -105,7 +117,7 @@ in
     # Looking Glass settings
     lookingGlass = {
       enable = mkEnableOption "Looking Glass shared memory for GPU framebuffer capture";
-      
+
       memoryMB = mkOption {
         type = types.int;
         default = 64;
@@ -122,16 +134,26 @@ in
     # Guest tools and integration
     guestTools = {
       spice = mkEnableOption "SPICE guest tools for clipboard and improved graphics";
-      
+
       virtiofs = mkEnableOption "Virtio-9p file sharing between host and guest";
-      
+
       sharedDirectories = mkOption {
         type = types.listOf (
           types.submodule {
             options = {
-              hostPath = mkOption { type = types.path; description = "Path on host to share"; };
-              mountTag = mkOption { type = types.str; description = "Mount tag in VM"; };
-              readOnly = mkOption { type = types.bool; default = false; description = "Read-only access"; };
+              hostPath = mkOption {
+                type = types.path;
+                description = "Path on host to share";
+              };
+              mountTag = mkOption {
+                type = types.str;
+                description = "Mount tag in VM";
+              };
+              readOnly = mkOption {
+                type = types.bool;
+                default = false;
+                description = "Read-only access";
+              };
             };
           }
         );
@@ -164,7 +186,10 @@ in
 
     # Advanced settings
     iommuType = mkOption {
-      type = types.enum [ "amd" "intel" ];
+      type = types.enum [
+        "amd"
+        "intel"
+      ];
       default = "amd";
       description = "IOMMU type for your CPU";
     };

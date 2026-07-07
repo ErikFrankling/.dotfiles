@@ -1,15 +1,28 @@
 { pkgs, ... }:
+let
+  zellijKittyShell = pkgs.writeShellScriptBin "zellij-kitty-shell" ''
+    exec ${pkgs.zellij}/bin/zellij
+  '';
+in
 {
+  xdg.configFile."kitty/plain.conf".text = ''
+    include kitty.conf
+    shell .
+  '';
+
   home.packages = [
+    zellijKittyShell
     (pkgs.writeShellScriptBin "kitty-plain" ''
-      exec env ZELLIJ=1 ${pkgs.kitty}/bin/kitty "$@"
+      exec ${pkgs.kitty}/bin/kitty --config "$HOME/.config/kitty/plain.conf" "$@"
     '')
   ];
 
   programs.kitty = {
     enable = true;
-    # settings = {
-    # };
+    settings = {
+      auto_reload_config = -1;
+      shell = "${zellijKittyShell}/bin/zellij-kitty-shell";
+    };
     keybindings = {
       # Disable kitty's unicode input
       "ctrl+shift+u" = "no_op";

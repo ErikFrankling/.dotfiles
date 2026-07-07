@@ -63,6 +63,7 @@
     fzf
     ripgrep
     nix-prefetch-github
+    nixfmt
     jq
     tree
     powershell
@@ -70,6 +71,7 @@
     kubernetes-helm
     typst
     gh
+    kubectl
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
@@ -118,6 +120,12 @@
           condition = "gitdir:~/kth/**";
           contents = {
             user.email = "erikfran@kth.se";
+          };
+        }
+        {
+          condition = "gitdir:~/.dotfiles/.git";
+          contents = {
+            core.hooksPath = "~/.dotfiles/.githooks";
           };
         }
       ];

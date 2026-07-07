@@ -6,48 +6,158 @@
   ...
 }:
 
+let
+  system = pkgs.stdenv.hostPlatform.system;
+  codexCli = inputs.llm-agents.packages.${system}.codex;
+  codexDesktop = inputs.codex-desktop-linux.packages.${system}.codex-desktop;
+  codexFirefoxShim = pkgs.writeShellScriptBin "firefox" ''
+    unset LD_LIBRARY_PATH
+    exec /run/current-system/sw/bin/firefox "$@"
+  '';
+  codexDesktopCleanExternalOpen = pkgs.symlinkJoin {
+    name = "${codexDesktop.name}-clean-external-open";
+    paths = [ codexDesktop ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      rm -f "$out/bin/codex-desktop"
+      makeWrapper "${codexDesktop}/opt/codex-desktop/start.sh" "$out/bin/codex-desktop" \
+        --prefix PATH : "${
+          pkgs.lib.makeBinPath (
+            with pkgs;
+            [
+              bash
+              coreutils
+              curl
+              findutils
+              gawk
+              gnugrep
+              gnused
+              nodejs
+              procps
+              python3
+              systemd
+              xdg-utils
+            ]
+          )
+        }" \
+        --prefix PATH : "/run/current-system/sw/bin" \
+        --prefix PATH : "/etc/profiles/per-user/\$(whoami)/bin" \
+        --prefix PATH : "${codexFirefoxShim}/bin"
+
+      desktopFile="$out/share/applications/codex-desktop.desktop"
+      if [ -e "$desktopFile" ]; then
+        target="$(readlink -f "$desktopFile")"
+        rm -f "$desktopFile"
+        substitute "$target" "$desktopFile" \
+          --replace-fail "${codexDesktop}/bin/codex-desktop" "$out/bin/codex-desktop"
+      fi
+    '';
+    meta = codexDesktop.meta or { };
+  };
+in
 {
   imports = [
+    inputs.codex-desktop-linux.homeManagerModules.default
+    ./omp
   ];
 
   nixpkgs.config.allowBroken = true;
 
-  home.file.".codex/config.toml" = {
-    force = true;
-    text = ''
-      approval_policy = "never"
-      approvals_reviewer = "user"
-      sandbox_mode = "danger-full-access"
-
-      [notice]
-      hide_full_access_warning = true
-
-      [projects."/home/erikf/.dotfiles"]
-      trust_level = "trusted"
-    '';
-  };
+  # home.file.".codex/config.toml" = {
+  #   force = true;
+  #   text = ''
+  #     approval_policy = "never"
+  #     approvals_reviewer = "user"
+  #     hide_agent_reasoning = false
+  #     model_reasoning_summary = "detailed"
+  #     sandbox_mode = "danger-full-access"
+  #     show_raw_agent_reasoning = true
+  #
+  #     [notice]
+  #     hide_full_access_warning = true
+  #
+  #     [projects."/home/erikf/.dotfiles"]
+  #     trust_level = "trusted"
+  #
+  #     [marketplaces.neptune-dxp-marketplace]
+  #     source_type = "local"
+  #     source = "/home/erikf/projects/work/claude-code-plugin"
+  #
+  #     [plugins."neptune-dxp@neptune-dxp-marketplace"]
+  #     enabled = true
+  #
+  #     [mcp_servers.neptune-dxp]
+  #     url = "http://localhost:8080/mcp"
+  #   '';
+  # };
 
   home.packages = with pkgs; [
-    claude-code # Disabled - npm package 404 error blocking build
+    # claude-code
+    inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code
     # code-cursor-fhs
     # opencode
     # codex
-    otherPkgs.pkgsMaster.codex
-    inputs.t3code-nix.packages.${pkgs.stdenv.hostPlatform.system}.t3code
+    # otherPkgs.pkgsMaster.codex
+    codexCli
+    inputs.t3code-nix.packages.${system}.t3code
+    inputs.llm-agents.packages.${system}.grok
     # kiro-fhs
     # vscode-fhs
     # windsurf
-    inputs.opencode-desktop-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
+    inputs.opencode-desktop-nix.packages.${system}.default
     lmstudio
     # inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.pi # Disabled - npm registry 500 blocking rebuild
   ];
 
+  home.file.".config/codex-desktop/electron-flags.conf" = {
+    force = true;
+    text = ''
+      # Codex Desktop Linux launch flags.
+      # Link opening is handled by the clean external opener wrapper below.
+    '';
+  };
+
+  programs.codexDesktopLinux = {
+    enable = true;
+    package = codexDesktopCleanExternalOpen;
+    cliPackage = codexCli;
+
+    remoteControl = {
+      enable = true;
+      package = codexCli;
+    };
+  };
+
   programs.opencode = {
     enable = true;
+
+    web = {
+      enable = true;
+      extraArgs = [
+        "--hostname"
+        "0.0.0.0"
+        "--port"
+        "4096"
+        "--mdns"
+      ];
+    };
+
     settings = {
-      permission = {
-        edit = "allow";
-        bash = "allow";
+      permission = "allow";
+
+      mcp = {
+        neptune-dxp = {
+          type = "remote";
+          url = "https://p9eval.erikfrankling.duckdns.org/mcp";
+          enabled = true;
+          timeout = 30000;
+        };
+      };
+
+      skills = {
+        paths = [
+          "/home/erikf/projects/work/claude-code-plugin/skills"
+        ];
       };
 
       provider = {

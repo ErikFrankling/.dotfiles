@@ -29,7 +29,7 @@
     # ── Router Mode Configuration ────────────────────────────────────────
     # Single-model mode: set `model` to a path, leave modelsDir/modelsPreset null
     # Multi-model mode (router): set modelsDir and optionally modelsPreset
-    model = null;  # Disable single-model mode
+    model = null; # Disable single-model mode
 
     # Directory containing all .gguf files - router serves all of them
     modelsDir = "/var/lib/llama-cpp/models";
@@ -94,7 +94,8 @@
     # ── Global Flags (Apply to All Models) ──────────────────────────────
     extraFlags = [
       # Router server: limit concurrent loaded models to save VRAM
-      "--models-max" "1"  # Load 1 model at a time, auto-swap on demand
+      "--models-max"
+      "1" # Load 1 model at a time, auto-swap on demand
 
       # Enable automatic model loading/unloading based on requests
       "--models-autoload"
@@ -113,7 +114,7 @@
       # ── Idle model unload ─────────────────────────────────────────────
       # Unload model weights from GPU VRAM after 3h of no requests.
       "--sleep-idle-seconds"
-      "10800"  # 3h
+      "10800" # 3h
 
       # ── Performance ───────────────────────────────────────────────────
       # FA must be forced on (not auto) for quantized cache to work
@@ -125,7 +126,7 @@
       "q8_0"
 
       # ── API ───────────────────────────────────────────────────────────
-      "--jinja"  # enable jinja2 chat template support
+      "--jinja" # enable jinja2 chat template support
 
       # Enable reasoning/thinking mode
       "--reasoning"
@@ -146,9 +147,9 @@
     ];
 
     # ── Network Configuration ────────────────────────────────────────────
-    host = "0.0.0.0";  # Bind to all interfaces - accessible on LAN
+    host = "0.0.0.0"; # Bind to all interfaces - accessible on LAN
     port = 8000;
-    openFirewall = false;  # Firewall managed manually below
+    openFirewall = false; # Firewall managed manually below
   };
 
   # Allow connections from LAN clients
@@ -158,11 +159,11 @@
   # Required for AMD GPU access and shader compilation (W+X memory)
   systemd.services.llama-cpp = {
     environment = {
-      GGML_VK_VISIBLE_DEVICES = "0";  # Select RX 7900 XT, not integrated GPU
+      GGML_VK_VISIBLE_DEVICES = "0"; # Select RX 7900 XT, not integrated GPU
 
-      XDG_CACHE_HOME = "/var/lib/llama-cpp/.cache";  # Writable shader cache directory
+      XDG_CACHE_HOME = "/var/lib/llama-cpp/.cache"; # Writable shader cache directory
 
-      RADV_PERFTEST = "bfloat16,nogttspill";  # Vulkan performance optimizations
+      RADV_PERFTEST = "bfloat16,nogttspill"; # Vulkan performance optimizations
 
       # Debug options (uncomment for troubleshooting):
       # GGML_SCHED_DEBUG = "2";
@@ -176,18 +177,18 @@
       User = "llama-cpp";
       Group = "llama-cpp";
       SupplementaryGroups = [
-        "video"  # GPU device access
+        "video" # GPU device access
         "render" # DRM/render node access
       ];
 
       # Device access for Vulkan GPU
       DevicePolicy = lib.mkForce "closed";
       DeviceAllow = [
-        "char-drm"  # Direct Rendering Infrastructure (Vulkan)
+        "char-drm" # Direct Rendering Infrastructure (Vulkan)
       ];
 
       # Memory settings
-      LimitMEMLOCK = "infinity";  # Allow mlock() for keeping model in RAM
+      LimitMEMLOCK = "infinity"; # Allow mlock() for keeping model in RAM
 
       # OOM killer: sacrifice this service before user session
       OOMScoreAdjust = 900;
@@ -210,7 +211,7 @@
     isSystemUser = true;
     group = "llama-cpp";
     extraGroups = [
-      "video"  # GPU device access
+      "video" # GPU device access
       "render" # DRM/render node access
     ];
     home = "/var/lib/llama-cpp";

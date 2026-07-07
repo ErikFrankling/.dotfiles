@@ -6,6 +6,33 @@
   ...
 }:
 
+let
+  rebuildScript = pkgs.writeScriptBin "rebuild" ''
+    #!${pkgs.fish}/bin/fish
+    cd /home/${username}/.dotfiles
+
+    if [ -f /home/${username}/.ssh/id_ed25519 ]
+      if [ ! -f /home/${username}/.config/sops/age/keys.txt ]
+        echo "No age key found. Generating one..."
+        mkdir -p ~/.config/sops/age
+        nix-shell -p ssh-to-age --run "ssh-to-age -private-key -i ~/.ssh/id_ed25519 > ~/.config/sops/age/keys.txt" 
+      end
+    else
+      echo "No SSH key found. Use 
+      'scp ~/.ssh/id_ed25519.pub erikf@$pc:~/.ssh/'"
+    end
+
+    git add -A
+
+    if [ -z "$argv" ]
+      set argv "switch"
+    end
+
+    # sudo nixos-rebuild $argv --fast --flake /home/${username}/.dotfiles#${hostName}
+    nh os $argv /home/${username}/.dotfiles --hostname ${hostName}
+    echo $(hyprctl reload)
+  '';
+in
 {
   # home.file = {
   #   ".config/fish/conf.d/config.fish" = {
@@ -20,9 +47,10 @@
 
   # xdg.configFile."fish/fish_variables".source = config.lib.file.mkOutOfStoreSymlink ./fish_variables;
 
-  home.packages = with pkgs; [
-    fastfetch
-    onefetch
+  home.packages = [
+    rebuildScript
+    pkgs.fastfetch
+    pkgs.onefetch
   ];
 
   programs.fish = {
@@ -36,30 +64,6 @@
         git push
       '';
 
-      rebuild = ''
-        cd /home/${username}/.dotfiles
-
-        if [ -f /home/${username}/.ssh/id_ed25519 ]
-          if [ ! -f /home/${username}/.config/sops/age/keys.txt ]
-            echo "No age key found. Generating one..."
-            mkdir -p ~/.config/sops/age
-            nix-shell -p ssh-to-age --run "ssh-to-age -private-key -i ~/.ssh/id_ed25519 > ~/.config/sops/age/keys.txt" 
-          end
-        else
-          echo "No SSH key found. Use 
-          'scp ~/.ssh/id_ed25519.pub erikf@$pc:~/.ssh/'"
-        end
-
-        git add -A
-
-        if [ -z "$argv" ]
-          set argv "switch"
-        end
-
-        # sudo nixos-rebuild $argv --fast --flake /home/${username}/.dotfiles#${hostName}
-        nh os $argv /home/${username}/.dotfiles --hostname ${hostName}
-        echo $(hyprctl reload)
-      '';
       eww_reload = ''
         pkill eww
         eww daemon --config /home/${username}/.dotfiles/modules/home-manager/eww/ 
@@ -119,6 +123,10 @@
 
     interactiveShellInit = ''
       set -g theme_display_date no
+
+      if set -q SSH_TTY; and isatty stdin; and not set -q ZELLIJ; and test "$TERM" != dumb
+        exec ${pkgs.zellij}/bin/zellij attach --create ssh
+      end
     '';
 
     shellInit = ''
