@@ -125,7 +125,7 @@ in
       set -g theme_display_date no
 
       if set -q SSH_TTY; and isatty stdin; and not set -q ZELLIJ; and test "$TERM" != dumb
-        exec ${pkgs.zellij}/bin/zellij attach --create ssh
+        exec ${pkgs.zellij}/bin/zellij
       end
     '';
 
