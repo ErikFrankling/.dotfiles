@@ -10,7 +10,7 @@ vram_used=$(echo "$vram_raw" | grep 'GPU\[0\]' | grep 'Used Memory' | awk '{prin
 vram_used=${vram_used:-0}
 vram_total=${vram_total:-1}
 
-vram_used_gb=$(awk "BEGIN {printf \"%.1f\", $vram_used / 1073741824}")
-vram_total_gb=$(awk "BEGIN {printf \"%.1f\", $vram_total / 1073741824}")
+vram_used_gb=$(awk "BEGIN {printf \"%.0f\", $vram_used / 1073741824}")
+vram_total_gb=$(awk "BEGIN {printf \"%.0f\", $vram_total / 1073741824}")
 
 echo "{\"text\": \"󰘚 ${vram_used_gb}/${vram_total_gb}GB\"}"

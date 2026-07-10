@@ -30,7 +30,7 @@ print_usage() {
         state = ""
       }
 
-      printf "{\"text\":\"  %.1f/%.1fGB\",\"tooltip\":\"Swap used: %.1f/%.1fGB (%.0f%%)\",\"class\":\"%s\",\"percentage\":%.0f}\n",
+      printf "{\"text\":\" %.0f/%.0fGB\",\"tooltip\":\"Swap used: %.0f/%.0fGB (%.0f%%)\",\"class\":\"%s\",\"percentage\":%.0f}\n",
         used_gb, total_gb, used_gb, total_gb, percent, state, percent
     }
   ' /proc/meminfo

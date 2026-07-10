@@ -56,12 +56,15 @@
   font-size: 13px;
 }
 
-/* Each module */
+/* Right-side status modules: a small global Waybar gap plus one uniform
+ * per-module padding rule keeps spacing consistent without crushing labels. */
+#backlight,
 #battery,
 #clock,
 #cpu,
 #disk,
 #custom-keyboard-layout,
+#custom-network,
 #custom-gpu-util,
 #custom-gpu-vram,
 #custom-swap,
@@ -74,8 +77,7 @@
 #custom-fan,
 #fan,
 #tray {
-  padding-left: 4px;
-  padding-right: 4px;
+  padding: 0 4px;
 }
 
 /* -----------------------------------------------------------------------------
@@ -198,6 +200,10 @@
 
 #tray {
   /* No styles */
+}
+
+#tray widget > image {
+  padding: 0 1px;
 }
 
 #window {

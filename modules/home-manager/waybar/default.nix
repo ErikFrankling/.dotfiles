@@ -13,6 +13,10 @@
       source = ./scripts/gpu-vram.sh;
       executable = true;
     };
+    ".local/bin/network-status.sh" = {
+      source = ./scripts/network-status.sh;
+      executable = true;
+    };
     ".local/bin/swap-usage.sh" = {
       source = ./scripts/swap-usage.sh;
       executable = true;

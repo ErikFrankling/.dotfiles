@@ -18,12 +18,12 @@
   // If height property would be not present, it'd be calculated dynamically
   "height": 30,
 
-  "spacing": 4,
+  "spacing": 2,
 
   "modules-left": ["hyprland/workspaces", "hyprland/mode"],
   "modules-center": [],
   "modules-right": [
-    "network",
+    "custom/network",
     "memory",
     "custom/swap-activity",
     "custom/swap",
@@ -38,8 +38,7 @@
     "battery",
     "pulseaudio",
     "tray",
-    "clock#date",
-    "clock#time"
+    "clock"
   ],
 
   // -------------------------------------------------------------------------
@@ -53,9 +52,9 @@
       "critical": 15
     },
     // Connected to AC
-    "format": " {icon}  {capacity}%", // Icon: bolt
+    "format": " {icon} {capacity}%", // Icon: bolt
     // Not connected to AC
-    "format-discharging": "{icon}  {capacity}%",
+    "format-discharging": "{icon} {capacity}%",
     "format-icons": [
       "", // Icon: battery-full
       "", // Icon: battery-three-quarters
@@ -68,26 +67,20 @@
 
   "backlight": {
     "device": "amdgpu_bl1",
-    "format": "󰃠  {percent}%",
+    "format": "󰃠 {percent}%",
     "tooltip": false,
   },
 
-  "clock#time": {
+  "clock": {
     "interval": 1,
-    "format": "{:%H:%M}",
-    "tooltip": false
-  },
-
-  "clock#date": {
-    "interval": 12,
-    "format": "  {:%e %b %Y}",
+    "format": "{:%d %b %H:%M}",
     "tooltip-format": "{:%e %B %Y}"
   },
 
   "cpu": {
     "interval": 5,
 
-    "format": "  {usage}% ({load})", // Icon: microchip
+    "format": " {usage}%", // Icon: microchip
     "states": {
       "warning": 70,
       "critical": 90
@@ -98,7 +91,7 @@
     "exec": "swaymsg -t get_inputs | grep -m1 'xkb_active_layout_name' | cut -d '\"' -f4",
     // Interval set only as a fallback, as the value is updated by signal
     "interval": 30,
-    "format": "  {}", // Icon: keyboard
+    "format": " {}", // Icon: keyboard
     // Signal sent by Sway key binding (~/.config/sway/key-bindings)
     "signal": 1, // SIGHUP
     "tooltip": false
@@ -106,7 +99,7 @@
 
   "memory": {
     "interval": 5,
-    "format": "  {used:0.1f}/{total:0.1f}GB", // Icon: memory
+    "format": " {used:0.0f}/{total:0.0f}GB", // Icon: memory
     "states": {
       "warning": 70,
       "critical": 90
@@ -130,7 +123,7 @@
   "disk#root": {
     "path": "/",
     "interval": 30,
-    "format": "  {specific_used:0.1f}/{specific_total:0.1f}GB",
+    "format": " {specific_used:0.0f}/{specific_total:0.0f}GB",
     "tooltip-format": "/: {used}/{total} used ({percentage_used}%)",
     "unit": "GB",
     "states": {
@@ -142,7 +135,7 @@
   "disk#data": {
     "path": "/mnt/data",
     "interval": 30,
-    "format": "  {specific_used:0.1f}/{specific_total:0.1f}TB",
+    "format": " {specific_used:0.0f}/{specific_total:0.0f}TB",
     "tooltip-format": "/mnt/data: {used}/{total} used ({percentage_used}%)",
     "unit": "TB",
     "states": {
@@ -151,12 +144,11 @@
     },
   },
 
-  "network": {
+  "custom/network": {
+    "exec": "~/.local/bin/network-status.sh",
+    "return-type": "json",
     "interval": 5,
-    "format-wifi": "  {essid} ({signalStrength}%)", // Icon: wifi
-    "format-ethernet": "  {ifname}: {ipaddr}/{cidr}", // Icon: ethernet
-    "format-disconnected": "⚠  Disconnected",
-    "tooltip-format": "{ifname}: {ipaddr}"
+    "tooltip": true
   },
 
   // "hyprland/mode":
@@ -186,8 +178,8 @@
 
   "pulseaudio": {
     //"scroll-step": 1,
-    "format": "{icon}  {volume}%",
-    "format-bluetooth": "{icon}  {volume}%",
+    "format": "{icon} {volume}%",
+    "format-bluetooth": "{icon} {volume}%",
     "format-muted": "",
     "format-icons": {
       "headphones": "󰋋",
@@ -207,7 +199,7 @@
     // "thermal-zone": 3,
     "critical-threshold": 83,
     "interval": 1,
-    "format": "{icon}  {temperatureC}°C",
+    "format": "{icon} {temperatureC}°C",
     "format-icons": [
       "", // Icon: temperature-empty
       "", // Icon: temperature-quarter
@@ -228,18 +220,18 @@
     "exec": "~/.local/bin/gpu-util.sh",
     "return-type": "json",
     "interval": 2,
-    "spacing": 4
+    "spacing": 0
   },
 
   "custom/gpu-vram": {
     "exec": "~/.local/bin/gpu-vram.sh",
     "return-type": "json",
     "interval": 2,
-    "spacing": 4
+    "spacing": 0
   },
 
   "tray": {
-    "icon-size": 21,
-    "spacing": 4
+    "icon-size": 18,
+    "spacing": 3
   },
 }
