@@ -33,7 +33,7 @@ in
           cmd = ''
             ${llama-cpp}/bin/llama-server \
             --port 5800 \
-            --model /var/lib/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-IQ4_NL.gguf \
+            --model /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-IQ4_NL.gguf \
             --n-gpu-layers 999 \
             -c 131072 \
             --sleep-idle-seconds 10800 \
@@ -61,11 +61,11 @@ in
           name = "Qwen3.5 27B Claude 4.6 Opus Reasoning Distilled";
           description = "Qwen3.5-27B distilled from Claude 4.6 Opus - Q4_K_S imatrix quant";
 
-          # --model /var/lib/llama-cpp/models/mradermacher/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-i1-GGUF/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled.i1-IQ4_XS.gguf \
+          # --model /mnt/data/ai-models/llama-cpp/models/mradermacher/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-i1-GGUF/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled.i1-IQ4_XS.gguf \
           cmd = ''
             ${llama-cpp}/bin/llama-server \
             --port 5802 \
-            --model /var/lib/llama-cpp/models/mradermacher/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-i1-GGUF/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-heretic-v2.i1-Q4_K_S.gguf \
+            --model /mnt/data/ai-models/llama-cpp/models/mradermacher/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-i1-GGUF/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-heretic-v2.i1-Q4_K_S.gguf \
             --n-gpu-layers 999 \
             -c 131072 \
             --sleep-idle-seconds 10800 \
@@ -96,7 +96,7 @@ in
           cmd = ''
             ${llama-cpp}/bin/llama-server \
             --port 5803 \
-            --model /var/lib/llama-cpp/models/unsloth/Qwen3.5-35B-A3B-GGUF/Qwen3.5-35B-A3B-UD-IQ4_NL.gguf \
+            --model /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-35B-A3B-GGUF/Qwen3.5-35B-A3B-UD-IQ4_NL.gguf \
             --n-gpu-layers 999 \
             -c 131072 \
             --fit off \
@@ -126,10 +126,13 @@ in
   };
 
   systemd.services.llama-swap = {
+    after = [ "mnt-data.mount" ];
+    requires = [ "mnt-data.mount" ];
+
     environment = {
       LD_LIBRARY_PATH = "${llama-cpp}/lib";
       GGML_VK_VISIBLE_DEVICES = "0";
-      XDG_CACHE_HOME = "/var/lib/llama-cpp/.cache";
+      XDG_CACHE_HOME = "/mnt/data/ai-models/llama-cpp/.cache";
       RADV_PERFTEST = "bfloat16,nogttspill";
     };
 
@@ -138,7 +141,7 @@ in
       PrivateUsers = lib.mkForce false;
       User = "llama-cpp";
       Group = "llama-cpp";
-      WorkingDirectory = lib.mkForce "/var/lib/llama-cpp";
+      WorkingDirectory = lib.mkForce "/mnt/data/ai-models/llama-cpp";
       SupplementaryGroups = [
         "video"
         "render"
@@ -154,8 +157,8 @@ in
   };
 
   systemd.tmpfiles.rules = [
-    "d /var/lib/llama-cpp/models 0770 llama-cpp llama-cpp -"
-    "d /var/lib/llama-cpp/.cache 0770 llama-cpp llama-cpp -"
+    "d /mnt/data/ai-models/llama-cpp/models 0770 llama-cpp llama-cpp -"
+    "d /mnt/data/ai-models/llama-cpp/.cache 0770 llama-cpp llama-cpp -"
   ];
 
   users.users.llama-cpp = {
@@ -164,8 +167,9 @@ in
     extraGroups = [
       "video"
       "render"
+      "users"
     ];
-    home = "/var/lib/llama-cpp";
+    home = "/mnt/data/ai-models/llama-cpp";
     createHome = true;
   };
 

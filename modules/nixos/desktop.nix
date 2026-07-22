@@ -53,6 +53,7 @@
   ];
 
   programs.kdeconnect.enable = true;
+  services.gnome.at-spi2-core.enable = true;
   # virtualisation.vmware.host.enable = true;
   programs.nm-applet.enable = true;
   security.polkit.enable = true;
@@ -65,6 +66,8 @@
   };
 
   users.extraUsers.${username}.extraGroups = [ "wireshark" ];
-  users.users.${username}.extraGroups = [ "wireshark" ];
+  users.users.${username}.extraGroups = [
+    "wireshark"
+  ];
 
 }

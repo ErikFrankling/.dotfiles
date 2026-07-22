@@ -152,6 +152,9 @@
   networking.firewall.allowedTCPPorts = [
     6789 # husk localhost web UI — reachable on the LAN for dev review
   ];
+
+  # T3 Code web UI — reachable only through the physical LAN interface.
+  networking.firewall.interfaces.eno1.allowedTCPPorts = [ 3773 ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;

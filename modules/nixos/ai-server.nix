@@ -8,16 +8,16 @@
 #
 # HOW TO ADD A NEW MODEL
 # ─────────────────────
-# 1. Download a .gguf file into /var/lib/llama-cpp/models/
+# 1. Download a .gguf file into /mnt/data/ai-models/llama-cpp/models/
 #
 #    Example (single file):
 #      sudo -u llama-cpp huggingface-cli download \
 #        bartowski/SomeModel-GGUF \
 #        --include "SomeModel-Q4_K_M.gguf" \
-#        --local-dir /var/lib/llama-cpp/models/
+#        --local-dir /mnt/data/ai-models/llama-cpp/models/
 #
 #    Fix perms if needed:
-#      sudo chown -R llama-cpp:llama-cpp /var/lib/llama-cpp/models/
+#      sudo chown -R llama-cpp:llama-cpp /mnt/data/ai-models/llama-cpp/models/
 #
 # 2. Update the `model` option below to point to the new .gguf file path.
 #    Or switch to `modelsDir` (comment out `model`, uncomment `modelsDir`)
@@ -46,33 +46,33 @@
 #   sudo nix run nixpkgs#python3Packages.huggingface-hub -- download \
 #     unsloth/Qwen3.5-27B-GGUF \
 #     --include "Qwen3.5-27B-UD-Q4_K_XL.gguf" \
-#     --local-dir /var/lib/llama-cpp/models/
-#   sudo chown -R llama-cpp:llama-cpp /var/lib/llama-cpp/models/
+#     --local-dir /mnt/data/ai-models/llama-cpp/models/
+#   sudo chown -R llama-cpp:llama-cpp /mnt/data/ai-models/llama-cpp/models/
 #
 # Use download command from here: https://unsloth.ai/docs/models/qwen3.5#qwen3.5-27b
 #
 # sudo nix run nixpkgs#python3Packages.huggingface-hub -- download \
 #     unsloth/Qwen3.5-27B-GGUF \
-#     --local-dir /var/lib/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF \
+#     --local-dir /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF \
 #     --include "*mmproj-F16*" \
 #     --include "*UD-Q4_K_XL*"
 #
 # IQ is not supported on ROCm yet
 # sudo nix run nixpkgs#python3Packages.huggingface-hub -- download \
 #     unsloth/Qwen3.5-27B-GGUF \
-#     --local-dir /var/lib/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF \
+#     --local-dir /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF \
 #     --include "*mmproj-F16*" \
 #     --include "*IQ4_NL*"
 #
 # sudo nix run nixpkgs#python3Packages.huggingface-hub -- download \
 #     unsloth/Qwen3.5-27B-GGUF \
-#     --local-dir /var/lib/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF \
+#     --local-dir /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF \
 #     --include "*mmproj-F16*" \
 #     --include "*UD-Q3_K_XL*"
 #
 # sudo nix run nixpkgs#python3Packages.huggingface-hub -- download \
 #     unsloth/Qwen3.5-27B-GGUF \
-#     --local-dir /var/lib/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF \
+#     --local-dir /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF \
 #     --include "*mmproj-F16*" \
 #     --include "*Q4_K_M*"
 
@@ -133,12 +133,12 @@
 
       # Single-model mode: point directly to a .gguf file
       # To serve multiple models, comment out `model` and use:
-      #   modelsDir = "/var/lib/llama-cpp/models";
-      # model = "/var/lib/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-UD-Q3_K_XL.gguf";
-      # model = "/var/lib/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-Q4_K_M.gguf";
-      # model = "/var/lib/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-UD-Q4_K_XL.gguf";
-      model = "/var/lib/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-IQ4_NL.gguf";
-      # model = "/var/lib/llama-cpp/models/Qwen3.5-27B-UD-Q4_K_XL.gguf";
+      #   modelsDir = "/mnt/data/ai-models/llama-cpp/models";
+      # model = "/mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-UD-Q3_K_XL.gguf";
+      # model = "/mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-Q4_K_M.gguf";
+      # model = "/mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-UD-Q4_K_XL.gguf";
+      model = "/mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-IQ4_NL.gguf";
+      # model = "/mnt/data/ai-models/llama-cpp/models/Qwen3.5-27B-UD-Q4_K_XL.gguf";
 
       host = "0.0.0.0"; # bind to all interfaces — accessible on LAN
       port = 8000;
@@ -209,7 +209,7 @@
 
         # ── Vison ─────────────────────────────────────────────────────────────
         # "--mmproj"
-        # "/var/lib/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/mmproj-F16.gguf"
+        # "/mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/mmproj-F16.gguf"
 
         # ── Memory mapping ────────────────────────────────────────────────────
         # --no-mmap: disable mmap() for model weights.
@@ -300,10 +300,13 @@
 
   # For Vulkan
   systemd.services.llama-cpp = {
+    after = [ "mnt-data.mount" ];
+    requires = [ "mnt-data.mount" ];
+
     environment = {
       GGML_VK_VISIBLE_DEVICES = "0"; # select the 7900 XT, not the iGPU
 
-      XDG_CACHE_HOME = "/var/lib/llama-cpp/.cache"; # writable shader cache dir
+      XDG_CACHE_HOME = "/mnt/data/ai-models/llama-cpp/.cache"; # writable shader cache dir
 
       RADV_PERFTEST = "bfloat16,nogttspill";
 
@@ -353,8 +356,9 @@
     extraGroups = [
       "video"
       "render"
+      "users"
     ];
-    home = "/var/lib/llama-cpp";
+    home = "/mnt/data/ai-models/llama-cpp";
     createHome = true;
   };
   # llama-cpp group is shared — add your desktop user here so LM Studio
@@ -363,6 +367,6 @@
 
   # 0770: llama-cpp user + group (erikf) can read/write, others cannot
   systemd.tmpfiles.rules = [
-    "d /var/lib/llama-cpp/models 0770 llama-cpp llama-cpp -"
+    "d /mnt/data/ai-models/llama-cpp/models 0770 llama-cpp llama-cpp -"
   ];
 }

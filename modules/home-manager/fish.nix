@@ -124,8 +124,8 @@ in
     interactiveShellInit = ''
       set -g theme_display_date no
 
-      if set -q SSH_TTY; and isatty stdin; and not set -q ZELLIJ; and test "$TERM" != dumb
-        exec ${pkgs.zellij}/bin/zellij
+      if isatty stdin
+        stty -ixon
       end
     '';
 

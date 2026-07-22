@@ -8,8 +8,8 @@
 #
 # HOW TO ADD A NEW MODEL
 # ──────────────────────
-# 1. Download .gguf file to /var/lib/llama-cpp/models/
-#    sudo -u llama-cpp huggingface-cli download ... --local-dir /var/lib/llama-cpp/models/
+# 1. Download .gguf file to /mnt/data/ai-models/llama-cpp/models/
+#    sudo -u llama-cpp huggingface-cli download ... --local-dir /mnt/data/ai-models/llama-cpp/models/
 #
 # 2. Add entry to modelsPreset below with model-specific settings
 #
@@ -32,14 +32,14 @@
     model = null; # Disable single-model mode
 
     # Directory containing all .gguf files - router serves all of them
-    modelsDir = "/var/lib/llama-cpp/models";
+    modelsDir = "/mnt/data/ai-models/llama-cpp/models";
 
     # Per-model configuration presets (converted to INI file automatically)
     # Each key becomes a [section] in the INI, passed via --models-preset
     modelsPreset = {
       "qwen3.5-27b" = {
         # Path to model file (required)
-        path = "/var/lib/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-IQ4_NL.gguf";
+        path = "/mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-IQ4_NL.gguf";
 
         # API name clients use to request this model
         alias = "qwen3.5-27b";
@@ -55,7 +55,7 @@
 
       # Gemma 4 31B (adjust path and settings after downloading)
       # "gemma4-31b" = {
-      #   path = "/var/lib/llama-cpp/models/gemma4-31b-Q4_K_M.gguf";
+      #   path = "/mnt/data/ai-models/llama-cpp/models/gemma4-31b-Q4_K_M.gguf";
       #   alias = "gemma4-31b";
       #   n_gpu_layers = "999";
       #   n_ctx = "65536";  # Smaller context for larger model
@@ -67,7 +67,7 @@
 
       # Gemma 4 26B (adjust path and settings after downloading)
       # "gemma4-26b" = {
-      #   path = "/var/lib/llama-cpp/models/gemma4-26b-Q5_K_M.gguf";
+      #   path = "/mnt/data/ai-models/llama-cpp/models/gemma4-26b-Q5_K_M.gguf";
       #   alias = "gemma4-26b";
       #   n_gpu_layers = "999";
       #   n_ctx = "32768";
@@ -79,7 +79,7 @@
 
       # Qwen 3.5 MoE small variant (adjust for your specific model)
       # "qwen-moe-small" = {
-      #   path = "/var/lib/llama-cpp/models/qwen-moe-small.gguf";
+      #   path = "/mnt/data/ai-models/llama-cpp/models/qwen-moe-small.gguf";
       #   alias = "qwen-moe-small";
       #   n_gpu_layers = "999";
       #   n_ctx = "32768";
@@ -158,10 +158,13 @@
   # ── Vulkan-Specific Systemd Override ──────────────────────────────────
   # Required for AMD GPU access and shader compilation (W+X memory)
   systemd.services.llama-cpp = {
+    after = [ "mnt-data.mount" ];
+    requires = [ "mnt-data.mount" ];
+
     environment = {
       GGML_VK_VISIBLE_DEVICES = "0"; # Select RX 7900 XT, not integrated GPU
 
-      XDG_CACHE_HOME = "/var/lib/llama-cpp/.cache"; # Writable shader cache directory
+      XDG_CACHE_HOME = "/mnt/data/ai-models/llama-cpp/.cache"; # Writable shader cache directory
 
       RADV_PERFTEST = "bfloat16,nogttspill"; # Vulkan performance optimizations
 
@@ -213,8 +216,9 @@
     extraGroups = [
       "video" # GPU device access
       "render" # DRM/render node access
+      "users"
     ];
-    home = "/var/lib/llama-cpp";
+    home = "/mnt/data/ai-models/llama-cpp";
     createHome = true;
   };
 
@@ -224,6 +228,6 @@
   # ── Model Directory Permissions ───────────────────────────────────────
   # 0770: llama-cpp user + group members (including erikf) can read/write
   systemd.tmpfiles.rules = [
-    "d /var/lib/llama-cpp/models 0770 llama-cpp llama-cpp -"
+    "d /mnt/data/ai-models/llama-cpp/models 0770 llama-cpp llama-cpp -"
   ];
 }

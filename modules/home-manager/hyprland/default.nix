@@ -59,6 +59,8 @@
         CLAUDE_USE_WAYLAND = "1";
       };
 
+      xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+
       wayland.windowManager.hyprland = {
         enable = true;
         xwayland.enable = true;
