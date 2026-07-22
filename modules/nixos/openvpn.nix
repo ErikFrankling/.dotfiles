@@ -24,6 +24,9 @@
       Type = "oneshot";
       ExecStart = "${config.services.cloudflare-warp.package}/bin/warp-cli --accept-tos settings reset";
       RemainAfterExit = true;
+      Restart = "on-failure";
+      RestartMode = "direct";
+      RestartSec = "5s";
     };
   };
 
