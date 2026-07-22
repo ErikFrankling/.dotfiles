@@ -1,8 +1,4 @@
 { username, config, ... }:
-let
-  openvpnEndpoint = "lohman.asuscomm.com";
-  warpExclusionUnit = "cloudflare-warp-openvpn-exclusion.service";
-in
 {
   services.openvpn.servers.homeVPN = {
     autoStart = true;
@@ -13,25 +9,27 @@ in
     '';
   };
 
-  # Keep the OpenVPN transport outside WARP. Nesting OpenVPN's 1500-byte
-  # tunnel through WARP's 1280-byte tunnel black-holes larger SSH packets.
-  systemd.services.cloudflare-warp-openvpn-exclusion = {
-    description = "Exclude the OpenVPN endpoint from Cloudflare WARP";
+  # The Husk-managed WARP profile uses include-only split tunneling, so the
+  # public OpenVPN endpoint already bypasses WARP. Clear the old CLI exclusion:
+  # a local split-tunnel edit changes the client to consumer exclude mode and
+  # overrides the organization-managed routes, including the Kubernetes API.
+  systemd.services.cloudflare-warp-managed-settings = {
+    description = "Clear local WARP overrides and use the managed device profile";
     after = [ "cloudflare-warp.service" ];
     requires = [ "cloudflare-warp.service" ];
     before = [ "openvpn-homeVPN.service" ];
+    wantedBy = [ "multi-user.target" ];
 
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "${config.services.cloudflare-warp.package}/bin/warp-cli --accept-tos tunnel host add ${openvpnEndpoint}";
-      Restart = "on-failure";
-      RestartSec = "5s";
+      ExecStart = "${config.services.cloudflare-warp.package}/bin/warp-cli --accept-tos settings reset";
+      RemainAfterExit = true;
     };
   };
 
   systemd.services.openvpn-homeVPN = {
-    after = [ warpExclusionUnit ];
-    requires = [ warpExclusionUnit ];
+    after = [ "cloudflare-warp-managed-settings.service" ];
+    requires = [ "cloudflare-warp-managed-settings.service" ];
   };
   users.users."${username}".openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJXhLc3vVBQPQLGlf4kMJ/WHXPlsXWzuustUwzFj/AaX erikf@arch-erik-pc"
