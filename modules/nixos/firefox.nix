@@ -27,6 +27,15 @@ in
       # ---- POLICIES ----
       # Check about:policies#documentation for options.
       policies = {
+        # Cloudflare One installs its account Gateway CA automatically on
+        # supported operating systems, but NixOS is not supported and Firefox
+        # on Linux has its own certificate store. Deploy the same verified CA
+        # through Firefox's enterprise policy so every managed NixOS profile
+        # trusts WARP-private HTTPS without a manual per-profile import.
+        Certificates = {
+          Install = [ ../../certificates/cloudflare-gateway-ca.pem ];
+        };
+
         # DisableTelemetry = true;
         # DisableFirefoxStudies = true;
         # EnableTrackingProtection = {
