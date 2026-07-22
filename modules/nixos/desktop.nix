@@ -56,6 +56,8 @@
   services.gnome.at-spi2-core.enable = true;
   # virtualisation.vmware.host.enable = true;
   programs.nm-applet.enable = true;
+
+  services.cloudflare-warp.enable = true;
   security.polkit.enable = true;
 
   programs.wireshark = {

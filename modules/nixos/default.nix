@@ -189,6 +189,7 @@
       Host pc
         Hostname 192.168.50.232
         User erikf
+        KexAlgorithms curve25519-sha256
       Host framework
         Hostname 192.168.50.137
         User erikf
