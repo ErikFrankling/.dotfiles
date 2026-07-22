@@ -58,6 +58,10 @@
   programs.nm-applet.enable = true;
 
   services.cloudflare-warp.enable = true;
+
+  # Cloudflare's Linux client cannot install the account Gateway CA on NixOS.
+  # Trust it system-wide so CLI tools can verify WARP-only HTTPS services.
+  security.pki.certificateFiles = [ ../../certificates/cloudflare-gateway-ca.pem ];
   security.polkit.enable = true;
 
   programs.wireshark = {
