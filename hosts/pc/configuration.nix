@@ -100,25 +100,8 @@
   };
 
   systemd.tmpfiles.rules = [
-    "d /mnt/data 0750 root root -"
+    "d /mnt/data 0750 ${username} users -"
   ];
-
-  systemd.services.data-drive-permissions = {
-    description = "Set permissions for /mnt/data";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "mnt-data.mount" ];
-    requires = [ "mnt-data.mount" ];
-
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-    };
-
-    script = ''
-      chown ${username}:users /mnt/data
-      chmod 0750 /mnt/data
-    '';
-  };
 
   time.hardwareClockInLocalTime = true;
 
