@@ -1,4 +1,9 @@
-{ inputs, pkgs, ... }:
+{
+  inputs,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   imports = [
@@ -177,4 +182,41 @@
     #   }
     # ];
   };
+  home.activation.configureOpenCodePcServer = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    stateFile="$HOME/.config/ai.opencode.desktop/opencode.global.dat"
+    mkdir -p "$(dirname "$stateFile")"
+    if [[ ! -s "$stateFile" ]]; then
+      printf '{}\n' > "$stateFile"
+    fi
+
+    serverState="$(${pkgs.jq}/bin/jq -r '.server // empty' "$stateFile")"
+    if [[ -z "$serverState" ]]; then
+      serverState='{"list":[],"projects":{},"lastProject":{},"recentlyClosed":{}}'
+    fi
+
+    serverState="$(
+      ${pkgs.jq}/bin/jq -c \
+        --arg url "http://192.168.50.232:4096" \
+        --arg name "PC" \
+        '
+          .list = (
+            [
+              (.list // [])[] |
+              select(
+                (if type == "string" then . else (.http.url // .url // "") end) != $url
+              )
+            ] + [{
+              type: "http",
+              http: { url: $url },
+              displayName: $name
+            }]
+          )
+        ' <<< "$serverState"
+    )"
+
+    temporaryFile="$(mktemp "$stateFile.tmp.XXXXXX")"
+    ${pkgs.jq}/bin/jq --arg server "$serverState" '.server = $server' "$stateFile" > "$temporaryFile"
+    mv "$temporaryFile" "$stateFile"
+  '';
+
 }

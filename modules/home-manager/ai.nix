@@ -3,6 +3,7 @@
   otherPkgs,
   lib,
   inputs,
+  hostName,
   ...
 }:
 
@@ -216,9 +217,10 @@ in
 
   programs.opencode = {
     enable = true;
+    package = inputs.llm-agents.packages.${system}.opencode;
 
     web = {
-      enable = true;
+      enable = hostName == "pc";
       extraArgs = [
         "--hostname"
         "0.0.0.0"
