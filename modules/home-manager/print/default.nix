@@ -26,10 +26,8 @@
   home.packages = with pkgs; [
     otherPkgs.pkgsStable.prusa-slicer
     # prusa-slicer
-    # openscad
-    # openscad-2024
-    # TODO: use openscad-unstable when it is no longer broken. it has much faster rendering
-    openscad-unstable
+    # openscad-unstable fails to link with LLVM LLD 21 in current nixpkgs.
+    openscad
   ];
   # home.file = {
   #   ".config/PrusaSlicer/" = {
