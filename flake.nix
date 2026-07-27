@@ -80,7 +80,11 @@
 
     ags-shell.url = "github:ErikFrankling/AGS";
     # ags-shell.url = "/home/erikf/projects/personal/AGS";
-    # ags-shell.inputs.nixpkgs.follows = "nixpkgs";
+    # Without this the shell builds against whatever nixpkgs the AGS flake has
+    # pinned, which drifted far enough behind to ship a GTK 4 that predates the
+    # prefers-color-scheme media query — so the popups stayed light while the
+    # rest of the desktop was dark.
+    ags-shell.inputs.nixpkgs.follows = "nixpkgs";
 
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
 

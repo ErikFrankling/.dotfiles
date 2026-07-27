@@ -71,10 +71,19 @@
   '';
   gtk = {
     enable = true;
+
     theme = {
       name = "adw-gtk3-dark";
       package = pkgs.adw-gtk3;
     };
+
+    # The piece that was missing. adw-gtk3 6.5 selects its dark palette with
+    # `@media (prefers-color-scheme: dark)`, and that query only matches once
+    # gtk-application-prefer-dark-theme is actually set — dconf and the desktop
+    # portal saying "prefer-dark" is not enough, because GTK 4 reads the theme
+    # from ~/.config/gtk-4.0/gtk.css at user priority. Without this every GTK 4
+    # app fell through to the light @define-colors.
+    colorScheme = "dark";
   };
 
   dconf.settings."org/gnome/desktop/interface" = {

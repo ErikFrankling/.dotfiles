@@ -132,6 +132,13 @@
           # windowrule = move 0 730, tag rtr
           windowrule = move 0 784, tag rtr
 
+          # The notification popups are deliberately translucent; blurring what
+          # is behind them is what keeps the text readable over a busy
+          # wallpaper. ignorealpha skips the fully transparent margin around
+          # each card so the blur stops at the card itself.
+          layerrule = blur on, match:namespace notifications
+          layerrule = ignore_alpha 0.4, match:namespace notifications
+
           windowrule = no_blur 1, tag rtr
           windowrule = no_shadow 1, tag rtr
           windowrule = border_size 0, tag rtr
