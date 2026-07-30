@@ -20,13 +20,18 @@ in
   programs.kitty = {
     enable = true;
     settings = {
-      auto_reload_config = -1;
       shell = "${zellijKittyShell}/bin/zellij-kitty-shell";
     };
     keybindings = {
       # Disable kitty's unicode input
       "ctrl+shift+u" = "no_op";
     };
+    # The shell republishes this on every theme change. Windows that are already
+    # open recolour from the OSC escapes it broadcasts; this is what makes a
+    # newly opened window start out matching them.
+    extraConfig = ''
+      include ~/.cache/wal/colors-kitty.conf
+    '';
   };
 
   xdg.desktopEntries.kitty-plain = {
