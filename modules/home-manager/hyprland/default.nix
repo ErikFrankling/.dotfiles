@@ -285,6 +285,22 @@
               # swap windows
               (lib.mapAttrsToList (key: direction: "$mod SHIFT,${key},swapwindow,${direction}") directions);
 
+          # The quickshell launcher: a centred overlay window, opened from the
+          # keyboard only — it deliberately has no button anywhere in the shell.
+          # `global` delivers the press straight to the running shell over
+          # hyprland-global-shortcuts-v1 (the shell registers `quickshell:launcher`
+          # as a GlobalShortcut), so nothing is forked on the keypress. Wofi keeps
+          # $mod+D untouched; this is a second key, not a replacement, because a
+          # `global` bind does nothing at all when the shell is not running.
+          #
+          # bindd rather than bind so `hyprctl binds` reports what it is. The
+          # other sixty binds still need converting — see
+          # ~/projects/personal/quickshell/docs/keyboard.md — but that is its own
+          # change and must land before the move to a Lua config.
+          bindd = [
+            "$mod, SPACE, Toggle the application launcher, global, quickshell:launcher"
+          ];
+
           bindm = [
             "$mod, mouse:272, movewindow"
             "$mod, mouse:273, resizewindow"
