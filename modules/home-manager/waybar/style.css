@@ -6,6 +6,10 @@
  *
  * =========================================================================== */
 
+/* The palette the shell publishes on every theme change. A systemd path unit
+ * sends waybar SIGUSR2 when this file is rewritten, which reloads the style. */
+@import "/home/erikf/.cache/wal/colors-waybar.css";
+
 /* -----------------------------------------------------------------------------
  * Keyframes
  * -------------------------------------------------------------------------- */
@@ -46,9 +50,13 @@
 }
 
 /* The whole bar */
+/* The literal is the fallback for when no palette has been published yet;
+ * GTK drops the line below it if @background is not defined. */
 #waybar {
   background: #323232;
+  background: @background;
   color: white;
+  color: @foreground;
   font-family:
     Cantarell,
     Noto Sans,

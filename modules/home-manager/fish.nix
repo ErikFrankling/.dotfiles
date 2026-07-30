@@ -127,6 +127,12 @@ in
       if isatty stdin
         stty -ixon
       end
+
+      # Replay the palette the shell last published, so a terminal opened now
+      # matches the ones that already recoloured from the live OSC broadcast.
+      if isatty stdout; and test -r $HOME/.cache/wal/sequences
+        cat $HOME/.cache/wal/sequences
+      end
     '';
 
     shellInit = ''

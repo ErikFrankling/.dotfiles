@@ -30,4 +30,22 @@
     style = ./style.css;
     # settings = builtins.readFile ./config.jsonc;
   };
+
+  # style.css @imports the palette the shell publishes, but nothing tells GTK to
+  # look at it again. SIGUSR2 makes waybar re-read its style.
+  systemd.user.paths.waybar-theme = {
+    Unit.Description = "Reload waybar when the published palette changes";
+    Path.PathChanged = "%h/.cache/wal/colors-waybar.css";
+    Install.WantedBy = [ "paths.target" ];
+  };
+
+  systemd.user.services.waybar-theme = {
+    Unit.Description = "Reload waybar's style";
+    Service = {
+      Type = "oneshot";
+      # waybar's own unit already maps reload onto SIGUSR2. Leading "-" so a
+      # theme change with waybar not running is not a failure.
+      ExecStart = "-${pkgs.systemd}/bin/systemctl --user reload waybar.service";
+    };
+  };
 }
