@@ -99,6 +99,14 @@
     noctalia.url = "github:noctalia-dev/noctalia-shell";
     noctalia.inputs.nixpkgs.follows = "nixpkgs";
 
+    # My own Quickshell desktop shell — the replacement for waybar + AGS.
+    # `packages.default` is the installable build (QML copied into the store),
+    # `homeManagerModules.default` is programs.erikshell. The working tree at
+    # ~/projects/personal/quickshell stays the place to iterate: `nix run .`
+    # there runs the same shell straight off disk, with hot reload.
+    erikshell.url = "github:ErikFrankling/quickshell";
+    erikshell.inputs.nixpkgs.follows = "nixpkgs";
+
     # claude-desktop.url = "github:k3d3/claude-desktop-linux-flake";
     # claude-desktop.inputs.nixpkgs.follows = "nixpkgs";
     # claude-desktop.inputs.flake-utils.follows = "flake-utils";

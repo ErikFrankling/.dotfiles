@@ -21,7 +21,10 @@
         size = 16;
       };
 
-      programs.wofi.enable = true;
+      # The launcher is the shell's own now ($mod+D, see bindd below). Wofi is
+      # left here commented rather than deleted — uncomment this and the $mod+D
+      # bind further down to go back to it.
+      # programs.wofi.enable = true;
       # services.cliphist.enable = true;
 
       home.packages = with pkgs; [
@@ -75,8 +78,12 @@
           # exec = eww open bar
           # exec = pkill waybar
           # exec-once = ags run
-          exec-once = my-shell
-          # Waybar is managed by Home Manager systemd integration.
+          # The AGS shell. Replaced by erikshell, which is started by its own
+          # systemd user unit (see ../erikshell.nix) rather than from here —
+          # two shells would fight over org.freedesktop.Notifications and the
+          # tray. Uncomment to go back.
+          # exec-once = my-shell
+          # Waybar was managed by Home Manager systemd integration.
           exec-once = nm-applet
           exec-once = blueman-applet
           exec-once = blueman-tray
@@ -209,7 +216,7 @@
           bind =
             let
               terminal = "kitty";
-              menu = "wofi --allow-images --show=drun --lines=15"; # prompt=""";
+              # menu = "wofi --allow-images --show=drun --lines=15"; # prompt=""";
               workspaces = map toString (lib.range 1 9);
               directions = {
                 h = "l";
@@ -227,7 +234,8 @@
             [
               # "$mod, O, Exec, hyprctl switchxkblayout at-translated-set-2-keyboard next"
               "$mod, Return, Exec, ${terminal}"
-              "$mod, D, Exec, ${menu}"
+              # $mod+D is the shell's launcher now — see bindd below.
+              # "$mod, D, Exec, ${menu}"
               "$mod, Q, killactive"
               "$mod SHIFT, G, exit"
               "$mod, F, togglefloating"
@@ -289,16 +297,17 @@
           # keyboard only — it deliberately has no button anywhere in the shell.
           # `global` delivers the press straight to the running shell over
           # hyprland-global-shortcuts-v1 (the shell registers `quickshell:launcher`
-          # as a GlobalShortcut), so nothing is forked on the keypress. Wofi keeps
-          # $mod+D untouched; this is a second key, not a replacement, because a
-          # `global` bind does nothing at all when the shell is not running.
+          # as a GlobalShortcut), so nothing is forked on the keypress. It has
+          # $mod+D now, the key wofi used to have, because the shell is started
+          # by a systemd unit that is always up — a `global` bind does nothing
+          # at all when the shell is not running.
           #
           # bindd rather than bind so `hyprctl binds` reports what it is. The
           # other sixty binds still need converting — see
           # ~/projects/personal/quickshell/docs/keyboard.md — but that is its own
           # change and must land before the move to a Lua config.
           bindd = [
-            "$mod, SPACE, Toggle the application launcher, global, quickshell:launcher"
+            "$mod, D, Toggle the application launcher, global, quickshell:launcher"
           ];
 
           bindm = [
@@ -308,16 +317,27 @@
 
           # l -> do stuff even when locked
           # e -> repeats when key is held
+          # These stay plain wpctl/brightnessctl calls: the shell's OSD has
+          # nothing to be told. It watches its own Audio.vol/Audio.muted and
+          # Sys.brightness properties, so the change signal *is* the event no
+          # matter who caused it — a media key, pavucontrol, or the shell's own
+          # slider. See Osd.qml. Routing the keys through the shell would only
+          # add a fork per keypress and break them whenever it is not running.
           bindle = [
             # Example volume button that allows press and hold, volume limited to 150%
             ", XF86AudioRaiseVolume, exec, wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 2%+"
             # Example volume button that will activate even while an input inhibitor is active
             ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%-"
 
-            ", xf86monbrightnessup, exec, brightnessctl set 10%+"
-            "$mod, U, exec, brightnessctl set 10%+"
-            ", xf86monbrightnessdown, exec, brightnessctl set 10%-"
-            "$mod, I, exec, brightnessctl set 10%-"
+            # -c backlight, because brightnessctl with no class falls back to
+            # the keyboard LEDs when there is no backlight — on pc, plain
+            # `brightnessctl set 10%+` was toggling the numlock light. With the
+            # class pinned it is the screen or nothing (pc has no backlight at
+            # all, so it is a no-op there and the OSD correctly stays away).
+            ", xf86monbrightnessup, exec, brightnessctl -c backlight set 10%+"
+            "$mod, U, exec, brightnessctl -c backlight set 10%+"
+            ", xf86monbrightnessdown, exec, brightnessctl -c backlight set 10%-"
+            "$mod, I, exec, brightnessctl -c backlight set 10%-"
           ];
 
           bindl = [

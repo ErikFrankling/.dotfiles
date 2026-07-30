@@ -291,6 +291,26 @@
         "url": "https://install.determinate.systems/determinate-nixd/tag/v3.21.8/x86_64-linux"
       }
     },
+    "erikshell": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785422200,
+        "narHash": "sha256-wbRNPkBGx6FfeIv1jYQFRbnSbefszz8TKqMVODFtzdY=",
+        "owner": "ErikFrankling",
+        "repo": "quickshell",
+        "rev": "fa0366ab2d05a96d1bfd2285e5df0f84a697f85e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ErikFrankling",
+        "repo": "quickshell",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -1159,6 +1179,7 @@
         "claude-desktop": "claude-desktop",
         "codex-desktop-linux": "codex-desktop-linux",
         "determinate": "determinate",
+        "erikshell": "erikshell",
         "flake-utils": "flake-utils",
         "helium": "helium",
         "home-manager": "home-manager",

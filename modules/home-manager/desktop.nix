@@ -10,7 +10,11 @@
 {
   imports = [
     # ./firefox.nix
-    ./waybar
+    # Replaced by ./erikshell.nix — my own Quickshell shell draws the bar now.
+    # The waybar config, style and scripts are still in ./waybar; re-import this
+    # line and comment out ./erikshell.nix to go back.
+    # ./waybar
+    ./erikshell.nix
     ./hyprland
     # ./eww
     # ./ags
@@ -36,7 +40,10 @@
     # otherPkgs.pkgsStable.obsidian
     # otherPkgs.pkgsMaster.obsidian
     # (inputs.ags-shell.packages.${system}.my-shell)
-    inputs.ags-shell.packages."x86_64-linux".default
+    # The AGS shell — `my-shell`, and the old notification daemon. Superseded by
+    # ./erikshell.nix; the flake input and the AGS repo are untouched, so
+    # uncommenting this line is all it takes to have it back on PATH.
+    # inputs.ags-shell.packages."x86_64-linux".default
     mattermost-desktop
     # inputs.claude-desktop.packages.${system}.claude-desktop-with-fhs
     ghostty
