@@ -306,8 +306,21 @@
           # other sixty binds still need converting — see
           # ~/projects/personal/quickshell/docs/keyboard.md — but that is its own
           # change and must land before the move to a Lua config.
+          # Themes and wallpapers is the same shape as the launcher — a centred
+          # overlay, registered as `quickshell:looks` at ShellRoot level — so it
+          # gets the same kind of bind. $mod+SHIFT+T because $mod+T is already
+          # the Rusty's Retirement tag, and T is still the letter he will reach
+          # for; $mod+W and $mod+C were the alternatives and both burn a bare
+          # $mod slot on something he touches twice a month.
+          #
+          # The rail's other pages get nothing here on purpose. Their IpcHandler
+          # lives inside the per-screen `Variants` block, so a GlobalShortcut
+          # beside it would register once per monitor under one name. Giving the
+          # control centre a key means first hoisting it out of `Variants`, and
+          # that is a change to the shell, not to this file.
           bindd = [
             "$mod, D, Toggle the application launcher, global, quickshell:launcher"
+            "$mod SHIFT, T, Toggle the themes and wallpapers overlay, global, quickshell:looks"
           ];
 
           bindm = [
