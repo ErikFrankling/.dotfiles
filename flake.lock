@@ -1095,11 +1095,11 @@
         "nixpkgs": "nixpkgs_6"
       },
       "locked": {
-        "lastModified": 1777140854,
-        "narHash": "sha256-/CnONOQhMvnpTMGhZ1+lF3B0hZAo+orAzChemYofYjA=",
+        "lastModified": 1785419729,
+        "narHash": "sha256-/x467a5l+DSZv6vD0I4lXcnkJ2fROHfz4qCkJPZvWY8=",
         "owner": "ErikFrankling",
         "repo": "nvim",
-        "rev": "246c9e636f2d8c7bbf2e56d6f4f712a7151da5e9",
+        "rev": "595a44093db27ebc8e8f35b2384c56c43f1452af",
         "type": "github"
       },
       "original": {
