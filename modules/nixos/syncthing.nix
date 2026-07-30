@@ -73,6 +73,19 @@
           versioning.type = "staggered";
           type = "sendreceive";
         };
+        # Wallpapers the shell's picker reads from. No versioning: these are
+        # large re-downloadable binaries and deleting one is deliberate, so
+        # keeping old copies in .stversions would only eat disk. Same shape as
+        # Camera below.
+        "wallpapers" = {
+          path = "~/Pictures/wallpapers";
+          id = "wallpapers";
+          devices = [
+            "framework"
+            "pc"
+          ];
+          type = "sendreceive";
+        };
         "Camera" = {
           path = "~/Camera";
           id = "sm-s901b_ud9q-photos";
