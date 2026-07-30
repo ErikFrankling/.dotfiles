@@ -77,6 +77,18 @@
         # large re-downloadable binaries and deleting one is deliberate, so
         # keeping old copies in .stversions would only eat disk. Same shape as
         # Camera below.
+        #
+        # The path is not free to change: panels/Wallpapers.qml in the shell
+        # looks in ~/Pictures/wallpapers and nowhere else, so the two have to
+        # say the same thing. A machine that accepted this folder through the
+        # web UI instead got ~/wallpapers, because that is the path the UI
+        # suggests, and its picker then found nothing while the disk was full.
+        # The cure is a rebuild there: the module POSTs each folder declared
+        # here and syncthing replaces the one with a matching id, path and all.
+        # Nothing on disk moves with it, so move the old directory into place
+        # first, with syncthing stopped and .stfolder along with it, or the
+        # rebuild will pull the whole folder down again and leave the old copy
+        # behind.
         "wallpapers" = {
           path = "~/Pictures/wallpapers";
           id = "wallpapers";
