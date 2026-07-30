@@ -6,7 +6,7 @@
 # as the `erikshell` flake input. That repo owns the module and the package; this
 # file only says "run it here, and here is how to point it at the working tree".
 #
-# Two paths, deliberately, and never a third:
+# Three paths:
 #
 #   production  the systemd unit below, running the store copy of the QML. What
 #               is on screen after a `rebuild`.
@@ -15,11 +15,14 @@
 #               Stop the unit first (`systemctl --user stop erikshell`) so the two
 #               do not fight over org.freedesktop.Notifications and the tray, and
 #               `systemctl --user start erikshell` when done.
+#   swapped     `erikshell-dev on` — the unit itself runs the working tree, from
+#               now until `erikshell-dev off` or the next reboot. No rebuild
+#               either way. This is the one to reach for.
 #
-# `programs.erikshell.localDev.enable = true` welds the two together: the unit
-# itself then runs the working tree, so the desktop that comes up on login is the
-# one that hot-reloads. That costs one rebuild to turn on and one to turn off,
-# which is why it is a flag and not the default.
+# `programs.erikshell.localDev.enable = true` is the declarative version of
+# `erikshell-dev on`: the unit runs the working tree, so the desktop that comes
+# up on login is the one that hot-reloads. It costs a rebuild each way, which is
+# why the imperative command exists — but this is the one that survives a reboot.
 {
   config,
   lib,
@@ -42,6 +45,82 @@ let
   # runtime environment.
   runFromTree = "${inputs.erikshell.apps.${system}.default.program} ${devTree}";
 
+  # The same swap as localDev, without the rebuild: a runtime systemd drop-in
+  # that overrides the unit's own ExecStart. Runtime drop-ins live under
+  # $XDG_RUNTIME_DIR, i.e. /run, so nothing Nix manages is touched and the
+  # override cannot outlive the session that set it — a reboot puts the store
+  # copy back on its own. `user.control/` rather than `user/` because that is
+  # the directory `systemctl --user edit --runtime` writes to, and the only one
+  # that outranks the unit home-manager installs in ~/.config/systemd/user.
+  devSwap = pkgs.writeShellApplication {
+    name = "erikshell-dev";
+    runtimeInputs = [
+      pkgs.systemd
+      pkgs.procps
+    ];
+    text = ''
+      dropin="$XDG_RUNTIME_DIR/systemd/user.control/erikshell.service.d"
+
+      report() {
+        if [ -e "$dropin/override.conf" ]; then
+          echo "erikshell: WORKING TREE — ${devTree}"
+          echo "  hot-reloads on save. Off again with 'erikshell-dev off', and"
+          echo "  a reboot reverts to the store copy by itself."
+        else
+          echo "erikshell: store copy"
+        fi
+        echo "  ExecStart: $(systemctl --user show erikshell -p ExecStart --value)"
+        echo "  unit:      $(systemctl --user is-active erikshell)"
+        running=$(pgrep -c quickshell || true)
+        if [ "$running" -gt 1 ]; then
+          echo "  WARNING: $running quickshell processes are running — they will"
+          echo "  fight over org.freedesktop.Notifications and the tray."
+        fi
+      }
+
+      # A QML error kills the process, Restart=on-failure restarts it, and a few
+      # seconds later systemd gives up and latches the unit into `failed` — where
+      # it stays, refusing to start anything, until it is reset. So every swap
+      # clears that latch first, and none of this is allowed to abort the script:
+      # a restart that fails is the case the caller has to handle, not exit on.
+      swap() {
+        systemctl --user daemon-reload
+        systemctl --user reset-failed erikshell || true
+        systemctl --user restart erikshell || true
+        sleep 3
+      }
+
+      case "''${1:-status}" in
+        on)
+          mkdir -p "$dropin"
+          # ExecStart is a list, so it has to be cleared before it can be reset.
+          printf '[Service]\nExecStart=\nExecStart=%s\n' ${lib.escapeShellArg runFromTree} \
+            > "$dropin/override.conf"
+          swap
+          # A working tree that does not load must not leave him with no shell.
+          if ! systemctl --user is-active --quiet erikshell; then
+            rm -rf "$dropin"
+            swap
+            echo "the working tree did not start — reverted to the store copy" >&2
+            report
+            exit 1
+          fi
+          ;;
+        off)
+          rm -rf "$dropin"
+          swap
+          ;;
+        status) ;;
+        *)
+          echo "usage: erikshell-dev [on|off|status]" >&2
+          exit 2
+          ;;
+      esac
+
+      report
+    '';
+  };
+
   cfg = config.programs.erikshell;
 in
 {
@@ -56,7 +135,10 @@ in
     # The client half of the notification spec. The shell is the daemon, so
     # nothing here provides `notify-send` — and without it a script has no way
     # to raise a notification, and no way to check the daemon is alive.
-    home.packages = [ pkgs.libnotify ];
+    home.packages = [
+      pkgs.libnotify
+      devSwap
+    ];
 
     programs.erikshell = {
       enable = true;
