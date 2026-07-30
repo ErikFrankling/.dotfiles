@@ -13,6 +13,7 @@
     # ./nixvim
     ./fish.nix
     ./tmux.nix
+    ./rust.nix
     ./scripts
     ./zellij
   ];
