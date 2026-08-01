@@ -241,7 +241,8 @@
               "$mod, F, togglefloating"
               "$mod, A, layoutmsg, preselect l"
               ''$mod, P, exec, hyprctl --batch "dispatch setfloating; dispatch pin"''
-              # "$mod, B, fullscreenstate 1"
+              # "$mod, B, fullscreenstate 1"  — $mod+B is the keys sheet now, see
+              # bindd below; revive this one on another key.
               "$mod, R, fullscreen"
               # Screenshot selected area to clipboard.
               ", Print, exec, grimblast copy area"
@@ -313,6 +314,21 @@
           # for; $mod+W and $mod+C were the alternatives and both burn a bare
           # $mod slot on something he touches twice a month.
           #
+          # The keys sheet — the Dactyl's layers, these binds, and Neovim's
+          # keymaps on three pages — is the third overlay of that shape, and it
+          # is the one he reaches for precisely when he cannot remember a key.
+          # So it gets a bare $mod slot rather than a shifted one.
+          #
+          # $mod+B, for board and for binds, because the letter it wants is gone:
+          # $mod+K, $mod+SHIFT+K and $mod+ALT+K are movefocus, swapwindow and
+          # resizeactive up — the vim-direction cluster owns the whole K family
+          # and none of it is negotiable. $mod+SLASH is the conventional help
+          # key and was rejected on the hardware: the G512 is Swedish-only
+          # (hosts/pc/home.nix), where slash lives on SHIFT+7, i.e. the
+          # movetoworkspace-7 chord. $mod+B itself only ever held a
+          # fullscreenstate bind that has been commented out since $mod+R took
+          # over fullscreen.
+          #
           # The rail's other pages get nothing here on purpose. Their IpcHandler
           # lives inside the per-screen `Variants` block, so a GlobalShortcut
           # beside it would register once per monitor under one name. Giving the
@@ -321,6 +337,7 @@
           bindd = [
             "$mod, D, Toggle the application launcher, global, quickshell:launcher"
             "$mod SHIFT, T, Toggle the themes and wallpapers overlay, global, quickshell:looks"
+            "$mod, B, Toggle the keyboard and keybind sheet, global, quickshell:keys"
           ];
 
           bindm = [
