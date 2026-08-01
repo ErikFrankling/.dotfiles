@@ -15,6 +15,9 @@
     # line and comment out ./erikshell.nix to go back.
     # ./waybar
     ./erikshell.nix
+    # What the shell's keys overlay reads on its Neovim page. Here rather than
+    # beside the editor because the file exists for the shell.
+    ./nvim-keymaps.nix
     ./hyprland
     # ./eww
     # ./ags
