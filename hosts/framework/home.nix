@@ -19,7 +19,6 @@
     enable = true;
     server = "https://time.erikfrankling.duckdns.org";
     device = "framework";
-    tokenFile = "/run/secrets/time-ingest-token";
   };
 
   wayland.windowManager.hyprland.settings = {

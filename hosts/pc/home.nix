@@ -94,7 +94,6 @@ in
     enable = true;
     server = "https://time.erikfrankling.duckdns.org";
     device = "pc";
-    tokenFile = "/run/secrets/time-ingest-token";
     note = ''
       This machine runs AI computer-use sessions (codex). An agent can open
       windows, type, and drive the screen with nobody present, and one monitor

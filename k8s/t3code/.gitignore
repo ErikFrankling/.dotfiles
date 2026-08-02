@@ -1,0 +1,2 @@
+# never commit the admin credentials
+.credentials.env

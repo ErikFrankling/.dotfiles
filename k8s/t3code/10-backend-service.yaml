@@ -1,0 +1,31 @@
+# T3 Code backend runs on the LAN host (pc, 192.168.50.232:3773), outside k8s.
+# A selector-less Service + EndpointSlice makes it addressable to Traefik.
+apiVersion: v1
+kind: Service
+metadata:
+  name: t3code-backend
+  namespace: t3code
+spec:
+  ports:
+    - name: http
+      port: 3773
+      targetPort: 3773
+      protocol: TCP
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: t3code-backend-1
+  namespace: t3code
+  labels:
+    kubernetes.io/service-name: t3code-backend
+addressType: IPv4
+ports:
+  - name: http
+    port: 3773
+    protocol: TCP
+endpoints:
+  - addresses:
+      - 192.168.50.232
+    conditions:
+      ready: true

@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: t3code-tls
+  namespace: t3code
+spec:
+  secretName: t3code-tls
+  dnsNames:
+    - "*.erikfrankling.duckdns.org"
+  issuerRef:
+    name: duckdns-letsencrypt-prod
+    kind: ClusterIssuer
