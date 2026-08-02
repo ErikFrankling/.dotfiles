@@ -100,14 +100,21 @@ home-manager = {
 
 ## Git Protocol
 
-**NEVER commit, push, or pull unless explicitly told to do so.**
+**Commit and push your own work without being asked.**
 
-- Only commit when the user explicitly asks you to
-- Never push to remote unless explicitly instructed
-- Never pull or fetch unless explicitly instructed
-- If you're unsure, ask first
+If Erik asked for a change to this config, finishing it includes committing
+and pushing. Do not stop and ask for permission to commit — a change sitting
+uncommitted is not done, and on a multi-machine setup it cannot reach the
+other hosts at all.
 
-This is critical — the user wants full control over when changes are committed and synchronized.
+- Commit the files your task actually touched, in one focused commit
+- Push it
+- Do not sweep unrelated modified files into your commit. If the working tree
+  has other in-progress work, leave it alone and say so
+- Never commit `.claude/worktrees/` or other agent scratch directories
+- Still never commit secrets in plaintext; sops-encrypted files are fine
+- Pulling and fetching still need to be asked for, since they can clobber
+  local work
 
 ---
 

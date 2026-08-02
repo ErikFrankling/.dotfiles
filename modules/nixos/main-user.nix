@@ -29,6 +29,10 @@ in
       extraGroups = [
         "wheel"
         "networkmanager"
+        # Lets the time-agent read /dev/input to tell whether a human is
+        # actually at the machine. It counts events only and never records
+        # which keys were pressed.
+        "input"
       ];
     };
   };

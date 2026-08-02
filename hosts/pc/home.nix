@@ -84,8 +84,24 @@ in
     ../../modules/home-manager/desktop.nix
     ../../modules/home-manager/print
     ../../modules/home-manager/vm-host.nix
+    inputs.time.homeManagerModules.default
     # ../../modules/home-manager/noctalia.nix
   ];
+
+  # Minute-by-minute activity tracking. The agent only screenshots and posts;
+  # the server in the cluster holds the API key and does the classifying.
+  services.time-agent = {
+    enable = true;
+    server = "https://time.erikfrankling.duckdns.org";
+    device = "pc";
+    tokenFile = "/run/secrets/time-ingest-token";
+    note = ''
+      This machine runs AI computer-use sessions (codex). An agent can open
+      windows, type, and drive the screen with nobody present, and one monitor
+      is dedicated to it. Screen activity here is therefore NOT evidence the
+      user is at the machine -- rely on the human input counters for that.
+    '';
+  };
 
   # Keep T3's mutable Codex database separate while sharing the authenticated
   # account, configuration, sessions, and user extensions.

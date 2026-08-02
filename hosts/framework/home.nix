@@ -10,7 +10,17 @@
     ../../modules/home-manager
     ../../modules/home-manager/desktop.nix
     ../../modules/home-manager/print
+    inputs.time.homeManagerModules.default
   ];
+
+  # Minute-by-minute activity tracking. The agent only screenshots and posts;
+  # the server in the cluster holds the API key and does the classifying.
+  services.time-agent = {
+    enable = true;
+    server = "https://time.erikfrankling.duckdns.org";
+    device = "framework";
+    tokenFile = "/run/secrets/time-ingest-token";
+  };
 
   wayland.windowManager.hyprland.settings = {
     device = [

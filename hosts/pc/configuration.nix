@@ -87,6 +87,11 @@
   sops.secrets.kth-password = {
     owner = username;
   };
+  # Read at start by the time-agent user service, so it has to be readable by
+  # the user rather than root-only.
+  sops.secrets.time-ingest-token = {
+    owner = username;
+  };
 
   networking.hostName = "${hostName}"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
