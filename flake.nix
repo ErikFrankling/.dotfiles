@@ -137,6 +137,10 @@
 
     batmon.url = "github:ErikFrankling/nvim";
 
+    # Private NixOS additions (llama-swap models etc.) — fetched over SSH,
+    # every host needs read access to the private repo.
+    private.url = "git+ssh://git@github.com/ErikFrankling/private-nix.git";
+
     voxtype.url = "github:peteonrails/voxtype";
     # Do NOT follow nixpkgs: voxtype's vulkan build needs its own pinned nixpkgs
     # (shaderc 2026.1 + vendored whisper.cpp w/ llama.cpp#15352). Forcing our

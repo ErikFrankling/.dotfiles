@@ -22,6 +22,7 @@
     ../../modules/nixos/secure-boot.nix
     ../../modules/nixos/neptune.nix
     ../../modules/nixos/llama-swap.nix
+    inputs.private.nixosModules.default
     # ../../modules/nixos/llama-cpp.nix
     # ../../modules/nixos/ai-server.nix
     # ../../modules/nixos/vm-host.nix

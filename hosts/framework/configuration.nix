@@ -44,7 +44,6 @@
   sops.secrets.syncthing-cert = { };
   sops.secrets.syncthing-key = { };
 
-
   sops.secrets.kth-password = {
     owner = username;
   };
