@@ -1210,11 +1210,11 @@
         "nixpkgs": "nixpkgs_7"
       },
       "locked": {
-        "lastModified": 1785923943,
-        "narHash": "sha256-6Wsn0Q7WreMT5D+6Y+HPNmiYaGNaFpZigd/SkRHfehg=",
+        "lastModified": 1785965224,
+        "narHash": "sha256-IjytvUk+jyws8w4+TEFLJOvw6NrXUlZv4nhelfvqeoQ=",
         "ref": "refs/heads/main",
-        "rev": "5c84db982eb4086d39a8c5db31cd90aa6c87f891",
-        "revCount": 1,
+        "rev": "ef8854aee43712c6679779f2f69a6e15c30478ff",
+        "revCount": 3,
         "type": "git",
         "url": "ssh://git@github.com/ErikFrankling/private-nix.git"
       },
