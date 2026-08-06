@@ -118,6 +118,7 @@ in
       output.restore_clipboard = true;
       output.restore_clipboard_delay_ms = 300;
       output.pre_type_delay_ms = 250;
+      output.notification.on_transcription = false;
       output.post_process.command = "${voxtypeTranscriptCleanup}/bin/voxtype-transcript-cleanup";
       output.post_process.timeout_ms = 60000;
 
