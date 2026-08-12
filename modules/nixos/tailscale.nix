@@ -41,6 +41,13 @@
     useRoutingFeatures = "client";
   };
 
+  # Without a DNS manager, tailscaled and every other DNS-writing daemon
+  # (NetworkManager, cloudflare-warp) rewrite /etc/resolv.conf directly and
+  # race each other -- Tailscale's documented fix for its "resolv.conf
+  # overwritten" health warning is to run systemd-resolved, which tailscaled
+  # then talks to over D-Bus instead of touching the file.
+  services.resolved.enable = true;
+
   # Each importing host must carry a `tailscale-authkey` entry in its default
   # sops file, i.e.:  sops hosts/<host>/secrets/secrets.yaml
   #   tailscale-authkey: tskey-auth-...
