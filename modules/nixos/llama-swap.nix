@@ -132,7 +132,6 @@ in
     environment = {
       LD_LIBRARY_PATH = "${llama-cpp}/lib";
       GGML_VK_VISIBLE_DEVICES = "0";
-      XDG_CACHE_HOME = "/mnt/data/ai-models/llama-cpp/.cache";
       RADV_PERFTEST = "bfloat16,nogttspill";
     };
 

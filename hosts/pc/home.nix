@@ -10,7 +10,6 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   codexHome = "${config.home.homeDirectory}/.codex";
   t3CodexHome = "${config.home.homeDirectory}/.codex-t3";
-  codexComputerUseMonitor = "codex-computer-use";
   codexCli = inputs.llm-agents.packages.${system}.codex;
   t3Cli =
     (inputs.t3code-nix.packages.${system}.t3code-cli.override { codex = codexCli; }).overrideAttrs
@@ -146,10 +145,6 @@ in
     # WLR_NO_HARDWARE_CURSORS="1";
   };
 
-  wayland.windowManager.hyprland.settings.exec-once = [
-    "hyprctl output create headless ${codexComputerUseMonitor}"
-  ];
-
   # wayland.windowManager.hyprland.settings = {
   #   # mouse = {
   #   #   sensitivity = "0.2";
@@ -207,14 +202,6 @@ in
           refreshRate = 60;
           x = 0;
           scale = "2";
-        }
-        {
-          name = codexComputerUseMonitor;
-          width = 1920;
-          height = 1080;
-          refreshRate = 60;
-          x = 0;
-          scale = "1";
         }
       ];
       initWindows = [

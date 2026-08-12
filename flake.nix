@@ -137,9 +137,10 @@
 
     batmon.url = "github:ErikFrankling/nvim";
 
-    # Private NixOS additions (llama-swap models etc.) — fetched over SSH,
-    # every host needs read access to the private repo.
-    private.url = "git+ssh://git@github.com/ErikFrankling/private-nix.git";
+    # Private NixOS additions (llama-swap models etc.). Local path while
+    # developing — rebuild picks up changes without committing. Only used on
+    # this machine.
+    private.url = "path:/home/erikf/projects/personal/private-nix";
 
     voxtype.url = "github:peteonrails/voxtype";
     # Do NOT follow nixpkgs: voxtype's vulkan build needs its own pinned nixpkgs

@@ -103,6 +103,10 @@
           "@searchengineadremover" = "searchengineadremover";
           "jid1-BoFifL9Vbdl2zQ@jetpack" = "decentraleyes";
           "jid1-MnnxcxisBPnSXQ@jetpack" = "privacy-badger17";
+          # Reports the focused tab to the time agent on this machine, which is
+          # the only way to get a domain: no window title carries one, and Zen
+          # hides the toolbar so the screenshot has none either.
+          "{ef87d84c-2127-493f-b952-5b4e744245bc}" = "aw-watcher-web";
           # LastPass:
           "support@lastpass.com" = {
             id = "lastpass-password-manager";
