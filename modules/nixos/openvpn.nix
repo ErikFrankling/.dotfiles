@@ -1,3 +1,5 @@
+# ARCHIVED 2026-08-12: the router's OpenVPN server is gone; the home VPN is
+# now Tailscale (see ./tailscale.nix). Kept unimported for reference.
 { username, config, ... }:
 {
   services.openvpn.servers.homeVPN = {

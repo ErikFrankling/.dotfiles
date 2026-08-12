@@ -13,7 +13,8 @@
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ../../modules/nixos
-    ../../modules/nixos/openvpn.nix
+    # ../../modules/nixos/openvpn.nix # archived: home VPN is Tailscale now
+    ../../modules/nixos/tailscale.nix
     ../../modules/nixos/laptop.nix
     ../../modules/nixos/desktop.nix
     ../../modules/nixos/game.nix
@@ -60,6 +61,13 @@
   };
 
   sops.secrets."wireless.env" = { };
+
+  # Moved out of the archived openvpn.nix when its import was dropped --
+  # without it this host would silently lose the pc's SSH access (password
+  # auth is off globally). Key name predates the pc's NixOS install.
+  users.users."${username}".openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJXhLc3vVBQPQLGlf4kMJ/WHXPlsXWzuustUwzFj/AaX erikf@arch-erik-pc"
+  ];
 
   environment.etc."eduroam/ca.pem".source = ./eduroam-ca.pem;
 
