@@ -14,7 +14,10 @@
     ./hardware-configuration.nix
     ../../modules/nixos
     # ../../modules/nixos/openvpn.nix # archived: home VPN is Tailscale now
-    ../../modules/nixos/tailscale.nix
+    # ../../modules/nixos/tailscale.nix -- deliberately NOT imported: this box
+    # lives inside the 192.168.50.0/24 subnet the tailnet already routes to,
+    # so membership adds nothing and conflicts with Mullvad's lockdown. Other
+    # tailnet devices reach it through the subnet router.
     # ../../modules/nixos/laptop.nix
     ../../modules/nixos/desktop.nix
     ../../modules/nixos/game.nix
@@ -39,9 +42,6 @@
     ACTION=="add", SUBSYSTEM=="drm", DRIVERS=="amdgpu", KERNEL=="card1", ATTR{device/power_dpm_force_performance_level}="profile_peak"
   '';
 
-  # Mullvad's lockdown blocks Tailscale traffic while the Mullvad tunnel is
-  # up; this box sits on the home LAN anyway, so Tailscale only matters when
-  # Mullvad is disconnected.
   services.mullvad-vpn.enable = true;
 
   services.openssh = {
