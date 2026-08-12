@@ -8,18 +8,25 @@
   # full-tunnel overlap has no equivalent here.
   services.tailscale = {
     enable = true;
-    # Pre-auth key so enrollment needs no browser login. Read by
-    # tailscaled-autoconnect.service only when the backend state is
-    # NeedsLogin/NeedsMachineAuth/Stopped (fresh enroll, logout) -- on a
-    # logged-in node the file is never opened, so the key going stale is
-    # harmless. Generate a reusable TAGGED key (admin console -> Settings ->
-    # Keys; the tag needs a tagOwners entry first, see homelab repo
-    # docs/tailscale.md): tagged nodes get node-key expiry disabled
-    # automatically, so enrolled machines never need to re-auth.
+    # An OAuth client secret (tskey-client-...) used as the pre-auth key, so
+    # enrollment needs no browser login. Unlike normal auth keys (90-day max),
+    # OAuth client secrets NEVER expire, and the tag they enroll with disables
+    # node-key expiry automatically -- set up the secret once and both fresh
+    # installs and enrolled machines work forever. Read by
+    # tailscaled-autoconnect.service only when the backend needs login; on a
+    # logged-in node the file is never opened. Create once in the admin
+    # console (see homelab repo docs/tailscale.md): a `tag:client` tagOwners
+    # entry, then an OAuth client with the auth_keys scope and tag:client.
     authKeyFile = config.sops.secrets.tailscale-authkey.path;
+    # OAuth-based enrollment is unapproved by default; preauthorize it.
+    authKeyParameters.preauthorized = true;
     # Applied only to the initial `tailscale up`; frozen into
     # /var/lib/tailscale afterwards and never re-applied to enrolled nodes.
-    extraUpFlags = [ "--accept-routes" ];
+    # --advertise-tags is mandatory when the auth key is an OAuth secret.
+    extraUpFlags = [
+      "--accept-routes"
+      "--advertise-tags=tag:client"
+    ];
     # Re-asserted via `tailscale set` (tailscaled-set.service) on every boot
     # and whenever the flags change, correcting manual drift. This, not
     # extraUpFlags, is the authoritative home of --accept-routes; Linux
