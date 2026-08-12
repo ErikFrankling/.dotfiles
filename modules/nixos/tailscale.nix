@@ -20,6 +20,9 @@
     authKeyFile = config.sops.secrets.tailscale-authkey.path;
     # OAuth-based enrollment is unapproved by default; preauthorize it.
     authKeyParameters.preauthorized = true;
+    # OAuth-enrolled nodes are EPHEMERAL by default (auto-removed from the
+    # tailnet after going offline) -- kb/1215. These are permanent machines.
+    authKeyParameters.ephemeral = false;
     # Applied only to the initial `tailscale up`; frozen into
     # /var/lib/tailscale afterwards and never re-applied to enrolled nodes.
     # --advertise-tags is mandatory when the auth key is an OAuth secret.
