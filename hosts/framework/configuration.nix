@@ -17,6 +17,7 @@
     ../../modules/nixos/tailscale.nix
     ../../modules/nixos/laptop.nix
     ../../modules/nixos/desktop.nix
+    ../../modules/nixos/keyring.nix
     ../../modules/nixos/game.nix
     inputs.home-manager.nixosModules.default
     ../../modules/nixos/vm-host.nix
