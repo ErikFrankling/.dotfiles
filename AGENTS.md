@@ -463,6 +463,20 @@ All tested and working at 192k context:
 | Qwen3.5-27B         | IQ4_NL (Unsloth)    | 14.6GB | 19.6GB      | Base model       |
 | Qwen3.5-27B Opus    | IQ4_XS (imatrix)    | 14.7GB | 19.7GB      | Claude distilled |
 | Qwen3.5-35B-A3B MoE | UD-IQ4_NL (Unsloth) | 17.8GB | 19.0GB      | 3B active params |
+| Qwen3.8-27B vision  | IQ4_XS (Unsloth)    | 15.7GB | see note    | + mmproj-F16 0.9GB |
+
+**Qwen3.8-27B (tested 2026-08-15):** weights + mmproj = 16.6GB, which is over
+the usual budget, so it runs with **60 of 65 layers on GPU** (5 on CPU) at
+`-c 40960`, `-ub 256`, q8_0 KV → 19.5GB used, 0.5GB free, 15.3 tok/s, stable
+across batched multi-image vision requests. Full offload (999 layers) hits
+19.9GB at 4k context — crash band — so partial offload is the trade that buys
+context and vision. Its hybrid attention keeps KV at ~32KB/token (q8_0): 16 of
+64 layers hold KV, so context is cheap and the weights are the bottleneck.
+Vision adds ~0.3GB after the first image; `-ub 256` keeps the encode buffer
+small. Reasoning must be capped (`--reasoning-budget 2048`) or the model can
+spend an entire completion budget thinking and return zero content. Serves the
+time tracker via aliases `time-vision`/`time-text` (same model on purpose —
+distinct models would thrash swaps).
 
 **Context testing results:**
 
