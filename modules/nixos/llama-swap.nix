@@ -61,7 +61,7 @@ in
             --reasoning on \
             --reasoning-budget 3072 \
             --cache-ram 0 \
-            --parallel 1 \
+            --parallel 2 \
             --temp 1.0 \
             --top-p 0.95 \
             --top-k 20 \
