@@ -26,6 +26,59 @@ in
       startPort = 5800;
 
       models = {
+        "qwen3.8-27b" = {
+          name = "Qwen3.8 27B IQ4_XS (vision)";
+          description = "Qwen3.8-27B with Unsloth IQ4_XS quantization + mmproj — native vision, used by the time tracker";
+
+          # Vision model: --mmproj loads the F16 vision encoder (~0.9GB VRAM).
+          # Sampling per Qwen3.8 thinking-mode recommendation (temp 1.0, top-p
+          # 0.95, top-k 20, min-p 0) — NOT the repeat-penalty settings the
+          # older text models use.
+          # Never run this family with --no-kv-offload on Vulkan
+          # (ggml-org/llama.cpp#24519, immediate-EOS bug).
+          #
+          # VRAM-tested 2026-08-15 on b10273 (methodology in AGENTS.md):
+          # weights 15.7G + mmproj 0.9G exceed the old 14.6G budget, so 5 of 65
+          # layers live on CPU. 60 layers + 40960 ctx + ub 256 = 19.5GB used,
+          # 0.5GB free, stable across 5-image batched vision requests at
+          # 15.3 tok/s. 999 layers @ 4096 ctx hit 19.9GB (crash band); KV is
+          # cheap on this arch (hybrid: 16/64 layers hold KV, ~32KB/tok q8_0)
+          # so context is not the bottleneck — the weights are.
+          cmd = ''
+            ${llama-cpp}/bin/llama-server \
+            --port 5806 \
+            --model /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-IQ4_XS.gguf \
+            --mmproj /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.8-27B-GGUF/mmproj-F16.gguf \
+            --n-gpu-layers 60 \
+            -ub 256 \
+            -c 40960 \
+            --sleep-idle-seconds 10800 \
+            --flash-attn on \
+            --cache-type-k q8_0 \
+            --cache-type-v q8_0 \
+            --alias qwen3.8-27b \
+            --jinja \
+            --reasoning on \
+            --cache-ram 0 \
+            --parallel 1 \
+            --temp 1.0 \
+            --top-p 0.95 \
+            --top-k 20 \
+            --min-p 0
+          '';
+
+          proxy = "http://127.0.0.1:5806";
+          ttl = 10800;
+          aliases = [
+            "qwen3.8"
+            # Stable names the time server's config points at. Both resolve to
+            # this one model on purpose: llama-swap would otherwise thrash
+            # loading two 15GB models as text and vision batches alternate.
+            "time-vision"
+            "time-text"
+          ];
+        };
+
         "qwen3.5-27b" = {
           name = "Qwen3.5 27B IQ4_NL";
           description = "Qwen3.5 27B with Unsloth IQ4_NL quantization";
