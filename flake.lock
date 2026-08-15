@@ -1424,11 +1424,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785722226,
-        "narHash": "sha256-Xgkm/zqOORTLTW6somH+WQiYahbOceTXfp4MfzY1WyU=",
+        "lastModified": 1786801842,
+        "narHash": "sha256-/X6HpNLBg7vWAA4OP+V/Kh9I9dbM0glc/fC1LdkbV3g=",
         "owner": "ErikFrankling",
         "repo": "time",
-        "rev": "b6a9c8899cd668d80ea889f1518fbc358291ffe8",
+        "rev": "f33cb6275932f4dfe6232641aed5a8f4c6966f02",
         "type": "github"
       },
       "original": {

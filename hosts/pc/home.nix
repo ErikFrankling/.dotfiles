@@ -93,6 +93,14 @@ in
     enable = true;
     server = "https://time.erikfrankling.duckdns.org";
     device = "pc";
+    # Near-live dashboard numbers: scan local git and agent transcripts every
+    # minute (cheap — mtime caches skip unchanged sources) and post them.
+    collect = {
+      enable = true;
+      roots = [ "~/projects" ];
+      githubUser = "ErikFrankling";
+    };
+    metrics.enable = true;
     note = ''
       This machine runs AI computer-use sessions (codex). An agent can open
       windows, type, and drive the screen with nobody present, and one monitor
