@@ -59,7 +59,7 @@ in
             --alias qwen3.8-27b \
             --jinja \
             --reasoning on \
-            --reasoning-budget 2048 \
+            --reasoning-budget 3072 \
             --cache-ram 0 \
             --parallel 1 \
             --temp 1.0 \
@@ -70,6 +70,15 @@ in
 
           proxy = "http://127.0.0.1:5806";
           ttl = 10800;
+          # Server-side sampling enforcement. llama-server lets request-body
+          # params silently override CLI flags, and greedy decoding
+          # (temperature 0) is a documented endless-repetition failure mode
+          # for Qwen thinking models — one client doing that burned a whole
+          # completion budget inside <think>. Strip the sampling params so the
+          # official thinking-mode values above always win.
+          filters = {
+            stripParams = "temperature, top_p, top_k, min_p";
+          };
           aliases = [
             "qwen3.8"
             # Stable names the time server's config points at. Both resolve to
