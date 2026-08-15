@@ -59,6 +59,7 @@ in
             --alias qwen3.8-27b \
             --jinja \
             --reasoning on \
+            --reasoning-budget 2048 \
             --cache-ram 0 \
             --parallel 1 \
             --temp 1.0 \
