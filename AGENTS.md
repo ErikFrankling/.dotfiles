@@ -452,6 +452,13 @@ If VRAM is safe (~15-16GB used), you can:
 
 This ensures quality is preserved. Even "Q4_K_S" or "IQ4_XS" (smaller 4-bit variants) are acceptable.
 
+**Exception (Erik, 2026-08-17): Unsloth UD dynamic 3-bit (UD-Q3_K_XL) is
+allowed when 4-bit weights + mmproj cannot fully fit the GPU.** CPU-offloaded
+layers halve decode speed; for Qwen3.8-27B with vision the choice was 3-bit
+fully on GPU over 4-bit at half speed. Naive 3-bit (plain Q3_K/IQ3) remains
+forbidden — the exception is only for Unsloth's dynamic UD variants, and the
+quality cost should be measured with a `time reclassify` A/B when it matters.
+
 ---
 
 ## Current Models (RX 7900 XT - 20GB VRAM)

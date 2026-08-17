@@ -27,8 +27,8 @@ in
 
       models = {
         "qwen3.8-27b" = {
-          name = "Qwen3.8 27B IQ4_XS (vision)";
-          description = "Qwen3.8-27B with Unsloth IQ4_XS quantization + mmproj — native vision, used by the time tracker";
+          name = "Qwen3.8 27B UD-Q3_K_XL (vision)";
+          description = "Qwen3.8-27B, Unsloth dynamic 3-bit + mmproj — native vision, fully on GPU, used by the time tracker";
 
           # Vision model: --mmproj loads the F16 vision encoder (~0.9GB VRAM).
           # Sampling per Qwen3.8 thinking-mode recommendation (temp 1.0, top-p
@@ -37,19 +37,19 @@ in
           # Never run this family with --no-kv-offload on Vulkan
           # (ggml-org/llama.cpp#24519, immediate-EOS bug).
           #
-          # VRAM-tested 2026-08-15/17 on b10273 (methodology in AGENTS.md):
-          # weights 15.7G + mmproj 0.9G exceed the old 14.6G budget, so layers
-          # live on CPU. KV is cheap on this arch (hybrid: 16/64 layers hold
-          # KV, ~32KB/tok q8_0), so two layers were traded for context:
-          # 58 layers + 65536 ctx (two 32k slots) so a 60-minute screenshot
-          # batch fits one slot. 60 layers @ 40960 measured 19.5GB; 999 layers
-          # @ 4096 hit 19.9GB (crash band).
+          # UD-Q3_K_XL (13.4G) instead of IQ4_XS (15.7G) by Erik's explicit
+          # call 2026-08-17: 4-bit + mmproj forced 5-7 layers onto the CPU,
+          # which halves decode speed — dynamic 3-bit fully on GPU won over
+          # 4-bit at half speed (exception recorded in AGENTS.md). KV is cheap
+          # on this arch (16/64 layers hold KV, ~32KB/tok q8_0): 65536 ctx =
+          # two 32k slots, so a 60-minute screenshot batch fits one slot.
+          # IQ4_XS full offload @ 4096 measured 19.9GB (crash band).
           cmd = ''
             ${llama-cpp}/bin/llama-server \
             --port 5806 \
-            --model /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-IQ4_XS.gguf \
+            --model /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q3_K_XL.gguf \
             --mmproj /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.8-27B-GGUF/mmproj-F16.gguf \
-            --n-gpu-layers 58 \
+            --n-gpu-layers 999 \
             -ub 256 \
             -c 65536 \
             --sleep-idle-seconds 10800 \
