@@ -55,6 +55,17 @@
   #   ACTION=="add", SUBSYSTEM=="usb", ATTR{product}!="*Mouse", ATTR{product}!="*Keyboard", TEST=="power/control", ATTR{power/control}="auto"
   # '';
 
+  # Default WiFi regulatory domain to SE. The MT7922 relies on the kernel
+  # regdb (no firmware-managed regdomain), and cfg80211 falls back to WORLD
+  # after every disconnect, where all of 6 GHz is no-IR — so every roam
+  # attempt to a 6 GHz BSSID failed with "Authentication request to the
+  # driver failed" and stalled traffic for seconds. A module-param regdom is
+  # a persistent *user hint*, which survives those resets; AP country IEs
+  # still refine it when abroad. Read at module load => needs a reboot.
+  boot.extraModprobeConfig = ''
+    options cfg80211 ieee80211_regdom=SE
+  '';
+
   # networking.networkmanager.wifi.powersave = true;
   # networking.networkmanager.wifi.backend = "iwd";
 
