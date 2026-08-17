@@ -48,6 +48,7 @@
     # uncommenting this line is all it takes to have it back on PATH.
     # inputs.ags-shell.packages."x86_64-linux".default
     mattermost-desktop
+    libreoffice-fresh # docx/xlsx/odf editing
     # inputs.claude-desktop.packages.${system}.claude-desktop-with-fhs
     ghostty
     code-cursor
