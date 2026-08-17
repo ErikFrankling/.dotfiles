@@ -177,6 +177,11 @@
     settings.PasswordAuthentication = lib.mkDefault false;
   };
 
+  # Mosh server on every host, so `mosh <host>` works between the machines.
+  # Also opens UDP 60000-61000 in the firewall; the client comes from
+  # home-manager (modules/home-manager/default.nix).
+  programs.mosh.enable = true;
+
   programs.ssh = {
     extraConfig = "
       Host student-shell
