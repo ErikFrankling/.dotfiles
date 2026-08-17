@@ -37,21 +37,21 @@ in
           # Never run this family with --no-kv-offload on Vulkan
           # (ggml-org/llama.cpp#24519, immediate-EOS bug).
           #
-          # VRAM-tested 2026-08-15 on b10273 (methodology in AGENTS.md):
-          # weights 15.7G + mmproj 0.9G exceed the old 14.6G budget, so 5 of 65
-          # layers live on CPU. 60 layers + 40960 ctx + ub 256 = 19.5GB used,
-          # 0.5GB free, stable across 5-image batched vision requests at
-          # 15.3 tok/s. 999 layers @ 4096 ctx hit 19.9GB (crash band); KV is
-          # cheap on this arch (hybrid: 16/64 layers hold KV, ~32KB/tok q8_0)
-          # so context is not the bottleneck — the weights are.
+          # VRAM-tested 2026-08-15/17 on b10273 (methodology in AGENTS.md):
+          # weights 15.7G + mmproj 0.9G exceed the old 14.6G budget, so layers
+          # live on CPU. KV is cheap on this arch (hybrid: 16/64 layers hold
+          # KV, ~32KB/tok q8_0), so two layers were traded for context:
+          # 58 layers + 65536 ctx (two 32k slots) so a 60-minute screenshot
+          # batch fits one slot. 60 layers @ 40960 measured 19.5GB; 999 layers
+          # @ 4096 hit 19.9GB (crash band).
           cmd = ''
             ${llama-cpp}/bin/llama-server \
             --port 5806 \
             --model /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-IQ4_XS.gguf \
             --mmproj /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.8-27B-GGUF/mmproj-F16.gguf \
-            --n-gpu-layers 60 \
+            --n-gpu-layers 58 \
             -ub 256 \
-            -c 40960 \
+            -c 65536 \
             --sleep-idle-seconds 10800 \
             --flash-attn on \
             --cache-type-k q8_0 \
