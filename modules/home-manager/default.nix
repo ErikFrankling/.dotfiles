@@ -69,6 +69,7 @@
     tree
     powershell
     sshfs
+    mosh
     kubernetes-helm
     typst
     gh
