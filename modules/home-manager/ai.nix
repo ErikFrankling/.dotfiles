@@ -10,40 +10,48 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   codexCli = inputs.llm-agents.packages.${system}.codex;
-  codexDesktopUpstream = inputs.codex-desktop-linux.packages.${system}.codex-desktop-computer-use-ui;
-  computerUseMcpConfig = pkgs.writeText "codex-computer-use-mcp.json" (
-    builtins.toJSON {
-      mcpServers.computer-use = {
-        command = "./bin/codex-computer-use-linux";
-        args = [ "mcp" ];
-        cwd = ".";
-        env.CODEX_COMPUTER_USE_SCREENSHOT_BACKEND = "gnome-screenshot";
-      };
-    }
-  );
-  codexDesktop = codexDesktopUpstream.overrideAttrs (old: {
-    postInstall = (old.postInstall or "") + ''
-      computer_use_plugin="$out/opt/codex-desktop/resources/plugins/openai-bundled/plugins/computer-use"
-      install -m 0644 ${computerUseMcpConfig} "$computer_use_plugin/.mcp.json"
+  # Upstream reworked the launcher on 2026-08-13: the computer-use variant now
+  # builds Rust feature helpers whose source filter drops Cargo.lock, so it fails
+  # to build, and start.sh no longer has the plugin-cache lines patched below.
+  # Until that is fixed upstream, install plain codex-desktop from the flake.
+  codexDesktopUpstream = inputs.codex-desktop-linux.packages.${system}.codex-desktop;
+  codexDesktop = codexDesktopUpstream;
 
-      # The launcher only compared the helper binaries before deciding whether
-      # to refresh the user plugin cache. Include the MCP manifest so changes to
-      # its environment reach the app-server as well.
-      substituteInPlace "$out/opt/codex-desktop/start.sh" \
-        --replace-fail \
-          $'local source_backend="$source_plugin/bin/codex-computer-use-linux"\n    local source_cosmic_helper="$source_plugin/bin/codex-computer-use-cosmic"' \
-          $'local source_backend="$source_plugin/bin/codex-computer-use-linux"\n    local source_cosmic_helper="$source_plugin/bin/codex-computer-use-cosmic"\n    local source_mcp="$source_plugin/.mcp.json"' \
-        --replace-fail \
-          $'local cache_backend\n    local cache_cosmic_helper' \
-          $'local cache_backend\n    local cache_cosmic_helper\n    local cache_mcp' \
-        --replace-fail \
-          $'cache_backend="$cache_plugin/bin/codex-computer-use-linux"\n    cache_cosmic_helper="$cache_plugin/bin/codex-computer-use-cosmic"' \
-          $'cache_backend="$cache_plugin/bin/codex-computer-use-linux"\n    cache_cosmic_helper="$cache_plugin/bin/codex-computer-use-cosmic"\n    cache_mcp="$cache_plugin/.mcp.json"' \
-        --replace-fail \
-          'cmp -s "$source_cosmic_helper" "$cache_cosmic_helper"; then' \
-          $'cmp -s "$source_cosmic_helper" "$cache_cosmic_helper" && \\\n        cmp -s "$source_mcp" "$cache_mcp"; then'
-    '';
-  });
+  # Computer-use MCP wiring. Needs codex-desktop-computer-use-ui, which is broken
+  # upstream right now. Re-enable this whole block together with the package above.
+  #   computerUseMcpConfig = pkgs.writeText "codex-computer-use-mcp.json" (
+  #     builtins.toJSON {
+  #       mcpServers.computer-use = {
+  #         command = "./bin/codex-computer-use-linux";
+  #         args = [ "mcp" ];
+  #         cwd = ".";
+  #         env.CODEX_COMPUTER_USE_SCREENSHOT_BACKEND = "gnome-screenshot";
+  #       };
+  #     }
+  #   );
+  #   codexDesktop = codexDesktopUpstream.overrideAttrs (old: {
+  #     postInstall = (old.postInstall or "") + ''
+  #       computer_use_plugin="$out/opt/codex-desktop/resources/plugins/openai-bundled/plugins/computer-use"
+  #       install -m 0644 ${computerUseMcpConfig} "$computer_use_plugin/.mcp.json"
+  #
+  #       # The launcher only compared the helper binaries before deciding whether
+  #       # to refresh the user plugin cache. Include the MCP manifest so changes to
+  #       # its environment reach the app-server as well.
+  #       substituteInPlace "$out/opt/codex-desktop/start.sh" \
+  #         --replace-fail \
+  #           $'local source_backend="$source_plugin/bin/codex-computer-use-linux"\n    local source_cosmic_helper="$source_plugin/bin/codex-computer-use-cosmic"' \
+  #           $'local source_backend="$source_plugin/bin/codex-computer-use-linux"\n    local source_cosmic_helper="$source_plugin/bin/codex-computer-use-cosmic"\n    local source_mcp="$source_plugin/.mcp.json"' \
+  #         --replace-fail \
+  #           $'local cache_backend\n    local cache_cosmic_helper' \
+  #           $'local cache_backend\n    local cache_cosmic_helper\n    local cache_mcp' \
+  #         --replace-fail \
+  #           $'cache_backend="$cache_plugin/bin/codex-computer-use-linux"\n    cache_cosmic_helper="$cache_plugin/bin/codex-computer-use-cosmic"' \
+  #           $'cache_backend="$cache_plugin/bin/codex-computer-use-linux"\n    cache_cosmic_helper="$cache_plugin/bin/codex-computer-use-cosmic"\n    cache_mcp="$cache_plugin/.mcp.json"' \
+  #         --replace-fail \
+  #           'cmp -s "$source_cosmic_helper" "$cache_cosmic_helper"; then' \
+  #           $'cmp -s "$source_cosmic_helper" "$cache_cosmic_helper" && \\\n        cmp -s "$source_mcp" "$cache_mcp"; then'
+  #     '';
+  #   });
   codexFirefoxShim = pkgs.writeShellScriptBin "firefox" ''
     unset LD_LIBRARY_PATH
     exec /run/current-system/sw/bin/firefox "$@"
