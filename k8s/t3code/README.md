@@ -20,8 +20,9 @@ Browser --(HTTPS, LE wildcard cert)--> Traefik (k3s, 192.168.50.100)
   -> Service t3code-backend    (EndpointSlice -> 192.168.50.232:3773)
      = the 't3 serve' backend (systemd user unit, host 'pc')
 
-The backend runs with `T3CODE_UNSAFE_NO_AUTH=1` (see `hosts/pc/home.nix`). T3 has
-no such flag upstream, so the unit's `t3` build carries a patch: with the
+The backend runs with `T3CODE_UNSAFE_NO_AUTH=1` (see `hosts/pc/home.nix`). T3
+has no such flag upstream, so the nixpkgs package carries a patch from
+`overlays/t3code.nix`: with the
 variable set, a request with no credential — or with a stale cookie from an
 earlier pairing — resolves to a long-lived, fully scoped session instead of a
 401. That session is a real row in T3's auth DB (subject `no-auth`), reused
@@ -47,14 +48,10 @@ Without the variable the build behaves exactly like upstream.
   duckdns-letsencrypt-prod / -staging, using the existing kube-system/duckdns-acme token.
 
 ## Updating T3 itself
-`hosts/pc/home.nix` pins the npm artifact (`t3Version`) instead of following
-`inputs.t3code-nix`, which is stuck on 0.0.25. To bump:
-
-1. `curl -s https://registry.npmjs.org/t3 | jq -r .dist-tags.latest`
-2. Set `t3Version` + the `src` hash (npm's `dist.integrity` is already SRI:
-   `curl -s https://registry.npmjs.org/t3/<version> | jq -r .dist.integrity`)
-3. Regenerate `hosts/pc/t3-npm/`: unpack the tarball, delete the `overrides`
-   block from `package.json` (pnpm syntax, npm rejects it), run
-   `npm install --package-lock-only --ignore-scripts`, copy both files over
-4. `rebuild` — the bundle patches throw by name if upstream moved out from
-   under them, which is the signal to re-derive that specific patch
+nixpkgs packages T3 Code (server CLI + desktop app, with a nix-update script),
+so updates arrive with `nix flake update nixpkgs` -- nothing here pins a
+version. `overlays/t3code.nix` layers this machine's two patches on top of
+whatever nixpkgs ships; each one fails the build by name if upstream moves the
+code it anchors to, which is the signal to re-derive that specific patch in
+`overlays/t3code-patches.js`. Expect one local source build of
+`t3code-unwrapped` per version bump, since patching it forfeits the cache.

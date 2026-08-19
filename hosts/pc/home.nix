@@ -7,125 +7,8 @@
 }:
 
 let
-  system = pkgs.stdenv.hostPlatform.system;
   codexHome = "${config.home.homeDirectory}/.codex";
   t3CodexHome = "${config.home.homeDirectory}/.codex-t3";
-  codexCli = inputs.llm-agents.packages.${system}.codex;
-  # Sawrz/t3code-nix has been pinned to 0.0.25 since June and T3 only learned
-  # about the Claude 5 family in 0.0.33, so keep its derivation but point it at
-  # the newer npm artifact with a locally vendored lockfile (npm/package.json in
-  # the tarball uses pnpm-style overrides that npm refuses; the vendored copy
-  # has them stripped, exactly like the upstream packaging does).
-  t3Version = "0.0.33";
-  t3NpmPackage = ./t3-npm/package.json;
-  t3NpmLock = ./t3-npm/package-lock.json;
-  t3Cli =
-    (inputs.t3code-nix.packages.${system}.t3code-cli.override { codex = codexCli; }).overrideAttrs
-      (_oldAttrs: {
-        version = t3Version;
-
-        src = pkgs.fetchurl {
-          url = "https://registry.npmjs.org/t3/-/t3-${t3Version}.tgz";
-          hash = "sha512-TpXtftAVkRi5X6Bse01WKNISyrflXMukOppMAH9duWMw9hswAPI6IChjNNaxHXI3ZfcN5CgKoNmh19XCvrOkYw==";
-        };
-
-        npmDeps = pkgs.importNpmLock {
-          package = lib.importJSON t3NpmPackage;
-          packageLock = lib.importJSON t3NpmLock;
-          fetcherOpts = {
-            "node_modules/@effect/platform-node" = {
-              name = "platform-node.tgz";
-            };
-            "node_modules/@effect/platform-node-shared" = {
-              name = "platform-node-shared.tgz";
-            };
-            "node_modules/@effect/sql-sqlite-bun" = {
-              name = "sql-sqlite-bun.tgz";
-            };
-            "node_modules/effect" = {
-              name = "effect.tgz";
-            };
-          };
-        };
-
-        postPatch = ''
-          cp ${t3NpmPackage} package.json
-          cp ${t3NpmLock} package-lock.json
-          sed -i "s/var version = \".*\";/var version = \"${t3Version}\";/" dist/bin.mjs
-
-          node <<'NODE'
-          const fs = require("fs");
-          const bundlePath = "dist/bin.mjs";
-          let source = fs.readFileSync(bundlePath, "utf8");
-
-          function replaceOnce(before, after, description) {
-            if (!source.includes(before)) {
-              throw new Error("T3 compatibility patch no longer matches: " + description);
-            }
-            source = source.replace(before, after);
-          }
-
-          // Codex speaks strict JSON-RPC 2.0; T3 omits the envelope field.
-          replaceOnce(
-            "const toProtocolMessage = (requestId, fields) => ({\n\tid: requestId,",
-            "const toProtocolMessage = (requestId, fields) => ({\n\tjsonrpc: \"2.0\",\n\tid: requestId,",
-            "Codex JSON-RPC response envelope",
-          );
-          replaceOnce(
-            "\t\tyield* offerOutgoing({\n\t\t\tid: requestId,\n\t\t\tmethod,",
-            "\t\tyield* offerOutgoing({\n\t\t\tjsonrpc: \"2.0\",\n\t\t\tid: requestId,\n\t\t\tmethod,",
-            "Codex JSON-RPC request envelope",
-          );
-          replaceOnce(
-            "\tconst notify = (method, payload) => offerOutgoing({\n\t\tmethod,",
-            "\tconst notify = (method, payload) => offerOutgoing({\n\t\tjsonrpc: \"2.0\",\n\t\tmethod,",
-            "Codex JSON-RPC notification envelope",
-          );
-
-          // With T3CODE_UNSAFE_NO_AUTH=1 every request that carries no
-          // credential -- or a stale one -- resolves to a fully scoped session
-          // instead of failing, so the LAN/VPN-only deployment needs no
-          // pairing, cookie, or bearer token. The fallback still goes through a
-          // real session row, so websocket tickets and the access UI keep
-          // working. Unset, the server behaves exactly as upstream.
-          replaceOnce(
-            "\tconst authenticateRequest = (request) => {\n\t\tconst cookieToken = request.cookies[sessions.cookieName];",
-            "\tconst authenticateRequestStrict = (request) => {\n\t\tconst cookieToken = request.cookies[sessions.cookieName];",
-            "Unauthenticated LAN access: rename the strict path",
-          );
-          replaceOnce(
-            "\tconst getSessionState = (request) => authenticateRequest(request).pipe(",
-            `const noAuthEnabled = process.env.T3CODE_UNSAFE_NO_AUTH === "1";
-          let noAuthPrincipal = null;
-          const loadNoAuthSession = Effect.gen(function* () {
-            const active = yield* sessions.listActive();
-            const existing = active.find((session) => session.subject === "no-auth");
-            const session = existing ?? (yield* sessions.issue({
-              method: "browser-session-cookie",
-              subject: "no-auth",
-              scopes: AuthAdministrativeScopes,
-              client: { deviceType: "unknown", label: "unauthenticated LAN access" },
-              ttl: Duration.days(3650)
-            }));
-            noAuthPrincipal = {
-              sessionId: session.sessionId,
-              subject: session.subject ?? "no-auth",
-              method: session.method,
-              scopes: session.scopes,
-              ...session.expiresAt ? { expiresAt: session.expiresAt } : {}
-            };
-            return noAuthPrincipal;
-          }).pipe(mapSessionVerificationErrors);
-          const noAuthSession = Effect.suspend(() => noAuthPrincipal === null ? loadNoAuthSession : Effect.succeed(noAuthPrincipal));
-          const authenticateRequest = noAuthEnabled ? (request) => authenticateRequestStrict(request).pipe(Effect.catchIf(isServerAuthCredentialError, () => noAuthSession)) : authenticateRequestStrict;
-          const getSessionState = (request) => authenticateRequest(request).pipe(`,
-            "Unauthenticated LAN access fallback",
-          );
-
-          fs.writeFileSync(bundlePath, source);
-          NODE
-        '';
-      });
   t3CodexPrepare = pkgs.writeShellScript "t3-code-codex-prepare" ''
     mkdir -p ${lib.escapeShellArg t3CodexHome}
     if [[ ! -e ${lib.escapeShellArg "${t3CodexHome}/state_5.sqlite"} ]]; then
@@ -183,7 +66,6 @@ in
 
   home.packages = with pkgs; [
     prismlauncher
-    t3Cli
   ];
 
   systemd.user.services.t3code = {
@@ -191,7 +73,7 @@ in
 
     Service = {
       ExecStartPre = t3CodexPrepare;
-      ExecStart = "${t3Cli}/bin/t3 serve --host 0.0.0.0 --port 3773";
+      ExecStart = "${pkgs.t3code}/bin/t3 serve --host 0.0.0.0 --port 3773";
       Environment = [
         "CODEX_HOME=${t3CodexHome}"
         # LAN/VPN-only deployment: serve without pairing, cookies, or tokens.

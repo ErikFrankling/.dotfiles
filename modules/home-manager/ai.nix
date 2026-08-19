@@ -169,6 +169,10 @@ in
   #   '';
   # };
 
+  # T3 Code needs two local patches (codex JSON-RPC, opt-in no-auth); the
+  # overlay keeps them on top of the nixpkgs package instead of a stale fork.
+  nixpkgs.overlays = [ (import ../../overlays/t3code.nix { inherit inputs; }) ];
+
   home.packages = with pkgs; [
     # claude-code
     inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code
@@ -179,7 +183,7 @@ in
     codexCli
     codexGnomeScreenshotShim
     codexYdotool
-    inputs.t3code-nix.packages.${system}.t3code
+    pkgs.t3code
     inputs.llm-agents.packages.${system}.grok
     # kiro-fhs
     # vscode-fhs
