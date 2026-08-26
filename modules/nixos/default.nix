@@ -109,6 +109,21 @@
   networking.networkmanager.enable = true;
   # networking.networkmanager.wifi.backend = "iwd";
 
+  # One owner for /etc/resolv.conf. NetworkManager, tailscaled, cloudflare-warp
+  # and mullvad all write DNS config, and without a manager they overwrite the
+  # file and each other. Daemons that speak D-Bus (tailscaled) then program
+  # resolved instead of touching the file at all. Enabled for every host rather
+  # than only the Tailscale ones, since the race does not need Tailscale.
+  services.resolved = {
+    enable = true;
+    # cloudflare-warp proves its DNS path by resolving `connectivity-check.warp-svc`
+    # before the tunnel is up. resolved refuses those names by default, so the
+    # probe fails, warp never reaches Connected, and it cannot install the
+    # resolver that would have answered. Without this the client is stuck at
+    # "Connectivity check failed due to DNS Lookup Failed" forever.
+    settings.Resolve.ResolveUnicastSingleLabel = true;
+  };
+
   nixpkgs.config.allowBroken = true;
   # List packages installed in system profile. To search, run:
   # $ nix search wget
