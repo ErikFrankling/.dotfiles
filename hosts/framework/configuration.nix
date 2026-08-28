@@ -15,6 +15,9 @@
     ../../modules/nixos
     # ../../modules/nixos/openvpn.nix # archived: home VPN is Tailscale now
     ../../modules/nixos/tailscale.nix
+    # Must come after tailscale.nix: it layers a husk-security.dev-only
+    # override on top of the '~.' default route Tailscale installs.
+    ../../modules/nixos/husk-dns.nix
     ../../modules/nixos/laptop.nix
     ../../modules/nixos/desktop.nix
     ../../modules/nixos/keyring.nix

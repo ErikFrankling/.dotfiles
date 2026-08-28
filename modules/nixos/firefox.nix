@@ -36,6 +36,17 @@ in
           Install = [ ../../certificates/cloudflare-gateway-ca.pem ];
         };
 
+        # The WARP-private Husk apps are resolved locally, by the split
+        # resolver in ../../modules/nixos/husk-dns.nix. Whenever Firefox has
+        # DNS-over-HTTPS on it bypasses the system resolver entirely, so those
+        # names would NXDOMAIN at Cloudflare's public resolver and the
+        # dashboards would break in Firefox only. Excluding the domain keeps
+        # DoH exactly as it is for everything else. Deliberately does not set
+        # Enabled: this is a carve-out, not a policy on whether to use DoH.
+        DNSOverHTTPS = {
+          ExcludedDomains = [ "husk-security.dev" ];
+        };
+
         # DisableTelemetry = true;
         # DisableFirefoxStudies = true;
         # EnableTrackingProtection = {
