@@ -141,8 +141,17 @@
     6789 # husk localhost web UI — reachable on the LAN for dev review
   ];
 
-  # T3 Code web UI — reachable only through the physical LAN interface.
-  networking.firewall.interfaces.eno1.allowedTCPPorts = [ 3773 ];
+  # T3 Code web UI and wayvnc — reachable only through the physical LAN
+  # interface (tailnet devices come in through the subnet router, so they
+  # arrive here too). wayvnc runs without auth on purpose; this interface
+  # scoping is the guard. 5900 = both monitors, 5901/5902 = single monitors
+  # (see hosts/pc/home.nix).
+  networking.firewall.interfaces.eno1.allowedTCPPorts = [
+    3773
+    5900
+    5901
+    5902
+  ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;

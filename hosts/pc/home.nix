@@ -24,6 +24,7 @@ in
     ../../modules/home-manager/desktop.nix
     ../../modules/home-manager/print
     ../../modules/home-manager/vm-host.nix
+    ../../modules/home-manager/wayvnc.nix
     inputs.time.homeManagerModules.default
     # ../../modules/home-manager/noctalia.nix
   ];
@@ -66,6 +67,30 @@ in
 
   home.packages = with pkgs; [
     prismlauncher
+  ];
+
+  # VNC into this desktop from the laptop and the phone (LAN/tailnet only —
+  # the ports are opened on eno1 alone in configuration.nix). One port per
+  # view because wayvnc captures one output per process: 5900 is both 4K
+  # monitors side by side (fine on the laptop), 5901/5902 are the single
+  # monitors (what the phone wants — half the pixels, and AVNC fits the
+  # remote resolution to the screen). Monitor names match the hyprland
+  # monitors block below.
+  wayvnc.instances = [
+    {
+      name = "desktop";
+      port = 5900;
+    }
+    {
+      name = "left";
+      port = 5901;
+      output = "DP-3";
+    }
+    {
+      name = "right";
+      port = 5902;
+      output = "HDMI-A-1";
+    }
   ];
 
   systemd.user.services.t3code = {
