@@ -607,6 +607,26 @@
         "type": "github"
       }
     },
+    "grok-bot": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788724506,
+        "narHash": "sha256-3My2cbyBW9wCqvSYuVjGzch7biS/2eLc/rI4Lua4eVs=",
+        "owner": "d-513",
+        "repo": "grok-bot-nix",
+        "rev": "e397e864d83b952edd623a0547a13ec855c25e6c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "d-513",
+        "repo": "grok-bot-nix",
+        "type": "github"
+      }
+    },
     "helium": {
       "inputs": {
         "flake-compat": "flake-compat_2",
@@ -1208,6 +1228,7 @@
         "determinate": "determinate",
         "erikshell": "erikshell",
         "flake-utils": "flake-utils",
+        "grok-bot": "grok-bot",
         "helium": "helium",
         "home-manager": "home-manager",
         "lanzaboote": "lanzaboote",

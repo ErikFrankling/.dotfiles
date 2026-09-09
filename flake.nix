@@ -129,6 +129,16 @@
     codex-desktop-linux.inputs.nixpkgs.follows = "nixpkgs";
     codex-desktop-linux.inputs.flake-utils.follows = "flake-utils";
 
+    # Grok Bot, xAI's desktop agent app (proprietary, ships only as a .deb).
+    # Not in nixpkgs yet (draft PR #558990). This flake extracts app.asar from
+    # the official .deb and runs it on nixpkgs electron_42, so it keeps the
+    # Chromium sandbox on; the other flake (jordangarrison/grok-bot-flake)
+    # keeps upstream's bundled Electron and needs --no-sandbox to work around
+    # an upstream webview crash. The native modules are ABI-tied to Electron
+    # 42, so following nixpkgs is fine as long as nixpkgs still carries it.
+    grok-bot.url = "github:d-513/grok-bot-nix";
+    grok-bot.inputs.nixpkgs.follows = "nixpkgs";
+
     # llamacpp-rocm.url = "github:hellas-ai/nix-strix-halo/feat/bootable-usb";
     # llamacpp-rocm.inputs.nixpkgs.follows = "nixpkgs";
 

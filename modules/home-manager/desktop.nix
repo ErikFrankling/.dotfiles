@@ -53,6 +53,9 @@
     ghostty
     code-cursor
     zed-editor
+    # Grok Bot desktop agent. See the grok-bot input in flake.nix for why this
+    # flake and not the other one. Needs a SuperGrok or Cursor plan to log in.
+    inputs.grok-bot.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 
   nixpkgs.config.permittedInsecurePackages = [
