@@ -1,0 +1,1 @@
+naiaclaw, OpenClaw, NixOS, Hyprland, Zellij, Codex, Claude Code, llama.cpp, Entra ID, Qwen, Granite, TypeSafe, Jev, STT, GGUF, Home Manager, nixpkgs, Voxtype

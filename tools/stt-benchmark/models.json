@@ -1,0 +1,117 @@
+{
+  "granite-bf16": {
+    "repo": "ibm-granite/granite-speech-4.1-2b-GGUF",
+    "revision": "8267dad2adc84209b0efd2702ec68a98356125eb",
+    "family": "granite",
+    "model": {
+      "url": "https://huggingface.co/ibm-granite/granite-speech-4.1-2b-GGUF/resolve/8267dad2adc84209b0efd2702ec68a98356125eb/granite-speech-4.1-2b-bf16.gguf",
+      "sha256": "adfe250889e45445fc5147be61477a365038db447f6d281c771c16677a8be565"
+    },
+    "projector": {
+      "url": "https://huggingface.co/ibm-granite/granite-speech-4.1-2b-GGUF/resolve/8267dad2adc84209b0efd2702ec68a98356125eb/mmproj-model-f16.gguf",
+      "sha256": "0d3615076cbe1d35c3f60c43a60a4047b3e2eeee1b2c233580be60186faab5c5"
+    }
+  },
+  "qwen-asr-bf16": {
+    "repo": "ggml-org/Qwen3-ASR-1.7B-GGUF",
+    "revision": "36a678687ba7d07a74ca70ccb0e36902e005fb80",
+    "family": "qwen",
+    "model": {
+      "url": "https://huggingface.co/ggml-org/Qwen3-ASR-1.7B-GGUF/resolve/36a678687ba7d07a74ca70ccb0e36902e005fb80/Qwen3-ASR-1.7B-bf16.gguf",
+      "sha256": "1af18763dfafde2bbf071ef8a0952f7bee66f140c3565e5ccc5afb07dc1f9227"
+    },
+    "projector": {
+      "url": "https://huggingface.co/ggml-org/Qwen3-ASR-1.7B-GGUF/resolve/36a678687ba7d07a74ca70ccb0e36902e005fb80/mmproj-Qwen3-ASR-1.7B-bf16.gguf",
+      "sha256": "8882e9ddab3186f9aa71b1417c847177913e1466655ac944cf86e9b846735d62"
+    }
+  },
+  "voxtral-q4": {
+    "repo": "ggml-org/Voxtral-Mini-3B-2507-GGUF",
+    "revision": "20616573013f28229fff61de74359d3eeff61f6a",
+    "family": "voxtral",
+    "model": {
+      "url": "https://huggingface.co/ggml-org/Voxtral-Mini-3B-2507-GGUF/resolve/20616573013f28229fff61de74359d3eeff61f6a/Voxtral-Mini-3B-2507-Q4_K_M.gguf",
+      "sha256": "4705be8ec22ca23d12632f4b4a3691faa95917d90a06d3cf3c3ec0e91958f1a8"
+    },
+    "projector": {
+      "url": "https://huggingface.co/ggml-org/Voxtral-Mini-3B-2507-GGUF/resolve/20616573013f28229fff61de74359d3eeff61f6a/mmproj-Voxtral-Mini-3B-2507-Q8_0.gguf",
+      "sha256": "4f24c4ef3ce929d02ed9d1cfb050ae9a7365f057c0ddec0d489580982ebe0d02"
+    }
+  },
+  "nemotron-3.5": {
+    "repo": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+    "revision": "1c8deaecc64b91f034d73e08dd8b64625eb3395d",
+    "family": "nemo",
+    "model": {
+      "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b/resolve/1c8deaecc64b91f034d73e08dd8b64625eb3395d/nemotron-3.5-asr-streaming-0.6b.q8_0.gguf",
+      "sha256": "a5c435f294eea8f88ce68dd27b8c3bfea7f777cb2fbba04fcd30eaa555f429ae"
+    }
+  },
+  "nemotron-en": {
+    "repo": "nvidia/nemotron-speech-streaming-en-0.6b",
+    "revision": "ebe59e5a817142986528bbbee5dba8db7b38ed50",
+    "family": "nemo",
+    "model": {
+      "url": "https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b/resolve/ebe59e5a817142986528bbbee5dba8db7b38ed50/nemotron-speech-streaming-en-0.6b.q8_0.gguf",
+      "sha256": "d9a01898d2a611c8764e23a1c2f45e70bbd5a425dc4de93692ac951dd603812d"
+    }
+  },
+  "parakeet-tdt": {
+    "repo": "nvidia/parakeet-tdt-0.6b-v3",
+    "revision": "541d1f99c6b0c3cd0b11a95167540bb8edefd82b",
+    "family": "nemo",
+    "model": {
+      "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3/resolve/541d1f99c6b0c3cd0b11a95167540bb8edefd82b/parakeet-tdt-0.6b-v3.q8_0.gguf",
+      "sha256": "e3880d0aaaaf2c308ea2c35016b2b895c423eb3fda924c1b463d1c19b7f4d32e"
+    }
+  },
+  "granite-turboctc-q8": {
+    "repo": "handy-computer/granite-speech-5.0-470m-turboctc-gguf",
+    "revision": "2b0b44d0d6c8b94a2e4f04a2cf3ec6a5c054463b",
+    "family": "transcribe",
+    "model": {
+      "url": "https://huggingface.co/handy-computer/granite-speech-5.0-470m-turboctc-gguf/resolve/2b0b44d0d6c8b94a2e4f04a2cf3ec6a5c054463b/granite-speech-5.0-470m-turboctc-Q8_0.gguf",
+      "sha256": "0408fe0b33be19af5be423d8ba6b43768608b6f065e1ac97b78c84b55c140738"
+    }
+  },
+  "glm-asr-bf16": {
+    "repo": "concedo/GLM-ASR-Nano-2512-GGUF",
+    "revision": "c86e98608bc49264a1526d35a74174f99064240c",
+    "family": "glm",
+    "model": {
+      "url": "https://huggingface.co/concedo/GLM-ASR-Nano-2512-GGUF/resolve/c86e98608bc49264a1526d35a74174f99064240c/GLM-ASR-Nano-1.6B-2512-BF16.gguf",
+      "sha256": "96a5c500e64f525382b6fbde80af98881e5c2485789d9604a7cd5107ed13d82e"
+    },
+    "projector": {
+      "url": "https://huggingface.co/concedo/GLM-ASR-Nano-2512-GGUF/resolve/c86e98608bc49264a1526d35a74174f99064240c/mmproj-GLM-ASR-Nano-2512-BF16.gguf",
+      "sha256": "15a5e4f7a7c4458041c06388b636f7a8bc5781d36aa73398216dda2927b7a8a3"
+    }
+  },
+  "canary-qwen-q8": {
+    "repo": "handy-computer/canary-qwen-2.5b-gguf",
+    "revision": "df576c1641eb59bb66bc3c396bbdd8b0b113825a",
+    "family": "transcribe",
+    "model": {
+      "url": "https://huggingface.co/handy-computer/canary-qwen-2.5b-gguf/resolve/df576c1641eb59bb66bc3c396bbdd8b0b113825a/canary-qwen-2.5b-Q8_0.gguf",
+      "sha256": "d89aad1285d5bd5aa441c464d3a4cf37bd5474f70705408e71558d8627415b34"
+    }
+  },
+  "granite-nar-q8": {
+    "repo": "handy-computer/granite-speech-4.1-2b-nar-gguf",
+    "revision": "c186f8d7ed6c67b947b90fd8ed9587be971766fa",
+    "family": "transcribe",
+    "model": {
+      "url": "https://huggingface.co/handy-computer/granite-speech-4.1-2b-nar-gguf/resolve/c186f8d7ed6c67b947b90fd8ed9587be971766fa/granite-speech-4.1-2b-nar-Q8_0.gguf",
+      "sha256": "4762df797b9efa1ce0d73d2f5128517c86fdfdba2e9d00cd5cca97e624760b21"
+    }
+  },
+  "cohere-q8": {
+    "repo": "handy-computer/cohere-transcribe-03-2026-gguf",
+    "revision": "ab667acedcb5d8d56837ef3ed3568c3ad50dde47",
+    "family": "transcribe",
+    "model": {
+      "url": "https://huggingface.co/handy-computer/cohere-transcribe-03-2026-gguf/resolve/ab667acedcb5d8d56837ef3ed3568c3ad50dde47/cohere-transcribe-03-2026-Q8_0.gguf",
+      "sha256": "931916663432fd895423a4291a8400221802b288967ca2d435fc5e3141c9e71e"
+    }
+  }
+}
