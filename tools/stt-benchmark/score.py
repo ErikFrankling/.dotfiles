@@ -7,7 +7,8 @@ import re
 
 
 def words(text):
-    return re.sub(r"[^\w' ]", " ", text.lower()).split()
+    text = text.lower().replace("’", "'").replace("‘", "'")
+    return re.sub(r"[^\w' ]", " ", text).split()
 
 
 def distance(reference, hypothesis):
@@ -28,6 +29,8 @@ def main():
     totals = collections.defaultdict(lambda: [0, 0, 0, 0, 0])
     for path in sorted(args.results.glob("*.json")):
         data = json.loads(path.read_text())
+        if not isinstance(data, dict) or not all(k in data for k in ("clip", "model", "arm", "returncode")):
+            continue
         if data.get("input_limit_exceeded"):
             print("Excluded input beyond model's supported window:", path.name)
             continue
@@ -44,7 +47,7 @@ def main():
         t[2] += data["elapsed_seconds"]
         t[3] += data["audio_seconds"]
         t[4] += 1
-    print("Model | Arm | Clips | Word disagreement with reference | Audio s | Inference s")
+    print("Model | Arm | Clips | Word disagreement with reference | Audio s | Recorded elapsed s")
     for (model, arm), (errors, count, elapsed, audio, clips) in sorted(totals.items()):
         print(f"{model} | {arm} | {clips} | {errors}/{count} ({100*errors/max(1,count):.2f}%) | {audio:.1f} | {elapsed:.2f}")
 

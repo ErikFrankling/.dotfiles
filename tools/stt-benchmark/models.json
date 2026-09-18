@@ -113,5 +113,49 @@
       "url": "https://huggingface.co/handy-computer/cohere-transcribe-03-2026-gguf/resolve/ab667acedcb5d8d56837ef3ed3568c3ad50dde47/cohere-transcribe-03-2026-Q8_0.gguf",
       "sha256": "931916663432fd895423a4291a8400221802b288967ca2d435fc5e3141c9e71e"
     }
+  },
+  "vibevoice-asr-q8": {
+    "repo": "audio-cpp/audio.cpp-gguf",
+    "revision": "f36105bcd4a7db785249e1b08a35781cc4274014",
+    "family": "audio-cpp",
+    "model": {
+      "url": "https://huggingface.co/audio-cpp/audio.cpp-gguf/resolve/f36105bcd4a7db785249e1b08a35781cc4274014/VibeVoice-ASR-GGUF/vibevoice-asr-q8_0.gguf",
+      "sha256": "71a821bcfe36370b906feae84b413572599d30c766f114a9505fd2716efe12af"
+    }
+  },
+  "vibevoice-streaming-q8": {
+    "repo": "audio-cpp/VibeVoice-ASR-Streaming-7B-GGUF",
+    "revision": "f1c45856434b200afc049a57d1c986e8d30052db",
+    "family": "audio-cpp",
+    "model": {
+      "url": "https://huggingface.co/audio-cpp/VibeVoice-ASR-Streaming-7B-GGUF/resolve/f1c45856434b200afc049a57d1c986e8d30052db/vibevoice-asr-streaming-7b-q8_0.gguf",
+      "sha256": "7e4c86034c1386d51d2eecb5af12c2f9c676d2156e8e8079c2297326461bf17d"
+    }
+  },
+  "gemma4-12b-q8": {
+    "repo": "ggml-org/gemma-4-12B-it-GGUF",
+    "revision": "e3e681731089efaa3f0917336944ac64752db8ba",
+    "family": "audiochat",
+    "model": {
+      "url": "https://huggingface.co/ggml-org/gemma-4-12B-it-GGUF/resolve/e3e681731089efaa3f0917336944ac64752db8ba/gemma-4-12B-it-Q8_0.gguf",
+      "sha256": "abfc3044b93795f6a446fc1a04468ac2d5fc5e9c92e237f09a5b3384c5a433e4"
+    },
+    "projector": {
+      "url": "https://huggingface.co/ggml-org/gemma-4-12B-it-GGUF/resolve/e3e681731089efaa3f0917336944ac64752db8ba/mmproj-gemma-4-12B-it-BF16.gguf",
+      "sha256": "9b1edfa05b634728ca4bfd60b4e6b278e95166c078fa54ae4fa83e680112fd1d"
+    }
+  },
+  "qwen3-omni-q4": {
+    "repo": "ggml-org/Qwen3-Omni-30B-A3B-Thinking-GGUF",
+    "revision": "6807f126832efa5bce2969fec85a80594e21df9d",
+    "family": "audiochat",
+    "model": {
+      "url": "https://huggingface.co/ggml-org/Qwen3-Omni-30B-A3B-Thinking-GGUF/resolve/6807f126832efa5bce2969fec85a80594e21df9d/Qwen3-Omni-30B-A3B-Thinking-Q4_K_M.gguf",
+      "sha256": "afdaeff6f23c740429aadb3fa180f9d53b78278fe0d331b594b0b71bd9bf4835"
+    },
+    "projector": {
+      "url": "https://huggingface.co/ggml-org/Qwen3-Omni-30B-A3B-Thinking-GGUF/resolve/6807f126832efa5bce2969fec85a80594e21df9d/mmproj-Qwen3-Omni-30B-A3B-Thinking-Q8_0.gguf",
+      "sha256": "2bd5459571f8230a0c251d3d0dd36267753f0800ed145449a34f220a31f93898"
+    }
   }
 }

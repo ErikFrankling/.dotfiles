@@ -3,6 +3,10 @@
 Optimize final transcription accuracy independently of the streaming preview.
 Voxtype is an existing baseline/client, not an architectural constraint.
 
+Measured results: [initial Codex comparison](RESULTS.md),
+[new 6m39s naiaclaw dictation](FRESH_RESULTS.md), and
+[research, access, and system plan](RESEARCH.md).
+
 This is a standalone Nix benchmark, not a change to running system services.
 Model revisions and SHA-256 hashes are recorded in `models.json`; package inputs
 come from this repository's locked nixpkgs. No Python packages are installed.
@@ -49,8 +53,9 @@ on exit. Run GPU benchmarks sequentially. The launcher refuses to start when
 existing VRAM usage exceeds 8 GiB. This check does not reserve GPU memory;
 avoid concurrent large model loads while testing.
 
-Each arm currently uses the whole recording and greedy decoding, with a 4096
-token server context. Check long-recording/context failures before interpreting
+The default server arms use greedy decoding with a 4096-token context.
+Audio-instruction models also support explicitly recorded sampling and reasoning
+settings. Check long-recording/context failures before interpreting
 outputs. Record latency as a secondary metric, including separate startup time;
 the first request can include cold shader/audio costs.
 
@@ -99,10 +104,12 @@ NAR/TurboCTC, Canary-Qwen, and Cohere Transcribe. Use `run_transcribe.py` with
 `--binary`, `--model-dir`, `--name`, `--audio-dir`, and `--output`. CLI runner
 elapsed times include model loading; server runner request timings do not.
 
-Further contenders to assess include VibeVoice ASR, larger Voxtral and
-audio-capable language models, and hosted recognizers where access is available.
-A runtime/model in the catalog is not evidence that it has passed a benchmark;
-report actual execution separately.
+`audio.nix` builds audio.cpp with Vulkan and both VibeVoice ASR families. Use
+`run_audio.py` with `--family vibevoice_asr` or `vibevoice_asr_streaming` and the
+same CLI runner arguments. Its `plain`, `vocabulary`, and `beam4` arms distinguish
+context conditioning from wider decoding. Each CLI call includes model loading.
+See [RESEARCH.md](RESEARCH.md) for the broader candidate and access map and
+[RESULTS.md](RESULTS.md) for what actually ran.
 
 ## Audio-based refinement experiment
 
@@ -119,3 +126,49 @@ Generate the private listening/comparison page with:
 python3 tools/stt-benchmark/report.py \
   --results tools/stt-benchmark/results --audio-dir .stt-bench
 ```
+
+## Audio-instruction and punctuation experiments
+
+Use `run.py --family audiochat` for Gemma 4 and Qwen3-Omni, selecting `plain`,
+`prosody`, `drafts`, and `textdrafts` with `--arms`. The last two use the same
+candidate prompt with and without audio. None receives the reference transcript.
+The prosody prompt is generic and never includes the expected punctuation.
+Models must run sequentially and fit fully on the GPU. Large CPU-offloaded models
+are prohibited on this desktop: they make it lag and retain excessive RAM. The
+runner rejects partial offload and combined weights/projector sizes above 16 GB.
+Qwen3-Omni's Q4 checkpoint is therefore excluded from further local runs.
+The historical Qwen-Omni reasoning run used `--reasoning --reasoning-budget 768
+--max-tokens 2048 --temperature 0.6 --top-p 0.95 --top-k 20`; Gemma uses the
+default greedy, non-reasoning configuration. `--startup-timeout 600` accommodates
+cold loading while model installations are doing disk I/O. Historical partial
+offload arguments are retained in result provenance, not supported for reruns.
+
+Gemma 4's documented audio window is 30 seconds. Prepare lossless chunks of at
+most 28 seconds, with boundaries chosen from quiet audio:
+
+```sh
+python3 tools/stt-benchmark/chunks.py split --audio-dir .stt-bench \
+  --output tools/stt-benchmark/results/chunks28
+```
+
+Use that directory as `--audio-dir`, save runs in `results/chunk-runs`, and merge
+each model/arm using `chunks.py merge --manifest results/chunks28/manifest.json
+--results results/chunk-runs --output results --name MODEL --arm ARM` (paths are
+relative to `tools/stt-benchmark` in this abbreviated example). Compare against
+a recognizer run on the same chunks as well as its whole-recording baseline.
+The manifest records source hashes and exact sample boundaries; no samples are
+dropped. Chunking itself can change recognition quality.
+
+`consensus.py` selects the least-disputed whole transcript from a frozen model
+list without using references. It is transcript selection, not trained audio
+deliberation. `diagnostics.py --results results --references ../../.stt-bench
+--output results/punctuation.json` records concrete question-mark, emphasis, and
+instruction differences. The HTML report also includes punctuation-sensitive
+diffs; normalized word counts alone cannot measure those distinctions.
+
+For the fresh long recording, VibeVoice uses `--max-tokens 4096`; the shorter
+window models use the lossless chunk manifest. `project-vocabulary.txt` is the
+one-term control against the frozen 18-term list. No accuracy percentage is
+computed for that recording without a verified reference. The Gemma marker-loop
+diagnostic can be reproduced with `--no-reasoning-budget --clips
+stt-tone-test-part00 --max-tokens 256`; omitting the server budget did not fix it.

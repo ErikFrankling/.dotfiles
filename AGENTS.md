@@ -300,6 +300,16 @@ someOption = "custom-value";
 
 ## Local LLM System Overview
 
+### CPU Offload Policy (Erik, 2026-09-19)
+
+Do not run large LLMs partially or fully on the CPU on this desktop. They make
+the machine lag and retain too much RAM. Large models must fit fully on the GPU
+with safe desktop headroom, or be excluded from the local setup and benchmarks.
+Small, genuinely lightweight CPU models are acceptable. Do not leave a large
+model resident in CPU RAM between requests or experiments. This supersedes the
+historical partial-offload examples below; those are measurements, not current
+deployment recommendations.
+
 ### The Problem
 
 The local LLM server runs on a desktop shared with Hyprland (the compositor). GPU VRAM is a shared resource — if the LLM uses too much VRAM, it will conflict with Hyprland and crash the entire system.
