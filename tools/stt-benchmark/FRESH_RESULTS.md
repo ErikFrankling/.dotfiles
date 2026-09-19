@@ -9,8 +9,10 @@ SHA-256: `5ad529c00f4404edf93273adada5e05906807b837b4748c8d326b1a8ab86cdf8`.
 A private copy and all outputs are in `results/tone-round/`.
 
 This is natural project dictation, not a controlled pair of identical words with
-contrasting intonation. There is **no Codex transcript or human-verified reference
-for this recording**, so no WER or “beats Codex” percentage is reported.
+contrasting intonation. This initial round had no Codex transcript. The
+[later same-audio study](CODEX_LONG_STUDY.md) now includes three actual Codex
+dictation runs and blind audio investigations. There is still no human-verified
+reference, so no WER or “beats Codex” percentage is reported.
 The older, separately scored Codex comparison remains in [RESULTS.md](RESULTS.md).
 
 ## Conditions

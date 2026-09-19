@@ -8,7 +8,9 @@ outside the repository with owner-only permissions. No large local model ran.
 
 The corpus is the original three Codex clips (106.32 seconds, 258 reference
 words), plus the 398.74-second naiaclaw recording. The saved Codex text is an
-unverified machine reference, not human truth. The new recording has no reference.
+unverified machine reference, not human truth. This round had no reference for
+the new recording. The [later same-audio study](CODEX_LONG_STUDY.md) adds three
+actual Codex dictation runs; none is treated as ground truth.
 No experiment received the Codex reference as input. Revision experiments use
 the new dedicated API's plain output as their draft. Audio instructions are data,
 not authorization to perform the actions spoken in them.

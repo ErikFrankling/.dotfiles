@@ -111,6 +111,11 @@ in fidelity. The vocabulary-only output contains “but now I want to implement
 it” and “will that be enough information to set up a new tenant?”; punctuation
 plausibility is not a controlled test of tone understanding.
 
+The [subsequent same-audio Codex study](CODEX_LONG_STUDY.md) investigates these
+differences: “service script” cannot be called wrong across all occurrences;
+two blind audio checks support it in the later information passage. Codex also
+misses the project names and varies between repeated runs.
+
 The patched runtime with bias disabled reproduced the earlier short plain
 transcript exactly. Native phrase-score tests cover partial rollback, completed
 phrases, overlaps and disabled bias. Four Python guard tests and the actual

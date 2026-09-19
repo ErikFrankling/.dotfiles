@@ -3,6 +3,10 @@
 Optimize final transcription accuracy independently of the streaming preview.
 Voxtype is an existing baseline/client, not an architectural constraint.
 
+[Actual Codex dictation on the same long recording](CODEX_LONG_STUDY.md): three
+Codex runs, cloud repeat checks, and ten blind audio investigations. Codex is
+not treated as ground truth.
+
 Runnable GPU implementation: [local contextual transcription](LOCAL_STACK.md).
 `bin/local-stt` transcribes a saved WAV with vocabulary/context prompting or
 experimental vocabulary bias inside the decoder, and records resource use.
