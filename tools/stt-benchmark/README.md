@@ -3,7 +3,9 @@
 Optimize final transcription accuracy independently of the streaming preview.
 Voxtype is an existing baseline/client, not an architectural constraint.
 
-Measured results: [initial Codex comparison](RESULTS.md),
+Start with [the technologies and why they behave differently](TECHNOLOGY.md).
+Measured results: [proprietary APIs and revision experiments](CLOUD_RESULTS.md),
+[initial local Codex comparison](RESULTS.md),
 [new 6m39s naiaclaw dictation](FRESH_RESULTS.md), and
 [research, access, and system plan](RESEARCH.md).
 
@@ -11,6 +13,30 @@ This is a standalone Nix benchmark, not a change to running system services.
 Model revisions and SHA-256 hashes are recorded in `models.json`; package inputs
 come from this repository's locked nixpkgs. No Python packages are installed.
 Recordings and raw results are private inputs, not committed benchmark fixtures.
+
+## Cloud comparison
+
+`run_cloud.py` uses Python's standard library and OpenRouter's dedicated
+transcription or audio-chat endpoints. It reads the key from
+`~/.config/stt-benchmark/openrouter.key` (mode 0600), never from committed files.
+It records the prompt, audio hash, provider response, usage, and failures, but
+omits audio base64 and credentials from request metadata. Existing outputs are
+not overwritten: use a new arm name for a deliberate retry.
+
+```sh
+python3 tools/stt-benchmark/run_cloud.py \
+  --model openai/gpt-transcribe --mode stt \
+  --technology dedicated-asr-undisclosed \
+  --clips ~/stt-tone-test.wav --output tools/stt-benchmark/results/cloud
+```
+
+Audio-chat models additionally accept `--vocabulary`, `--draft-dir` (one `.txt`
+per clip), and `--text-only` for a correction control. Dedicated transcription
+conditioning uses documented `--provider-options` JSON; OpenRouter's top-level
+STT `prompt` is ignored. Parameter forwarding varies by provider. Nonempty
+responses still need inspection: a refusal, an answer to the speaker, or an
+incomplete transcript is not a successful transcription. HTML comparisons are
+grouped by technology, with model identities retained for reproducibility.
 
 ## Record a reusable sample
 

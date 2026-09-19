@@ -1,5 +1,9 @@
 # Naiaclaw dictation — 2026-09-19
 
+The local results below are followed by [cloud API, vocabulary-selection, and
+audio-revision experiments](CLOUD_RESULTS.md). For the explanation organized by
+technology rather than model name, start with [TECHNOLOGY.md](TECHNOLOGY.md).
+
 Input: Erik's new `~/stt-tone-test.wav`, **398.739625 seconds**, mono 16 kHz.
 SHA-256: `5ad529c00f4404edf93273adada5e05906807b837b4748c8d326b1a8ab86cdf8`.
 A private copy and all outputs are in `results/tone-round/`.
@@ -96,6 +100,6 @@ generic Gemma/Qwen-Omni correction experiments did not demonstrate a dependable
 improvement over their input recognizer. A trained audio-aware correction system
 or a proprietary service remains a separate, unproven comparison on this corpus.
 
-Provider credentials, a corrected reference, and genuinely held-out recordings
+Broader provider access, a corrected reference, and held-out recordings
 are still needed before selecting an absolute quality winner. The full research
 and access map is in [RESEARCH.md](RESEARCH.md).

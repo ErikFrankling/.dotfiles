@@ -2,6 +2,11 @@
 
 Research date: 2026-09-19. This is a map of materially different approaches,
 not a claim to have tested every published system or established a global winner.
+Read [TECHNOLOGY.md](TECHNOLOGY.md) first for the architecture-based explanation;
+the vendor catalog below is an access inventory, not a technology taxonomy.
+The later [cloud round](CLOUD_RESULTS.md) now includes paid API tests using the
+funded OpenRouter account. Earlier lack-of-credential constraints are superseded
+for endpoints available there.
 See [RESULTS.md](RESULTS.md) for the saved-Codex comparison and
 [FRESH_RESULTS.md](FRESH_RESULTS.md) for Erik's new 6m39s project recording.
 Papers' benchmark improvements below are
@@ -42,12 +47,12 @@ expected answers to the recognizers.
 
 ## Proprietary candidates worth comparing
 
-These are current primary-source candidates, **not results on Erik's audio**.
-No usable provider credential was identified in the targeted credential checks;
-no new recording was uploaded to these services. A Codex login is not silently
-reused as an unrelated API credential. OpenRouter model availability and audio
-input support must be verified per endpoint; one key does not unlock every
-vendor's dedicated transcription API.
+These are a provider access inventory, not separate architectural categories.
+See [CLOUD_RESULTS.md](CLOUD_RESULTS.md) for actual uploaded-audio experiments
+and unresolved access limits. A benchmark key was created through Erik's
+OpenRouter account with authorization. OpenRouter now exposes both dedicated
+transcription and audio-chat endpoints; its live catalog was saved with the
+private results. Services absent from that catalog still require separate access.
 
 | System | Why it is relevant | Source / access |
 | --- | --- | --- |
@@ -131,11 +136,11 @@ it faithfully transcribed their request.
 
 ## What remains necessary beyond these local tests
 
-Provider credentials for the proprietary comparisons; released/ported research
+Separate provider access for services absent from the cloud round; released/ported research
 systems where noted; more real dictation containing difficult names; corrected
 reference transcripts; a held-out evaluation; vocabulary retrieval and false-term
-insertion tests; and paired-prosody recordings. Jev remains an optional text-based
-vocabulary selector, not an acoustic verifier. No observed result establishes
+insertion tests; and paired-prosody recordings. Jev has now been tested as a
+text-based vocabulary selector in the cloud round, not an acoustic verifier. No observed result establishes
 perfect transcription or that extra reasoning always improves it.
 
 ## Provisional system to build after selecting the final pass

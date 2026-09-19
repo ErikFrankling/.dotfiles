@@ -1,5 +1,11 @@
 # Dictation comparison — 2026-09-18–19
 
+Start with [TECHNOLOGY.md](TECHNOLOGY.md) for mechanisms and their implications.
+The later [cloud API round](CLOUD_RESULTS.md) adds proprietary references and
+audio-versus-text revision controls. Tables below preserve the original local
+measurements; model identities are reproducibility details, not distinct
+technological categories.
+
 Status: **initial local comparison complete; no final quality winner established**.
 The new 6m39s naiaclaw recording and vocabulary/context findings are reported
 separately in [FRESH_RESULTS.md](FRESH_RESULTS.md).
