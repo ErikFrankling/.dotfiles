@@ -199,3 +199,15 @@ one-term control against the frozen 18-term list. No accuracy percentage is
 computed for that recording without a verified reference. The Gemma marker-loop
 diagnostic can be reproduced with `--no-reasoning-budget --clips
 stt-tone-test-part00 --max-tokens 256`; omitting the server budget did not fix it.
+
+### Interactive evidence dashboard
+
+Generate the private offline dashboard from the combined saved results:
+
+```sh
+python3 tools/stt-benchmark/dashboard.py --results tools/stt-benchmark/results/technology-comparison
+```
+
+Open `results/technology-comparison/dashboard.html`. It groups results by technology and pipeline strategy, with word and combined punctuation/case agreement, context diagnostics, elapsed time, reported API costs, failures, original audio and transcript diffs. Only complete three-clip configurations enter the aggregate charts. Scores measure disagreement with saved Codex transcripts, not human-verified accuracy. The long project recording remains unscored. Generated transcripts and audio stay in ignored `results/`; the generator does not embed API requests, credentials, or background project documents.
+
+Local residency preference: GPU-resident models may remain loaded when desktop VRAM headroom is safe. Avoid persistent large CPU/system-RAM residency competing with browsers and builds; unload RAM-heavy models after use. GPU offload does not imply zero host RAM use, which must be measured separately.

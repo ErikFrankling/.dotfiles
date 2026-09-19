@@ -310,6 +310,12 @@ model resident in CPU RAM between requests or experiments. This supersedes the
 historical partial-offload examples below; those are measurements, not current
 deployment recommendations.
 
+GPU-resident models may remain loaded for longer when safe desktop VRAM
+headroom is preserved. There is no requirement to unload after every request.
+The concern is persistent system-RAM use competing with browsers and builds,
+causing swapping or OOM. Prefer GPU residency; unload RAM-heavy models after
+use and measure host RAM separately because GPU offload does not eliminate it.
+
 ### The Problem
 
 The local LLM server runs on a desktop shared with Hyprland (the compositor). GPU VRAM is a shared resource — if the LLM uses too much VRAM, it will conflict with Hyprland and crash the entire system.
