@@ -82,6 +82,7 @@ td,th{padding:8px;text-align:left;border-bottom:1px solid #ddd}select{max-width:
 ins{background:#cef0cf;text-decoration:none}del{background:#f7cccc}audio{width:100%}#diff{white-space:pre-wrap}
 summary{cursor:pointer;font-weight:600}p{overflow-wrap:anywhere}</style>
 <h1>The same 6m39s recording, including real Codex dictation</h1>
+<p><strong><a href="../quality-ranking/ranking.html">Open the quality ranking: technology, best setup, why it wins, and remaining errors.</a></strong></p>
 <p>Every full-recording result below has the identical WAV SHA-256. Codex is the actual desktop HTTP dictation
 function, not an OpenAI API substitute. No transcript is designated ground truth. Failed runs, text-only revisions,
 draft-conditioned revisions, and chunked runs are excluded from this table. Exact name counts are not verified recall.</p>

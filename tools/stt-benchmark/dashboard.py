@@ -49,6 +49,8 @@ def main():
             historical='omni' in d['model'].lower() and '30b' in d['model'].lower()))
     payload = json.dumps(dict(records=records, references=references), ensure_ascii=False).replace('<','\\u003c')
     template = pathlib.Path(__file__).with_name('dashboard.html').read_text()
+    if (root.parent / 'quality-ranking' / 'ranking.html').exists():
+        template = template.replace('<main>', '<main><p class="notice"><a href="../quality-ranking/ranking.html"><strong>New: quality ranking by technology, with the best setup and remaining errors</strong></a></p>', 1)
     output = root / 'dashboard.html'
     output.write_text(template.replace('/*BENCHMARK_DATA*/', payload))
     print(f'{output}: {len(records)} records, {len(references)} references')
