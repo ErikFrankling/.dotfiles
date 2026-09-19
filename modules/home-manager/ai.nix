@@ -169,9 +169,9 @@ in
   #   '';
   # };
 
-  # T3 Code needs two local patches (codex JSON-RPC, opt-in no-auth); the
-  # overlay keeps them on top of the nixpkgs package instead of a stale fork.
-  nixpkgs.overlays = [ (import ../../overlays/t3code.nix { inherit inputs; }) ];
+  # Package the pinned source fork with local dictation and deployment auth;
+  # reuse nixpkgs master's T3 build recipe and resource-monitor sidecar.
+  nixpkgs.overlays = [ (import ../../overlays/t3code.nix { inherit inputs otherPkgs; }) ];
 
   home.packages = with pkgs; [
     # claude-code

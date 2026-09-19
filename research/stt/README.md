@@ -39,6 +39,7 @@ Priorities, in order:
 | What research was unavailable or remains promising? | [Research/access map](2026-09-19/RESEARCH.md), [local research availability audit](2026-09-19/LOCAL_STACK.md) |
 | How should we extend the study? | [Methodology and revisit checklist](METHODOLOGY.md) |
 | What integration was agreed? | [Implementation scope](IMPLEMENTATION.md) |
+| Did the chosen stack work in T3? | [Integration evidence](2026-09-19/INTEGRATION.md), [live deployment status](DEPLOYMENT_STATUS.md) |
 
 The dated Markdown files are frozen copies of the completed study. Historical
 reports may describe earlier candidate sets or restrictions; the latest ranking

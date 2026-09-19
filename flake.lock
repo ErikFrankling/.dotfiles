@@ -1050,11 +1050,11 @@
     },
     "nixpkgs_master": {
       "locked": {
-        "lastModified": 1788429663,
-        "narHash": "sha256-mj9mpiTW51HzmPJlwxUh8kmdHnqcwF0xJ48Vhp8vIV0=",
+        "lastModified": 1789705056,
+        "narHash": "sha256-CS8l8y69gkAYUoSR5ivXwCoWg1xGHT+TDcu44ZFlvas=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "87917464efe58887e7c7f55380d6d2f1688fb782",
+        "rev": "d8e6446fd15a0d146577edbc7a48e39ff1446fd7",
         "type": "github"
       },
       "original": {
@@ -1245,6 +1245,7 @@
         "opencode-desktop-nix": "opencode-desktop-nix",
         "private": "private",
         "sops-nix": "sops-nix",
+        "t3code-src": "t3code-src",
         "time": "time",
         "voxtype": "voxtype",
         "xremap-flake": "xremap-flake",
@@ -1381,6 +1382,23 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "t3code-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1789825767,
+        "narHash": "sha256-11rC6AKnwX2i8uy5MihmyEbOdIf2ra/1WELM5x3Bf7E=",
+        "owner": "ErikFrankling",
+        "repo": "t3code",
+        "rev": "5c3bb2bacfdbd429f142f87cc0e88cae5b3c0107",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ErikFrankling",
+        "ref": "erik/local-dictation",
+        "repo": "t3code",
         "type": "github"
       }
     },

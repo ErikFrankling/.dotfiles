@@ -2,6 +2,10 @@
   description = "Nixos config flake";
 
   inputs = {
+    t3code-src = {
+      url = "github:ErikFrankling/t3code/erik/local-dictation";
+      flake = false;
+    };
     # nixpkgs.url = "github:nixos/nixpkgs/master";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     # nixpkgs.url = "github:nixos/nixpkgs?rev=77b584d61ff80b4cef9245829a6f1dfad5afdfa3";

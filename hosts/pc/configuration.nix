@@ -9,6 +9,8 @@
 }:
 
 {
+  services.local-stt.enable = true;
+
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
@@ -19,6 +21,7 @@
     # so membership adds nothing and conflicts with Mullvad's lockdown. Other
     # tailnet devices reach it through the subnet router.
     # ../../modules/nixos/laptop.nix
+    ../../modules/nixos/local-stt.nix
     ../../modules/nixos/desktop.nix
     ../../modules/nixos/keyring.nix
     ../../modules/nixos/game.nix

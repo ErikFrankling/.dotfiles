@@ -1,32 +1,20 @@
-# T3 Code, patched.
-#
-# nixpkgs tracks upstream releases and builds both the `t3` server CLI and the
-# desktop app, so this only adds what this machine needs on top:
-#
-#   * the JSON-RPC 2.0 envelopes codex refuses to work without
-#   * an opt-in unauthenticated mode, gated on T3CODE_UNSAFE_NO_AUTH=1
-#
-# Both live in t3code-patches.js and fail the build by name if upstream moves
-# the code they anchor to.
-#
-# `t3code-unwrapped` and the resource-monitor sidecar are private defaults of
-# the wrapper rather than package-set attributes, so they are reached through
-# passthru: patch the first, pass the second through untouched so it is not
-# rebuilt for a change that cannot affect it.
-{ inputs }:
+# Build Erik's source fork; auth, protocol and dictation changes live there.
+# Keep the historical bundle patch file for reference, but do not apply it.
+{ inputs, otherPkgs }:
 final: prev:
 let
   system = prev.stdenv.hostPlatform.system;
+  t3codeBase = otherPkgs.pkgsMaster.t3code;
 in
 {
-  t3code = prev.t3code.override {
-    t3code-unwrapped = prev.t3code.passthru.unwrapped.overrideAttrs (oldAttrs: {
-      postFixup = (oldAttrs.postFixup or "") + ''
-        export T3CODE_BUNDLE="$out/libexec/t3code/apps/server/dist/bin.mjs"
-        ${prev.nodejs}/bin/node ${./t3code-patches.js}
-      '';
+  t3code = t3codeBase.override {
+    t3code-unwrapped = t3codeBase.passthru.unwrapped.overrideAttrs (_: {
+      src = inputs.t3code-src;
+      # The fork retains v0.0.40's dependency lock; source changes do not require
+      # another dependency download or a separately maintained package recipe.
+      pnpmDeps = t3codeBase.passthru.unwrapped.pnpmDeps;
     });
-    t3code-resource-monitor = prev.t3code.passthru.resourceMonitor;
+    t3code-resource-monitor = t3codeBase.passthru.resourceMonitor;
 
     # Agent CLIs come from llm-agents everywhere else in this config; hand T3
     # the same binaries instead of the nixpkgs ones it would otherwise use.

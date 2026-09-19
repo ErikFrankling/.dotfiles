@@ -1,7 +1,9 @@
 # Agreed integration scope — 2026-09-19
 
-Status at archival: implementation requested and in progress; **not yet verified
-working in T3 Code**. Research CLI success is not deployment verification.
+The initial archive captured the agreed scope before implementation. The fork
+and coordinator now have [isolated T3 integration evidence](2026-09-19/INTEGRATION.md).
+See [deployment status](DEPLOYMENT_STATUS.md) for live activation; successful
+research or isolated tests must not be confused with an activated service.
 
 - One PC-hosted speech service, managed declaratively by Nix/systemd at startup.
   Prefer GPU for both preview and final inference; bound host RAM and preserve
