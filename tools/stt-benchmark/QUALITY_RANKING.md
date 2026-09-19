@@ -124,3 +124,18 @@ Validation: matching-hash result records; reference self-distance, harmless
 cleanup, preserved negation/emphasis, half-omission, actual intent reversal,
 score bounds and audio-link checks. Headless Firefox screenshot inspected.
 The follow-up loaded models in isolated benchmark processes; no deployed system configuration changed.
+
+
+## Consumer API and pairwise follow-up
+
+Aqua Avalon v1.5 completed four full-recording conditions. Plain scored 95.3;
+18 names scored 96.6 and recognized Claude Code but not Naiaclaw. Adding the
+existing compact project overview scored 68.5 in both trials and reversed the
+opening request. Each request took about five seconds. This is the batch API,
+not a verified reproduction of the desktop dictation workflow.
+
+The report now has a selectable A/B diff for all 60 full-recording outputs
+plus the provisional reference. It preserves original wording, case,
+punctuation and whitespace in side-by-side panels, with a combined diff
+underneath. The three matched Wispr-excerpt outputs occupy a separate corpus
+so they cannot be compared accidentally against a longer recording.

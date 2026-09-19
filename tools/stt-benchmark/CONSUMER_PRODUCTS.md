@@ -7,7 +7,7 @@ Access failures do not receive quality scores.
 | Product / technology | Same-recording evidence | Free or direct test route | Remaining requirement |
 |---|---|---|---|
 | Wispr Flow / packaged contextual dictation | Official demo tested on a 349.952-second excerpt. It reversed the opening implementation request. Gemini and VibeVoice preserved it on that identical excerpt. | Browser demo; desktop free plan/trial also exists. | Desktop with dictionary and app context has not been tested. The full recording exceeds the demo's accepted duration. |
-| Aqua / Avalon proprietary speech recognition | No valid transcript yet; earlier browser microphone integration did not work. | Official Avalon API accepts the full WAV and optional context/vocabulary prompt. | API dashboard requires authenticated Google, Apple, Microsoft or SSO login. No authenticated account was available in the automation browser. |
+| Aqua / Avalon proprietary speech recognition | Four full-recording Avalon v1.5 API runs completed. Plain 95.3 agreement, vocabulary 96.6, project context 68.5 twice; context reverses intent. | Official Avalon API accepts the full WAV and optional context/vocabulary prompt. | Signed in through existing Firefox Gmail session with explicit user authorization. Private API key saved outside repository. Desktop workflow remains untested. |
 | Superwhisper / packaged speech recognition and optional editing | Fresh original-WAV upload through the actual browser UI returned HTTP 502; UI displayed transcription unavailable. | No-signup browser upload supports recordings up to ten minutes. | Working service or desktop trial. No quality conclusion from the failure. |
 | Granola / live transcription followed by meeting notes | Not tested. Do not compare its summary with a dictation transcript. | Free account; desktop/mobile live transcription. | Official web app cannot transcribe; recorded-file imports are unsupported. Replay requires the desktop/mobile capture route and authenticated account. No official Linux app documented. |
 | Otter / meeting transcription and notes | Not tested. | Basic free plan supports three lifetime audio/video imports; this recording fits the documented 30-minute recording limit. | Authenticated account. Sign-in page verified, but no account was connected. |
@@ -34,9 +34,9 @@ not establish unlimited context or an audio-native general LLM architecture.
 Compare plain audio and the same 18-name vocabulary first; then relevant
 project text if the endpoint handles it. Keep this API result distinct from
 the Aqua app's dictation/editing workflow. Published API price is $0.39/audio
-hour, approximately $0.043 for one pass of this recording; free API credit
-availability has not been verified. Do not equate desktop free words with API
-credit.
+hour, approximately $0.043 for one pass of this recording; the authenticated dashboard supplied $1 starting API credit. Four runs
+used approximately $0.173 at the published rate; actual billing was not read
+back. No payment method was added.
 
 ## Sources and private evidence
 
@@ -51,6 +51,6 @@ credit.
 
 Private evidence remains in ignored `results/frontier-round/`:
 `consumer-access-probe.log`, `superwhisper-ui-recheck.json`, and
-`excerpt350/comparison.json`. No fresh successful product transcript was
-obtained during this access recheck; the existing 56 full-recording scores
-are unchanged.
+`excerpt350/comparison.json`. Four successful Aqua API outputs extend the ranking to 60 full-recording
+conditions. The HTML now includes selectable pairwise comparison with case
+and punctuation preserved; the shorter Wispr corpus is a separate selection.

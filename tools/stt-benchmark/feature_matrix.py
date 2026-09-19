@@ -71,6 +71,7 @@ def enrich(d, root, explanations):
     elif n.startswith('gemma4'):benefit='Maker prompt 89.2 → vocabulary 71.1; stricter prompt added translations'
     elif n.startswith('qwen3-omni'):benefit='Plain 95.4 → 18 names 97.7; Claude Code still missing'
     elif n.startswith('audio-flamingo-next'):benefit='Simple prompt 89.4; faithful prompt + 18 names 88.9 (two variables changed)'
+    elif n=='aqua/avalon-v1.5':benefit='Plain 95.3 → 18 names 96.6; project overview 68.5 twice, with intent reversal'
     else:benefit='No matched context comparison'
     why,_,weakness=explanations[d['tech']]
     if n.startswith('gemma4'):
@@ -82,6 +83,9 @@ def enrich(d, root, explanations):
     elif n.startswith('qwen3-omni'):
         why='Audio-language model supports audio plus a draft; see condition results'
         weakness='Standalone run misses Claude Code and three question checks; temporary CPU offload required on this GPU.'
+    elif n=='aqua/avalon-v1.5':
+        why='Fast hosted ASR; recognizes Claude Code in this recording'
+        weakness='Misspells Naiaclaw despite hints; project-context condition reverses intent. Batch API, not desktop workflow.'
     if d['reversal']:
         why='Excluded from recommendation: changes intent'
         weakness='Changes the opening implementation request into its opposite.'

@@ -8,6 +8,7 @@ from pathlib import Path
 from score import distance
 from report import technology
 from feature_matrix import render as render_feature_matrix
+from pairwise_view import render as render_pairwise
 
 ROOT = Path(__file__).parent / 'results'
 OUT = ROOT / 'quality-ranking'
@@ -166,7 +167,7 @@ def main():
         overview+='<tr>'+''.join('<td>'+esc(str(v))+'</td>' for v in [tech,b['model']+' / '+b['arm'],f'{b["score"]:.1f}',f'{b["seconds"]:.1f}',EXPLANATIONS[tech][0]])+'</tr>'
     overview+='</tbody></table></div><p>Categories ordered by best observed word agreement. Within 0.5 points, the displayed setup favors content/name checks, then speed; this is a practical tie rule, not statistical significance. Intent reversals are disqualified. Gaps around 1 point remain inconclusive on this single recording.</p></section>'
     matrix,matrix_rows=render_feature_matrix(rs,groups,representative,ROOT,EXPLANATIONS)
-    overview+=matrix
+    overview+=render_pairwise(rs,reference,ROOT)+matrix
     excerpt_path=ROOT/'frontier-round/excerpt350/comparison.json'
     if excerpt_path.exists():
         excerpt=json.loads(excerpt_path.read_text())
