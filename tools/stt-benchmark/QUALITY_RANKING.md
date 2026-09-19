@@ -2,11 +2,52 @@
 
 The private report at `results/quality-ranking/ranking.html` now leads with
 technology, best observed setup, why it is useful, remaining errors, and speed.
-All 47 successful same-audio outputs are included, including actual Codex,
+Completed same-audio outputs are included, including actual Codex,
 chunked recognition, vocabulary retrieval, audio/draft revision and text editing.
 Older reports link to it. Within 0.5 word-agreement points, the displayed
 representative favors content/name checks, then speed. This is an explicit
 practical tie rule, not a statistical test.
+
+The interactive matrix puts technology and model together with 50 comparison
+columns. It shows every condition, including failed-quality Gemma outputs;
+unchecking “Show all” keeps eight category representatives. Unknown features are
+labelled unmeasured. Resource peaks include merged chunk runs.
+
+## GPU-first follow-up
+
+Gemma 4 12B Q8 completed four full-recording conditions through Vulkan on the
+RX 7900 XT: the documented ASR prompt and a stricter verbatim prompt, each with
+and without vocabulary. All used 16 audio chunks and requested full GPU
+offload. The maker-prompt conditions scored 89.2/71.1 agreement; the vocabulary
+condition included an empty chunk and recited unspoken keywords. The stricter
+prompt added unwanted translations and other non-transcript material, yielding
+zero clamped word agreement. That measures these unusable outputs, not zero
+recognition ability or a proven ceiling for Gemma. More prompt/runtime work is
+needed before treating this as a fair model-capability verdict.
+
+The runner now verifies the selected GPU is exposed by the executable before
+loading weights, explicitly selects Vulkan0, and rejects CPU-only builds. Large
+CPU offload is a temporary, explicitly selected fallback experiment, not the
+default. Process cleanup unloads models; GPU and available-RAM guards bound
+experiments. GPU placement does not imply zero host RAM or swap.
+
+Qwen3-Omni completed GPU-first temporary-offload tests: 95.4 plain and 97.7
+with vocabulary, with four of seven question checks. Audio Flamingo Next ran
+entirely on GPU: 89.4 plain and 88.9 with faithful instructions plus vocabulary.
+It recovered only two question checks and missed project spelling. See
+[FRONTIER_ROUND.md](FRONTIER_ROUND.md) for runtime repairs and memory evidence.
+
+Qwen reconsideration of the original audio plus VibeVoice's draft scored 98.0,
+with seven of eight content checks and six of seven question checks. It takes
+180.6 seconds after the draft, still misses Claude Code and retains the
+already/only error. This does not establish an improvement over VibeVoice.
+
+Wispr Flow's official browser demo also produced a transcript of the first
+349.952 seconds. It reversed the opening instruction to “I don't want to
+implement it.” Its supported excerpt is shorter than the original recording,
+so it is excluded from the full-recording ranking. This is evidence about the
+web demo, not a completed comparison of all commercial desktop products.
+Superwhisper's browser endpoint returned errors on two browser attempts.
 
 The reference is an assistant-reviewed **best estimate**, as Erik requested.
 It uses Gemini vocabulary18 as the coverage scaffold, compares other outputs,
@@ -79,7 +120,7 @@ all checks, and original transcripts. This regenerates the complete offline HTML
 The reviewed private reference is intentionally frozen rather than automatically
 changing whenever a new model result arrives.
 
-Validation: 47 matching-hash result records; reference self-distance, harmless
+Validation: matching-hash result records; reference self-distance, harmless
 cleanup, preserved negation/emphasis, half-omission, actual intent reversal,
 score bounds and audio-link checks. Headless Firefox screenshot inspected.
-No model loading or system-configuration change was required.
+The follow-up loaded models in isolated benchmark processes; no deployed system configuration changed.

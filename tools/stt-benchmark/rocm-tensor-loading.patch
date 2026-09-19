@@ -1,0 +1,15 @@
+--- a/transformers/core_model_loading.py
++++ b/transformers/core_model_loading.py
+@@ -783,6 +783,12 @@
+ def _materialize_copy(tensor: torch.Tensor, device=None, dtype=None) -> torch.Tensor:
+     # This slicing is what actually loads the tensor from the safetensors slice object
+     tensor = tensor[...]
++    # ROCm HMM can dirty private file mappings during a host-to-device copy,
++    # retaining an anonymous-RAM copy of the checkpoint. Stage one tensor in
++    # independent host memory instead; values and GPU placement are unchanged.
++    # https://github.com/ROCm/legacy-rocm-build/issues/6523
++    if torch.version.hip and tensor.device.type == "cpu" and device is not None and torch.device(device).type == "cuda":
++        tensor = tensor.clone()
+     if dtype is not None or device is not None:
+         tensor = tensor.to(device=device, dtype=dtype)
+     return tensor

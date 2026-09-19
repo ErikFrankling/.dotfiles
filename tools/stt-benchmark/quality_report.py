@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from score import distance
 from report import technology
+from feature_matrix import render as render_feature_matrix
 
 ROOT = Path(__file__).parent / 'results'
 OUT = ROOT / 'quality-ranking'
@@ -50,10 +51,10 @@ def ordinary_score(ref, hyp):
 def records():
     sha = json.loads((OUT/'manifest.json').read_text())['audio_sha256']
     found=[]
-    for folder in ['cloud','contextual-round','codex-long','tone-round/results']:
+    for folder in ['cloud','contextual-round','codex-long','tone-round/results','frontier-round']:
         for p in sorted((ROOT/folder).glob('*.stt-tone-test.*.json')):
             d=json.loads(p.read_text())
-            if d.get('audio_sha256') != sha or d.get('returncode') != 0 or d.get('input_limit_exceeded'):continue
+            if d.get('audio_sha256') != sha or d.get('returncode') != 0 or d.get('input_limit_exceeded') or d.get('output_validity')=='not-a-transcript':continue
             text=d.get('response',{}).get('text')
             if not isinstance(text,str) or not text.strip():continue
             d['source']=str(p.relative_to(ROOT));d['text']=text;found.append(d)
@@ -62,18 +63,29 @@ def records():
 def category(d):
     n=d['model'].lower();arm=d['arm']
     if 'textdraft' in arm:return 'Text-only cleanup of an ASR draft'
-    if 'audiodraft' in arm:return 'Audio + draft reconsideration'
+    if 'audiodraft' in arm or arm=='drafts':return 'Audio + draft reconsideration'
     if n.startswith('codex'):return 'Codex dictation · backend undisclosed'
     if n.startswith('vibevoice'):return 'Whole-recording autoregressive ASR + vocabulary'
     if n.startswith('granite-nar'):return 'CTC draft + trained parallel editor'
     if n.startswith(('qwen-asr','cohere')):return 'Chunked autoregressive ASR'
+    if n.startswith(('gemma','qwen3-omni')):return 'Instruction-following audio-language model'
+    if d.get('technology')=='dictation-product':return 'Packaged dictation product'
     if d.get('technology')=='audio-instruction':return 'Instruction-following audio-language model'
     return 'Dedicated hosted speech recognizer'
 
 def capabilities(d):
     n=d['model'];local='/' not in n and not n.startswith('codex')
+    if d.get('technology')=='dictation-product':
+        return 'Cloud', 'Public product configuration; custom vocabulary not tested', 'Provider-managed', 'See recorded demo method and limits'
     if n.startswith('vibevoice'):
         return 'Local GPU', '18 names + ~1k characters worked; 6.2k context hit GPU guard', '16.9 GiB total VRAM / 1.44 GiB anonymous RAM (compact-context run)', 'Whole recording; live preview not integrated'
+    if n.startswith('gemma'):
+        return 'Local GPU', '18 names tested; 30-second documented audio window', 'Per-chunk resource peaks recorded', '16 chunks here; streaming not tested'
+    if n.startswith('audio-flamingo-next'):
+        return 'Local GPU', 'Audio plus instructions; see tested vocabulary condition', 'ROCm; per-run GPU and host memory recorded', 'Whole-recording final output; streaming not tested'
+    if n.startswith('qwen3-omni'):
+        offload=any(r.get('cpu_offload_experiment') for r in [d,*d.get('chunk_results',[])])
+        return ('Local GPU + CPU' if offload else 'Local GPU'), 'See vocabulary condition', 'Temporary offload experiment; unloaded after testing' if offload else 'Per-run resources recorded', ('Chunked' if d.get('chunk_results') else 'Whole-recording')+' final output; streaming not tested'
     if local:return 'Local GPU', '18 names tested for Qwen; no context condition here for Cohere/Granite', 'Fully GPU runs; comparable peak RAM/VRAM not recorded', '28-second chunks here; live preview not measured'
     if n.startswith('codex'):return 'Cloud', 'Audio only tested; dictionary endpoint returned 404', 'Remote inference', 'Whole-recording upload; preview not measured'
     if n.startswith('google/gemini'):return 'Cloud', '400 names and ~68k-character instruction tested; Jev selection also tested', 'Remote inference', 'Whole-recording upload; preview not measured'
@@ -91,9 +103,10 @@ CHECKS=[('Wants implementation',r'now i (?:do not )?want to implement it',r'now 
 QUESTIONS=['enough information to set up a new tenant','as soon as you log in right','if it has instances right','as soon as a user registers right','not included in the token','correct','for now we do not have that right']
 
 EXPLANATIONS={
+ 'Packaged dictation product': ('Product-level comparison', 'Includes the product’s recognition and any enabled cleanup.', 'Public demo/tool result; not necessarily identical to the paid desktop configuration.'),
  'Instruction-following audio-language model': ('Best observed quality', 'Takes audio plus vocabulary or project documents. The leading Gemini conditions preserve names and ordinary wording together.', 'More context is not automatically better: rich-context and repeated runs still change already to solely. The reference scaffold also favors the vocabulary18 run.'),
  'Audio + draft reconsideration': ('Close to the leader; extra work not justified yet', 'Receives the original sound and a first transcript, then writes a revised transcript.', 'No clear gain over direct contextual transcription; some revisions retain the draft’s only/solely error. Timings exclude the first ASR pass.'),
- 'Whole-recording autoregressive ASR + vocabulary': ('Best local category tested', 'Decodes the whole recording with supplied names. Vocabulary improves project spelling and long audio avoids artificial chunk boundaries.', 'Still omits Claude Code and says someone’s portal instead of the same as portal. It also changes already to only. Compact context works; larger context hit the GPU guard.'),
+ 'Whole-recording autoregressive ASR + vocabulary': ('Strong local dedicated-ASR option', 'Decodes the whole recording with supplied names. Vocabulary improves project spelling and long audio avoids artificial chunk boundaries.', 'Still omits Claude Code and says someone’s portal instead of the same as portal. It also changes already to only. Compact context works; larger context hit the GPU guard.'),
  'Text-only cleanup of an ASR draft': ('Better spelling is not audio verification', 'Can repair a likely project spelling using context.', 'Cannot hear whether a guessed correction is true. It retains the already/only error; first-pass latency must be added.'),
  'Dedicated hosted speech recognizer': ('Fastest strong option', 'Specialized transcription endpoint; MAI gives a complete result in about 2 seconds on this recording.', 'Names remain inconsistent even with vocabulary. Endpoint architecture is undisclosed; this result does not establish that every dedicated recognizer behaves alike.'),
  'Codex dictation · backend undisclosed': ('Fast, but misses your names', 'Actual Codex desktop dictation preserves most ordinary wording with approximately 7-second completion.', 'All three runs miss naiaclaw and Claude Code. One run gets already right; the other two say only. No matched custom-dictionary test was available.'),
@@ -145,16 +158,29 @@ def main():
         cards.append(f'<section><div class="rank">{rank}</div><h2>{esc(tech)}</h2><p class="winner"><strong>{esc(verdict)}</strong> — {esc(b["model"])} · {esc(b["arm"])}</p><div class="metrics"><b>{b["score"]:.1f}<small>word agreement / 100</small></b><b>{b["check_count"]}/8<small>content checks</small></b><b>{b["questions"]}/7<small>question boundaries</small></b><b>{b["seconds"]:.1f}s<small>for 6m39s audio</small></b></div><p><strong>Why it performs this way:</strong> {esc(why)}</p><p><strong>What holds it back:</strong> {esc(weakness)}</p><p>Ordinary-word diagnostic: {b["ordinary_score"]:.1f}/100 after excluding name-associated edit spans. Exact naiaclaw: {b["names"]}/9; Claude Code: {"yes" if b["claude"] else "no"}.</p><p><strong>{esc(b["location"])}</strong> · {esc(b["context"])}</p><details><summary>Resources, remaining content checks, all {len(rows)} setups and exact transcript differences</summary><p>{esc(b["memory"])}. {esc(b["streaming"])}.</p><ul>{examples}</ul>{detail}</details></section>')
     data={'reference_sha256':hashlib.sha256(reference.encode()).hexdigest(),'reference_words':len(ref),'records':rs,'method':'Best-estimate machine-assisted reference; readable normalized word agreement, separate content and question checks. Not human WER.'}
     (OUT/'ranking.json').write_text(json.dumps(data,indent=2)+'\n')
-    overview='<section><h2>The choices that matter</h2><p><strong>Quality-first cloud: contextual Gemini.</strong> <strong>Quality-first local: VibeVoice with vocabulary.</strong> <strong>Speed-first cloud: MAI.</strong> Adding a draft or a text editor has not demonstrated a clear quality gain.</p><div style="overflow:auto"><table><thead><tr><th>Technology</th><th>Recommended tested setup</th><th>Agreement</th><th>Seconds</th><th>Why choose it?</th></tr></thead><tbody>'
+    local_choice=representative([d for d in rs if d['location'].startswith('Local')])
+    cloud_choice=representative([d for d in rs if d['location']=='Cloud'])
+    overview='<section><h2>The choices that matter</h2><p><strong>Quality-first cloud: '+esc(cloud_choice['model']+' / '+cloud_choice['arm'])+'.</strong> <strong>Quality-first local: '+esc(local_choice['model']+' / '+local_choice['arm'])+'.</strong> <strong>Speed-first cloud: MAI.</strong> Adding a draft or a text editor has not demonstrated a clear quality gain.</p><div style="overflow:auto"><table><thead><tr><th>Technology</th><th>Recommended tested setup</th><th>Agreement</th><th>Seconds</th><th>Why choose it?</th></tr></thead><tbody>'
     for tech,rows in groups.items():
         b=representative(rows)
         overview+='<tr>'+''.join('<td>'+esc(str(v))+'</td>' for v in [tech,b['model']+' / '+b['arm'],f'{b["score"]:.1f}',f'{b["seconds"]:.1f}',EXPLANATIONS[tech][0]])+'</tr>'
     overview+='</tbody></table></div><p>Categories ordered by best observed word agreement. Within 0.5 points, the displayed setup favors content/name checks, then speed; this is a practical tie rule, not statistical significance. Intent reversals are disqualified. Gaps around 1 point remain inconclusive on this single recording.</p></section>'
+    matrix,matrix_rows=render_feature_matrix(rs,groups,representative,ROOT,EXPLANATIONS)
+    overview+=matrix
+    excerpt_path=ROOT/'frontier-round/excerpt350/comparison.json'
+    if excerpt_path.exists():
+        excerpt=json.loads(excerpt_path.read_text())
+        overview+='<section><h2>Commercial demo: matched 349.952-second excerpt</h2><p>These unhinted runs use the same shorter audio. They are separate from the full-recording ranking. Word agreement also penalizes some harmless cleanup; it is not a complete readability or meaning score.</p><div style="overflow:auto"><table><tr><th>Technology / implementation</th><th>Word agreement</th><th>Opening intent reversed?</th><th>Observed seconds</th></tr>'
+        for r in excerpt['records']:
+            kind='Packaged dictation' if 'demo' in r['model'] else 'Whole-recording ASR' if r['model'].startswith('vibevoice') else 'Audio-language model'
+            overview+='<tr>'+''.join('<td>'+esc(str(v))+'</td>' for v in [kind+' / '+r['model'],r['word_agreement'],'YES' if r['opening_intent_reversed'] else 'No',round(r['seconds'],1)])+'</tr>'
+        overview+='</table></div><p>Wispr’s demo changed “now I want to implement it” to “I don’t want to implement it.” Gemini and VibeVoice preserved this instruction. Demo results do not establish paid-desktop parity. VibeVoice timing includes cold loading; buffered Wispr timing excludes live playback. <a href="../frontier-round/excerpt350/comparison.json">Methods and source records</a>.</p></section>'
+    (OUT/'features.json').write_text(json.dumps(matrix_rows,indent=2)+'\n')
     (OUT/'ranking.html').write_text('''<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Which transcription technology wins?</title><style>body{font:17px/1.55 system-ui;background:#f2f5fa;color:#162238;max-width:1100px;margin:35px auto;padding:0 20px}h1{font-size:36px}section{position:relative;background:white;border:1px solid #d5deea;border-radius:14px;padding:25px;margin:22px 0}h2{margin:0 0 5px;padding-right:40px}.rank{position:absolute;right:24px;font-size:32px;color:#4868ba}.winner{color:#4868ba}.metrics{display:flex;gap:35px;flex-wrap:wrap}.metrics b{font-size:29px}.metrics small{display:block;font-size:13px;font-weight:400}details{margin-top:16px}summary{cursor:pointer;font-weight:600}del{background:#fbd6d6}ins{background:#d2f3da;text-decoration:none}audio{width:100%}.note{background:#fff0cd;padding:18px;border-radius:10px}pre{white-space:pre-wrap}p{overflow-wrap:anywhere}</style><h1>Which transcription technology wins?</h1><p>Quality first. The best tested setup is shown inside each technology category, with its remaining mistakes and practical tradeoffs.</p><p class="note"><strong>Baseline established:</strong> a reviewed, corrected best-estimate transcript of your long naiaclaw recording. Scores measure agreement with that provisional reference—not human-verified accuracy. Small differences (about 1 point) are practically inconclusive on this one recording. Names count as words; meaning checks and punctuation remain visible separately so a dangerous one-word change cannot hide behind a high score.</p><audio controls preload="none" src="../../../../../stt-tone-test.wav"></audio><p>Removing um/uh and function-word stutters is free. Contractions, gonna/going to, Planet9/Planet Nine and common number formatting are normalized. Other wording differences still count, even when some are harmless. The automated bulk judge scores were discarded.</p>'''+''.join(cards)+'<section><h2>The baseline</h2><p>Red in comparisons = reference words missing/changed; green = candidate additions/replacements. Colors describe differences, not certainty.</p><details><summary>Read the full corrected reference</summary><pre>'+esc(reference)+'</pre></details><p><a href="reference-decisions.json">Reference decisions and unresolved alternatives</a> · <a href="ranking.json">All scores and source files</a> · <a href="../codex-long/study.html">Original audio investigations</a></p></section>')
     page=OUT/'ranking.html'
     rendered=page.read_text().replace('<style>','<style>td,th{text-align:left;padding:10px;border-bottom:1px solid #d5deea;font-size:14px}table{border-collapse:collapse;width:100%}')
     rendered=rendered.replace('<audio controls',overview+'<audio controls',1)
-    rendered=re.sub(r'<p class="note">.*?</p>', '<p class="note">Scores compare all 47 outputs with our corrected best-estimate reference. They are not human-verified accuracy; small gaps are inconclusive. <a href="reference-decisions.json">How the baseline was chosen</a>.</p>', rendered, count=1, flags=re.S)
+    rendered=re.sub(r'<p class="note">.*?</p>', f'<p class="note">Scores compare all {len(rs)} outputs with our corrected best-estimate reference. They are not human-verified accuracy; small gaps are inconclusive. <a href="reference-decisions.json">How the baseline was chosen</a>.</p>', rendered, count=1, flags=re.S)
     rendered=rendered.replace('</body>','')
     rendered+='<p>Ordinary-word diagnostic excludes edit blocks touching known names and may also exclude nearby ordinary words. Content checks are eight explicit phrase checks, not a full semantic metric. Question checks require the expected clause and a question mark; they do not measure tone understanding in isolation. Jev and draft timings exclude preparation; all times are observed samples, not controlled latency distributions.</p>'
     page.write_text(rendered)

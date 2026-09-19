@@ -1,0 +1,43 @@
+{
+  "audio-flamingo-next": {
+    "repo": "nvidia/audio-flamingo-next-hf",
+    "revision": "5634886e2615c2f587dcf8b93c6edfe9907930ca",
+    "files": [
+      {
+        "name": "chat_template.jinja",
+        "url": "https://huggingface.co/nvidia/audio-flamingo-next-hf/resolve/5634886e2615c2f587dcf8b93c6edfe9907930ca/chat_template.jinja",
+        "sha256": "d0e7b20b73225c81822ae4e1f8788d978ce98fe4bbc3f9cec04e11479bc72172"
+      },
+      {
+        "name": "config.json",
+        "url": "https://huggingface.co/nvidia/audio-flamingo-next-hf/resolve/5634886e2615c2f587dcf8b93c6edfe9907930ca/config.json",
+        "sha256": "27f364f9036ef28c21cfaf5b3792944a28cdef0529e39d0f3fc17ad51306a713"
+      },
+      {
+        "name": "generation_config.json",
+        "url": "https://huggingface.co/nvidia/audio-flamingo-next-hf/resolve/5634886e2615c2f587dcf8b93c6edfe9907930ca/generation_config.json",
+        "sha256": "72909beeb6b272d61534c75cfea0a22fb30b8147d7fa699958e9ebef39d827e9"
+      },
+      {
+        "name": "model.safetensors",
+        "url": "https://huggingface.co/nvidia/audio-flamingo-next-hf/resolve/5634886e2615c2f587dcf8b93c6edfe9907930ca/model.safetensors",
+        "sha256": "abe72a07b5c22faaefc0a611b57f4c81e3439d095dd01738f23fb9da054f39c3"
+      },
+      {
+        "name": "processor_config.json",
+        "url": "https://huggingface.co/nvidia/audio-flamingo-next-hf/resolve/5634886e2615c2f587dcf8b93c6edfe9907930ca/processor_config.json",
+        "sha256": "df7e04e74cd72f3e670aa0ddaf14a264efcf3f1cc5303f7fbc29b5837766c91f"
+      },
+      {
+        "name": "tokenizer.json",
+        "url": "https://huggingface.co/nvidia/audio-flamingo-next-hf/resolve/5634886e2615c2f587dcf8b93c6edfe9907930ca/tokenizer.json",
+        "sha256": "a64cc913679c6eaf01ba137504e15a55d174d590944fe06f7b3899b2ae82de31"
+      },
+      {
+        "name": "tokenizer_config.json",
+        "url": "https://huggingface.co/nvidia/audio-flamingo-next-hf/resolve/5634886e2615c2f587dcf8b93c6edfe9907930ca/tokenizer_config.json",
+        "sha256": "9e87d2dc44cd224d343b54b9236fc9bd7cb67bee716625d6ba1d82586cce7809"
+      }
+    ]
+  }
+}
