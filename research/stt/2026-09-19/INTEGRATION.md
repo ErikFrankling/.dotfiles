@@ -16,6 +16,11 @@ The host coordinator is in `tools/local-stt`, with a declarative systemd module.
   the accelerated upload-plus-final test took 104.1 seconds. Observed peak total
   VRAM was 15.97 GiB. This is an integration observation, not a controlled speed
   comparison with the earlier 42.1-second benchmark.
+- The full service output had 16 normalized edits against 983 provisional
+  reference words: **98.37% reference agreement**, with six of the seven question
+  checks. This is consistent with the earlier VibeVoice conditions, not proof
+  of a significant improvement or human-verified accuracy. The same frozen
+  reference and normalization code were used; no reference was given to ASR.
 - Headless Firefox replayed real recorded audio as a MediaStream through T3's
   microphone button, capture code, upload path, streaming preview and final pass.
   The composer retained its existing introduction and replaced its own draft.
@@ -24,6 +29,10 @@ The host coordinator is in `tools/local-stt`, with a declarative systemd module.
   text, and thread switching finalizing the old recording without inserting its
   result into the new thread. These UI safety tests isolate state behavior;
   they are distinct from the real-model tests above.
+- The exact deployment package also passed reload recovery with saved manual
+  edits and explicit insertion of the recovered final transcript. Sending is
+  disabled during recording/finalization, preventing accidental submission of
+  provisional text. The harness uses distinct session IDs to test stale responses.
 - Server/web typechecks and the focused auth/protocol suites passed. Coordinator
   tests cover owner isolation, duplicate/out-of-order chunks, malformed PCM and
   rejecting empty recordings.
