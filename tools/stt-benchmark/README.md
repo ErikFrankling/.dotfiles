@@ -3,6 +3,10 @@
 Optimize final transcription accuracy independently of the streaming preview.
 Voxtype is an existing baseline/client, not an architectural constraint.
 
+Runnable GPU implementation: [local contextual transcription](LOCAL_STACK.md).
+`bin/local-stt` transcribes a saved WAV with vocabulary/context prompting or
+experimental vocabulary bias inside the decoder, and records resource use.
+
 Start with [the technologies and why they behave differently](TECHNOLOGY.md).
 Measured results: [proprietary APIs and revision experiments](CLOUD_RESULTS.md),
 [initial local Codex comparison](RESULTS.md),

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+stt_repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+stt_app_path="$(nix build --impure --no-link --print-out-paths --file "$stt_repo_root/tools/stt-benchmark/local-stack.nix")"
+exec "$stt_app_path/bin/local-stt" "$@"
