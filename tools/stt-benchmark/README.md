@@ -31,7 +31,8 @@ python3 tools/stt-benchmark/run_cloud.py \
 ```
 
 Audio-chat models additionally accept `--vocabulary`, `--draft-dir` (one `.txt`
-per clip), and `--text-only` for a correction control. Dedicated transcription
+per clip), `--context` for direct project documents, and `--text-only` for a
+correction control. Dedicated transcription
 conditioning uses documented `--provider-options` JSON; OpenRouter's top-level
 STT `prompt` is ignored. Parameter forwarding varies by provider. Nonempty
 responses still need inspection: a refusal, an answer to the speaker, or an

@@ -87,6 +87,7 @@ Erik's Codex dictation. It has not been ported and benchmarked here.
 | Whole-recording context | More surrounding sound and discourse is available | Fewer artificial sentence cuts; long context alone does not identify a rare spelling |
 | Vocabulary biasing | Raises the plausibility of supplied names | Corrects naiaclaw in some runs; can omit words or change unrelated phrases |
 | Vocabulary retrieval / Jev | Selects which spellings reach the recognizer | Text selector cannot hear the name; preliminary transcript errors can exclude the right term |
+| Direct rich-context conditioning | Gives the audio model documents and relationships, beyond a word list | Already possible with audio-language models; stale context or draft anchoring can still distort the transcript |
 | Beam / N-best search | Retains multiple candidate continuations | More search through a mistaken distribution still selects mistakes; beam-4 changed only one word here |
 | Consensus | Combines independent recognizers' hypotheses | Shared errors survive; our three-way selection improved agreement by only one word |
 | Audio-aware punctuation | Uses acoustic cues alongside words | Correct “Why?” may reflect syntax rather than intonation; paired-tone recordings are still needed |
@@ -97,6 +98,12 @@ The observed vocabulary regression from “now I want to implement it” to
 “I don't want to implement it” shows why correct name spelling is insufficient.
 That is a measured conditioning effect in a particular local run, not a universal
 property of vocabulary lists.
+
+Jev is a capacity adapter for models with limited vocabulary inputs, not a
+mandatory bottleneck. A model that can use rich context should be tested with
+the documents directly before compressing them into a shortlist. Context-window
+capacity establishes that the input fits, not that every detail is used reliably.
+The cloud round includes direct-document experiments as well as the selector.
 
 ## Hosted dedicated recognition: disclose what is unknown
 

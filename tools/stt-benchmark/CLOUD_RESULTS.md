@@ -2,7 +2,7 @@
 
 Date: 2026-09-19. Actual paid API requests through Erik's OpenRouter account,
 not vendor benchmark claims. Thirteen audio model endpoints were exercised,
-plus TypeSafe Jev. Account-reported spend after this round: **$2.484**. The
+plus TypeSafe Jev. Account-reported spend after this round: **$3.490**. The
 separate benchmark key has a $20 total limit and expires 2026-10-19; it is stored
 outside the repository with owner-only permissions. No large local model ran.
 
@@ -196,10 +196,59 @@ for phonetic alternatives from the preview, and separate specialized names from
 generic code identifiers. Tune and test on held-out recordings; do not repair
 this shortlist using knowledge of the desired answer and call that a fair result.
 
+## 6. Direct rich project context plus audio
+
+Erik's preferred route is to let a capable audio-language model consume rich
+context directly. Jev should compress context only where a model's vocabulary
+input is constrained, with a budget appropriate to that model.
+
+This round therefore also sends all **16 documents directly with the original
+398.74-second audio**. The document-only background is 67,696 JSON characters.
+The documents include `naiaclaw` and `Planet9`, but contain no exact `Claude Code`
+phrase. A second arm additionally includes the unconditioned local preview and
+all 400 vocabulary candidates: the same information available to the selector,
+without discarding it into a shortlist. The prompt says that background is
+reference data, that the speaker may contradict the current design, and that
+facts from documents must not be inserted merely because they are present.
+
+| Direct-context input | Final model | Observed output |
+| --- | --- | --- |
+| Documents + original audio | Flash | 9 `naiaclaw` occurrences and “Claude Code”; excessive line breaks |
+| Documents + original audio | Pro | 9 `naiaclaw` occurrences and “Claude Code”; normal paragraphs |
+| Documents + preview + 400 terms + original audio | Flash | 10 `naiaclaw` occurrences and “Claude Code”; includes an extra project-name repetition relative to the other runs |
+| Documents + preview + 400 terms + original audio | Pro, default reasoning | Incomplete at both 16,384 and 32,768 total output-token limits; excluded |
+| Documents + preview + 400 terms + original audio | Pro, explicitly low reasoning, 32,768 output budget | Complete in 21.2 seconds; 11 name occurrences and “Claude Code,” but also sound-event text and possible over-biasing |
+
+The larger Pro request consumed 31,457 of 32,764 generated tokens in reasoning,
+leaving an incomplete 952-word transcript after 181.9 seconds. Increasing the
+total budget alone did not resolve it. This is a decoding/configuration failure,
+not evidence that the complete rich-context transcript would be inaccurate.
+Gemini 3 uses thinking levels rather than a precise hard reasoning-token cap;
+[OpenRouter documents this distinction](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens).
+A bounded retry with explicitly low reasoning completed using 1,704 reasoning
+tokens. It writes “Naiaclaw build” where other outputs have “Naya build,” includes
+an extra project-name repetition, and adds an unintelligible-speech tag. Without
+a verified reference, those differences require listening; more exact project-name
+occurrences are not automatically an improvement. This is a working configuration
+test, not a claim that lower reasoning maximizes quality.
+
+Both document-only runs retain “now I want to implement it” and the full question
+“will that be enough information to set up a new tenant?” The Flash full-input
+arm writes “Correct. Right.” where its 18-term vocabulary arm writes
+“Correct? Right?” for the same recording. That is another reason to evaluate
+punctuation separately rather than infer reliable tone recognition from fluent
+text or additional context.
+
+The capability to accept and use substantial project documents with audio is
+available now. These examples demonstrate useful context-conditioned outputs;
+they do not establish that adding every available document always improves
+fidelity or that this is a perfected context-aware transcription system.
+
 ## What these tests establish, and what remains missing
 
 We now have stronger proprietary reference outputs and a functioning API harness.
-The evidence favors testing **specialized recognition with context**, and using
+The evidence favors testing **specialized recognition and audio-language models
+with direct rich context**, and using
 audio-based correction only where measured benefits justify it. Blindly chaining
 an increasingly capable conversational model did not improve the short corpus.
 

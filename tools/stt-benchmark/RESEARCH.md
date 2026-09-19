@@ -152,17 +152,22 @@ perfect transcription or that extra reasoning always improves it.
 2. **Stream a provisional transcript.** Use a lightweight recognizer for early
    feedback. Mark it provisional and allow the final pass to replace it. Preview
    speed does not determine which model gets the final word.
-3. **Retrieve contextual spellings.** Maintain a project vocabulary containing
-   names, repository terms, paths, and commands. Retrieve from active-project
-   context and phonetic alternatives as well as the preview. Compare a small
-   subset with the large list; measure false insertions on ordinary speech.
-   Jev can rank relevance, but a spelling absent from a faulty preview must still
-   have a route into the shortlist. The final recognizer must hear the audio.
+3. **Gather rich project context, then adapt it to the final model's capacity.**
+   Preserve project documents, recent task context, known names and spellings,
+   and the provisional transcript as separate sources with provenance. Prefer
+   testing a capable audio-language model with that context directly: a short
+   vocabulary discards relationships and meaning. For a recognizer that only
+   accepts limited vocabulary hints, use Jev to rank candidates from the broad
+   context and preview, with a budget matching that endpoint's actual limits.
+   The 24-term experiment is not a universal production limit. Canonicalize
+   spellings and retain a route for phonetic alternatives absent from a faulty
+   preview. Compare direct rich context, large unfiltered lists, and selected
+   lists on the same recordings, including false insertions on ordinary speech.
 4. **Run the strongest validated final recognizer.** Give it the original audio
    and supported context. Preserve long-recording context where the model allows
    it; use explicit, lossless segmentation where it does not. Store model version,
    prompt, vocabulary, decoding settings, and output alongside the audio.
-5. **Reconsider genuinely uncertain spans only if testing supports it.** A second
+5. **Reconsider uncertain spans only if testing supports it.** A second
    recognizer can identify disagreements; an audio model can examine the original
    span plus surrounding sound and alternatives. Do not automatically rewrite all
    text or assume agreement means correctness. First demonstrate that the editor
