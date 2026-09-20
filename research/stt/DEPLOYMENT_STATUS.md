@@ -1,14 +1,10 @@
 # Deployment status
 
-The repaired speech backend is applied and the complete long-recording browser
-test passed on 2026-09-20. The tested T3 UI is source-fork revision `411a3466`.
-Its final live activation is pending the independent rebuild job, because
-restarting T3 also terminates the coding session it hosts.
+Applied and verified on the PC at 2026-09-20T09:06:21.230230+00:00.
 
-Do not infer that the live UI is updated until the job replaces this status
-with its activation result. It runs `rebuild switch`, checks the active system
-and T3 package, then replays the full captured recording through the live route.
+- T3 runs source-fork revision `411a3466` with the responsive dictation workspace.
+- Both speech workers are active, GPU-resident and configured to remain loaded; services start at boot.
+- The full 400.896-second captured recording passed through the live T3 route, streaming preview and long-context VibeVoice final pass.
+- Actual browser microphone replay, desktop/mobile rendering, non-destructive close, failure fallback and recovery were verified before activation.
 
-See [measured results and limitations](2026-09-20/DICTATION_REPAIR.md).
-Private handoff logs: `2026-09-20/private/activation-job.log`, `rebuild.log`,
-and `live-verification.json`. All original drafts and audio are retained.
+See [repair results and limits](2026-09-20/DICTATION_REPAIR.md). Private live proof: `2026-09-20/private/live-verification.json`.
