@@ -3,6 +3,7 @@ import importlib.util
 import json
 import tempfile
 import unittest
+from unittest.mock import AsyncMock, MagicMock, patch
 from pathlib import Path
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
@@ -53,6 +54,67 @@ class RecordingTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_empty_recording_cannot_finalize(self):
         self.assertEqual((await self.post(action='finish')).status, 400)
+
+
+
+    async def test_failed_refinement_keeps_draft_and_original_audio(self):
+        state = gateway.sessions['recording']
+        state['draft'] = 'Keep my first draft.'
+        pcm = b'\x01\x00' * 16000
+        (gateway.ROOT / 'recording' / 'audio.pcm').write_bytes(pcm)
+        state['bytes'] = len(pcm)
+        with patch.object(gateway, 'start_worker', AsyncMock(side_effect=RuntimeError('worker stopped'))):
+            await gateway.finalize(state, None)
+        self.assertEqual(state['status'], 'error')
+        self.assertEqual(state['draft'], 'Keep my first draft.')
+        self.assertEqual((gateway.ROOT / 'recording' / 'audio.pcm').read_bytes(), pcm)
+        self.assertTrue((gateway.ROOT / 'recording' / 'audio.wav').exists())
+
+    async def test_background_completion_does_not_skip_the_quality_pass(self):
+        state = gateway.sessions['recording']
+        state.update(draft='Keep my first draft.', final='Provisional wording.', bytes=32000,
+                     refined_bytes=32000)
+        (gateway.ROOT / 'recording' / 'audio.pcm').write_bytes(b'\x01\x00' * 16000)
+        response = MagicMock()
+        response.json = AsyncMock(return_value={'text': 'Full-context wording.'})
+        client = MagicMock()
+        client.post.return_value.__aenter__ = AsyncMock(return_value=response)
+        client.post.return_value.__aexit__ = AsyncMock(return_value=False)
+        with patch.object(gateway, 'start_worker', AsyncMock()), \
+             patch.object(gateway, 'project_context', return_value=('Project context', [])):
+            await gateway.finalize(state, client)
+        self.assertEqual(state['status'], 'complete')
+        self.assertEqual(state['final'], 'Full-context wording.')
+        self.assertEqual(state['draft'], 'Keep my first draft.')
+        self.assertEqual(state['quality_bytes'], state['bytes'])
+        restored = json.loads((gateway.ROOT / 'recording' / 'state.json').read_text())
+        self.assertEqual(restored['quality_bytes'], state['bytes'])
+        self.assertEqual(restored['quality_text'], state['final'])
+        self.assertEqual(restored['quality_segments'][-1]['end'], state['bytes'])
+
+
+class ChunkTests(unittest.TestCase):
+    def test_waits_for_lookahead_and_keeps_final_tail(self):
+        self.assertIsNone(gateway.chunk_end(b'\x00\x00' * 16000 * 30, 0))
+        self.assertEqual(gateway.chunk_end(b'\x00\x00' * 16000 * 12, 0, True), 384000)
+
+    def test_splits_inside_pause_not_the_next_word(self):
+        pcm = b'\xff\x1f' * 16000 * 31
+        start, end = 25 * 32000, 26 * 32000
+        pcm = pcm[:start] + b'\x00' * (end - start) + pcm[end:]
+        split = gateway.chunk_end(pcm, 0)
+        self.assertGreater(split, start)
+        self.assertLess(split, end)
+        self.assertEqual(split % 2, 0)
+
+    def test_noise_floor_does_not_force_overlap_at_a_real_pause(self):
+        pcm = (700).to_bytes(2, 'little') * 16000 * 31
+        offset = 25 * 32000
+        self.assertEqual(gateway.chunk_start(pcm, offset, len(pcm)), offset)
+
+    def test_overlap_is_removed_without_removing_new_speech(self):
+        self.assertEqual(gateway.merge_transcripts('Deploy the NaiaClaw server.', 'the naiaclaw server, then run tests.'), 'Deploy the NaiaClaw server. then run tests.')
+        self.assertEqual(gateway.merge_transcripts('Really?', 'Why would you do that?'), 'Really? Why would you do that?')
 
 
 if __name__ == '__main__':

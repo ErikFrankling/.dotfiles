@@ -12,9 +12,9 @@ let
       backend = "vulkan";
       device = 0;
       threads = 4;
-      lazy_load = true;
+      lazy_load = false;
       max_loaded_models = 1;
-      idle_unload_ms = 120000;
+      idle_unload_ms = 0;
       log_request_body = false;
       models = [
         {

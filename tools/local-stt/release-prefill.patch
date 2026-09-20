@@ -1,0 +1,30 @@
+--- a/src/models/vibevoice_asr/text_decoder.cpp
++++ b/src/models/vibevoice_asr/text_decoder.cpp
+@@ -1284,7 +1284,12 @@
+             speech_tokens,
+             1024ull * 1024ull * 1024ull);
+     }
+-    return prefill_graph_->run_prompt(input_ids, speech_features, speech_positions);
++    // Offline prefill returns owning CPU vectors for logits and K/V state.
++    // Retaining its GPU workspace overlaps decoding and the next request's
++    // speech encoder. Keep the model weights resident, not this scratch graph.
++    // Local ownership also releases the workspace if execution throws.
++    auto graph = std::move(prefill_graph_);
++    return graph->run_prompt(input_ids, speech_features, speech_positions);
+ }
+ 
+ void VibeVoiceDecoderWeightsRuntime::reset_cached_state(
+--- a/src/models/vibevoice_asr/speech_encoder.cpp
++++ b/src/models/vibevoice_asr/speech_encoder.cpp
+@@ -10,7 +10,10 @@
+ namespace engine::models::vibevoice_asr {
+ namespace {
+ 
+-constexpr int64_t kStreamingSegmentSeconds = 60;
++// Bound convolution workspace on a shared desktop GPU. Streaming tokenizer
++// state crosses these blocks, and all resulting latents still enter the same
++// decoder prompt; these are not independent transcription chunks.
++constexpr int64_t kStreamingSegmentSeconds = 20;
+ 
+ int64_t audio_frame_count(const runtime::AudioBuffer & audio) {
+     if (audio.sample_rate <= 0 || audio.channels <= 0 || audio.samples.empty()) {
