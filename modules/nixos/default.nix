@@ -77,7 +77,10 @@
 
     settings = {
       auto-optimise-store = false;
-      experimental-features = "nix-command flakes";
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
       download-buffer-size = 524288000;
       substituters = [
         "https://install.determinate.systems"

@@ -2,7 +2,8 @@ let
   pkgs = import ./pkgs.nix;
   runtime = import ./contextual-audio.nix;
   model = import ./default.nix { model = "vibevoice-asr-q8"; };
-in pkgs.writeShellApplication {
+in
+pkgs.writeShellApplication {
   name = "local-stt";
   runtimeInputs = [ pkgs.python3 ];
   text = ''

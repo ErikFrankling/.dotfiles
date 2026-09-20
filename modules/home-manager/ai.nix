@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   otherPkgs,
   lib,
@@ -9,7 +10,17 @@
 
 let
   system = pkgs.stdenv.hostPlatform.system;
-  codexCli = inputs.llm-agents.packages.${system}.codex;
+  agentDesktopEnabled = config.programs.agent-desktop.enable or false;
+  codexCliUpstream = inputs.llm-agents.packages.${system}.codex;
+  claudeCliUpstream = inputs.llm-agents.packages.${system}.claude-code;
+  agentDesktopHarnesses = import ./computer-use/harness-integration.nix {
+    inherit pkgs lib;
+    runtimePackage = config.programs.agent-desktop.package;
+    codexPackage = codexCliUpstream;
+    claudePackage = claudeCliUpstream;
+  };
+  codexCli = if agentDesktopEnabled then agentDesktopHarnesses.codex else codexCliUpstream;
+  claudeCli = if agentDesktopEnabled then agentDesktopHarnesses.claude else claudeCliUpstream;
   # Upstream reworked the launcher on 2026-08-13: the computer-use variant now
   # builds Rust feature helpers whose source filter drops Cargo.lock, so it fails
   # to build, and start.sh no longer has the plugin-cache lines patched below.
@@ -171,11 +182,17 @@ in
 
   # Package the pinned source fork with local dictation and deployment auth;
   # reuse nixpkgs master's T3 build recipe and resource-monitor sidecar.
-  nixpkgs.overlays = [ (import ../../overlays/t3code.nix { inherit inputs otherPkgs; }) ];
+  nixpkgs.overlays = [
+    (import ../../overlays/t3code.nix {
+      inherit inputs otherPkgs;
+      codexPackage = codexCli;
+      claudePackage = claudeCli;
+    })
+  ];
 
   home.packages = with pkgs; [
     # claude-code
-    inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code
+    claudeCli
     # code-cursor-fhs
     # opencode
     # codex
@@ -246,6 +263,15 @@ in
       permission = "allow";
 
       mcp = {
+        agent-desktop = lib.mkIf agentDesktopEnabled {
+          type = "local";
+          command = [
+            agentDesktopHarnesses.command
+            "mcp"
+          ];
+          enabled = true;
+          timeout = 30000;
+        };
         neptune-dxp = {
           type = "remote";
           url = "https://p9eval.erikfrankling.duckdns.org/mcp";

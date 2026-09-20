@@ -1,0 +1,93 @@
+---
+name: computer-use
+description: Operate browser windows and native applications on Erik's local agent desktop using the shared computer-use tools. Use for requests to click, type, inspect an app, or complete a workflow through its GUI on this PC.
+---
+
+# Computer use on this PC
+
+Use the `agent-desktop` MCP server for GUI actions. Its launch command is
+`agent-computer-use mcp`. Read the tools' current schemas before calling them;
+tool availability in a previous session does not establish that this session
+is connected.
+
+The agent's display is the headless Hyprland output `AGENT-1`, with workspace
+`name:agent`. Erik's physical displays are for his own work. The agent uses an
+independent input seat; an extra monitor alone does not isolate input.
+
+## Start a task
+
+Run `agent-desktop status` to check the current runtime. If the independent
+input backend or agent output is unavailable, report the failure and diagnose
+that path. Do not switch to global `ydotool`, `hyprctl dispatch` focus changes,
+or the older built-in computer-use backend to get past the failure: those can
+move Erik's pointer or send keystrokes to his windows.
+
+Use `agent-desktop --help` for the installed helper's command syntax. It provides
+`start-browser`, `screenshot FILE`, and `view` as well as `status`. Launch the browser
+through `start-browser` so it uses the agent's persistent profile and opens on
+the agent display. Do not reuse Erik's running Firefox process or copy its live
+profile. The separate profile can retain LastPass and account logins between
+tasks; it may need an initial sign-in or a vault unlock.
+
+Inspect the target window and a fresh agent-display screenshot before acting.
+Check window/output identity, rather than assuming that every window returned
+by a desktop-wide tool belongs to the agent. Keep actions on `AGENT-1`; leave
+human windows where they are. Launch native applications using the installed
+agent-desktop helper's supported commands, if available, and verify placement
+before input. If a requested app cannot be opened there reliably, report that
+specific limitation.
+
+## Work and verify
+
+Use `computer_status` to inspect connection grants and pause state, then
+`list_windows` for stable window IDs. This backend provides compositor window
+and surface metadata, not a semantic accessibility tree. Use `view_window` for
+pixels and `window_state` for popup/subsurface geometry.
+
+Request `control` permission with `scope: {kind: "window", id: window_id}` for
+input, or `observe` for viewing only. Control also covers observation. The local
+supervisor automatically approves these requests for 300 seconds only while
+the mapped window is on output `AGENT-1` and workspace `agent`. For an
+`approval_required` response, use `wait_for_permission` and retry after a grant.
+The supervisor does not auto-approve workspace, recording, or launch access.
+Transient toplevel dialogs need their own window grant. If paused, respect the
+owner's pause; do not issue UI resume/mode commands to bypass it.
+
+`input_window` takes **window-local logical coordinates** and the current
+geometry `revision`. For a resized/cropped `view_window` image, convert using
+its `image_to_window`: `x = pixel_x * scale_x + offset_x`, and likewise for y.
+Do not add the output's desktop position. Surface-targeted input instead uses
+`surface_id`, `surface_revision`, and surface-local coordinates from
+`window_state`. Refresh observations after layout changes; frame IDs are not
+input freshness tokens.
+
+Use `then: "screenshot"` when an action and its follow-up capture should share
+one call. Input can complete before rendering does, so verify the resulting
+state. On partial failures inspect acknowledged actions/characters and observe
+again before retrying; do not replay completed typing because capture failed.
+
+Client support depends on binding both pointer and keyboard resources for the
+independent seat. Unsupported clients, explicit focus actions, and active popup
+grabs are refused. Report that limitation for the actual app; a running Firefox
+service is not proof that every Firefox dialog accepts independent input.
+
+Do not have multiple sessions operate this one desktop concurrently. Respect
+runtime ownership/busy errors; coordinate a handoff rather than launching a
+second input backend. Keep the scope of external actions within the user's task.
+
+`agent-desktop view` opens the agent display for Erik. The VNC endpoint is
+loopback port `5903` and is view-only; opening the viewer does not enable human
+clicks. If a step needs Erik's interaction, explain the exact blocked step and
+the available handoff mechanism rather than promising that the viewer accepts
+input. Do not change VNC input mode or take over a physical display implicitly.
+
+## Connection and maintenance
+
+The shared skill and tools are local machine capabilities. A cloud harness
+does not gain access merely by loading these instructions. If this session has
+no `agent-desktop` tools, report that registration/connection gap; do not claim
+the runtime is working based on this skill's presence.
+
+The source is in `~/.dotfiles/modules/home-manager/computer-use/`. Changes to
+packages, services, wrappers, and skill distribution belong in the Nix config.
+Consult that repository's `AGENTS.md` before modifying it.

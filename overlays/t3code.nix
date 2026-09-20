@@ -1,6 +1,11 @@
 # Build Erik's source fork; auth, protocol and dictation changes live there.
 # Keep the historical bundle patch file for reference, but do not apply it.
-{ inputs, otherPkgs }:
+{
+  inputs,
+  otherPkgs,
+  codexPackage ? null,
+  claudePackage ? null,
+}:
 final: prev:
 let
   system = prev.stdenv.hostPlatform.system;
@@ -18,8 +23,9 @@ in
 
     # Agent CLIs come from llm-agents everywhere else in this config; hand T3
     # the same binaries instead of the nixpkgs ones it would otherwise use.
-    codex = inputs.llm-agents.packages.${system}.codex;
-    claude-code = inputs.llm-agents.packages.${system}.claude-code;
+    codex = if codexPackage != null then codexPackage else inputs.llm-agents.packages.${system}.codex;
+    claude-code =
+      if claudePackage != null then claudePackage else inputs.llm-agents.packages.${system}.claude-code;
     enableClaude = true;
   };
 }

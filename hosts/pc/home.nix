@@ -25,6 +25,8 @@ in
     ../../modules/home-manager/print
     ../../modules/home-manager/vm-host.nix
     ../../modules/home-manager/wayvnc.nix
+    ../../modules/home-manager/computer-use
+    ../../modules/home-manager/ibus-native-seat.nix
     inputs.time.homeManagerModules.default
     # ../../modules/home-manager/noctalia.nix
   ];

@@ -104,7 +104,10 @@
           # exec-once = ibus-daemon -dr
           # exec-once = ${pkgs.ibus}/bin/ibus-daemon --daemonize --xim 
           # exec-once = ${pkgs.ibus}/libexec/ibus-ui-gtk3 --panel
-          exec-once = ibus start --type wayland
+          # On pc, the patched IBus frontend is owned by ibus-wayland.service.
+          ${lib.optionalString (
+            !(config.services.ibus-native-seat.enable or false)
+          ) "exec-once = ibus start --type wayland"}
 
           exec-once = lxqt-policykit-agent
 

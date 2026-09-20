@@ -1,0 +1,102 @@
+--- a/native/guard.cpp
++++ b/native/guard.cpp
+@@ -1,3 +1,9 @@
++#include "seat_only_policy.hpp"
++#ifndef COMPUTER_USE_INDEPENDENT_SEAT
++#error "This Nix package requires the independent seat build"
++#endif
++#include <hyprland/src/output/Monitor.hpp>
++#include <hyprland/src/desktop/Workspace.hpp>
+ #include <cerrno>
+ #include <chrono>
+ #include <cstdio>
+@@ -79,6 +85,10 @@
+ #include "surface_tree.hpp"
+ #include "text_keyboard.hpp"
+ #include "text_transaction.hpp"
++static bool agentWindowAllowed(PHLWINDOW w) {
++  return w && w->m_monitor && w->m_workspace &&
++         agentDesktopAllowed(w->m_monitor->m_name, w->m_workspace->m_name);
++}
+ static const std::string guardInstance = surfaceEpoch();
+ #ifdef COMPUTER_USE_INDEPENDENT_SEAT
+ #include "independent_seat.hpp"
+@@ -125,7 +135,7 @@
+       seat = independentSeat->supports(window->resource());
+ #endif
+       modes[std::format("{:x}", window->m_stableID)] =
+-          seat ? "Seat" : "Fallback";
++          seat ? "Seat" : "Unsupported";
+     }
+     return {{"ok", true}, {"modes", modes}};
+   }
+@@ -140,7 +150,7 @@
+             {"focus_preserving", true},
+ #ifdef COMPUTER_USE_INDEPENDENT_SEAT
+             {"independent_seat", true},
+-            {"automatic_fallback", true},
++            {"automatic_fallback", false},
+             {"seat_resources", independentSeat->clients()},
+             {"refused_popup_grabs", independentSeat->deniedGrabs()},
+ #endif
+@@ -205,6 +215,8 @@
+   }
+   if (!w || !w->m_isMapped || w->resource() != l.surface.lock())
+     throw std::runtime_error("target_closed");
++  if (!agentWindowAllowed(w))
++    throw std::runtime_error("target_outside_agent_desktop");
+   if (!w->visible() || !w->acceptsInput())
+     throw std::runtime_error("target_not_visible");
+   if (q.value("revision", "") != revision(w))
+@@ -218,7 +230,8 @@
+ #ifdef COMPUTER_USE_INDEPENDENT_SEAT
+   useSeat = independentSeat->supports(l.surface.lock());
+ #endif
+-  const auto inputMode = useSeat ? "seat" : "fallback";
++  requireIndependentInput(useSeat, op);
++  const auto inputMode = "seat";
+   // Only this explicit action requests desktop activation. Default input
+   // prefers its own seat and otherwise borrows/restores native focus.
+   // Application-created toplevels/activation requests are not suppressed.
+--- a/internal/app/cli.go
++++ b/internal/app/cli.go
+@@ -29,7 +29,7 @@
+ 	}
+ 	// Setup can build offline, without a running desktop or runtime socket.
+ 	if os.Args[1] == "setup" {
+-		return runSetup(os.Args[2:])
++		return errors.New("setup is disabled in the Nix package; manage the immutable plugin through Hyprland configuration")
+ 	}
+ 	if os.Args[1] == "console" {
+ 		return runConsole(os.Args[2:])
+@@ -183,6 +183,9 @@
+ 		if e = d.guard(ctx, map[string]any{"op": "status"}); e != nil {
+ 			return guardStartupError(e)
+ 		}
++		if !d.independentSeat.Load() || d.automaticFallback.Load() {
++			return errors.New("seat-only package requires an independent-seat guard without automatic fallback")
++		}
+ 		var devices *waylandDevices
+ 		if d.automaticFallback.Load() {
+ 			devices, e = startAutomaticDevices(ctx, dir)
+--- a/internal/app/tools.go
++++ b/internal/app/tools.go
+@@ -154,7 +154,7 @@
+ 		}
+ 		return resultContent(meta, data, false), nil, nil
+ 	})
+-	mcp.AddTool(s, &mcp.Tool{Name: "input_window", InputSchema: inputWindowSchema(), Description: "Perform up to 128 fully prevalidated window-scoped actions with a 60-second execution budget. Unicode text is limited to 262144 UTF-8 bytes per batch and delivered in 48-scalar chunks without clipboard access. Window-local logical coordinates and exact geometry revision required by default. Optional surface_id plus surface_revision from window_state selects surface-local coordinates, including popups. Pointer input hit-tests subsurfaces; crossing surfaces within a drag is refused. Ordinary input restores focus without cursor warp; explicit focus activates. No global fallback. Runtime failures report acknowledged action/character counts; the failed transaction may still have effects, so re-observe before retrying. Optional then=state returns surface/dialog metadata; then=screenshot returns a permission-checked capture (optional observation crop/max_width/max_height) only after a completed batch. Set observation.delay_ms (0–5000, default 0) to wait before capture: applications may not have rendered when input completes; a delay is not a settled-frame guarantee. Observation failure never means replay the batch."}, func(ctx context.Context, _ *mcp.CallToolRequest, a InputArgs) (*mcp.CallToolResult, any, error) {
++	mcp.AddTool(s, &mcp.Tool{Name: "input_window", InputSchema: inputWindowSchema(), Description: "Perform up to 128 fully prevalidated window-scoped actions with a 60-second execution budget. Unicode text is limited to 262144 UTF-8 bytes per batch and delivered in 48-scalar chunks without clipboard access. Window-local logical coordinates and exact geometry revision required by default. Optional surface_id plus surface_revision from window_state selects surface-local coordinates, including popups. Pointer input hit-tests subsurfaces; crossing surfaces within a drag is refused. Input requires both agent-seat resources; unsupported clients and explicit focus actions are refused. No native-focus borrowing or global fallback. Runtime failures report acknowledged action/character counts; the failed transaction may still have effects, so re-observe before retrying. Optional then=state returns surface/dialog metadata; then=screenshot returns a permission-checked capture (optional observation crop/max_width/max_height) only after a completed batch. Set observation.delay_ms (0–5000, default 0) to wait before capture: applications may not have rendered when input completes; a delay is not a settled-frame guarantee. Observation failure never means replay the batch."}, func(ctx context.Context, _ *mcp.CallToolRequest, a InputArgs) (*mcp.CallToolResult, any, error) {
+ 		return b.inputTool(ctx, id, a)
+ 	})
+ 	tool(s, "record_window", "Start a local, window-only MP4 recording. Separate record permission required. Stops on revoke, expiry, disconnect or 10-minute cap.", func(ctx context.Context, a struct {
+--- a/native/independent_seat.hpp
++++ b/native/independent_seat.hpp
+@@ -127,6 +127,7 @@
+            Clock::now() < it->second.until && it->second.window &&
+            it->second.window->m_isMapped && it->second.window->visible() &&
+            it->second.window->acceptsInput() &&
++           agentWindowAllowed(it->second.window.lock()) &&
+            it->second.surface.lock() == root.lock() &&
+            it->second.window->resource() == root.lock() &&
+            raw(root.lock()) == rootRaw;
