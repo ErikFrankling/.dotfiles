@@ -141,12 +141,24 @@ def main():
         wait_event(lambda e:e['type']=='pointermove' and e['target']=='drag' and e['buttons']==1 and e['trusted'])
         act([{'type':'scroll',**point('scroll'),'delta_x':0,'delta_y':4,'unit':'wheel_steps'}])
         wait_event(lambda e:e['type']=='scrolled' and e['target']=='scroll' and e['scroll']>0)
+        act([{'type':'click','button':'right',**point('drag')}])
+        def wait_popup(present):
+            end=time.monotonic()+5
+            while time.monotonic()<end:
+                state=call('window_state',{'window_id':wid})['state']
+                if any(s['kind']=='popup' for s in state['surfaces'])==present:return
+                time.sleep(.05)
+            raise AssertionError('Native Firefox popup state did not change')
+        wait_popup(True)
+        act([{'type':'key','key':'ESC'}])
+        wait_popup(False)
         for args in [dict(revision='stale',actions=[{'type':'text','text':'MUST_NOT_TYPE'}]),dict(actions=[{'type':'focus'}])]:
             request={'window_id':wid,'revision':w['revision'],**args}
             refused=call('input_window',request,True);assert refused.get('isError'),refused
         assert not any('MUST_NOT_TYPE' in e.get('value','') for e in events)
         # Request only; never send even a supposedly refused input to a human window.
-        human=next((v for v in windows if v['workspace']['name']!='agent'),None)
+        human=next((v for v in windows if v['class']=='firefox' and v['workspace']['name']=='agent'),None)
+        if human is None:human=next((v for v in windows if v['workspace']['name']!='agent'),None)
         assert human is not None, 'No human window available for permission boundary test'
         refused=call('request_permission',{'capability':'control','scope':{'kind':'window','id':human['id']},'reason':'Regression test: must not auto-grant human window'})
         assert refused['status']=='approval_required',refused
@@ -157,7 +169,7 @@ def main():
         with socket.create_connection(('127.0.0.1',5903),timeout=3) as vnc:assert vnc.recv(12).startswith(b'RFB ')
         # Close only the disposable tab created by this run, after all checks pass.
         act([{'type':'key','key':'CTRL+W'}])
-        print(json.dumps({'status':'passed','checks':['stdio MCP','permission supervisor','navigation','screenshot','Unicode text','keyboard chords','target-verified click','HTML popover menu','human permission not auto-granted','native keyboard unchanged and agent never activated','drag','scroll','stale geometry refusal','focus refusal','cropped screenshot','VNC handshake'],'native_focus_unchanged':all(c['before']==c['after'] for c in focus_checks),'timings':timings,'latency_ms':{'median':statistics.median(t['ms'] for t in timings),'max':max(t['ms'] for t in timings)},'limitations':['Native popup protocol and concurrent held human modifiers require separate tests']},indent=2))
+        print(json.dumps({'status':'passed','checks':['stdio MCP','permission supervisor','navigation','screenshot','Unicode text','keyboard chords','target-verified click','HTML popover menu','native Firefox popup open/dismiss','human permission not auto-granted','native keyboard unchanged and agent never activated','drag','scroll','stale geometry refusal','focus refusal','cropped screenshot','VNC handshake'],'native_focus_unchanged':all(c['before']==c['after'] for c in focus_checks),'timings':timings,'latency_ms':{'median':statistics.median(t['ms'] for t in timings),'max':max(t['ms'] for t in timings)},'limitations':['Concurrent held human modifiers, authenticated LastPass flows and native apps beyond Firefox were not exercised']},indent=2))
     except BaseException as error:
         failures.append(str(error))
         raise

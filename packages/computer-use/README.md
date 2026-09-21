@@ -76,8 +76,9 @@ input method is not a solution. Agent and native input paths must be independent
 the running agent Firefox. It drives a disposable loopback page through the
 actual MCP stdio bridge and checks trusted browser events, Unicode, chords,
 clicks, an HTML popover, dragging, scrolling, captures, permission boundaries,
-and native keyboard/focus state. It does not claim native-popup or held-human-
-modifier coverage. Run `agent-desktop-self-test [OUTPUT_DIRECTORY]` and retain
+and native keyboard/focus state, including native Firefox popup open/dismiss.
+It does not claim held-human-modifier coverage. Run
+`agent-desktop-self-test [OUTPUT_DIRECTORY]` and retain
 the JSON report; package tests alone do not establish desktop coexistence.
 
 The opt-in filter uses `HYPRLAND_AGENT_SEAT=1` from each client's initial process
@@ -91,3 +92,22 @@ The compositor's original global filter is retained, preserving its security
 context checks. Its local symbol offset is resolved during the Nix build from
 the exact Hyprland binary; runtime requires that same immutable executable path.
 This also restores a compositor-owned callback if plugin initialization fails.
+
+## Live verification on 2026-09-21
+
+After restarting Hyprland, the read-only probe confirmed one native seat for an
+ordinary client and one private seat for a marked client. The Firefox MCP suite
+passed, with native focus and the main keyboard unchanged. A separate native
+Firefox context-menu test confirmed popup creation and Escape dismissal.
+Ordinary input calls took roughly 8–10 ms and full window captures 60–80 ms on
+this machine. These are tool response times, not model latency or guaranteed
+application paint completion; the combined capture with a 200 ms delay could
+still precede the browser's visible text update. Re-observe after input when the
+image does not yet show the expected state.
+
+The approval supervisor also requires the process opt-in marker, so human
+windows moved onto the headless workspace after display disconnection do not
+receive automatic grants. Authenticated LastPass flows, physical held-modifier
+coexistence, and native applications beyond Firefox have not been exercised.
+Clipboard transfer/native DnD remain intentionally unsupported; the VNC viewer
+is view-only.

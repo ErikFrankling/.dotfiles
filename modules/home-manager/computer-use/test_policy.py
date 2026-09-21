@@ -11,11 +11,12 @@ from supervisor import allowed, decisions, eligible_windows
 class AgentWindowPolicy(unittest.TestCase):
     def test_only_mapped_agent_windows_on_agent_output(self):
         monitors = [{"id": 0, "name": "DP-3"}, {"id": 2, "name": "AGENT-1"}]
-        window = {"stableId": "a", "mapped": True, "monitor": 2, "workspace": {"name": "agent"}}
+        window = {"stableId": "a", "mapped": True, "monitor": 2, "workspace": {"name": "agent"}, "pid": 123}
         for changes in ({"monitor": 0}, {"workspace": {"name": "1"}}, {"mapped": False}):
-            self.assertEqual(eligible_windows(monitors, [window | changes]), set())
-        self.assertEqual(eligible_windows(monitors, [window]), {"a"})
-        self.assertEqual(eligible_windows([], [window]), set())
+            self.assertEqual(eligible_windows(monitors, [window | changes], lambda p: p == 123), set())
+        self.assertEqual(eligible_windows(monitors, [window], lambda p: p == 123), {"a"})
+        self.assertEqual(eligible_windows([], [window], lambda p: p == 123), set())
+        self.assertEqual(eligible_windows(monitors, [window], lambda p: False), set())
 
     def test_no_broad_observation_recording_or_launch_grants(self):
         request = {"capability": "control", "scope": {"kind": "window", "id": "a"}}

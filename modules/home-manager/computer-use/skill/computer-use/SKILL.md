@@ -52,7 +52,9 @@ pixels and `window_state` for popup/subsurface geometry.
 Request `control` permission with `scope: {kind: "window", id: window_id}` for
 input, or `observe` for viewing only. Control also covers observation. The local
 supervisor automatically approves these requests for 300 seconds only while
-the mapped window is on output `AGENT-1` and workspace `agent`. For an
+the mapped window belongs to an opted-in agent process on output `AGENT-1`
+and workspace `agent`. Human windows can land there when displays disconnect;
+placement alone never makes them agent windows. For an
 `approval_required` response, use `wait_for_permission` and retry after a grant.
 The supervisor does not auto-approve workspace, recording, or launch access.
 Transient toplevel dialogs need their own window grant. If paused, respect the
@@ -105,4 +107,4 @@ hot-unloading it or stopping the user's input method.
 For implementation verification, `agent-desktop-self-test [OUTPUT_DIRECTORY]`
 drives a disposable local page through MCP and checks actual browser events.
 Run it only when testing the setup; it operates the agent Firefox. Its report explicitly
-separates tested paths from native popup and concurrent-modifier coverage.
+separates tested paths from concurrent-modifier and authenticated-flow coverage.

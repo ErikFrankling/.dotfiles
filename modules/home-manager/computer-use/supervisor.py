@@ -6,18 +6,29 @@ also refuses input outside AGENT-1, including between these periodic checks.
 
 import json
 import os
+from pathlib import Path
 import socket
 import time
 
 from desktop import query, session
 
 
-def eligible_windows(monitors, windows):
+def agent_process(pid):
+    try:
+        process = Path('/proc') / str(int(pid))
+        return (process.stat().st_uid == os.getuid()
+                and b'HYPRLAND_AGENT_SEAT=1' in (process / 'environ').read_bytes().split(b'\0'))
+    except (OSError, ValueError, TypeError):
+        return False
+
+
+def eligible_windows(monitors, windows, opted_in=agent_process):
     outputs = {m["id"] for m in monitors if m["name"] == "AGENT-1"}
     return {w["stableId"] for w in windows
             if w.get("mapped") and w.get("stableId")
             and w.get("monitor") in outputs
-            and w.get("workspace", {}).get("name") == "agent"}
+            and w.get("workspace", {}).get("name") == "agent"
+            and opted_in(w.get("pid"))}
 
 
 def allowed(request, windows):
