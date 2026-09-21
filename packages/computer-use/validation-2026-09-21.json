@@ -1,0 +1,184 @@
+{
+  "status": "passed",
+  "checks": [
+    "stdio MCP",
+    "permission supervisor",
+    "navigation",
+    "screenshot",
+    "Unicode text",
+    "keyboard chords",
+    "target-verified click",
+    "HTML popover menu",
+    "native Firefox popup open/dismiss",
+    "human permission not auto-granted",
+    "native keyboard unchanged and agent never activated",
+    "drag",
+    "scroll",
+    "stale geometry refusal",
+    "focus refusal",
+    "cropped screenshot",
+    "VNC handshake"
+  ],
+  "native_focus_unchanged": true,
+  "timings": [
+    {
+      "method": "initialize",
+      "ms": 39.8
+    },
+    {
+      "method": "computer_status",
+      "ms": 0.2
+    },
+    {
+      "method": "list_windows",
+      "ms": 8.6
+    },
+    {
+      "method": "request_permission",
+      "ms": 8.7
+    },
+    {
+      "method": "wait_for_permission",
+      "ms": 201.0
+    },
+    {
+      "method": "view_window",
+      "ms": 72.1
+    },
+    {
+      "method": "list_windows",
+      "ms": 8.3
+    },
+    {
+      "method": "input_window",
+      "ms": 9.3
+    },
+    {
+      "method": "view_window",
+      "ms": 48.2
+    },
+    {
+      "method": "list_windows",
+      "ms": 8.9
+    },
+    {
+      "method": "input_window",
+      "ms": 272.7
+    },
+    {
+      "method": "list_windows",
+      "ms": 8.0
+    },
+    {
+      "method": "input_window",
+      "ms": 7.8
+    },
+    {
+      "method": "list_windows",
+      "ms": 8.2
+    },
+    {
+      "method": "input_window",
+      "ms": 8.2
+    },
+    {
+      "method": "list_windows",
+      "ms": 7.8
+    },
+    {
+      "method": "input_window",
+      "ms": 7.7
+    },
+    {
+      "method": "list_windows",
+      "ms": 8.4
+    },
+    {
+      "method": "input_window",
+      "ms": 7.8
+    },
+    {
+      "method": "list_windows",
+      "ms": 7.5
+    },
+    {
+      "method": "input_window",
+      "ms": 7.5
+    },
+    {
+      "method": "list_windows",
+      "ms": 7.5
+    },
+    {
+      "method": "input_window",
+      "ms": 8.3
+    },
+    {
+      "method": "list_windows",
+      "ms": 8.1
+    },
+    {
+      "method": "input_window",
+      "ms": 7.6
+    },
+    {
+      "method": "window_state",
+      "ms": 0.5
+    },
+    {
+      "method": "window_state",
+      "ms": 0.4
+    },
+    {
+      "method": "window_state",
+      "ms": 0.7
+    },
+    {
+      "method": "list_windows",
+      "ms": 8.2
+    },
+    {
+      "method": "input_window",
+      "ms": 9.4
+    },
+    {
+      "method": "window_state",
+      "ms": 0.3
+    },
+    {
+      "method": "input_window",
+      "ms": 7.9
+    },
+    {
+      "method": "input_window",
+      "ms": 9.8
+    },
+    {
+      "method": "request_permission",
+      "ms": 7.4
+    },
+    {
+      "method": "wait_for_permission",
+      "ms": 2001.4
+    },
+    {
+      "method": "view_window",
+      "ms": 68.5
+    },
+    {
+      "method": "list_windows",
+      "ms": 8.5
+    },
+    {
+      "method": "input_window",
+      "ms": 8.6
+    }
+  ],
+  "latency_ms": {
+    "median": 8.2,
+    "max": 2001.4
+  },
+  "limitations": [
+    "Concurrent held human modifiers, authenticated LastPass flows and native apps beyond Firefox were not exercised"
+  ]
+}

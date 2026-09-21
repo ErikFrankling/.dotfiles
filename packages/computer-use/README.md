@@ -95,6 +95,9 @@ This also restores a compositor-owned callback if plugin initialization fails.
 
 ## Live verification on 2026-09-21
 
+The final [machine-readable report](validation-2026-09-21.json) records the
+passing live suite after process opt-in was added to automatic approvals.
+
 After restarting Hyprland, the read-only probe confirmed one native seat for an
 ordinary client and one private seat for a marked client. The Firefox MCP suite
 passed, with native focus and the main keyboard unchanged. A separate native
