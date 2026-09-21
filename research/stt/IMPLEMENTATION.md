@@ -1,4 +1,4 @@
-# Agreed integration scope — 2026-09-19
+# Agreed integration scope — updated 2026-09-21
 
 The initial archive captured the agreed scope before implementation. The fork
 and coordinator now have [isolated T3 integration evidence](2026-09-19/INTEGRATION.md).
@@ -17,9 +17,11 @@ research or isolated tests must not be confused with an activated service.
   present a manually curated 18-name test list as automatic repository coverage.
 - Replace only the recording's own draft. Preserve preexisting composer text,
   manual edits, and thread ownership. Switching threads must not insert text
-  into the wrong conversation. Users still edit and send normally.
+  into the wrong conversation. Stop now sends automatically: the server refines,
+  retries, and sends the first draft if refinement fails. Delivery continues
+  after navigation and resumes after restart.
 - Retain recoverable audio/transcript state for transient failures and provide
-  retry/cancel behavior. Aim to support long recordings up to 30 minutes;
+  upload retry/download recovery without discarding work. Aim to support long recordings up to 30 minutes;
   that duration still needs validation, not inference from the 6m39s study.
 - Browser connects through T3's same-origin route; T3 and speech service run on
   the same PC. Keep service endpoints local rather than exposing an unauthenticated
@@ -36,5 +38,5 @@ research or isolated tests must not be confused with an activated service.
 
 Acceptance requires a real T3 browser test showing a draft during recording,
 an independent audio-based final result, correct project context, preserved
-composer edits/thread ownership, retry/cancel behavior, and measured GPU/RAM
+composer edits/thread ownership, automatic fallback/delivery, and measured GPU/RAM
 use, followed by the declarative rebuild and source/config commits.

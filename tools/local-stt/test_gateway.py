@@ -55,6 +55,17 @@ class RecordingTests(unittest.IsolatedAsyncioTestCase):
     async def test_empty_recording_cannot_finalize(self):
         self.assertEqual((await self.post(action='finish')).status, 400)
 
+    async def test_background_failure_preserves_live_feedback_and_backs_off(self):
+        state = gateway.sessions['recording']
+        state['draft'] = 'Keep listening.'
+        with patch.object(gateway, 'refine_available', AsyncMock(side_effect=RuntimeError('GPU guard'))):
+            await gateway.refine_background(state, None)
+        self.assertEqual(state['status'], 'recording')
+        self.assertEqual(state['error'], '')
+        self.assertEqual(state['draft'], 'Keep listening.')
+        self.assertEqual(state['background_error'], 'RuntimeError')
+        self.assertGreater(state['refine_after'], gateway.time.time())
+
 
 
     async def test_failed_refinement_keeps_draft_and_original_audio(self):

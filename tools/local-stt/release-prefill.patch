@@ -24,7 +24,7 @@
 +// Bound convolution workspace on a shared desktop GPU. Streaming tokenizer
 +// state crosses these blocks, and all resulting latents still enter the same
 +// decoder prompt; these are not independent transcription chunks.
-+constexpr int64_t kStreamingSegmentSeconds = 20;
++constexpr int64_t kStreamingSegmentSeconds = 10;
  
  int64_t audio_frame_count(const runtime::AudioBuffer & audio) {
      if (audio.sample_rate <= 0 || audio.channels <= 0 || audio.samples.empty()) {

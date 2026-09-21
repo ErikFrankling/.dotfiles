@@ -12,7 +12,7 @@ import wave
 import traceback
 from pathlib import Path
 
-from aiohttp import ClientSession, ClientTimeout, WSMsgType, web
+from aiohttp import ClientSession, ClientTimeout, ClientWSTimeout, WSMsgType, web
 
 ROOT = Path(os.environ.get("STT_RECORDINGS", "/var/lib/local-stt"))
 NEMO = os.environ.get("STT_STREAM_URL", "http://127.0.0.1:8782")
@@ -27,11 +27,19 @@ CHUNK_SECONDS = 30
 QUALITY_SECONDS = 420
 
 
+def log(event, state=None, **fields):
+    print(json.dumps({"time": time.time(), "event": event,
+                      **({"recording_id": state["id"]} if state else {}), **fields}), flush=True)
+
+
 
 async def stop_worker(name):
     process = workers.pop(name, None)
     if process and process.returncode is None:
-        process.terminate()
+        try:
+            process.terminate()
+        except ProcessLookupError:
+            return
         try:
             await asyncio.wait_for(process.wait(), 5)
         except asyncio.TimeoutError:
@@ -57,6 +65,7 @@ async def _start_worker(name, client):
         command = [os.environ["STT_VIBE_BINARY"], "--config", os.environ["STT_VIBE_CONFIG"]]
         url = VIBE + "/v1/models"
     workers[name] = await asyncio.create_subprocess_exec(*command)
+    log("worker.start", worker=name, pid=workers[name].pid)
     for _ in range(600):
         if name not in workers or workers[name].returncode is not None:
             raise RuntimeError(f"{name} worker exited during startup")
@@ -94,7 +103,9 @@ async def monitor():
                     for key, value in {"total_vram_bytes": vram, "anonymous_ram_bytes": anonymous, "swap_bytes": swap}.items():
                         peaks[key] = max(peaks.get(key, 0), value)
             if vram > 17 * 1024**3 or available < 3 * 1024**3 or anonymous > 6 * 1024**3 or swap > 256 * 1024**2:
-                print(f"Stopping {name}: memory guard: total_vram={vram}, available_ram={available}, anonymous_ram={anonymous}, swap={swap}", flush=True)
+                log("worker.memory_guard", worker=name, pid=process.pid, total_vram=vram,
+                    available_ram=available, anonymous_ram=anonymous, swap=swap,
+                    recordings=[s["id"] for s in sessions.values() if s["status"] in {"recording", "finalizing"}])
                 await stop_worker(name)
                 break
 
@@ -161,7 +172,7 @@ def save(state):
     public = {k: state[k] for k in (
         "id", "owner", "project", "status", "draft", "final", "error", "bytes", "created", "vocabulary", "sequence"
     )}
-    public.update({key: state[key] for key in ("context", "resources", "audio_sha256", "runtime", "segments", "refined_bytes", "quality_bytes", "quality_text", "quality_segments") if key in state})
+    public.update({key: state[key] for key in ("context", "resources", "audio_sha256", "runtime", "segments", "refined_bytes", "quality_bytes", "quality_text", "quality_segments", "background_error", "refine_after") if key in state})
     path = ROOT / state["id"] / "state.json"
     temporary = path.with_suffix(".new")
     temporary.write_text(json.dumps(public))
@@ -262,6 +273,8 @@ async def refine_available(state, client, finishing=False, quality=False):
                 output.setsampwidth(2)
                 output.setframerate(16000)
                 output.writeframes(pcm[start:end])
+            began = time.monotonic()
+            log("refinement.start", state, quality=quality, start=start, end=end)
             await start_worker("final", client)
             context, state["vocabulary"] = await asyncio.to_thread(project_context, state["project"], state["draft"])
             state["context"] = context
@@ -274,8 +287,13 @@ async def refine_available(state, client, finishing=False, quality=False):
                 data = await response.json()
             text = data.get("text", "").strip()
             text = re.sub(r"\[(?:breathing|silence|noise|environmental sounds|music|laughter)\]\s*", "", text, flags=re.I).strip()
-            if not text:
+            if not text and quality:
                 raise ValueError("The recognizer returned an empty transcript.")
+            if not text:
+                log("refinement.no_speech", state, start=start, end=end)
+            state.pop("background_error", None)
+            log("refinement.complete", state, quality=quality, start=start, end=end,
+                seconds=round(time.monotonic() - began, 3), characters=len(text))
             previous = state.get(text_key, "")
             state[text_key] = (" ".join(filter(None, (previous, text))) if quiet_boundary
                                else merge_transcripts(previous, text))
@@ -291,17 +309,20 @@ async def refine_available(state, client, finishing=False, quality=False):
 async def refine_background(state, client):
     try:
         await refine_available(state, client)
-    except Exception:
-        # Original audio remains authoritative. Finish/retry resumes at the last
-        # successfully saved chunk, rather than dropping the failed interval.
-        traceback.print_exc()
-        state["error"] = "Still recording. Saved audio will be retried when you finish."
+    except Exception as error:
+        # A failed progress pass is recoverable; do not turn it into a persistent
+        # red UI error while the microphone and draft are still working.
+        state["background_error"] = type(error).__name__
+        state["refine_after"] = time.time() + 15
+        log("refinement.background_failed", state, error_type=type(error).__name__, error=str(error))
         save(state)
 
 
 async def finalize(state, client):
     state["status"] = "finalizing"
     state["error"] = ""
+    began = time.monotonic()
+    log("recording.finalizing", state, bytes=state["bytes"])
     save(state)
     try:
         if state.get("ws") is not None:
@@ -321,12 +342,15 @@ async def finalize(state, client):
         )}
         await refine_available(state, client, finishing=True, quality=True)
         state["status"] = "complete"
+        log("recording.complete", state, seconds=round(time.monotonic() - began, 3),
+            characters=len(state["final"]))
     except asyncio.CancelledError:
         state["status"] = "error"
         state["error"] = "Transcription interrupted; your recording is saved."
         raise
     except Exception as error:
-        traceback.print_exc()
+        log("recording.failed", state, error_type=type(error).__name__, error=str(error),
+            seconds=round(time.monotonic() - began, 3), resources=state.get("resources"))
         state["status"] = "error"
         state["error"] = f"Transcription interrupted ({type(error).__name__}). Your recording is saved; retry to continue."
     finally:
@@ -343,6 +367,7 @@ async def action(request):
         if final_lock.locked() or any(s["status"] in {"recording", "finalizing"} for s in sessions.values()):
             raise web.HTTPConflict(text="The speech service is busy with another recording.")
         identifier = str(uuid.uuid4())
+        log("recording.start", recording_id=identifier)
         (ROOT / identifier).mkdir(mode=0o700, parents=True)
         (ROOT / identifier / "audio.pcm").touch(mode=0o600)
         state = dict(id=identifier, owner=owner, project=str(data.get("project", "")),
@@ -352,7 +377,7 @@ async def action(request):
         try:
             await start_worker("preview", request.app["client"])
             state["ws"] = await request.app["client"].ws_connect(
-                NEMO + "/v1/audio/transcriptions/realtime", timeout=10
+                NEMO + "/v1/audio/transcriptions/realtime", timeout=ClientWSTimeout(ws_close=10)
             )
             await state["ws"].send_json({"type": "session.update", "session": {
                 "sample_rate": 16000, "language": "en", "automatic_punctuation": True,
@@ -389,7 +414,8 @@ async def action(request):
         except Exception:
             state["error"] = "Preview disconnected; original audio is retained."
         save(state)
-        if state["bytes"] - state.get("refined_bytes", 0) >= (CHUNK_SECONDS + 1) * SAMPLE_BYTES:
+        if (state["bytes"] - state.get("refined_bytes", 0) >= (CHUNK_SECONDS + 1) * SAMPLE_BYTES
+                and time.time() >= state.get("refine_after", 0)):
             task = state.get("refiner")
             if task is None or task.done():
                 state["refiner"] = asyncio.create_task(refine_background(state, request.app["client"]))

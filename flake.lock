@@ -1388,11 +1388,11 @@
     "t3code-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1789891587,
-        "narHash": "sha256-Nm0yt0khwLM9DiHoa0SPpf6UC+uiCVAd44orR8Pp3gA=",
+        "lastModified": 1789953545,
+        "narHash": "sha256-qEfNWeQdcvkOWzGPqOblhuzinX3dfGaARB/vMxExMmw=",
         "owner": "ErikFrankling",
         "repo": "t3code",
-        "rev": "411a346669ebf9eb2c88ab6ddff56a60371a060d",
+        "rev": "f837fdf587cdfbd9f4faf8f0c2d23e6da35c4534",
         "type": "github"
       },
       "original": {

@@ -5,6 +5,8 @@ Start here when revisiting model selection. Latest completed study:
 evidence behind the decision, rather than treating the chosen model as a
 permanent winner.
 
+Latest integration: [2026-09-21 automatic delivery, failure recovery and stable composer](2026-09-21/DELIVERY_REPAIR.md).
+
 Deployment follow-up: [2026-09-20 reliability, chunking and mobile UI](2026-09-20/DICTATION_REPAIR.md).
 
 ## Decision and priorities
