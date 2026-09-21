@@ -22,8 +22,17 @@ let
     rev = revision;
     hash = "sha256-fge+kRqjjYH/FUHuAbGIXAYzmmD3TWATClJGfTo9XTw=";
   };
-  patches = [ ./seat-only.patch ];
+  patches = [
+    ./seat-only.patch
+    ./seat-visibility.patch
+  ];
   postPatch = ''
+    cp ${./agent_data_device_test.cpp} native/agent_data_device_test.cpp
+    cp ${./agent_data_device.hpp} native/agent_data_device.hpp
+    cp ${./seat_probe.cpp} native/seat_probe.cpp
+    cp ${./native_filter.hpp} native/native_filter.hpp
+    cp ${./seat_visibility.hpp} native/seat_visibility.hpp
+    cp ${./seat_visibility_test.cpp} native/seat_visibility_test.cpp
     cp ${./seat_only_policy.hpp} native/seat_only_policy.hpp
     cp ${./seat_only_policy_test.cpp} native/seat_only_policy_test.cpp
   '';
@@ -47,7 +56,16 @@ let
     dontConfigure = true;
     buildPhase = ''
       runHook preBuild
+      # filterGlobals is a local symbol, unavailable to dlsym/nm -D. Resolve
+      # it only from this exact Nix dependency and verify that path at runtime.
+      nativeExe=${hyprland}/bin/.Hyprland-wrapped
+      test -f "$nativeExe"
+      nativeOffset=$(nm -a "$nativeExe" | awk '$3 == "_ZL13filterGlobalsPK9wl_clientPK9wl_globalPv" { print $1 }')
+      test -n "$nativeOffset"
+      test "$(printf '%s\n' "$nativeOffset" | wc -l)" -eq 1
+      printf '#pragma once\n#include <cstdint>\ninline constexpr uintptr_t nativeFilterOffset = 0x%s;\ninline constexpr char nativeFilterExecutable[] = "%s";\n' "$nativeOffset" "$nativeExe" > native/native_filter_build.hpp
       make independent-seat build/header-version
+      $CXX -std=c++23 -Wall -Wextra -Werror native/seat_probe.cpp $(pkg-config --cflags --libs wayland-client) -o build/computer-use-seat-probe
       runHook postBuild
     '';
     doCheck = true;
@@ -56,11 +74,16 @@ let
       make native-test native-text-wire-test
       $CXX -std=c++23 -Wall -Wextra -Werror native/seat_only_policy_test.cpp -o build/seat-only-policy-test
       build/seat-only-policy-test
+      $CXX -std=c++23 -Wall -Wextra -Werror native/seat_visibility_test.cpp $(pkg-config --cflags --libs wayland-server wayland-client) -o build/seat-visibility-test
+      build/seat-visibility-test
+      $CXX -std=c++23 -Wall -Wextra -Werror native/agent_data_device_test.cpp $(pkg-config --cflags --libs wayland-server wayland-client) -o build/agent-data-device-test
+      build/agent-data-device-test
       runHook postCheck
     '';
     installPhase = ''
       runHook preInstall
       install -Dm755 build/guard-seat.so $out/lib/guard-seat.so
+      install -Dm755 build/computer-use-seat-probe $out/bin/computer-use-seat-probe
       install -Dm755 build/header-version $out/bin/computer-use-header-version
       runHook postInstall
     '';

@@ -37,11 +37,16 @@ let
              ["hyprland-computer-use", *sys.argv[1:]])
     ' "$@"
   '';
+  liveTest = pkgs.writeShellScriptBin "agent-desktop-self-test" ''
+    export PATH=${lib.makeBinPath [ bridge ]}:${runtimePath}:"$PATH"
+    exec ${pkgs.python3}/bin/python3 ${./tests/live_e2e.py} "$@"
+  '';
   package = pkgs.symlinkJoin {
     name = "agent-desktop";
     paths = [
       desktop
       bridge
+      liveTest
     ];
   };
   sessionUnit = {
@@ -55,7 +60,7 @@ let
   profile = "${config.xdg.dataHome}/agent-desktop/firefox";
 in
 {
-  options.programs.agent-desktop.enable = lib.mkEnableOption "experimental agent desktop (disabled after human keyboard regression)";
+  options.programs.agent-desktop.enable = lib.mkEnableOption "agent desktop with independent keyboard and pointer";
   options.programs.agent-desktop.package = lib.mkOption {
     type = lib.types.package;
     readOnly = true;
@@ -157,11 +162,15 @@ in
     systemd.user.services.agent-firefox = {
       Unit = sessionUnit // {
         Description = "Persistent Firefox for the agent workspace";
+        After = sessionUnit.After ++ [ "agent-input-plugin.service" ];
+        Requires = sessionUnit.Requires ++ [ "agent-input-plugin.service" ];
       };
       Service = {
         ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${profile}";
         ExecStart = "${package}/bin/agent-desktop exec-session ${osConfig.programs.firefox.finalPackage}/bin/firefox --no-remote --name agent-firefox --profile ${profile} about:blank";
         Environment = [
+          "HYPRLAND_AGENT_SEAT=1"
+          "GTK_IM_MODULE=gtk-im-context-simple"
           "MOZ_ENABLE_WAYLAND=1"
           "GDK_BACKEND=wayland"
           "GDK_SCALE=1"

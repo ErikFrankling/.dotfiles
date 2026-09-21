@@ -1,0 +1,82 @@
+--- a/native/independent_seat.hpp
++++ b/native/independent_seat.hpp
+@@ -4,6 +4,9 @@
+ #pragma once
+ #include "popup_hook.hpp"
+ #include "seat_policy.hpp"
++#include "seat_visibility.hpp"
++#include "agent_data_device.hpp"
++#include "native_filter.hpp"
+ #include <cstring>
+ #include <deque>
+ #include <memory>
+@@ -12,6 +15,8 @@
+ 
+ class IndependentSeat {
+   inline static IndependentSeat *self = nullptr;
++  SeatVisibility visibility;
++  AgentDataDevice dataDevice;
+   wl_global *global = nullptr;
+   wl_protocol_logger *logger = nullptr;
+   CFunctionHook *grabHook = nullptr;
+@@ -96,6 +101,10 @@
+   inline static const struct wl_seat_interface seatImpl = {
+       getPointer, getKeyboard, getTouch, release};
+   static void bindSeat(wl_client *c, void *, uint32_t version, uint32_t id) {
++    if (!self->visibility.isAgent(c)) {
++      wl_client_post_implementation_error(c, "agent seat requires explicit opt-in");
++      return;
++    }
+     auto r =
+         wl_resource_create(c, &wl_seat_interface, std::min(version, 7u), id);
+     if (!r) {
+@@ -235,7 +244,9 @@
+   }
+ 
+ public:
+-  explicit IndependentSeat(HANDLE h) {
++  explicit IndependentSeat(HANDLE h)
++      : visibility(g_pCompositor->m_wlDisplay, reinterpret_cast<SeatVisibility::BaseFilter>(nativeGlobalFilterAddress())),
++        dataDevice(g_pCompositor->m_wlDisplay, &visibility) {
+     self = this;
+     wl_list_init(&rootDestroy.link);
+     wl_list_init(&focusDestroy.link);
+@@ -272,7 +283,7 @@
+       throw std::runtime_error("agent_logger_failed");
+     }
+     global = wl_global_create(g_pCompositor->m_wlDisplay, &wl_seat_interface, 7,
+-                              nullptr, bindSeat);
++                              &visibility, bindSeat);
+     if (!global) {
+       wl_protocol_logger_destroy(logger);
+       grabHook->unhook();
+@@ -321,7 +332,7 @@
+   }
+   // Require both devices so a window never mixes seat and fallback delivery.
+   bool supports(SP<CWLSurfaceResource> surface) const {
+-    if (!surface)
++    if (!surface || !const_cast<SeatVisibility &>(visibility).isAgent(surface->client()))
+       return false;
+     const auto bound = [&](const auto &list) {
+       return std::ranges::any_of(list, [&](auto r) {
+@@ -335,14 +346,16 @@
+   void begin(const std::string &lease, SP<CWLSurfaceResource> rootSurface,
+              SP<CWLSurfaceResource> surface, Vector2D local = {},
+              bool keyboard = false, bool explicitSurface = false) {
+-    // Constraints, capture, DnD and IME grabs are NOT independently integrated.
++    // The native IBus grab belongs to the hidden native seat. It neither
++    // routes nor blocks keyboard events on an explicitly opted-in agent seat.
++    if (!surface || !visibility.isAgent(surface->client()))
++      throw std::runtime_error("agent_seat_requires_opt_in");
++    // Constraints, capture and DnD are NOT independently integrated.
+     // Do not refuse ordinary physical typing or a native human popup grab.
+     if (g_pInputManager->isConstrained() ||
+         (PROTO::data && PROTO::data->dndActive()) ||
+         (PROTO::inputCapture && PROTO::inputCapture->isCaptured()) ||
+-        g_pSeatManager->m_state.touchFocus ||
+-        (g_pInputManager->m_relay.m_inputMethod &&
+-         g_pInputManager->m_relay.m_inputMethod->hasGrab()))
++        g_pSeatManager->m_state.touchFocus)
+       throw std::runtime_error(
+           "agent_seat_constraint_capture_drag_or_ime_unsupported");
+     if (token != lease || rootRaw != raw(rootSurface)) {

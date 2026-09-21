@@ -57,7 +57,7 @@ not have independently implemented input here. An extra seat does not make a
 single-seat application compatible; unsupported targets must remain refused.
 The toolkit supplies window discovery, toplevel capture, surface metadata,
 batched input and optional post-action observation, not an AT-SPI tree engine.
-# Deployment status: disabled after native keyboard regression
+## Native keyboard regression and live validation
 
 On 2026-09-21, loading the independent seat disrupted human Firefox text input
 before any agent GUI actions were sent. IBus 1.5.34 binds every advertised seat
@@ -67,7 +67,27 @@ forwarding then uses an uninitialized/rejected seat. The local IBus patch in
 `../ibus-native-seat.patch` preserves the first/native seat. The frontend is
 managed by `modules/home-manager/ibus-native-seat.nix`.
 
-The agent module remains disabled by default. Before another rollout, confine
-seat advertisement to opted-in agent clients and validate that human input
-methods and applications never bind it. Successful package tests did not prove
-desktop coexistence. No successful end-to-end agent workflow is claimed.
+The follow-up live MCP test also found that the upstream independent-seat
+implementation refuses every input action while the human IBus grab is active
+(`agent_seat_constraint_capture_drag_or_ime_unsupported`). Stopping the human
+input method is not a solution. Agent and native input paths must be independent.
+
+`modules/home-manager/computer-use/tests/live_e2e.py` is an opt-in test against
+the running agent Firefox. It drives a disposable loopback page through the
+actual MCP stdio bridge and checks trusted browser events, Unicode, chords,
+clicks, an HTML popover, dragging, scrolling, captures, permission boundaries,
+and native keyboard/focus state. It does not claim native-popup or held-human-
+modifier coverage. Run `agent-desktop-self-test [OUTPUT_DIRECTORY]` and retain
+the JSON report; package tests alone do not establish desktop coexistence.
+
+The opt-in filter uses `HYPRLAND_AGENT_SEAT=1` from each client's initial process
+environment. Native clients see the compositor seat; agent clients see only the
+private seat. Unsupported native-seat protocols are hidden from agent clients.
+GTK's mandatory data-device manager is replaced with an empty private manager;
+clipboard transfer and native drag-and-drop are unavailable, and cannot mutate
+the human selection through that manager.
+
+The compositor's original global filter is retained, preserving its security
+context checks. Its local symbol offset is resolved during the Nix build from
+the exact Hyprland binary; runtime requires that same immutable executable path.
+This also restores a compositor-owned callback if plugin initialization fails.

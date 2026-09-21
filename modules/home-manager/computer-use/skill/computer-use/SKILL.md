@@ -13,6 +13,11 @@ is connected.
 The agent's display is the headless Hyprland output `AGENT-1`, with workspace
 `name:agent`. Erik's physical displays are for his own work. The agent uses an
 independent input seat; an extra monitor alone does not isolate input.
+The plugin filters seat visibility: normal clients see the native seat, and
+clients launched with `HYPRLAND_AGENT_SEAT=1` see the agent seat. The Firefox
+service sets this marker before process startup. Never export it into the
+user's session or human application launchers; changing it after a client
+connects does not change that client's seat classification.
 
 ## Start a task
 
@@ -91,3 +96,13 @@ the runtime is working based on this skill's presence.
 The source is in `~/.dotfiles/modules/home-manager/computer-use/`. Changes to
 packages, services, wrappers, and skill distribution belong in the Nix config.
 Consult that repository's `AGENTS.md` before modifying it.
+
+`agent-input-plugin.service` refuses to replace a different plugin in a live
+session. A plugin update requires a planned Hyprland logout/login because the
+old plugin owns client-bound Wayland resources; never work around this by
+hot-unloading it or stopping the user's input method.
+
+For implementation verification, `agent-desktop-self-test [OUTPUT_DIRECTORY]`
+drives a disposable local page through MCP and checks actual browser events.
+Run it only when testing the setup; it operates the agent Firefox. Its report explicitly
+separates tested paths from native popup and concurrent-modifier coverage.

@@ -31,6 +31,8 @@ in
     # ../../modules/home-manager/noctalia.nix
   ];
 
+  programs.agent-desktop.enable = true;
+
   # Minute-by-minute activity tracking. The agent only screenshots and posts;
   # the server in the cluster holds the API key and does the classifying.
   services.time-agent = {

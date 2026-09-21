@@ -78,7 +78,7 @@ def main():
         monitors = query("monitors")
         windows = [w for w in query("clients") if w["workspace"]["name"] == WORKSPACE]
         units = {}
-        for unit in ("agent-desktop", "agent-computer-use", "agent-desktop-permissions", "agent-firefox", "agent-desktop-vnc"):
+        for unit in ("agent-desktop", "agent-input-plugin", "agent-computer-use", "agent-desktop-permissions", "agent-firefox", "agent-desktop-vnc"):
             units[unit] = run("systemctl", "--user", "show", unit, "--property=ActiveState", "--value")
         print(json.dumps({"output": next((m for m in monitors if m["name"] == OUTPUT), None),
                           "windows": windows, "services": units,
