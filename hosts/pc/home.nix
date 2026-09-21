@@ -99,6 +99,9 @@ in
 
   systemd.user.services.t3code = {
     Unit.Description = "T3 Code web server";
+    # Rebuilds update CLI dependencies too. Restarting this server interrupts
+    # every active agent turn; apply updates on the next deliberate restart.
+    Unit.X-SwitchMethod = "keep-old";
 
     Service = {
       ExecStartPre = t3CodexPrepare;
