@@ -1,15 +1,42 @@
 # Firefox with Erik's existing logins
 
-Erik wants an ordinary additional Firefox window, using his running profile,
-on the agent monitor. His original windows and tabs stay on the physical
+Erik wants one agent-owned Firefox window, using his running profile,
+filling the agent monitor, with additional pages in tabs in that same window.
+His original windows and tabs stay on the physical
 monitors. This is the default for account tasks, including GitHub and LastPass.
 
-## Open the window normally
+## Reuse one window and open tabs
+
+At task start, identify and reuse the existing agent-owned Firefox window on
+`AGENT-1`. Keep it maximized to the agent monitor with browser tabs and controls
+visible; do not work in a tiny tile beside accumulated browser windows. Use
+window-targeted controls so Erik's active window and focus stay unchanged.
+
+Navigate the current tab when it can be reused. For another page, use the
+target window's New Tab UI or a browser tool explicitly targeting that window
+ID. Prefer Open Link in New Tab over Open Link in New Window. Verify that the
+tab belongs to the agent window. Do not use a bare `firefox --new-tab URL` as
+window targeting: the shared process may choose Erik's last-active window.
+Do not send global Ctrl+T or focus the agent window to direct keyboard input.
+
+`--new-window` is only for initial setup when there is no suitable agent window,
+never a navigation fallback. If the available background controls cannot open
+or navigate a tab, diagnose that specific limitation instead of accumulating
+windows. The earlier successful new-window test does not establish tab control.
+
+Site-required authentication popups are exceptions: track only the popup
+created by the agent action, keep it on `AGENT-1`, and return to the main agent
+window afterward. Do not change profile-wide popup preferences. Reuse or
+consolidate agent-created windows when safe, preserving pending forms and login
+flows; never close or move Erik's windows or tabs. Do not start the separate
+test-profile browser for normal account work.
+
+## Create the initial window only when absent
 
 1. Read `hyprctl -j clients`, `hyprctl -j monitors`, and the active window.
    Record existing Firefox window addresses, stable IDs, PIDs, and workspaces.
-   Reuse a known agent-created window if its UI supports the requested action.
-2. Open an ordinary new window with the task URL:
+   If an agent-owned window already exists, follow the tab workflow above.
+2. Only if absent, open an ordinary new window with the task URL:
 
    ```sh
    hyprctl dispatch exec '[workspace name:agent silent] /run/current-system/sw/bin/firefox --new-window https://github.com/settings/profile'
@@ -90,8 +117,8 @@ this installation; `GetName` returned useful names such as `press` and `click`.
 and check the active human window after interaction. During validation, the
 GitHub page's menu and Appearance link worked; background address-bar editing
 and the LastPass toolbar action did not produce a verified result. Do not claim
-those worked or repeatedly send input because of the acknowledgement. Opening
-a normal new window at the desired URL is the tested navigation path.
+those worked or repeatedly send input because of the acknowledgement. The
+tested new-window launch is for initial setup only, not repeated navigation.
 
 The compositor MCP's `input_window` still cannot control a normal shared Firefox
 process. Do not try to solve that by marking the entire browser as agent-owned,

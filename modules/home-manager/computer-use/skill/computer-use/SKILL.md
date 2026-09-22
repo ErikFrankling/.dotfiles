@@ -5,8 +5,10 @@ description: Operate browser windows and native applications on Erik's local age
 
 # Computer use on this PC
 
-For Firefox account work, use a **normal new Firefox window in Erik's existing
-profile**, placed on `AGENT-1`. It shares his website logins and LastPass
+For Firefox account work, reuse **one agent-owned Firefox window in Erik's existing
+profile** on `AGENT-1`, filling the agent monitor. Open additional pages as
+**tabs in that same window**, not additional tiled windows. Create the window
+only if no suitable agent-owned window exists. It shares his website logins and LastPass
 installation. Follow [Firefox with existing logins](firefox.md) for the tested
 launch and window-scoped accessibility UI workflow. Check whether the site is
 already signed in before opening LastPass. Never close Erik's Firefox or move
