@@ -1,6 +1,8 @@
 { pkgs, inputs, ... }:
 
 {
+  nixpkgs.overlays = [ (import ../../overlays/aquamarine.nix) ];
+
   # Package set
   environment.systemPackages = with pkgs; [ lxqt.lxqt-policykit ];
 

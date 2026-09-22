@@ -13,6 +13,9 @@
       cfg = config.hyprland;
     in
     {
+      # Home Manager has its own package set; patch its Hyprland launcher too.
+      nixpkgs.overlays = [ (import ../../../overlays/aquamarine.nix) ];
+
       home.pointerCursor = {
         gtk.enable = true;
         # x11.enable = true;
