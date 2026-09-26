@@ -17,6 +17,13 @@ from aiohttp import ClientSession, ClientTimeout, ClientWSTimeout, WSMsgType, we
 ROOT = Path(os.environ.get("STT_RECORDINGS", "/var/lib/local-stt"))
 NEMO = os.environ.get("STT_STREAM_URL", "http://127.0.0.1:8782")
 VIBE = os.environ.get("STT_FINAL_URL", "http://127.0.0.1:8783")
+# The final recogniser shares the GPU with llama-swap (LLMs, TTS): it unloads
+# after this much idle time, on request from llama-swap, and asks llama-swap
+# to unload its idle model before loading itself.
+FINAL_IDLE_SECONDS = float(os.environ.get("STT_FINAL_IDLE_SECONDS", "18000"))
+LLAMA_SWAP = os.environ.get("STT_LLAMA_SWAP_URL", "")
+FINAL_VRAM_BYTES = 11 * 1024**3
+last_used = {}
 MAX_BYTES = 16000 * 2 * 30 * 60
 sessions = {}
 final_lock = asyncio.Lock()
@@ -48,8 +55,43 @@ async def stop_worker(name):
 
 
 async def start_worker(name, client):
+    last_used[name] = time.monotonic()
     async with worker_locks[name]:
         await _start_worker(name, client)
+
+
+def vram_free():
+    free = []
+    for used in Path("/sys/class/drm").glob("card*/device/mem_info_vram_used"):
+        total = int((used.parent / "mem_info_vram_total").read_text())
+        if total > 4 * 1024**3:
+            free.append(total - int(used.read_text()))
+    return max(free, default=0)
+
+
+async def make_room(client):
+    """Ask llama-swap to unload its (idle) model when the final recogniser won't fit."""
+    if not LLAMA_SWAP or vram_free() >= FINAL_VRAM_BYTES:
+        return
+    try:
+        async with client.get(LLAMA_SWAP + "/unload", timeout=ClientTimeout(total=30)) as response:
+            log("worker.make_room", status=response.status, free_vram=vram_free())
+    except (OSError, asyncio.TimeoutError) as error:
+        log("worker.make_room_failed", error=str(error))
+
+
+def busy():
+    return any(s["status"] in {"recording", "finalizing"} for s in sessions.values())
+
+
+async def release_gpu(_request):
+    """Called by llama-swap before it loads a model: unload the idle final recogniser."""
+    process = workers.get("final")
+    if busy() or not process or process.returncode is not None:
+        return web.json_response({"released": False, "busy": busy()})
+    await stop_worker("final")
+    log("worker.released", worker="final")
+    return web.json_response({"released": True})
 
 
 async def _start_worker(name, client):
@@ -62,6 +104,7 @@ async def _start_worker(name, client):
                    "--threads", "4", "--no-ui", "--read-timeout", "1900"]
         url = NEMO + "/v1/models"
     else:
+        await make_room(client)
         command = [os.environ["STT_VIBE_BINARY"], "--config", os.environ["STT_VIBE_CONFIG"]]
         url = VIBE + "/v1/models"
     workers[name] = await asyncio.create_subprocess_exec(*command)
@@ -85,6 +128,11 @@ async def monitor():
     # These bounds are a guard, not a GPU reservation.
     while True:
         await asyncio.sleep(0.2)
+        final = workers.get("final")
+        if (final and final.returncode is None and not busy()
+                and time.monotonic() - last_used.get("final", 0) > FINAL_IDLE_SECONDS):
+            log("worker.idle_unload", worker="final")
+            await stop_worker("final")
         vram = max((int(p.read_text()) for p in Path("/sys/class/drm").glob("card*/device/mem_info_vram_used")), default=0)
         memory = dict(line.split(":", 1) for line in Path("/proc/meminfo").read_text().splitlines())
         available = int(memory["MemAvailable"].split()[0]) * 1024
@@ -486,4 +534,5 @@ if __name__ == "__main__":
     app.cleanup_ctx.append(lifecycle)
     app.router.add_post("/dictation", action)
     app.router.add_get("/health", lambda _: web.json_response({"ok": True}))
+    app.router.add_post("/release-gpu", release_gpu)
     web.run_app(app, host="127.0.0.1", port=int(os.environ.get("STT_PORT", "8781")), access_log=None)

@@ -11,6 +11,43 @@ let
   # llama-cpp = otherPkgs.pkgsStable.llama-cpp-vulkan;
   # llama-cpp = pkgs.llama-cpp-rocm;
   # llama-cpp = llama-cpp-vulkan;
+
+  # Every GPU model here first asks the dictation gateway (local-stt) to unload
+  # its idle 10 GB final recogniser, so one GPU workload runs at a time: the
+  # request that just arrived wins over whatever sat idle. Harmless if
+  # local-stt is busy or not running.
+  releaseStt = pkgs.writeShellScript "release-stt-gpu" ''
+    ${pkgs.curl}/bin/curl -s -m 20 -X POST http://127.0.0.1:8781/release-gpu || true
+    exec "$@"
+  '';
+
+  # Breeze TTS 2 (BreezeBlue, #1 open-weight TTS on the Artificial Analysis
+  # arena, Sep 2026). Upstream only ships CUDA; this runs its eager PyTorch path
+  # on ROCm (gfx1100) in a container built from a pinned ROCm PyTorch image.
+  # ~7.7 GiB VRAM. Weights are research/non-commercial only.
+  breezeDockerfileText = ''
+    FROM rocm/pytorch:rocm7.2.4_ubuntu24.04_py3.12_pytorch_release_2.9.1
+    ENV DEBIAN_FRONTEND=noninteractive PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 TOKENIZERS_PARALLELISM=false
+    RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg libsndfile1 sox git && rm -rf /var/lib/apt/lists/*
+    RUN git clone https://github.com/breezeblue-ai/breeze-tts /opt/breeze \
+     && git -C /opt/breeze checkout 008f769016b0a24711becd7a4925030bc93f608c
+    # qwen-tts without deps: its unpinned torchaudio dep would replace ROCm torch with CUDA torch.
+    RUN pip install --no-deps qwen-tts==0.1.1 \
+     && pip install transformers==4.57.3 accelerate==1.12.0 librosa soundfile sox onnxruntime einops "numpy>=2.0" fastapi uvicorn python-multipart
+    RUN cd /opt/breeze && python -c "import torch; assert torch.version.hip, torch.__version__; import qwen_tts, breeze_infer"
+    WORKDIR /opt/breeze
+    ENTRYPOINT ["python", "-m", "breeze_infer.api"]
+  '';
+  breezeDockerfile = pkgs.writeText "breeze-tts.Dockerfile" breezeDockerfileText;
+  breezeImage = "breeze-tts:${
+    builtins.substring 0 12 (builtins.hashString "sha256" breezeDockerfileText)
+  }";
+  # Not under /mnt/data/ai-models: /mnt/data is erikf-owned and ai-models root-owned,
+  # which systemd-tmpfiles rejects as an "unsafe path transition" (it won't chown).
+  # The container's file I/O is done by the root docker daemon, so erikf ownership
+  # is enough and lets erikf download weights here directly.
+  ttsDir = "/mnt/data/tts";
+  docker = "${pkgs.docker}/bin/docker";
 in
 {
   services.llama-swap = {
@@ -45,7 +82,7 @@ in
           # two 32k slots, so a 60-minute screenshot batch fits one slot.
           # IQ4_XS full offload @ 4096 measured 19.9GB (crash band).
           cmd = ''
-            ${llama-cpp}/bin/llama-server \
+            ${releaseStt} ${llama-cpp}/bin/llama-server \
             --port 5806 \
             --model /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q3_K_XL.gguf \
             --mmproj /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.8-27B-GGUF/mmproj-F16.gguf \
@@ -94,7 +131,7 @@ in
           description = "Qwen3.5 27B with Unsloth IQ4_NL quantization";
 
           cmd = ''
-            ${llama-cpp}/bin/llama-server \
+            ${releaseStt} ${llama-cpp}/bin/llama-server \
             --port 5800 \
             --model /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-IQ4_NL.gguf \
             --n-gpu-layers 999 \
@@ -126,7 +163,7 @@ in
 
           # --model /mnt/data/ai-models/llama-cpp/models/mradermacher/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-i1-GGUF/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled.i1-IQ4_XS.gguf \
           cmd = ''
-            ${llama-cpp}/bin/llama-server \
+            ${releaseStt} ${llama-cpp}/bin/llama-server \
             --port 5802 \
             --model /mnt/data/ai-models/llama-cpp/models/mradermacher/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-i1-GGUF/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-heretic-v2.i1-Q4_K_S.gguf \
             --n-gpu-layers 999 \
@@ -157,7 +194,7 @@ in
           description = "Qwen3.5-35B-A3B MoE with Unsloth UD-IQ4_NL (17.8GB) - 3B active params";
 
           cmd = ''
-            ${llama-cpp}/bin/llama-server \
+            ${releaseStt} ${llama-cpp}/bin/llama-server \
             --port 5803 \
             --model /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-35B-A3B-GGUF/Qwen3.5-35B-A3B-UD-IQ4_NL.gguf \
             --n-gpu-layers 999 \
@@ -184,7 +221,55 @@ in
             "qwen-moe"
           ];
         };
+
+        "breeze-tts-2" = {
+          name = "Breeze TTS 2 (text-to-speech)";
+          description = "BreezeBlue Breeze TTS 2, ROCm eager PyTorch in Docker — POST /upstream/breeze-tts-2/v1/audio/speech (multipart), returns 24 kHz PCM";
+
+          # Multipart API, so clients use llama-swap's /upstream/<model>/ passthrough.
+          # --rm + a fixed name; cmdStop stops the container, not just the CLI.
+          # MIOpen kernel cache persisted, otherwise every start recompiles.
+          cmd = ''
+            ${releaseStt} ${docker} run --rm --name breeze-tts-2 \
+            --device /dev/kfd --device /dev/dri --security-opt seccomp=unconfined \
+            --ipc=host -p 127.0.0.1:5810:7860 \
+            -v ${ttsDir}/Breeze-TTS-2:/model:ro \
+            -v ${ttsDir}/cache/miopen:/root/.cache/miopen \
+            -v ${ttsDir}/cache/triton:/root/.triton \
+            ${breezeImage} /model --host 0.0.0.0 --port 7860
+          '';
+          cmdStop = "${docker} stop -t 15 breeze-tts-2";
+          proxy = "http://127.0.0.1:5810";
+          checkEndpoint = "/health";
+          ttl = 900;
+          aliases = [
+            "breeze"
+            "tts"
+          ];
+        };
       };
+    };
+  };
+
+  # Build the Breeze image once per Dockerfile change (tag = Dockerfile hash).
+  systemd.services.breeze-tts-image = {
+    description = "Build the Breeze TTS 2 ROCm Docker image";
+    wantedBy = [ "multi-user.target" ];
+    after = [
+      "docker.service"
+      "network-online.target"
+    ];
+    wants = [ "network-online.target" ];
+    requires = [ "docker.service" ];
+    path = [ pkgs.docker ];
+    script = ''
+      docker image inspect ${breezeImage} >/dev/null 2>&1 \
+        || docker build -t ${breezeImage} - < ${breezeDockerfile}
+    '';
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      TimeoutStartSec = "2h";
     };
   };
 
@@ -196,6 +281,8 @@ in
       LD_LIBRARY_PATH = "${llama-cpp}/lib";
       GGML_VK_VISIBLE_DEVICES = "0";
       RADV_PERFTEST = "bfloat16,nogttspill";
+      # The docker CLI (Breeze TTS) needs a writable config dir; the FS is read-only.
+      DOCKER_CONFIG = "/var/cache/llama-swap/docker";
     };
 
     serviceConfig = {
@@ -207,6 +294,8 @@ in
       SupplementaryGroups = [
         "video"
         "render"
+        # Breeze TTS runs as a container. Note: docker group is root-equivalent.
+        "docker"
       ];
       DevicePolicy = lib.mkForce "closed";
       DeviceAllow = [ "char-drm" ];
@@ -221,6 +310,11 @@ in
   systemd.tmpfiles.rules = [
     "d /mnt/data/ai-models/llama-cpp/models 0770 llama-cpp llama-cpp -"
     "d /mnt/data/ai-models/llama-cpp/.cache 0770 llama-cpp llama-cpp -"
+    # TTS weights and container caches (see ttsDir).
+    "d ${ttsDir} 0755 erikf users -"
+    "d ${ttsDir}/cache 0755 erikf users -"
+    "d ${ttsDir}/cache/miopen 0755 erikf users -"
+    "d ${ttsDir}/cache/triton 0755 erikf users -"
   ];
 
   users.users.llama-cpp = {
@@ -230,6 +324,7 @@ in
       "video"
       "render"
       "users"
+      "docker"
     ];
     home = "/mnt/data/ai-models/llama-cpp";
     createHome = true;

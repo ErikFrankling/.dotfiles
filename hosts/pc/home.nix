@@ -67,7 +67,19 @@ in
     ".codex-t3/skills".source = config.lib.file.mkOutOfStoreSymlink "${codexHome}/skills";
     ".codex-t3/rules".source = config.lib.file.mkOutOfStoreSymlink "${codexHome}/rules";
     ".codex-t3/plugins".source = config.lib.file.mkOutOfStoreSymlink "${codexHome}/plugins";
-  };
+  }
+  # math-video skill lives in the mathvid repo (~/projects/mathvid/skill); a live
+  # symlink so improvements to the workflow doc apply without a rebuild.
+  //
+    lib.genAttrs
+      [
+        ".claude/skills/math-video"
+        ".agents/skills/math-video"
+        ".codex/skills/math-video"
+      ]
+      (_: {
+        source = config.lib.file.mkOutOfStoreSymlink "/home/erikf/projects/mathvid/skill";
+      });
 
   home.packages = with pkgs; [
     prismlauncher
