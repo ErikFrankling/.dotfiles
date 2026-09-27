@@ -80,10 +80,14 @@ in
             install_url = "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi";
             installation_mode = "force_installed";
           };
-          # Privacy Badger:
+          # Privacy Badger: removed. It blocks login.microsoftonline.com as a
+          # third party, which breaks the silent 24h token renewal Teams/Outlook
+          # web rely on and forces a full Microsoft login every day. "blocked"
+          # uninstalls it from existing profiles instead of just unpinning it.
           "jid1-MnnxcxisBPnSXQ@jetpack" = {
-            install_url = "https://addons.mozilla.org/firefox/downloads/latest/privacy-badger17/latest.xpi";
-            installation_mode = "force_installed";
+            # install_url = "https://addons.mozilla.org/firefox/downloads/latest/privacy-badger17/latest.xpi";
+            # installation_mode = "force_installed";
+            installation_mode = "blocked";
           };
           # LastPass:
           "support@lastpass.com" = {

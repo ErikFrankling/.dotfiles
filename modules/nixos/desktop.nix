@@ -18,6 +18,24 @@
 
   nixpkgs.overlays = [ inputs.claude-desktop.overlays.default ];
 
+  # Managed policy for every Chromium-based browser (Helium, Chromium, Chrome).
+  # Helium blocks third-party cookies by default, and Microsoft 365 web apps
+  # renew their 24h sign-in token in a hidden login.microsoftonline.com iframe
+  # that needs those cookies, so without this Teams logs out once a day. Keep
+  # third-party cookies blocked elsewhere; only allow Microsoft's sign-in and
+  # app domains.
+  programs.chromium = {
+    enable = true;
+    extraOpts.CookiesAllowedForUrls = [
+      "[*.]microsoftonline.com"
+      "[*.]microsoft.com"
+      "[*.]live.com"
+      "[*.]office.com"
+      "[*.]sharepoint.com"
+      "[*.]skype.com"
+    ];
+  };
+
   environment.systemPackages = with pkgs; [
     xdg-utils
     wlvncc
@@ -29,7 +47,27 @@
     gthumb
     vlc
     xrdb
-    inputs.helium.packages.${pkgs.stdenv.hostPlatform.system}.default
+    # inputs.helium.packages.${pkgs.stdenv.hostPlatform.system}.default
+    # Same Helium AppImage, re-wrapped so its bwrap sandbox can see the host's
+    # /etc/chromium. Helium reads managed policies from /etc/chromium/policies,
+    # but the upstream FHS wrapper only exposes a fixed set of host /etc paths,
+    # so programs.chromium.extraOpts below would otherwise never reach it.
+    (
+      let
+        helium = inputs.helium.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        contents = pkgs.appimageTools.extract { inherit (helium) pname version src; };
+      in
+      pkgs.appimageTools.wrapType2 {
+        inherit (helium) pname version src;
+        extraBwrapArgs = [ "--ro-bind-try /etc/chromium /etc/chromium" ];
+        extraInstallCommands = ''
+          install -m 444 -D ${contents}/helium.desktop -t $out/share/applications
+          substituteInPlace $out/share/applications/helium.desktop \
+            --replace 'Exec=AppRun' 'Exec=helium'
+          cp -r ${contents}/usr/share/icons $out/share
+        '';
+      }
+    )
     # inputs.claude-desktop.packages.${system}.claude-desktop-fhs
     # Claude Desktop (FHS variant — needed for MCP servers: npx/uvx/docker),
     # wrapped to force 2x scaling. Electron ignores GDK_SCALE / the Hyprland
