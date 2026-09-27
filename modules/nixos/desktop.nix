@@ -21,19 +21,22 @@
   # Managed policy for every Chromium-based browser (Helium, Chromium, Chrome).
   # Helium blocks third-party cookies by default, and Microsoft 365 web apps
   # renew their 24h sign-in token in a hidden login.microsoftonline.com iframe
-  # that needs those cookies, so without this Teams logs out once a day. Keep
-  # third-party cookies blocked elsewhere; only allow Microsoft's sign-in and
-  # app domains.
+  # that needs those cookies, so without this Teams logs out once a day.
+  # Third-party cookie blocking is deliberately off everywhere: breaking logins
+  # isn't worth it. BlockThirdPartyCookies = false is mandatory, so it also
+  # overrides Helium's default and any per-profile "block" setting in Chrome.
   programs.chromium = {
     enable = true;
-    extraOpts.CookiesAllowedForUrls = [
-      "[*.]microsoftonline.com"
-      "[*.]microsoft.com"
-      "[*.]live.com"
-      "[*.]office.com"
-      "[*.]sharepoint.com"
-      "[*.]skype.com"
-    ];
+    extraOpts.BlockThirdPartyCookies = false;
+    # Earlier, narrower attempt: allow only Microsoft's domains.
+    # extraOpts.CookiesAllowedForUrls = [
+    #   "[*.]microsoftonline.com"
+    #   "[*.]microsoft.com"
+    #   "[*.]live.com"
+    #   "[*.]office.com"
+    #   "[*.]sharepoint.com"
+    #   "[*.]skype.com"
+    # ];
   };
 
   environment.systemPackages = with pkgs; [

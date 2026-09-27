@@ -32,6 +32,16 @@ in
         # on Linux has its own certificate store. Deploy the same verified CA
         # through Firefox's enterprise policy so every managed NixOS profile
         # trusts WARP-private HTTPS without a manual per-profile import.
+        # Accept all cookies, third-party included, with no partitioning (Total
+        # Cookie Protection). Blocking them breaks Microsoft 365's silent token
+        # renewal and forces a daily Teams login; locked so the profile's
+        # custom tracking-protection setting can't turn it back on.
+        Cookies = {
+          Behavior = "accept";
+          BehaviorPrivateBrowsing = "accept";
+          Locked = true;
+        };
+
         Certificates = {
           Install = [ ../../certificates/cloudflare-gateway-ca.pem ];
         };
