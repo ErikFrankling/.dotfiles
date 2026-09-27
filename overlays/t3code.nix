@@ -42,7 +42,7 @@ in
                 ;
               pnpm = otherPkgs.pkgsMaster.pnpm_11;
               fetcherVersion = 4;
-              hash = "sha256-XibgRj37k63e/4OAZNgcD9ATwhX+0JvfI60aePn9BVU=";
+              hash = "sha256-S8LAyBlmZMS/DGVV8EjRHqBlOHqe+N4eaKBSwPO3Uks=";
             };
           }
         );
