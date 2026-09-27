@@ -42,15 +42,6 @@ in
           Locked = true;
         };
 
-        # New windows opened internal.ericsson.com: a leftover homepage from the
-        # Ericsson job that Firefox Sync kept bringing back. Locking it here
-        # beats the synced user pref. Startup still restores the last session.
-        Homepage = {
-          URL = "about:home";
-          StartPage = "previous-session";
-          Locked = true;
-        };
-
         Certificates = {
           Install = [ ../../certificates/cloudflare-gateway-ca.pem ];
         };
