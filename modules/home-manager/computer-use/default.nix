@@ -99,6 +99,20 @@ in
       Install.WantedBy = [ "hyprland-session.target" ];
     };
 
+    # Powering the monitors off leaves AGENT-1 as the only output, so Hyprland
+    # parks the pointer and focus there and keeps them after reconnect.
+    systemd.user.services.agent-desktop-return-focus = {
+      Unit = sessionUnit // {
+        Description = "Return pointer and focus from AGENT-1 when a display connects";
+      };
+      Service = {
+        ExecStart = "${package}/bin/agent-desktop watch-focus";
+        Restart = "always";
+        RestartSec = 3;
+      };
+      Install.WantedBy = [ "hyprland-session.target" ];
+    };
+
     systemd.user.services.agent-computer-use = {
       Unit = sessionUnit // {
         Description = "Computer-use MCP broker with independent input";

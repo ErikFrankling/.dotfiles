@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+import socket
 import subprocess
 import sys
 
@@ -44,6 +45,28 @@ def monitor():
     return found[0]
 
 
+def return_focus():
+    # When every physical display disconnects (monitors powered off), Hyprland
+    # warps the pointer and focus to the only remaining output, AGENT-1. On
+    # reconnect it leaves both there, and the gap before AGENT-1 clamps the
+    # pointer to it, so the desktop looks frozen. Hand both back to the human.
+    monitors = query("monitors")
+    human = next((m for m in monitors if m["name"] != OUTPUT and not m["disabled"]), None)
+    if human and any(m["focused"] and m["name"] == OUTPUT for m in monitors):
+        run("hyprctl", "dispatch", "focusmonitor", human["name"])
+        print(f"Returned focus from {OUTPUT} to {human['name']}", flush=True)
+
+
+def watch_focus():
+    return_focus()
+    events = Path(os.environ["XDG_RUNTIME_DIR"]) / "hypr" / os.environ["HYPRLAND_INSTANCE_SIGNATURE"] / ".socket2.sock"
+    with socket.socket(socket.AF_UNIX) as connection:
+        connection.connect(str(events))
+        for line in connection.makefile("rb"):
+            if line.startswith(b"monitoradded>>"):
+                return_focus()
+
+
 def main():
     command = sys.argv[1] if len(sys.argv) > 1 else "status"
     if command in ("--help", "help"):
@@ -74,6 +97,8 @@ def main():
             if "ok" not in reply.lower():
                 raise RuntimeError(reply)
         monitor()
+    elif command == "watch-focus":
+        watch_focus()
     elif command == "status":
         monitors = query("monitors")
         windows = [w for w in query("clients") if w["workspace"]["name"] == WORKSPACE]

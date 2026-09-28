@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 
-from desktop import run, session
+from desktop import return_focus, run, session
 from supervisor import allowed, decisions, eligible_windows
 
 
@@ -61,6 +61,26 @@ class SessionLaunch(unittest.TestCase):
             ])):
                 with self.assertRaises(RuntimeError):
                     session()
+
+
+class ReturnFocus(unittest.TestCase):
+    AGENT = {"name": "AGENT-1", "disabled": False}
+    HUMAN = {"name": "DP-3", "disabled": False}
+
+    def dispatched(self, monitors):
+        with patch("desktop.query", return_value=monitors), patch("desktop.run") as process:
+            return_focus()
+        return [call.args for call in process.call_args_list]
+
+    def test_reconnected_display_takes_focus_back_from_agent_output(self):
+        monitors = [self.AGENT | {"focused": True}, self.HUMAN | {"focused": False}]
+        self.assertEqual(self.dispatched(monitors), [("hyprctl", "dispatch", "focusmonitor", "DP-3")])
+
+    def test_never_moves_focus_otherwise(self):
+        for monitors in ([self.AGENT | {"focused": True}],
+                         [self.AGENT | {"focused": True}, self.HUMAN | {"focused": False, "disabled": True}],
+                         [self.AGENT | {"focused": False}, self.HUMAN | {"focused": True}]):
+            self.assertEqual(self.dispatched(monitors), [])
 
 
 if __name__ == "__main__":
