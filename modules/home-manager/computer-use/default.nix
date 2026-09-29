@@ -142,6 +142,28 @@ in
       Install.WantedBy = [ "hyprland-session.target" ];
     };
 
+    # The same stdio MCP, bridged to streamable HTTP (/mcp) and SSE (/sse) on
+    # :4790 so Executor on the homelab can proxy it to every agent. One shared
+    # stdio child serves all clients. mcp-proxy has no inbound auth: the host
+    # firewall admits only the k3s VM (hosts/pc/configuration.nix), and
+    # approvals still go through the local tray like any other client.
+    # --pass-environment keeps XDG_RUNTIME_DIR/HYPRLAND_INSTANCE_SIGNATURE,
+    # which the bridge needs to find the broker and the session.
+    systemd.user.services.agent-computer-use-http = {
+      Unit = sessionUnit // {
+        Description = "Computer-use MCP over HTTP for Executor";
+        After = sessionUnit.After ++ [ "agent-computer-use.service" ];
+        Requires = sessionUnit.Requires ++ [ "agent-computer-use.service" ];
+      };
+      Service = {
+        ExecStart = "${pkgs.mcp-proxy}/bin/mcp-proxy --host 0.0.0.0 --port 4790 --pass-environment -- ${package}/bin/agent-computer-use mcp";
+        Restart = "always";
+        RestartSec = 5;
+        UMask = "0077";
+      };
+      Install.WantedBy = [ "hyprland-session.target" ];
+    };
+
     systemd.user.services.agent-desktop-permissions = {
       Unit = sessionUnit // {
         Description = "Approve computer-use requests confined to agent windows";

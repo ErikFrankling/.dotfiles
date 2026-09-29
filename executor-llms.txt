@@ -1,0 +1,14 @@
+# Executor
+
+## Docs
+
+- [Introduction](https://executor.sh/docs/index.md): Executor is the open-source integration layer for AI agents: one catalog for every tool, shared across every agent you use.
+- [MCP Proxy](https://executor.sh/docs/mcp-proxy.md): Executor is one MCP endpoint in front of all your integrations: connect once, and every agent gets the same catalog with shared auth and policies.
+- [CLI](https://executor.sh/docs/local/cli.md): Run Executor as a local background service and drive it from the command line.
+- [Desktop app](https://executor.sh/docs/local/desktop.md): Run Executor locally with a native desktop app: a graphical console that runs alongside the CLI.
+- [Executor Cloud](https://executor.sh/docs/hosted/cloud.md): Use hosted Executor Cloud: no setup, with a free tier.
+- [Self Hosted Docker](https://executor.sh/docs/hosted/docker.md): Run the whole Executor server in one Docker container over a SQLite file: API, MCP, auth, code execution, and the web UI.
+- [Self Hosted Cloudflare](https://executor.sh/docs/hosted/cloudflare.md): Run Executor as a single Cloudflare Worker in your own account, with Cloudflare Access for auth and D1 for storage.
+- [Integrations](https://executor.sh/docs/concepts/integrations.md): An integration is something Executor connects to, defined by an MCP server, an OpenAPI spec, or a GraphQL endpoint.
+- [Connections](https://executor.sh/docs/concepts/connections.md): A connection is a configured instance of an integration. One integration can have many connections.
+- [Policies](https://executor.sh/docs/concepts/policies.md): Policies control whether each tool is always allowed, requires approval, or is blocked.
