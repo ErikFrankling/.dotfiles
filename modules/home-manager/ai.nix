@@ -1,5 +1,6 @@
 {
   config,
+  osConfig,
   pkgs,
   otherPkgs,
   lib,
@@ -13,14 +14,25 @@ let
   agentDesktopEnabled = config.programs.agent-desktop.enable or false;
   codexCliUpstream = inputs.llm-agents.packages.${system}.codex;
   claudeCliUpstream = inputs.llm-agents.packages.${system}.claude-code;
-  agentDesktopHarnesses = import ./computer-use/harness-integration.nix {
+  # Before Executor: each harness launched the computer-use MCP over stdio
+  # itself. Computer use now reaches every agent through Executor instead.
+  # agentDesktopHarnesses = import ./computer-use/harness-integration.nix {
+  #   inherit pkgs lib;
+  #   runtimePackage = config.programs.agent-desktop.package;
+  #   codexPackage = codexCliUpstream;
+  #   claudePackage = claudeCliUpstream;
+  # };
+  # codexCli = if agentDesktopEnabled then agentDesktopHarnesses.codex else codexCliUpstream;
+  # claudeCli = if agentDesktopEnabled then agentDesktopHarnesses.claude else claudeCliUpstream;
+  executorKeyFile = osConfig.sops.secrets.executor-api-key.path;
+  executorHarnesses = import ./executor-harness.nix {
     inherit pkgs lib;
-    runtimePackage = config.programs.agent-desktop.package;
+    keyFile = executorKeyFile;
     codexPackage = codexCliUpstream;
     claudePackage = claudeCliUpstream;
   };
-  codexCli = if agentDesktopEnabled then agentDesktopHarnesses.codex else codexCliUpstream;
-  claudeCli = if agentDesktopEnabled then agentDesktopHarnesses.claude else claudeCliUpstream;
+  codexCli = executorHarnesses.codex;
+  claudeCli = executorHarnesses.claude;
   # Upstream reworked the launcher on 2026-08-13: the computer-use variant now
   # builds Rust feature helpers whose source filter drops Cargo.lock, so it fails
   # to build, and start.sh no longer has the plugin-cache lines patched below.
@@ -263,12 +275,20 @@ in
       permission = "allow";
 
       mcp = {
-        agent-desktop = lib.mkIf agentDesktopEnabled {
-          type = "local";
-          command = [
-            agentDesktopHarnesses.command
-            "mcp"
-          ];
+        # Replaced by Executor, which proxies computer use to every agent.
+        # agent-desktop = lib.mkIf agentDesktopEnabled {
+        #   type = "local";
+        #   command = [
+        #     agentDesktopHarnesses.command
+        #     "mcp"
+        #   ];
+        #   enabled = true;
+        #   timeout = 30000;
+        # };
+        executor = {
+          type = "remote";
+          url = executorHarnesses.url;
+          headers.Authorization = "Bearer {file:${executorKeyFile}}";
           enabled = true;
           timeout = 30000;
         };

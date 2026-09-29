@@ -15,11 +15,20 @@ already signed in before opening LastPass. Never close Erik's Firefox or move
 his existing windows to reuse the profile. No profile copying, browser restart,
 new automation server, or compositor change is needed for this workflow.
 
-For applications launched on the independent agent seat, use the `agent-desktop`
-MCP server for GUI actions. Its launch command is
-`agent-computer-use mcp`. Read the tools' current schemas before calling them;
-tool availability in a previous session does not establish that this session
-is connected.
+For applications launched on the independent agent seat, use the computer-use
+tools through the `executor` MCP server (Executor on the homelab). They are the
+`computer_use` integration, connection `pc`: inside Executor's `execute` tool
+call them as `tools.computer_use.org.pc.<tool>(args)`, e.g.
+`tools.computer_use.org.pc.list_windows({})`. Each call returns
+`{ ok, data | error }`, where `data` is the upstream MCP result
+(`content`, `structuredContent`). **Pixels only reach you if you `emit` them:**
+for `view_window` or `then: "screenshot"`, run
+`for (const c of r.data.content) if (c.type === "image") emit(c);` and return
+the text/structured part. Search the catalog (`tools.search`) to read the
+tools' current schemas before calling them; tool availability in a previous
+session does not establish that this session is connected. Executor reaches
+the PC's `agent-computer-use-http` bridge (port 4790), so these tools work
+from any machine's agents, and always operate this PC.
 
 The agent's display is the headless Hyprland output `AGENT-1`, with workspace
 `name:agent`. Erik's physical displays are for his own work. Dedicated agent
@@ -105,10 +114,12 @@ input. Do not change VNC input mode or take over a physical display implicitly.
 
 ## Connection and maintenance
 
-The shared skill and tools are local machine capabilities. A cloud harness
-does not gain access merely by loading these instructions. If this session has
-no `agent-desktop` tools, report that registration/connection gap; do not claim
-the runtime is working based on this skill's presence.
+The tools reach this PC via Executor
+(`https://executor.erikfrankling.duckdns.org`, LAN/tailnet only). A cloud
+harness does not gain access merely by loading these instructions. If this
+session has no `executor` MCP, or the `computer_use` integration fails, report
+that registration/connection gap (check `agent-computer-use-http.service` on
+the PC); do not claim the runtime is working based on this skill's presence.
 
 The source is in `~/.dotfiles/modules/home-manager/computer-use/`. Changes to
 packages, services, wrappers, and skill distribution belong in the Nix config.
