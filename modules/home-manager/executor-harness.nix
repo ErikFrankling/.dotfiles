@@ -12,6 +12,10 @@
   keyFile,
   codexPackage,
   claudePackage,
+  # Host-local stdio MCP servers ({ name = { command, args, env }; }), added
+  # to every session whether or not Executor is reachable. Used for computer
+  # use on the PC, where screenshots should not round-trip through Executor.
+  localMcpServers ? { },
 }:
 let
   url = "https://executor.erikfrankling.duckdns.org/mcp";
@@ -31,6 +35,30 @@ let
       };
     }
   );
+  localMcpConfig = pkgs.writeText "local-mcp.json" (
+    builtins.toJSON {
+      mcpServers = lib.mapAttrs (_: server: { type = "stdio"; } // server) localMcpServers;
+    }
+  );
+  localClaudeArgs = lib.optionalString (localMcpServers != { }) "--mcp-config=${localMcpConfig}";
+  localCodexArgs = lib.escapeShellArgs (
+    lib.concatLists (
+      lib.mapAttrsToList (name: server: [
+        "-c"
+        "mcp_servers.${name}.command=${builtins.toJSON server.command}"
+        "-c"
+        "mcp_servers.${name}.args=${builtins.toJSON server.args}"
+        "-c"
+        "mcp_servers.${name}.env=${
+          "{"
+          + lib.concatStringsSep "," (lib.mapAttrsToList (k: v: "${k}=${builtins.toJSON v}") server.env)
+          + "}"
+        }"
+        "-c"
+        "mcp_servers.${name}.tool_timeout_sec=300"
+      ]) localMcpServers
+    )
+  );
   # Claude's --mcp-config takes variadic arguments. Put it after the user's
   # arguments (but before an explicit --), so it cannot consume their prompt.
   claudeLauncher = pkgs.writeShellScript "claude-executor" ''
@@ -41,29 +69,33 @@ let
         ;;
     esac
     ${loadKey}
-    if [ -z "''${EXECUTOR_API_KEY-}" ]; then
+    configs=(${localClaudeArgs})
+    if [ -n "''${EXECUTOR_API_KEY-}" ]; then
+      configs+=("--mcp-config=${mcpConfig}")
+    fi
+    if [ ''${#configs[@]} -eq 0 ]; then
       exec ${claudePackage}/bin/claude "$@"
     fi
     args=()
     inserted=false
     for arg in "$@"; do
       if [ "$arg" = -- ] && [ "$inserted" = false ]; then
-        args+=("--mcp-config=${mcpConfig}")
+        args+=("''${configs[@]}")
         inserted=true
       fi
       args+=("$arg")
     done
     if [ "$inserted" = false ]; then
-      args+=("--mcp-config=${mcpConfig}")
+      args+=("''${configs[@]}")
     fi
     exec ${claudePackage}/bin/claude "''${args[@]}"
   '';
   codexLauncher = pkgs.writeShellScript "codex-executor" ''
     ${loadKey}
     if [ -z "''${EXECUTOR_API_KEY-}" ]; then
-      exec ${codexPackage}/bin/codex "$@"
+      exec ${codexPackage}/bin/codex ${localCodexArgs} "$@"
     fi
-    exec ${codexPackage}/bin/codex \
+    exec ${codexPackage}/bin/codex ${localCodexArgs} \
       -c ${lib.escapeShellArg "mcp_servers.executor.url=${builtins.toJSON url}"} \
       -c 'mcp_servers.executor.bearer_token_env_var="EXECUTOR_API_KEY"' \
       -c 'mcp_servers.executor.tool_timeout_sec=300' \

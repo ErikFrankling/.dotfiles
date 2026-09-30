@@ -30,6 +30,9 @@ let
     keyFile = executorKeyFile;
     codexPackage = codexCliUpstream;
     claudePackage = claudeCliUpstream;
+    # Computer use on this host: agent browser (Playwright), Cua Driver and
+    # the agent seat. Local stdio, so screenshots reach the model directly.
+    localMcpServers = lib.optionalAttrs agentDesktopEnabled config.programs.agent-desktop.mcpServers;
   };
   codexCli = executorHarnesses.codex;
   claudeCli = executorHarnesses.claude;
@@ -285,6 +288,17 @@ in
         #   enabled = true;
         #   timeout = 30000;
         # };
+      }
+      // lib.optionalAttrs agentDesktopEnabled (
+        lib.mapAttrs (_: server: {
+          type = "local";
+          command = [ server.command ] ++ server.args;
+          environment = server.env;
+          enabled = true;
+          timeout = 30000;
+        }) config.programs.agent-desktop.mcpServers
+      )
+      // {
         executor = {
           type = "remote";
           url = executorHarnesses.url;

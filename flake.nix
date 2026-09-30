@@ -51,6 +51,11 @@
     nix-matlab.url = "gitlab:doronbehar/nix-matlab";
     nix-matlab.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Cua Driver: computer-use driver (accessibility trees, window capture,
+    # element actions) for agents on the agent monitor. Pinned to a release tag.
+    cua.url = "github:trycua/cua/cua-driver-rs-v0.30.4";
+    cua.inputs.nixpkgs.follows = "nixpkgs";
+
     time.url = "github:ErikFrankling/time";
     time.inputs.nixpkgs.follows = "nixpkgs";
 

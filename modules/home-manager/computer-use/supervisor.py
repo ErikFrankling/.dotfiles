@@ -16,8 +16,11 @@ from desktop import query, session
 def agent_process(pid):
     try:
         process = Path('/proc') / str(int(pid))
+        # Chromium/Electron overwrite their environment block, so they opt in
+        # with a command-line switch instead (same rule as the seat plugin).
         return (process.stat().st_uid == os.getuid()
-                and b'HYPRLAND_AGENT_SEAT=1' in (process / 'environ').read_bytes().split(b'\0'))
+                and (b'HYPRLAND_AGENT_SEAT=1' in (process / 'environ').read_bytes().split(b'\0')
+                     or b'--hyprland-agent-seat' in (process / 'cmdline').read_bytes().split(b'\0')))
     except (OSError, ValueError, TypeError):
         return False
 

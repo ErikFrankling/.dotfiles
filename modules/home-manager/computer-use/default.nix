@@ -3,11 +3,14 @@
   lib,
   pkgs,
   osConfig,
+  inputs,
   ...
 }:
 
 let
   hyprland = osConfig.programs.hyprland.package;
+  system = pkgs.stdenv.hostPlatform.system;
+  cuaDriver = inputs.cua.packages.${system}.cua-driver;
   backend = pkgs.callPackage ../../../packages/computer-use { inherit hyprland; };
   runtimePath = lib.makeBinPath [
     hyprland
@@ -58,9 +61,94 @@ let
     PartOf = [ "hyprland-session.target" ];
   };
   profile = "${config.xdg.dataHome}/agent-desktop/firefox";
+
+  # The agent's own browser: a separate Chromium process on AGENT-1 with the
+  # agent seat, a permanent profile (LastPass stays logged in) and a loopback
+  # DevTools port for Playwright. --hyprland-agent-seat is the opt-in marker
+  # the seat plugin and supervisor read from the command line, because
+  # Chromium overwrites its environment block at startup.
+  chromiumProfile = "${config.xdg.dataHome}/agent-desktop/chromium";
+  cdpPort = 9222;
+  chromiumFlags = [
+    "--user-data-dir=${chromiumProfile}"
+    "--password-store=basic"
+    "--no-first-run"
+    "--no-default-browser-check"
+    "--hide-crash-restore-bubble"
+    "--ozone-platform=wayland"
+  ];
+  agentChromiumArgs = lib.escapeShellArgs (
+    chromiumFlags
+    ++ [
+      "--class=agent-chromium"
+      "--hyprland-agent-seat"
+      "--remote-debugging-port=${toString cdpPort}"
+      "--force-renderer-accessibility"
+    ]
+  );
+  # For the rare manual login (LastPass re-login, passkeys, phone approval):
+  # the same profile as a normal window on Erik's monitor with his own input.
+  browserLogin = pkgs.writeShellScriptBin "agent-browser-login" ''
+    set -u
+    systemctl --user stop agent-chromium.service
+    ${pkgs.chromium}/bin/chromium ${
+      lib.escapeShellArgs (chromiumFlags ++ [ "--class=agent-chromium-login" ])
+    } "''${1:-chrome-extension://hdokiejnpimakedhajhdlcegeplioahd/vault.html}"
+    systemctl --user start agent-chromium.service
+    echo "Agent browser is back on AGENT-1."
+  '';
+  browserLoginDesktop = pkgs.makeDesktopItem {
+    name = "agent-browser-login";
+    desktopName = "Agent Browser Login";
+    comment = "Open the agent's Chromium on this screen to log in (LastPass etc.)";
+    exec = "${browserLogin}/bin/agent-browser-login";
+    icon = "chromium";
+  };
+
+  cuaEnv = {
+    CUA_DRIVER_RS_ENABLE_WAYLAND = "1";
+    CUA_DRIVER_RS_TELEMETRY_ENABLED = "false";
+  };
 in
 {
   options.programs.agent-desktop.enable = lib.mkEnableOption "agent desktop with independent keyboard and pointer";
+  options.programs.agent-desktop.mcpServers = lib.mkOption {
+    type = lib.types.attrs;
+    readOnly = true;
+    default = {
+      # Playwright on the agent's Chromium (DevTools protocol, loopback only).
+      browser = {
+        command = "${pkgs.playwright-mcp}/bin/playwright-mcp";
+        args = [
+          "--cdp-endpoint"
+          "http://127.0.0.1:${toString cdpPort}"
+          # Coordinate mouse tools, for canvas pages and iframes such as
+          # LastPass's autofill dropdown.
+          "--caps"
+          "vision"
+          "--output-dir"
+          "${config.xdg.cacheHome}/playwright-mcp"
+        ];
+        # The nixpkgs wrapper exports PLAYWRIGHT_MCP_ISOLATED=1 unless this is
+        # set, which puts every page in a fresh incognito-like context: no
+        # cookies, no LastPass. With it set, pages open in the real profile.
+        env.PLAYWRIGHT_MCP_USER_DATA_DIR = chromiumProfile;
+      };
+      # Cua Driver: windows, accessibility trees, captures, element actions.
+      cua = {
+        command = "${cuaDriver}/bin/cua-driver";
+        args = [ "mcp" ];
+        env = cuaEnv;
+      };
+      # Raw keyboard/pointer on the agent seat, window capture and recording.
+      agent-seat = {
+        command = "${package}/bin/agent-computer-use";
+        args = [ "mcp" ];
+        env = { };
+      };
+    };
+    description = "Local computer-use MCP servers for agent harnesses on this host.";
+  };
   options.programs.agent-desktop.package = lib.mkOption {
     type = lib.types.package;
     readOnly = true;
@@ -69,15 +157,32 @@ in
   };
 
   config = lib.mkIf config.programs.agent-desktop.enable {
-    home.packages = [ package ];
+    home.packages = [
+      package
+      cuaDriver
+      browserLogin
+      browserLoginDesktop
+      pkgs.wf-recorder
+      pkgs.grim
+    ];
 
     # One immutable plugin, built with the same compiler/dependencies as the
     # actual compositor. Do not hot-unload a plugin that owns a Wayland seat.
     wayland.windowManager.hyprland.settings = {
       # A gap keeps ordinary pointer motion from entering the headless output.
       monitor = [ "AGENT-1,1920x1080@30,10000x0,1" ];
-      workspace = [ "name:agent,monitor:AGENT-1,default:true,persistent:true" ];
+      # `agent` is what AGENT-1 shows (and the only workspace the seat plugin
+      # accepts input on); `agent-park` is a hidden shelf for windows that
+      # should not be on screen, e.g. while recording a demo.
+      workspace = [
+        "name:agent,monitor:AGENT-1,default:true,persistent:true"
+        "name:agent-park,monitor:AGENT-1,persistent:true"
+      ];
       windowrule = [
+        "workspace name:agent silent, match:class ^(agent-chromium)$"
+        "no_initial_focus on, match:class ^(agent-chromium)$"
+        "focus_on_activate off, match:class ^(agent-chromium)$"
+
         "workspace name:agent silent, match:class ^(agent-firefox)$"
         "no_initial_focus on, match:class ^(agent-firefox)$"
         "focus_on_activate off, match:class ^(agent-firefox)$"
@@ -195,38 +300,79 @@ in
       Install.WantedBy = [ "hyprland-session.target" ];
     };
 
-    systemd.user.services.agent-firefox = {
+    # Replaced by agent-chromium below: Chromium has the widest site
+    # compatibility, Playwright drives it over DevTools, and its permanent
+    # profile keeps LastPass logged in.
+    # systemd.user.services.agent-firefox = {
+    #   Unit = sessionUnit // {
+    #     Description = "Persistent Firefox for the agent workspace";
+    #     After = sessionUnit.After ++ [ "agent-input-plugin.service" ];
+    #     Requires = sessionUnit.Requires ++ [ "agent-input-plugin.service" ];
+    #   };
+    #   Service = {
+    #     ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${profile}";
+    #     ExecStart = "${package}/bin/agent-desktop exec-session ${osConfig.programs.firefox.finalPackage}/bin/firefox --no-remote --name agent-firefox --profile ${profile} about:blank";
+    #     Environment = [
+    #       "HYPRLAND_AGENT_SEAT=1"
+    #       "GTK_IM_MODULE=gtk-im-context-simple"
+    #       "MOZ_ENABLE_WAYLAND=1"
+    #       "GDK_BACKEND=wayland"
+    #       "GDK_SCALE=1"
+    #     ];
+    #     Restart = "on-failure";
+    #     RestartSec = 5;
+    #     UMask = "0077";
+    #   };
+    #   Install.WantedBy = [ "hyprland-session.target" ];
+    # };
+
+    systemd.user.services.agent-chromium = {
       Unit = sessionUnit // {
-        Description = "Persistent Firefox for the agent workspace";
+        Description = "Agent Chromium on AGENT-1 (agent seat, permanent profile)";
         After = sessionUnit.After ++ [ "agent-input-plugin.service" ];
-        Requires = sessionUnit.Requires ++ [ "agent-input-plugin.service" ];
+        Wants = [ "agent-input-plugin.service" ];
       };
       Service = {
-        ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${profile}";
-        ExecStart = "${package}/bin/agent-desktop exec-session ${osConfig.programs.firefox.finalPackage}/bin/firefox --no-remote --name agent-firefox --profile ${profile} about:blank";
-        Environment = [
-          "HYPRLAND_AGENT_SEAT=1"
-          "GTK_IM_MODULE=gtk-im-context-simple"
-          "MOZ_ENABLE_WAYLAND=1"
-          "GDK_BACKEND=wayland"
-          "GDK_SCALE=1"
-        ];
-        Restart = "on-failure";
-        RestartSec = 5;
+        ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${chromiumProfile}";
+        ExecStart = "${package}/bin/agent-desktop exec-session ${pkgs.chromium}/bin/chromium ${agentChromiumArgs} --no-startup-window";
+        Environment = [ "HYPRLAND_AGENT_SEAT=1" ];
+        Restart = "always";
+        RestartSec = 3;
         UMask = "0077";
       };
       Install.WantedBy = [ "hyprland-session.target" ];
     };
 
-    home.file =
-      lib.genAttrs
-        [
-          ".agents/skills/computer-use"
-          ".claude/skills/computer-use"
-          ".codex/skills/computer-use"
-        ]
-        (_: {
-          source = ./skill/computer-use;
-        });
+    # Cua Driver daemon; `cua-driver mcp` and `cua-driver call` connect to it.
+    # No overlay: its cursor layer would cover Erik's monitors too.
+    systemd.user.services.cua-driver = {
+      Unit = sessionUnit // {
+        Description = "Cua Driver computer-use daemon";
+      };
+      Service = {
+        ExecStart = "${package}/bin/agent-desktop exec-session ${cuaDriver}/bin/cua-driver serve --no-overlay";
+        Environment = lib.mapAttrsToList (n: v: "${n}=${v}") cuaEnv;
+        Restart = "always";
+        RestartSec = 3;
+        UMask = "0077";
+      };
+      Install.WantedBy = [ "hyprland-session.target" ];
+    };
+    home.sessionVariables = cuaEnv;
+
+    home.file = lib.mergeAttrsList (
+      lib.mapCartesianProduct ({ dir, skill }: { "${dir}/${skill}".source = ./skill + "/${skill}"; }) {
+        dir = [
+          ".agents/skills"
+          ".claude/skills"
+          ".codex/skills"
+        ];
+        skill = [
+          "computer-use"
+          "browser-use"
+          "screen-recording"
+        ];
+      }
+    );
   };
 }

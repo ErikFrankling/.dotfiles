@@ -103,7 +103,7 @@ def main():
         monitors = query("monitors")
         windows = [w for w in query("clients") if w["workspace"]["name"] == WORKSPACE]
         units = {}
-        for unit in ("agent-desktop", "agent-input-plugin", "agent-computer-use", "agent-desktop-permissions", "agent-firefox", "agent-desktop-vnc"):
+        for unit in ("agent-desktop", "agent-input-plugin", "agent-computer-use", "agent-desktop-permissions", "agent-chromium", "cua-driver", "agent-desktop-vnc"):
             units[unit] = run("systemctl", "--user", "show", unit, "--property=ActiveState", "--value")
         print(json.dumps({"output": next((m for m in monitors if m["name"] == OUTPUT), None),
                           "windows": windows, "services": units,
@@ -111,8 +111,8 @@ def main():
                           "viewer": "127.0.0.1:5903 (view-only)"}, indent=2))
     elif command == "start-browser":
         monitor()
-        run("systemctl", "--user", "start", "agent-firefox.service", timeout=30)
-        print("Agent Firefox service started on workspace agent")
+        run("systemctl", "--user", "start", "agent-chromium.service", timeout=30)
+        print("Agent Chromium running on workspace agent (Playwright: http://127.0.0.1:9222)")
     elif command == "screenshot" and len(sys.argv) == 3:
         monitor()
         target = Path(sys.argv[2]).expanduser().absolute()

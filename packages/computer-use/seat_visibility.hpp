@@ -36,6 +36,12 @@ private:
     std::string item;
     while (std::getline(env, item, '\0'))
       if (item == "HYPRLAND_AGENT_SEAT=1") return true;
+    // Chromium and Electron overwrite their environment block with the process
+    // title at startup, so the variable is unreadable there. Their command
+    // line survives; they opt in with an extra (ignored) switch instead.
+    std::ifstream args("/proc/" + std::to_string(pid) + "/cmdline", std::ios::binary);
+    while (std::getline(args, item, '\0'))
+      if (item == "--hyprland-agent-seat") return true;
     return false;
   }
   static bool filter(const wl_client *client, const wl_global *global, void *data) {
