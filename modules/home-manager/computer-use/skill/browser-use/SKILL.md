@@ -56,8 +56,9 @@ not for choosing what to click.
   `{action:"select", index}`, close finished ones with `{action:"close"}`.
 - Every `agent-chromium` window is forced onto AGENT-1 by a Hyprland rule, so
   nothing can open on Erik's monitors. Still, don't open extra windows.
-- Pages you open are closed when your MCP session ends; logins persist
-  (cookies live in the profile).
+- Tabs **persist after your session** (it's a real browser profile). When the
+  task is done, close every tab you opened (`browser_tabs` `{action:"close"}`
+  per tab) so the next agent starts clean. Logins stay; they live in cookies.
 - Never start another browser (no `chromium`, `google-chrome`, `firefox`,
   `npx playwright`, headless browsers): they have none of the logins and may
   open on Erik's screens. Erik's own Firefox is off limits.

@@ -81,7 +81,7 @@ Burn captions (bottom, readable box) plus a title card for the first 3 s:
 
 ```sh
 ffmpeg -y -i "$D/raw.mp4" -vf "\
-subtitles=$D/captions.srt:force_style='FontSize=24,PrimaryColour=&H00FFFFFF,BackColour=&H99000000,BorderStyle=4,Outline=0,Shadow=0,MarginV=40',\
+subtitles=$D/captions.srt:force_style='FontSize=24,PrimaryColour=&H00FFFFFF,BackColour=&H20000000,BorderStyle=4,Outline=0,Shadow=0,MarginV=40',\
 drawtext=text='Demo\: password reset flow':fontsize=44:fontcolor=white:box=1:boxcolor=black@0.7:boxborderw=24:x=(w-text_w)/2:y=(h-text_h)/2:enable='lt(t,3)'" \
   -c:v libx264 -crf 20 -pix_fmt yuv420p -movflags +faststart "$D/demo.mp4"
 ```

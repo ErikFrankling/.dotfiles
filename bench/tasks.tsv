@@ -1,0 +1,4 @@
+t1	Use computer use: go to GitHub trending for Rust (this week) and tell me the top 3 repositories with their total star counts.
+t2	Use computer use to QA the login form at https://the-internet.herokuapp.com/login . Test a wrong password, then log in with tomsmith / SuperSecretPassword! , then log out. Report what each step showed and whether anything looks broken.
+t3	Use computer use to make a short screen recording (with captions explaining each step) of searching Wikipedia for "Hyprland" and opening the article. Give me the path to the final video.
+t4	Use computer use to open pavucontrol on your monitor and tell me which output device is the default and what its volume is. Close it when done.

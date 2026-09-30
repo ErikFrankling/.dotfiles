@@ -118,10 +118,16 @@ tidy:
 
 Two routes. Pick the first that works:
 
-1. **By element (accessibility, fastest, most robust):** from
-   `get_window_state`, `mcp__cua__click` / `double_click` / `right_click` with
-   `element_index` (plus the `snapshot_id` or `element_token` it gave you), and
-   `mcp__cua__set_value` to fill text fields. No coordinates, no focus needed.
+1. **By element (accessibility, fastest):** from `get_window_state`,
+   `mcp__cua__click` / `double_click` / `right_click` with the `element_token`
+   (or `snapshot_id` + `element_index`), and `mcp__cua__set_value` for text
+   fields. **Only for elements whose `actions` list is non-empty** (`click`,
+   `press`, `activate`, `toggle`...). Elements with `actions=[]` (e.g. GTK tabs,
+   many list rows) can't be activated this way: Cua then falls back to X11
+   input, which fails on this Wayland desktop ("X11 connection failed"). Use
+   route 2 for those, clicking the centre of the element's `frame`.
+   Results with `"effect":"unverifiable"` mean "sent", not "worked": re-read
+   the tree or screenshot to confirm.
 2. **Real keyboard/mouse on the agent seat:** `mcp__agent-seat__input_window`
    with `window_id`, the window's current `revision` (from `list_windows` /
    `view_window`) and a list of `actions`:
@@ -143,7 +149,8 @@ Two routes. Pick the first that works:
 
    Coordinates are **window-local logical pixels**. If you clicked from a
    downscaled screenshot, convert with its `image_to_window` transform:
-   `x = px * scale_x + offset_x`.
+   `x = px * scale_x + offset_x`. From a Cua element `frame` (screen
+   coordinates): `x = frame.x + frame.w/2 - window_bounds.x`, same for y.
 
 **Testing keyboard input** (for QA): focus the field by clicking it, send
 `text` then check the value in `get_window_state` (the element's `value`) or a

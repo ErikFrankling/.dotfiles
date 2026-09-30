@@ -136,8 +136,14 @@ in
       };
       # Cua Driver: windows, accessibility trees, captures, element actions.
       cua = {
-        command = "${cuaDriver}/bin/cua-driver";
-        args = [ "mcp" ];
+        # exec-session supplies HYPRLAND_INSTANCE_SIGNATURE/WAYLAND_DISPLAY,
+        # which harness shells often lack; without them it finds no windows.
+        command = "${package}/bin/agent-desktop";
+        args = [
+          "exec-session"
+          "${cuaDriver}/bin/cua-driver"
+          "mcp"
+        ];
         env = cuaEnv;
       };
       # Raw keyboard/pointer on the agent seat, window capture and recording.
