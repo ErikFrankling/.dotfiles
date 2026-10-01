@@ -77,6 +77,12 @@ Then find it with `mcp__cua__list_windows` or `hyprctl -i 0 clients -j` (match
   those. If you did by accident, close only that new window.
 - Native Wayland apps work best. XWayland apps and kitty cannot use the agent
   seat; use GNOME Terminal if you need a GUI terminal (you normally have a shell).
+- A watcher moves any window of an agent-seat app (dialogs, extra windows)
+  or of a program you started straight from your shell onto workspace `agent`
+  the instant it opens. That is a safety net, not the plan: a window launched
+  without the `[workspace name:agent silent]` rule still flashes on Erik's
+  screen for a moment and, without the seat marker, can't take your input.
+  Always launch with the full command above.
 - Close what you open when you are done:
   `hyprctl -i 0 dispatch closewindow address:0x...` (your window's address only).
 

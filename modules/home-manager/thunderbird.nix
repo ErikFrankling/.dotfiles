@@ -129,7 +129,9 @@ in
     user_pref("mail.smtpserver.smtp_kth.hostname", "smtp.kth.se");
     user_pref("mail.smtpserver.smtp_kth.port", 587);
     user_pref("mail.smtpserver.smtp_kth.try_ssl", 2);
-    user_pref("mail.smtpserver.smtp_kth.username", "ug.kth.se\\erikfran");
+    // smtp.kth.se only accepts the bare KTH username. The ug.kth.se\ form that
+    // IMAP wants is rejected here with "535 authentication failed".
+    user_pref("mail.smtpserver.smtp_kth.username", "erikfran");
     user_pref("mail.smtpserver.smtp_kth.authMethod", 3);
 
     // ===== Outlook.com — erik.frankling@outlook.com (OAuth2) =====

@@ -212,9 +212,13 @@ in
 
     # Powering the monitors off leaves AGENT-1 as the only output, so Hyprland
     # parks the pointer and focus there and keeps them after reconnect.
+    # The same watcher keeps agent windows off Erik's monitors: only an app's
+    # first window follows its launch rule, so every later window of an
+    # agent-seat process (and anything a harness spawns directly) is moved to
+    # workspace agent as soon as Hyprland announces it.
     systemd.user.services.agent-desktop-return-focus = {
       Unit = sessionUnit // {
-        Description = "Return pointer and focus from AGENT-1 when a display connects";
+        Description = "Keep agent windows on AGENT-1 and return focus when a display connects";
       };
       Service = {
         ExecStart = "${package}/bin/agent-desktop watch-focus";

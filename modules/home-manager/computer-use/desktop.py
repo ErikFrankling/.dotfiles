@@ -9,6 +9,7 @@ import sys
 
 OUTPUT = "AGENT-1"
 WORKSPACE = "agent"
+AGENT_WORKSPACES = ("agent", "agent-park")
 
 
 def run(*args, timeout=15):
@@ -57,14 +58,89 @@ def return_focus():
         print(f"Returned focus from {OUTPUT} to {human['name']}", flush=True)
 
 
+def agent_process(pid):
+    """True for processes that opted in to the agent seat (or their children)."""
+    try:
+        for _ in range(6):
+            process = Path("/proc") / str(int(pid))
+            if process.stat().st_uid != os.getuid():
+                return False
+            # Chromium/Electron overwrite their environment block, so they opt
+            # in with a command-line switch instead (same rule as the plugin).
+            if (b"HYPRLAND_AGENT_SEAT=1" in (process / "environ").read_bytes().split(b"\0")
+                    or b"--hyprland-agent-seat" in (process / "cmdline").read_bytes().split(b"\0")):
+                return True
+            pid = int((process / "stat").read_text().rsplit(")", 1)[1].split()[1])
+            if pid <= 1:
+                return False
+    except (OSError, ValueError, TypeError, IndexError):
+        pass
+    return False
+
+
+HARNESSES = ("claude", "codex", "opencode")
+
+
+def harness_spawned(pid):
+    """True for GUI processes an agent harness started directly (e.g. a
+    Playwright browser or `xdg-open` from an agent's shell)."""
+    try:
+        for _ in range(16):
+            process = Path("/proc") / str(int(pid))
+            name = (process / "comm").read_text().strip().lstrip(".").removesuffix("-wrapped")
+            if name in HARNESSES:
+                return True
+            pid = int((process / "stat").read_text().rsplit(")", 1)[1].split()[1])
+            if pid <= 1:
+                return False
+    except (OSError, ValueError, IndexError):
+        pass
+    return False
+
+
+def hypr_request(command):
+    """One request on Hyprland's command socket, without spawning hyprctl."""
+    path = Path(os.environ["XDG_RUNTIME_DIR"]) / "hypr" / os.environ["HYPRLAND_INSTANCE_SIGNATURE"] / ".socket.sock"
+    with socket.socket(socket.AF_UNIX) as connection:
+        connection.settimeout(2)
+        connection.connect(str(path))
+        connection.sendall(command.encode())
+        chunks = []
+        while chunk := connection.recv(65536):
+            chunks.append(chunk)
+    return b"".join(chunks).decode(errors="replace")
+
+
+def confine_window(address):
+    # Only an app's first window follows the `[workspace name:agent silent]`
+    # launch rule. Later ones (dialogs, compose windows, extra toplevels) open
+    # on whatever workspace has focus, i.e. on Erik's monitor. Send every
+    # window of an agent-seat process, and anything an agent harness spawned
+    # itself, to AGENT-1 the moment it opens.
+    window = next((w for w in json.loads(hypr_request("j/clients"))
+                   if w["address"] == address), None)
+    if (window and window["workspace"]["name"] not in AGENT_WORKSPACES
+            and (agent_process(window["pid"]) or harness_spawned(window["pid"]))):
+        hypr_request(f"dispatch movetoworkspacesilent name:{WORKSPACE},address:{address}")
+        print(f"Moved agent window {window['class']} ({address}) from workspace "
+              f"{window['workspace']['name']} to {WORKSPACE}", flush=True)
+
+
 def watch_focus():
     return_focus()
+    for window in query("clients"):
+        confine_window(window["address"])
     events = Path(os.environ["XDG_RUNTIME_DIR"]) / "hypr" / os.environ["HYPRLAND_INSTANCE_SIGNATURE"] / ".socket2.sock"
     with socket.socket(socket.AF_UNIX) as connection:
         connection.connect(str(events))
         for line in connection.makefile("rb"):
             if line.startswith(b"monitoradded>>"):
                 return_focus()
+            elif line.startswith(b"openwindow>>"):
+                try:
+                    confine_window("0x" + line[12:].split(b",", 1)[0].decode())
+                except (OSError, ValueError, KeyError) as error:
+                    print(f"confine failed: {error}", flush=True)
 
 
 def main():
