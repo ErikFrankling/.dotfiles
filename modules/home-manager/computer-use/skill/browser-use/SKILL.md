@@ -101,6 +101,44 @@ when he closes it the browser returns to AGENT-1 with the session saved, and you
 continue. His master password never passes through you. For a one-off code
 (SMS/authenticator), you can instead ask him for the code in chat.
 
+## Email codes and confirmation links (Thunderbird)
+
+Logins often send a code or "confirm it's you" link by email. You can read
+Erik's mail yourself; don't ask him to copy codes. His accounts:
+`erik.frankling@frankling.se` (Office 365), `erik.frankling@gmail.com`,
+`ef.pro454@gmail.com`, KTH (`erikfran`), `erik.frankling@outlook.com`.
+Thunderbird is always running on his desktop with all of them. In order:
+
+1. **Webmail in your browser**, if that mailbox is already logged in there
+   (`https://mail.google.com`, `https://outlook.office.com`): open it in a
+   tab and read the newest message.
+2. **Look at Thunderbird (read-only).** It is Erik's window on his
+   monitor: never click, type in, or move it. Capture it without touching it:
+   `mcp__cua__list_windows` (find `app_name` `thunderbird`), then
+   `mcp__cua__get_window_state` with that `pid`/`window_id` and
+   `include_accessibility_tree:false` for a screenshot of the window, and
+   `mcp__cua__zoom` to read small text. The message list usually shows the
+   newest mail's sender and subject, which is often enough (many codes are in
+   the subject line). Wait ~20-60 s after triggering the mail and capture again.
+3. **Read the mail store on disk** for the body (code or link inside the
+   message). Thunderbird keeps mbox files; newest messages are at the end:
+
+   ```sh
+   for f in ~/.thunderbird/default/ImapMail/*/INBOX*; do
+     case "$f" in *.msf) continue;; esac
+     echo "== $f ($(date -r "$f" '+%F %H:%M'))"
+     tail -c 400000 "$f" | grep -a -E '^(From|Date|Subject): ' | tail -6
+   done
+   # then print the newest matching message body:
+   tail -c 400000 "FILE" | grep -a -i -A60 '^Subject: .*KEYWORD' | tail -80
+   ```
+
+   These files lag behind for some accounts (bodies are stored when
+   Thunderbird syncs or the message is opened), so check the file's timestamp.
+
+If the mail is visible in Thunderbird's list but its body isn't on disk yet and
+you need the body, ask Erik to click that message (or to read you the code).
+
 ## QA / testing web apps
 
 - Reproduce as a user would: navigate, click, type; after each step check
