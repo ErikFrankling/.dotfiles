@@ -22,6 +22,7 @@
     # ./eww
     # ./ags
     ./thunderbird.nix
+    ./mime-apps.nix
     ./zen.nix
     ./kitty.nix
     ./ai.nix

@@ -29,7 +29,15 @@ in
   home.file.".thunderbird/default/user.js".text = ''
     // Thunderbird declarative config — managed by home-manager
 
-    user_pref("mail.accountmanager.accounts", "account_frankling,account_gmail1,account_gmail2,account_kth,account_outlook");
+    // Local Folders has to be in this list. Left out, Thunderbird found no
+    // local account at every start and made a fresh one (account1..account38).
+    user_pref("mail.accountmanager.accounts", "account_frankling,account_gmail1,account_gmail2,account_kth,account_outlook,account_local");
+    user_pref("mail.accountmanager.localfoldersserver", "server1");
+    user_pref("mail.account.account_local.server", "server1");
+    user_pref("mail.server.server1.type", "none");
+    user_pref("mail.server.server1.hostname", "Local Folders");
+    user_pref("mail.server.server1.userName", "nobody");
+    user_pref("mail.server.server1.name", "Local Folders");
     user_pref("mail.accountmanager.defaultaccount", "account_frankling");
     user_pref("mail.smtpservers", "smtp_frankling,smtp_gmail1,smtp_gmail2,smtp_kth,smtp_outlook");
     user_pref("mail.smtp.defaultserver", "smtp_frankling");
