@@ -32,6 +32,17 @@ in
             fetcherVersion = 4;
             hash = "sha256-S8LAyBlmZMS/DGVV8EjRHqBlOHqe+N4eaKBSwPO3Uks=";
           };
+
+          # node-pty ships a prebuilt pty.node that needs libstdc++ but has no
+          # rpath for it. Node already has libstdc++ loaded, so `t3 serve`
+          # works; Electron links libc++ statically, so the desktop app's
+          # backend died on startup and no window ever opened.
+          postFixup = (oldAttrs.postFixup or "") + ''
+            find "$out"/libexec/t3code \
+              -path '*/node-pty/prebuilds/linux-${prev.stdenv.hostPlatform.node.arch}/pty.node' \
+              -exec ${otherPkgs.pkgsMaster.patchelf}/bin/patchelf \
+                --add-rpath ${prev.lib.getLib otherPkgs.pkgsMaster.stdenv.cc.cc}/lib {} +
+          '';
         }
       );
     t3code-resource-monitor = t3codeBase.passthru.resourceMonitor;
