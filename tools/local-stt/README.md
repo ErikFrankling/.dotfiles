@@ -21,7 +21,7 @@ It also releases completed decoder-prefill scratch memory while retaining model
 weights. These changes allow the tested long-context request with both workers
 resident. See the [measured repair results](../../research/stt/2026-09-20/DICTATION_REPAIR.md).
 
-A monitor stops the owned worker above 17 GiB total GPU use, below 3 GiB
+A monitor stops the owned worker above 19 GiB total GPU use, below 3 GiB
 available host RAM, above 6 GiB anonymous worker RAM, or above 256 MiB worker
 swap. This observes memory rather than reserving VRAM: competing GPU workloads
 can still cause a request to fail. Failure retains the original draft and audio.

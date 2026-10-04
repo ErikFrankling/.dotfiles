@@ -150,7 +150,7 @@ async def monitor():
                     peaks = state.setdefault("resources", {})
                     for key, value in {"total_vram_bytes": vram, "anonymous_ram_bytes": anonymous, "swap_bytes": swap}.items():
                         peaks[key] = max(peaks.get(key, 0), value)
-            if vram > 17 * 1024**3 or available < 3 * 1024**3 or anonymous > 6 * 1024**3 or swap > 256 * 1024**2:
+            if vram > 19 * 1024**3 or available < 3 * 1024**3 or anonymous > 6 * 1024**3 or swap > 256 * 1024**2:
                 log("worker.memory_guard", worker=name, pid=process.pid, total_vram=vram,
                     available_ram=available, anonymous_ram=anonymous, swap=swap,
                     recordings=[s["id"] for s in sessions.values() if s["status"] in {"recording", "finalizing"}])
