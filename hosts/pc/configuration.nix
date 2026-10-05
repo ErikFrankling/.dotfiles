@@ -21,6 +21,7 @@
     # so membership adds nothing and conflicts with Mullvad's lockdown. Other
     # tailnet devices reach it through the subnet router.
     # ../../modules/nixos/laptop.nix
+    ../../modules/nixos/mullvad.nix
     ../../modules/nixos/local-stt.nix
     ../../modules/nixos/desktop.nix
     # ../../modules/nixos/keyring.nix -- disabled: the default keyring on disk
@@ -51,8 +52,6 @@
   services.udev.extraRules = ''
     ACTION=="add", SUBSYSTEM=="drm", DRIVERS=="amdgpu", KERNEL=="card1", ATTR{device/power_dpm_force_performance_level}="profile_peak"
   '';
-
-  services.mullvad-vpn.enable = true;
 
   services.openssh = {
     settings.PasswordAuthentication = true;
