@@ -23,6 +23,10 @@ class RecordingTests(unittest.IsolatedAsyncioTestCase):
         gateway.sessions['recording'] = dict(id='recording', owner='alice', project='', status='recording',
             draft='', final='', error='', bytes=0, created=0, vocabulary=[], sequence=0)
         app = web.Application()
+        app['client'] = None
+        patcher = patch.object(gateway, 'ensure_preview')
+        patcher.start()
+        self.addCleanup(patcher.stop)
         app.router.add_post('/dictation', gateway.action)
         self.client = TestClient(TestServer(app))
         await self.client.start_server()
@@ -68,18 +72,81 @@ class RecordingTests(unittest.IsolatedAsyncioTestCase):
 
 
 
-    async def test_failed_refinement_keeps_draft_and_original_audio(self):
+    def transcriber(self, *texts):
+        response = MagicMock()
+        response.json = AsyncMock(side_effect=[{'text': text} for text in texts])
+        client = MagicMock()
+        client.post.return_value.__aenter__ = AsyncMock(return_value=response)
+        client.post.return_value.__aexit__ = AsyncMock(return_value=False)
+        return client
+
+    def record(self, seconds=1, **fields):
         state = gateway.sessions['recording']
-        state['draft'] = 'Keep my first draft.'
-        pcm = b'\x01\x00' * 16000
+        pcm = b'\x01\x00' * 16000 * seconds
         (gateway.ROOT / 'recording' / 'audio.pcm').write_bytes(pcm)
-        state['bytes'] = len(pcm)
-        with patch.object(gateway, 'start_worker', AsyncMock(side_effect=RuntimeError('worker stopped'))):
-            await gateway.finalize(state, None)
-        self.assertEqual(state['status'], 'error')
-        self.assertEqual(state['draft'], 'Keep my first draft.')
+        state.update(bytes=len(pcm), **fields)
+        return state, pcm
+
+    async def test_finalization_outlasts_worker_failures(self):
+        state, pcm = self.record(draft='Keep my first draft.')
+        failures = [RuntimeError('not enough free GPU memory'), RuntimeError('final worker exited during startup'), None]
+        with patch.object(gateway, 'start_worker', AsyncMock(side_effect=failures)), \
+             patch.object(gateway, 'stop_worker', AsyncMock()) as stop, \
+             patch.object(gateway.asyncio, 'sleep', AsyncMock()) as sleep, \
+             patch.object(gateway, 'project_context', return_value=('', [])):
+            await gateway.finalize(state, self.transcriber('Full quality.'))
+        self.assertEqual(state['status'], 'complete')
+        self.assertEqual(state['final'], 'Full quality.')
+        self.assertEqual(state['error'], '')
+        self.assertEqual([call.args[0] for call in sleep.call_args_list], [2, 4])
+        stop.assert_awaited_once_with('final')
         self.assertEqual((gateway.ROOT / 'recording' / 'audio.pcm').read_bytes(), pcm)
-        self.assertTrue((gateway.ROOT / 'recording' / 'audio.wav').exists())
+
+    async def test_interrupted_finalization_resumes_after_restart(self):
+        state, _ = self.record()
+        with patch.object(gateway, 'start_worker', AsyncMock(side_effect=gateway.asyncio.CancelledError)):
+            with self.assertRaises(gateway.asyncio.CancelledError):
+                await gateway.finalize(state, None)
+        saved = json.loads((gateway.ROOT / 'recording' / 'state.json').read_text())
+        self.assertEqual(saved['status'], 'finalizing')
+
+    async def test_silence_completes_without_text_instead_of_retrying_forever(self):
+        state, _ = self.record()
+        with patch.object(gateway, 'start_worker', AsyncMock()), \
+             patch.object(gateway, 'project_context', return_value=('', [])):
+            await gateway.finalize(state, self.transcriber('[silence]', ''))
+        self.assertEqual(state['status'], 'complete')
+        self.assertEqual(state['final'], '')
+
+    async def test_truncated_long_transcript_is_redone_in_shorter_windows(self):
+        draft = ' '.join(['word'] * 400)
+        state, _ = self.record(seconds=200, draft=draft)
+        with patch.object(gateway, 'start_worker', AsyncMock()), \
+             patch.object(gateway, 'project_context', return_value=('', [])):
+            await gateway.finalize(state, self.transcriber('Only the start.', draft[:1000], draft[1000:]))
+        self.assertEqual(state['final'], draft)
+        self.assertEqual(len(state['quality_segments']), 2)
+
+    async def test_start_is_immediate_idempotent_and_allowed_during_finalization(self):
+        gateway.sessions['recording']['status'] = 'finalizing'
+        identifier = '11111111-2222-3333-4444-555555555555'
+        with patch.object(gateway, 'ensure_preview') as preview, \
+             patch.object(gateway, 'warm', AsyncMock()):
+            first = await self.client.post('/dictation', json=dict(action='start', id=identifier), headers={'X-STT-Owner': 'alice'})
+            again = await self.client.post('/dictation', json=dict(action='start', id=identifier), headers={'X-STT-Owner': 'alice'})
+            other = await self.client.post('/dictation', json=dict(action='start', id=identifier), headers={'X-STT-Owner': 'bob'})
+            bad = await self.client.post('/dictation', json=dict(action='start', id='../etc'), headers={'X-STT-Owner': 'alice'})
+        self.assertEqual([first.status, again.status, other.status, bad.status], [200, 200, 409, 400])
+        self.assertEqual((await first.json())['status'], 'recording')
+        preview.assert_called_once()
+        self.assertTrue((gateway.ROOT / identifier / 'audio.pcm').exists())
+
+    async def test_abandoned_recording_does_not_hold_the_gpu(self):
+        state = gateway.sessions['recording']
+        state['touched'] = gateway.time.time()
+        self.assertTrue(gateway.busy())
+        state['touched'] -= gateway.ACTIVE_SECONDS + 1
+        self.assertFalse(gateway.busy())
 
     async def test_background_completion_does_not_skip_the_quality_pass(self):
         state = gateway.sessions['recording']

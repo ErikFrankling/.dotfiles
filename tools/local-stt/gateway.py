@@ -9,7 +9,6 @@ import re
 import time
 import uuid
 import wave
-import traceback
 from pathlib import Path
 
 from aiohttp import ClientSession, ClientTimeout, ClientWSTimeout, WSMsgType, web
@@ -23,6 +22,9 @@ VIBE = os.environ.get("STT_FINAL_URL", "http://127.0.0.1:8783")
 FINAL_IDLE_SECONDS = float(os.environ.get("STT_FINAL_IDLE_SECONDS", "18000"))
 LLAMA_SWAP = os.environ.get("STT_LLAMA_SWAP_URL", "")
 FINAL_VRAM_BYTES = 11 * 1024**3
+# The loaded recogniser holds ~9.2 GiB. Below this much free GPU memory a load
+# cannot succeed and would only push the desktop into its crash band.
+FINAL_LOAD_BYTES = 9.5 * 1024**3
 last_used = {}
 MAX_BYTES = 16000 * 2 * 30 * 60
 sessions = {}
@@ -32,6 +34,22 @@ worker_locks = {name: asyncio.Lock() for name in ("preview", "final")}
 SAMPLE_BYTES = 32000
 CHUNK_SECONDS = 30
 QUALITY_SECONDS = 420
+# Final-pass window per attempt. Shorter windows need less GPU scratch memory,
+# so a recording that cannot be transcribed in one piece still completes.
+RETRY_WINDOWS = (QUALITY_SECONDS, QUALITY_SECONDS, 120, 120, CHUNK_SECONDS)
+ACTIVE_SECONDS = 120
+background = set()
+
+
+class EmptyTranscript(ValueError):
+    pass
+
+
+def spawn(coroutine):
+    task = asyncio.create_task(coroutine)
+    background.add(task)
+    task.add_done_callback(background.discard)
+    return task
 
 
 def log(event, state=None, **fields):
@@ -71,17 +89,30 @@ def vram_free():
 
 async def make_room(client):
     """Ask llama-swap to unload its (idle) model when the final recogniser won't fit."""
-    if not LLAMA_SWAP or vram_free() >= FINAL_VRAM_BYTES:
-        return
-    try:
-        async with client.get(LLAMA_SWAP + "/unload", timeout=ClientTimeout(total=30)) as response:
-            log("worker.make_room", status=response.status, free_vram=vram_free())
-    except (OSError, asyncio.TimeoutError) as error:
-        log("worker.make_room_failed", error=str(error))
+    if LLAMA_SWAP and vram_free() < FINAL_VRAM_BYTES:
+        try:
+            async with client.get(LLAMA_SWAP + "/unload", timeout=ClientTimeout(total=30)) as response:
+                status = response.status
+            # llama-swap answers before its model process has released the GPU.
+            for _ in range(25):
+                if vram_free() >= FINAL_VRAM_BYTES:
+                    break
+                await asyncio.sleep(0.2)
+            log("worker.make_room", status=status, free_vram=vram_free())
+        except (OSError, asyncio.TimeoutError) as error:
+            log("worker.make_room_failed", error=str(error))
+    if vram_free() < FINAL_LOAD_BYTES:
+        raise RuntimeError(f"not enough free GPU memory for the final recogniser ({vram_free() / 1024**3:.1f} GiB)")
+
+
+def active(state):
+    """A recording whose browser went away must not hold the GPU forever."""
+    return state["status"] == "finalizing" or (
+        state["status"] == "recording" and time.time() - state.get("touched", 0) < ACTIVE_SECONDS)
 
 
 def busy():
-    return any(s["status"] in {"recording", "finalizing"} for s in sessions.values())
+    return any(active(s) for s in sessions.values())
 
 
 async def release_gpu(_request):
@@ -146,14 +177,18 @@ async def monitor():
             anonymous = int(status.get("RssAnon", "0").split()[0]) * 1024
             swap = int(status.get("VmSwap", "0").split()[0]) * 1024
             for state in sessions.values():
-                if state["status"] in {"recording", "finalizing"}:
+                if active(state):
                     peaks = state.setdefault("resources", {})
                     for key, value in {"total_vram_bytes": vram, "anonymous_ram_bytes": anonymous, "swap_bytes": swap}.items():
                         peaks[key] = max(peaks.get(key, 0), value)
-            if vram > 19.5 * 1024**3 or available < 3 * 1024**3 or anonymous > 6 * 1024**3 or swap > 256 * 1024**2:
+            # Low host RAM only counts against a worker that is itself holding
+            # RAM: the models live on the GPU, so stopping a ~100 MiB process
+            # frees nothing and costs a minute-long reload on the next recording.
+            hungry = available < 3 * 1024**3 and anonymous + swap > 1024**3
+            if vram > 19.5 * 1024**3 or hungry or anonymous > 6 * 1024**3 or swap > 256 * 1024**2:
                 log("worker.memory_guard", worker=name, pid=process.pid, total_vram=vram,
                     available_ram=available, anonymous_ram=anonymous, swap=swap,
-                    recordings=[s["id"] for s in sessions.values() if s["status"] in {"recording", "finalizing"}])
+                    recordings=[s["id"] for s in sessions.values() if active(s)])
                 await stop_worker(name)
                 break
 
@@ -231,11 +266,11 @@ def result(state):
     return {k: state[k] for k in ("id", "status", "draft", "final", "error", "bytes")}
 
 
-async def receive(state):
+async def receive(state, ws, base):
     partial = ""
-    completed = []
+    completed = [base] if base else []
     try:
-        async for message in state["ws"]:
+        async for message in ws:
             if message.type != WSMsgType.TEXT:
                 continue
             event = json.loads(message.data)
@@ -246,10 +281,60 @@ async def receive(state):
                 completed.append(event.get("transcript", ""))
                 partial = ""
             elif kind == "error":
-                state["error"] = "Streaming preview unavailable; original audio is retained."
+                log("preview.error", state, detail=str(event)[:300])
             state["draft"] = " ".join(completed + [partial]).strip()
     except (OSError, ValueError):
-        state["error"] = "Streaming connection interrupted; final transcription remains available."
+        pass
+
+
+async def preview(state, client):
+    """Feed the retained audio to the streaming recogniser.
+
+    The draft is a convenience, never a precondition for recording: this reads
+    from the audio file, so it starts late, catches up, and reconnects after a
+    worker restart without the browser noticing.
+    """
+    path = ROOT / state["id"] / "audio.pcm"
+    sent = failures = 0
+    base = ""  # everything is replayed from the file, including after a restart
+    while state["status"] == "recording" or (state["status"] == "finalizing" and sent < state["bytes"]):
+        ws = reader = None
+        try:
+            await start_worker("preview", client)
+            ws = await client.ws_connect(
+                NEMO + "/v1/audio/transcriptions/realtime", timeout=ClientWSTimeout(ws_close=10)
+            )
+            await ws.send_json({"type": "session.update", "session": {
+                "sample_rate": 16000, "language": "en", "automatic_punctuation": True,
+            }})
+            reader = asyncio.create_task(receive(state, ws, base))
+            while not reader.done():
+                with path.open("rb") as audio:
+                    audio.seek(sent)
+                    pcm = audio.read(SAMPLE_BYTES)
+                pcm = pcm[:len(pcm) // 2 * 2]
+                if pcm:
+                    await ws.send_bytes(pcm)
+                    sent += len(pcm)
+                    failures = 0
+                elif state["status"] != "recording":
+                    await asyncio.sleep(0.4)  # let the last words arrive
+                    return
+                else:
+                    await asyncio.sleep(0.1)
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:
+            log("preview.interrupted", state, error_type=type(error).__name__, error=str(error))
+        finally:
+            if ws is not None:
+                await ws.close()
+            if reader is not None:
+                reader.cancel()
+                await asyncio.gather(reader, return_exceptions=True)
+        base = state["draft"]
+        failures += 1
+        await asyncio.sleep(min(10, failures))
 
 
 def chunk_end(pcm, start, finishing=False, seconds=CHUNK_SECONDS):
@@ -299,13 +384,13 @@ def merge_transcripts(previous, current):
     return " ".join(part for part in (previous, current) if part)
 
 
-async def refine_available(state, client, finishing=False, quality=False):
+async def refine_available(state, client, finishing=False, quality=False, seconds=None):
     # The short background sections are progress, not the final quality result.
     # Keep separate checkpoints so retries never mistake them for the long-context pass.
     offset_key = "quality_bytes" if quality else "refined_bytes"
     text_key = "quality_text" if quality else "final"
     segments_key = "quality_segments" if quality else "segments"
-    seconds = QUALITY_SECONDS if quality else CHUNK_SECONDS
+    seconds = seconds or (QUALITY_SECONDS if quality else CHUNK_SECONDS)
     async with final_lock:
         pcm_path = ROOT / state["id"] / "audio.pcm"
         pcm = pcm_path.read_bytes()
@@ -335,8 +420,6 @@ async def refine_available(state, client, finishing=False, quality=False):
                 data = await response.json()
             text = data.get("text", "").strip()
             text = re.sub(r"\[(?:breathing|silence|noise|environmental sounds|music|laughter)\]\s*", "", text, flags=re.I).strip()
-            if not text and quality:
-                raise ValueError("The recognizer returned an empty transcript.")
             if not text:
                 log("refinement.no_speech", state, start=start, end=end)
             state.pop("background_error", None)
@@ -348,6 +431,8 @@ async def refine_available(state, client, finishing=False, quality=False):
             state.setdefault(segments_key, []).append(dict(start=start, end=end, text=text))
             state[offset_key] = end
             if quality and end == len(pcm):
+                if not state[text_key]:
+                    raise EmptyTranscript("The recognizer returned an empty transcript.")
                 state["final"] = state[text_key]
             save(state)
             if end == len(pcm):
@@ -366,17 +451,38 @@ async def refine_background(state, client):
         save(state)
 
 
+def restart_quality(state):
+    for key in ("quality_bytes", "quality_text", "quality_segments"):
+        state.pop(key, None)
+
+
+def truncated(state):
+    """The streaming draft hears every word; a much shorter final lost speech."""
+    draft, final = len(state["draft"].split()), len(state["final"].split())
+    return draft >= 30 and final < draft * 0.5
+
+
 async def finalize(state, client):
+    """Transcribe the whole recording at full quality, however long that takes.
+
+    Resource failures (GPU taken by another workload, a crashed or guarded
+    worker) are waited out and retried with progressively smaller windows. The
+    recording only ever leaves "finalizing" with a transcript, or because the
+    recogniser twice heard no speech at all.
+    """
     state["status"] = "finalizing"
     state["error"] = ""
     began = time.monotonic()
     log("recording.finalizing", state, bytes=state["bytes"])
     save(state)
     try:
-        if state.get("ws") is not None:
-            await state["ws"].close()
+        if task := state.get("preview"):
+            try:
+                await asyncio.wait_for(task, 3)
+            except (asyncio.TimeoutError, Exception):
+                pass
         if task := state.get("refiner"):
-            await task
+            await asyncio.gather(task, return_exceptions=True)
         pcm = ROOT / state["id"] / "audio.pcm"
         wav = pcm.with_suffix(".wav")
         with wave.open(str(wav), "wb") as output:
@@ -388,21 +494,60 @@ async def finalize(state, client):
         state["runtime"] = {key: os.environ.get(key) for key in (
             "STT_NEMO_BINARY", "STT_NEMO_MODEL", "STT_VIBE_BINARY", "STT_VIBE_CONFIG"
         )}
-        await refine_available(state, client, finishing=True, quality=True)
+        attempt = empties = 0
+        candidate = None
+        while True:
+            seconds = RETRY_WINDOWS[min(attempt, len(RETRY_WINDOWS) - 1)]
+            try:
+                await refine_available(state, client, finishing=True, quality=True, seconds=seconds)
+                if candidate is None and truncated(state) and state["bytes"] > 120 * SAMPLE_BYTES:
+                    # One long window dropped speech; redo in shorter windows
+                    # and keep whichever transcript is more complete.
+                    log("recording.truncated", state, characters=len(state["final"]))
+                    candidate = state["final"]
+                    restart_quality(state)
+                    attempt = max(attempt, 2)
+                    continue
+                if candidate and len(candidate.split()) > len(state["final"].split()):
+                    state["final"] = candidate
+                break
+            except asyncio.CancelledError:
+                raise
+            except EmptyTranscript:
+                empties += 1
+                restart_quality(state)
+                if empties >= 2:
+                    state["final"] = candidate or ""
+                    break
+            except Exception as error:
+                log("recording.retry", state, attempt=attempt, error_type=type(error).__name__,
+                    error=str(error), resources=state.get("resources"))
+                # A worker that answered with an error may be wedged; a fresh
+                # one is cheap next to a transcript that never arrives.
+                if attempt % 2:
+                    await stop_worker("final")
+                save(state)
+                await asyncio.sleep(min(60, 2 * 2 ** min(attempt, 5)))
+            attempt += 1
         state["status"] = "complete"
         log("recording.complete", state, seconds=round(time.monotonic() - began, 3),
-            characters=len(state["final"]))
-    except asyncio.CancelledError:
-        state["status"] = "error"
-        state["error"] = "Transcription interrupted; your recording is saved."
-        raise
-    except Exception as error:
-        log("recording.failed", state, error_type=type(error).__name__, error=str(error),
-            seconds=round(time.monotonic() - began, 3), resources=state.get("resources"))
-        state["status"] = "error"
-        state["error"] = f"Transcription interrupted ({type(error).__name__}). Your recording is saved; retry to continue."
+            characters=len(state["final"]), attempts=attempt + 1)
     finally:
+        # Interrupted by shutdown: stays "finalizing" on disk and resumes at start.
         save(state)
+
+
+def ensure_preview(state, client):
+    task = state.get("preview")
+    if task is None or task.done():
+        state["preview"] = asyncio.create_task(preview(state, client))
+
+
+async def warm(name, client):
+    try:
+        await start_worker(name, client)
+    except Exception as error:
+        log("worker.warm_failed", worker=name, error=str(error))
 
 
 async def action(request):
@@ -412,28 +557,25 @@ async def action(request):
         raise web.HTTPUnauthorized()
     kind = data.get("action")
     if kind == "start":
-        if final_lock.locked() or any(s["status"] in {"recording", "finalizing"} for s in sessions.values()):
-            raise web.HTTPConflict(text="The speech service is busy with another recording.")
-        identifier = str(uuid.uuid4())
+        # Never make the microphone wait: accept at once, load models behind it.
+        # The browser names the recording, which makes a retried start harmless.
+        identifier = str(data.get("id") or uuid.uuid4())
+        if not re.fullmatch(r"[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}", identifier):
+            raise web.HTTPBadRequest(text="Invalid recording identifier.")
+        if existing := sessions.get(identifier):
+            if existing["owner"] != owner:
+                raise web.HTTPConflict(text="Recording identifier is already in use.")
+            return web.json_response(result(existing))
         log("recording.start", recording_id=identifier)
         (ROOT / identifier).mkdir(mode=0o700, parents=True)
         (ROOT / identifier / "audio.pcm").touch(mode=0o600)
         state = dict(id=identifier, owner=owner, project=str(data.get("project", "")),
                      status="recording", draft="", final="", error="", bytes=0,
-                     created=time.time(), vocabulary=[], sequence=0)
+                     created=time.time(), vocabulary=[], sequence=0, touched=time.time())
         sessions[identifier] = state
-        try:
-            await start_worker("preview", request.app["client"])
-            state["ws"] = await request.app["client"].ws_connect(
-                NEMO + "/v1/audio/transcriptions/realtime", timeout=ClientWSTimeout(ws_close=10)
-            )
-            await state["ws"].send_json({"type": "session.update", "session": {
-                "sample_rate": 16000, "language": "en", "automatic_punctuation": True,
-            }})
-            state["reader"] = asyncio.create_task(receive(state))
-        except Exception:
-            state["error"] = "Streaming preview unavailable; you can still record for VibeVoice."
         save(state)
+        ensure_preview(state, request.app["client"])
+        spawn(warm("final", request.app["client"]))
         return web.json_response(result(state))
     state = sessions.get(data.get("id"))
     if state is None or state["owner"] != owner:
@@ -456,12 +598,9 @@ async def action(request):
             output.write(pcm)
         state["bytes"] += len(pcm)
         state["sequence"] += 1
-        try:
-            if state.get("ws") is not None:
-                await state["ws"].send_bytes(pcm)
-        except Exception:
-            state["error"] = "Preview disconnected; original audio is retained."
+        state["touched"] = time.time()
         save(state)
+        ensure_preview(state, request.app["client"])
         if (state["bytes"] - state.get("refined_bytes", 0) >= (CHUNK_SECONDS + 1) * SAMPLE_BYTES
                 and time.time() >= state.get("refine_after", 0)):
             task = state.get("refiner")
@@ -474,14 +613,10 @@ async def action(request):
             state["status"] = "finalizing"
             state["task"] = asyncio.create_task(finalize(state, request.app["client"]))
     elif kind == "cancel":
-        if state["status"] == "finalizing":
-            await stop_worker("final")
-            if task := state.get("task"):
+        for key in ("task", "preview", "refiner"):
+            if task := state.get(key):
                 task.cancel()
                 await asyncio.gather(task, return_exceptions=True)
-        if state.get("ws") is not None:
-            await state["ws"].close()
-        await stop_worker("preview")
         state["status"] = "cancelled"
         save(state)
     elif kind != "status":
@@ -494,34 +629,34 @@ async def lifecycle(app):
     for path in ROOT.glob("*/state.json"):
         try:
             state = json.loads(path.read_text())
-            if state["status"] in {"recording", "finalizing"}:
-                state["status"] = "error"
-                state["error"] = "Service restarted; saved audio is available for retry."
+            # Unfinished work survives a restart: a recording keeps accepting
+            # audio where it stopped, and a transcription resumes below.
             sessions[state["id"]] = state
         except (ValueError, KeyError):
             continue
     async with ClientSession(timeout=ClientTimeout(total=30)) as client:
         app["client"] = client
         watcher = asyncio.create_task(monitor())
-        async def warm():
+        async def warm_all():
             for name in ("preview", "final"):
-                try:
-                    await start_worker(name, client)
-                except Exception:
-                    traceback.print_exc()
-        warmer = asyncio.create_task(warm())
+                await warm(name, client)
+        warmer = asyncio.create_task(warm_all())
+        for state in sessions.values():
+            if state["status"] == "finalizing":
+                state["task"] = asyncio.create_task(finalize(state, client))
         yield
         warmer.cancel()
         await asyncio.gather(warmer, return_exceptions=True)
         watcher.cancel()
         tasks = []
         for state in sessions.values():
-            for key in ("reader", "task", "refiner"):
+            for key in ("preview", "task", "refiner"):
                 if task := state.get(key):
                     task.cancel()
                     tasks.append(task)
-            if state.get("ws") is not None:
-                await state["ws"].close()
+        tasks.extend(background)
+        for task in background:
+            task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
         await asyncio.gather(watcher, return_exceptions=True)
         for name in list(workers):
