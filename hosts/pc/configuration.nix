@@ -24,12 +24,10 @@
     ../../modules/nixos/mullvad.nix
     ../../modules/nixos/local-stt.nix
     ../../modules/nixos/desktop.nix
-    # ../../modules/nixos/keyring.nix -- disabled: the default keyring on disk
-    # was Default_Keyring, not login.keyring, so PAM never unlocked it and
-    # every Secret Service request prompted for a password nobody knew.
-    # Trade-off: Claude Desktop safeStorage falls back to basic_text and
-    # signs out on restart. Re-enable (and reset ~/.local/share/keyrings) if
-    # that becomes annoying again.
+    # Was disabled for a while: under getty autologin PAM never unlocked the
+    # keyring, so every Secret Service request prompted for a password nobody
+    # knew. The module now seeds a passwordless, always-unlocked keyring.
+    ../../modules/nixos/keyring.nix
     ../../modules/nixos/game.nix
     # ../../modules/nixos/ollama.nix
     inputs.home-manager.nixosModules.default
