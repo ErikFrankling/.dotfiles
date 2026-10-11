@@ -135,7 +135,10 @@
     opencode-desktop-nix.inputs.nixpkgs.follows = "nixpkgs";
 
     codex-desktop-linux.url = "github:ilysenko/codex-desktop-linux";
-    codex-desktop-linux.inputs.nixpkgs.follows = "nixpkgs";
+    # Do NOT follow nixpkgs: with the 2026-10-07 nixos-unstable the asar repack
+    # step lists an empty archive layout and the build dies with "Official
+    # app.asar layout is empty". Its own pinned nixpkgs builds fine.
+    # codex-desktop-linux.inputs.nixpkgs.follows = "nixpkgs";
     codex-desktop-linux.inputs.flake-utils.follows = "flake-utils";
 
     # Grok Bot, xAI's desktop agent app (proprietary, ships only as a .deb).

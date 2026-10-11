@@ -11,6 +11,9 @@
 
 ibus.overrideAttrs (old: {
   patches = (old.patches or [ ]) ++ [ ./ibus-native-seat.patch ];
+  # `make install -jN` races in bindings/pygobject: two jobs install
+  # gi/overrides/IBus.py at once and the loser dies with "File exists".
+  enableParallelInstalling = false;
   passthru = (old.passthru or { }) // {
     tests = ((old.passthru or { }).tests or { }) // {
       nativeSeat =

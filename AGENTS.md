@@ -21,6 +21,38 @@
 - `rebuild` with no arguments defaults to `switch`. Pass arguments through when needed, e.g. `rebuild test`, `rebuild boot`, or `rebuild switch`.
 - After changing this NixOS/Home Manager configuration, always run a real rebuild with `rebuild` before yielding unless Erik explicitly says not to apply the change.
 
+### Hard Rule: Pull From a Binary Cache, Do Not Compile (Erik, 2026-10-08)
+
+**If a rebuild is compiling something, that is probably a mistake.** Packages
+must come from a binary cache almost always. A rebuild that takes a long time
+is a bug to analyze, not something to wait out.
+
+- **Before a real rebuild after any input change, check what would build
+  locally:** `nix build --dry-run .#nixosConfigurations.<host>.config.system.build.toplevel`
+  and read the "will be built" list. Ignore trivial entries (wrappers, units,
+  fish completions, fhsenv/bwrap shells, repacked upstream binaries). For every
+  real compile, find out why it misses the cache and fix that first.
+- **Usual causes of a cache miss:** an input with `inputs.nixpkgs.follows`
+  whose own cache was built against a different nixpkgs; an override or overlay
+  on a cached package; a package taken from `nixpkgs_master` before Hydra built
+  it; an unfree package (never cached, but those are binary repacks).
+- **Never compile a browser, Electron, a compiler toolchain, or anything of
+  that size.** If one shows up in the build list, stop and change the config
+  (pin back, drop the override, use the input's own nixpkgs) until it is
+  fetched.
+- **Local builds are the exception**, acceptable only for:
+  - Erik's own forks and projects (t3code fork, erikshell, time, nvim, ...)
+  - Coding harnesses Erik wants on the cutting edge, and only when no cache
+    has the latest release yet. Check first: if nixos-unstable or a cached
+    flake already has the same version, use that instead.
+- **A local build must actually succeed.** Build it on its own
+  (`nix build --no-link ...`) before the real rebuild, so a failure does not
+  cost a full rebuild cycle.
+- **Low disk makes everything rebuild.** `min-free` is 10 GiB; below that Nix
+  garbage-collects during the build and deletes fresh unrooted outputs, so
+  failed attempts start from scratch. Check `df -h /` before a big update and
+  tell Erik if it is nearly full.
+
 ---
 
 ## Understanding the Config
