@@ -71,6 +71,22 @@
         enable = true;
         xwayland.enable = true;
 
+        # Hand the scaling/Wayland session variables to the systemd user
+        # manager too. The shell (erikshell) is a user unit, so every app
+        # started from its launcher inherits the manager's environment, not
+        # Hyprland's. Without GDK_SCALE there, XWayland apps (Steam, Spotify)
+        # render at 1x on the 2x monitors because of force_zero_scaling.
+        # The `import_env system` exec-once below was meant to cover
+        # XCURSOR_SIZE but the script is not executable, so it never ran.
+        systemd.variables = [
+          "DISPLAY"
+          "HYPRLAND_INSTANCE_SIGNATURE"
+          "WAYLAND_DISPLAY"
+          "XDG_CURRENT_DESKTOP"
+          "XDG_SESSION_TYPE"
+        ]
+        ++ builtins.attrNames config.home.sessionVariables;
+
         extraConfig = ''
           # exec-once = hyprctl output create headless
           # exec-once = hyprctl keyword monitor HEADLESS-1,1920x1080@60,0x0,1
