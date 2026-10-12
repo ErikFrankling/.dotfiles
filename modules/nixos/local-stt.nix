@@ -1,15 +1,25 @@
 {
   lib,
   config,
+  pkgs,
   username,
   ...
 }:
 let
   package = import ../../tools/local-stt;
+  sttPkgs = import ../../tools/stt-benchmark/pkgs.nix;
 in
 {
   options.services.local-stt.enable = lib.mkEnableOption "local streaming dictation and VibeVoice final transcription";
   config = lib.mkIf config.services.local-stt.enable {
+    # The workers dlopen the system Vulkan driver. Built against another glibc
+    # they find no GPU and dictation silently dies (2026-10-11).
+    assertions = [
+      {
+        assertion = sttPkgs.stdenv.cc.libc.outPath == pkgs.stdenv.cc.libc.outPath;
+        message = "local-stt is built against a different glibc than the system; fix tools/stt-benchmark/pkgs.nix";
+      }
+    ];
     systemd.services.local-stt = {
       description = "Local GPU speech transcription";
       wantedBy = [ "multi-user.target" ];
