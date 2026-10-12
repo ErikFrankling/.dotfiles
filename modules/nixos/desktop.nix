@@ -104,6 +104,18 @@
 
   services.cloudflare-warp.enable = true;
 
+  # WARP cannot parse NixOS's systemd version ("261.3", no dash), so it never
+  # programs systemd-resolved and falls back to overwriting /etc/resolv.conf
+  # with its local resolver. Programs that go through resolved (nearly all of
+  # them, via nss-resolve) then never ask that resolver once Mullvad claims
+  # `~.` on its own link, and the Gateway-only work names stop resolving.
+  # Naming the work domains here routes exactly those to WARP's resolver
+  # whatever else is up.
+  services.resolved.settings.Resolve = {
+    DNS = "127.0.2.2 127.0.2.3";
+    Domains = "~husk-security.dev ~cloudflareaccess.com";
+  };
+
   # Pin the Zero Trust organization. Without this the client re-registers as a
   # personal "Free" account whenever the Teams session is lost, which swaps the
   # org's include-only split tunnel for the consumer exclude list -- i.e. full
