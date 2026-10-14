@@ -163,6 +163,7 @@ in
   imports = [
     inputs.codex-desktop-linux.homeManagerModules.default
     ./omp
+    ./t3code-connection.nix
   ];
 
   nixpkgs.config.allowBroken = true;
