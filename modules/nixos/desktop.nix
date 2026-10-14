@@ -114,8 +114,11 @@
   # org's include-only split tunnel for the consumer exclude list -- i.e. full
   # tunnel for everything outside RFC1918. That both hides the internal
   # dashboards and swallows the home VPN endpoint (see ./openvpn.nix).
+  # The file must be copied (C+), not symlinked: warp-svc opens it without
+  # following symlinks and a store symlink fails with ELOOP, so the whole
+  # local policy (organization pin, service_mode) is silently ignored.
   systemd.tmpfiles.rules = [
-    "L+ /var/lib/cloudflare-warp/mdm.xml - - - - ${pkgs.writeText "warp-mdm.xml" ''
+    "C+ /var/lib/cloudflare-warp/mdm.xml 0644 root root - ${pkgs.writeText "warp-mdm.xml" ''
       <dict>
         <key>organization</key>
         <string>small-forest-3d80</string>
