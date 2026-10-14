@@ -36,7 +36,6 @@ let
     name = "auto-update";
     runtimeInputs = [
       config.nix.package
-      config.programs.nh.package
       pkgs.curl
       pkgs.iproute2
       pkgs.networkmanager
@@ -115,20 +114,59 @@ let
 
       # --max-jobs 0: fetch, never build. Main only moves once the homelab has
       # built it, so this fails only for work the homelab has not seen yet.
-      if ! nh os switch ${dotfiles} --hostname ${hostName} --no-nom --max-jobs 0 > "$log/rebuild.log" 2>&1; then
+      if ! system=$(nix build --no-link --print-out-paths --max-jobs 0 \
+        "${dotfiles}#nixosConfigurations.${hostName}.config.system.build.toplevel" \
+        2> "$log/rebuild.log"); then
         if $pushed_local_work; then
           notify low "Local dotfiles changes were committed and pushed. They are not built yet, so the system update waits for tonight's build."
           exit 0
         fi
-        notify critical "The update was pulled but not applied: part of it is missing from the cache, or it failed to activate. Details: $log/rebuild.log"
+        notify critical "The update was pulled but not applied: part of it is missing from the cache. Details: $log/rebuild.log"
+        exit 1
+      fi
+
+      # Activation runs as its own system unit. Run from in here it would be a
+      # child of the user manager, which the switch reloads: on 2026-10-14
+      # that killed this job halfway, leaving the new system running but not
+      # set as the boot default. nixos-rebuild uses systemd-run for the same
+      # reason. The unit notifies when it is done.
+      sudo systemd-run --unit="auto-update-switch-$(date +%s)" --collect --quiet \
+        --description="Switch to the system built by the homelab" \
+        ${lib.getExe switchScript} "$system" "$(git rev-parse --short HEAD)"
+    '';
+  };
+
+  # Runs as root, from systemd-run above. Mirrors what nixos-rebuild switch
+  # does after building: point the system profile at the new closure, then
+  # activate it and install the boot entry.
+  switchScript = pkgs.writeShellApplication {
+    name = "auto-update-switch";
+    runtimeInputs = [
+      config.nix.package
+      config.systemd.package
+      pkgs.coreutils
+    ];
+    text = ''
+      system=$1
+      rev=$2
+
+      notify() {
+        systemd-run --machine=${username}@.host --user --quiet --collect \
+          ${pkgs.libnotify}/bin/notify-send --app-name "System update" \
+          --urgency "$1" "System update" "$2" || true
+      }
+
+      if ! nix-env --profile /nix/var/nix/profiles/system --set "$system" \
+        || ! "$system/bin/switch-to-configuration" switch; then
+        notify critical "Switching to $rev failed. Run 'rebuild' to see why; journalctl -b -u 'auto-update-switch-*' has the log."
         exit 1
       fi
 
       if [ "$(readlink -f /run/booted-system/kernel)" != "$(readlink -f /run/current-system/kernel)" ] \
         || [ "$(readlink -f /run/booted-system/initrd)" != "$(readlink -f /run/current-system/initrd)" ]; then
-        notify critical "Updated. Restart when convenient: the new kernel is not running yet."
+        notify critical "Updated to $rev. Restart when convenient: the new kernel is not running yet."
       else
-        notify low "Updated."
+        notify low "Updated to $rev."
       fi
     '';
   };
@@ -190,7 +228,7 @@ in
 
       # A user unit, not a system one: it works in the user's checkout with
       # the user's SSH key and Claude login, and it can reach the desktop to
-      # notify. nh elevates through passwordless sudo for the activation.
+      # notify. Activation is handed to a system unit through passwordless sudo.
       # NixOS does not restart user units on a switch, so the job survives
       # its own update.
       systemd.user.services.auto-update = {

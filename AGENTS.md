@@ -63,7 +63,8 @@ The machines update themselves; nothing compiles on them.
   (`nix-nightly build`), repairs breakage following the `nix-update-doctor`
   skill, and pushes to `main` only when both closures are built.
 - **06:00, each machine:** `auto-update.timer` (user unit) pulls `main` and
-  runs `nh os switch --max-jobs 0`. Uncommitted or unpushed work in
+  fetches the system with `--max-jobs 0`, then activates it in a separate
+  system unit (`auto-update-switch-*`). Uncommitted or unpushed work in
   `~/.dotfiles` is first committed and pushed by a headless Claude session
   (`dotfiles-sync` skill). The laptop only runs on mains power on the home LAN.
 - **The cache** is `https://nix-cache.erikfrankling.duckdns.org`, the build
