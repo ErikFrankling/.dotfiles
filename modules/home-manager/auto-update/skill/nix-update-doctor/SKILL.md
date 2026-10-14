@@ -146,14 +146,9 @@ you leave. LLMs guess wrong about Nix; search before you edit.
    error and the link. Do not turn off anything the machine needs to boot, log
    in, reach the network or run the desktop; hold the input back instead.
 
-8. **Build it on the PC and hand it over.** Two kinds of derivation cannot be
-   built on the homelab at all:
-   - Builds that nest a user namespace inside the Nix sandbox
-     (`bwrap: setting up uid map: Permission denied`; `vmware-workstation`
-     does this). The homelab node is Ubuntu, which denies unprivileged user
-     namespaces.
-   - Unfree downloads the vendor has since deleted (a 404 on a `.deb` or
-     installer) that the PC still has in its store.
+8. **Build it on the PC and hand it over.** An unfree download the vendor has
+   since deleted (a 404 on a `.deb` or installer) cannot be fetched on the
+   homelab, but the PC may still have it in its store.
 
    For exactly that derivation: `nix build --no-link --print-out-paths
    <drv>^*` on the PC (it is already there if nothing changed), then
@@ -201,9 +196,10 @@ learns the patterns; keep entries to a few lines.
   know how to build these paths" and the filter hid that. Fixed in the
   script: it now copies the .drv closure first.
 - 2026-10-14 — `vmware-workstation` failed on the homelab with `bwrap: setting
-  up uid map: Permission denied`. Cause: Ubuntu 24.04 on the node sets
-  `kernel.apparmor_restrict_unprivileged_userns=1`. Fix: copied the PC's
-  build to the builder (repair 8).
+  up uid map: Permission denied`. Cause: Ubuntu 24.04 on the node denied
+  unprivileged user namespaces. Fixed on the node (homelab repo,
+  `ops/sysctl/99-homelab.conf`); if it comes back, that file was not
+  installed.
 - 2026-10-14 — `google-chrome` 143 from `pkgsStable` (frozen release-25.05)
   404ed on its `.deb`; only machines that already had it could build. Fix:
   take `google-chrome` from `pkgs`.
