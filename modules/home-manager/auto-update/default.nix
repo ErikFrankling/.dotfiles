@@ -42,10 +42,15 @@ let
       case "''${1:-}" in
         plan)
           # What the homelab would have to build, per host. Substitutions are
-          # not listed; only real builds matter.
+          # not listed; only real builds matter. A dry run against a remote
+          # store only knows derivations that are already there, so the .drv
+          # closure is copied over first; without that the builder answers
+          # "don't know how to build" and this printed nothing.
           for host in ${lib.concatStringsSep " " hosts}; do
             echo "== $host"
-            nix build --dry-run --eval-store auto --store ${builder} "$(attr "$host")" 2>&1 \
+            drv=$(nix eval --raw "$(attr "$host").drvPath")
+            nix copy --to ${builder} "$drv"
+            nix build --dry-run --store ${builder} "$drv^*" 2>&1 \
               | sed -n '/will be built:/,/will be fetched/p' \
               | sed 's|^  /nix/store/[a-z0-9]*-|  |' \
               | grep -v 'will be fetched' || true
@@ -226,7 +231,7 @@ in
     };
     prompt = lib.mkOption {
       type = lib.types.str;
-      default = "Load the nix-update-doctor skill and run tonight's update exactly as it describes. This is the scheduled nightly run; nobody is watching, so do not ask questions.";
+      default = "Load the nix-update-doctor skill and run tonight's update exactly as it describes, including fixing the evaluation warnings whose fix is clear. This is the scheduled nightly run; nobody is watching, so do not ask questions.";
       description = "First message of the nightly session.";
     };
   };

@@ -1,6 +1,6 @@
 ---
 name: nix-update-doctor
-description: Run and repair the nightly NixOS update for Erik's machines. Load for the scheduled nightly update session, and whenever a `nix flake update`, rebuild or cache miss in ~/.dotfiles needs diagnosing (a broken package on unstable, a hash mismatch, a removed option, something compiling that should be cached).
+description: Run and repair the nightly NixOS update for Erik's machines. Load for the scheduled nightly update session, and whenever a `nix flake update`, rebuild, cache miss or evaluation warning in ~/.dotfiles needs dealing with (a broken package on unstable, a hash mismatch, a removed option, a deprecation, something compiling that should be cached).
 ---
 
 # Nightly update: run it, repair it
@@ -27,14 +27,16 @@ You start in a dedicated clone, clean and at `origin/main`. Never touch
    have been someone else's and not built yet.
 2. `nix-nightly plan` — lists what the homelab would have to build for each
    host. Read it (see "What may compile").
-3. `nix-nightly build` — builds both hosts on the homelab and keeps the results
+3. Clear the evaluation warnings (see "Evaluation warnings"). Evaluate both
+   hosts, fix every warning whose fix is clear, one commit each.
+4. `nix-nightly build` — builds both hosts on the homelab and keeps the results
    alive there. It is slow (an old 4-core machine): run it in the background and
    wait for it rather than polling. It refuses a dirty tree, so commit first.
-4. If it fails, repair (below), commit each fix on its own, and build again.
-5. When it succeeds: `git pull --rebase origin main`. If that brought anything
+5. If it fails, repair (below), commit each fix on its own, and build again.
+6. When it succeeds: `git pull --rebase origin main`. If that brought anything
    in, build again. Then `git push origin HEAD:main`.
-6. End with a short summary: what was updated, what you had to change and why,
-   what is held back.
+7. End with a short summary: what was updated, what you had to change and why,
+   what is held back, which warnings you fixed and which you left and why.
 
 Stop after 5 failed repair rounds or about 3 hours, whichever comes first. Then
 push nothing, run `nix-nightly notify "<one sentence Erik can act on>"`, and
@@ -43,6 +45,42 @@ you would do next.
 
 A partial update is a success, not a failure. Holding one input back and
 shipping the rest is the normal outcome of a bad night.
+
+## Evaluation warnings
+
+Erik wants warnings gone, not reported. Most are a rename, a deprecation or
+a changed default with an obvious answer, and they turn into errors a few
+releases later if left alone. Collect them for both hosts:
+
+```bash
+for h in pc framework; do
+  nix eval --raw .#nixosConfigurations.$h.config.system.build.toplevel.drvPath 2>&1 >/dev/null \
+    | grep -A8 "evaluation warning"
+done
+```
+
+For each one, read the warning in full (it usually names the fix) and look it
+up: the home-manager or nixpkgs commit that added it, the option docs, the
+release notes. Then:
+
+- **A rename or removed alias** (`stdenv.isLinux` → `stdenv.hostPlatform.isLinux`,
+  `xorg.libICE` → `libice`): apply it. In Erik's own code, fix it there. If the
+  warning comes from an input's code, not this repo, leave it; it is theirs.
+- **A changed default** (`gtk.gtk4.theme`, `wayland.windowManager.hyprland.configType`,
+  `home.pointerCursor.enable`): the warning almost always offers "keep the
+  old behaviour" and "adopt the new one". Keep what Erik has today unless the
+  new behaviour is plainly what his config is trying to do, and say which you
+  picked. Setting the option explicitly is what silences it. Never pick the
+  option that changes how the desktop looks or behaves without a reason; a
+  silent visual change at 06:00 is worse than the warning.
+- **A real decision** (a setting with two reasonable answers and nothing in
+  the config to choose by, or a migration that rewrites a whole module, like
+  converting the Hyprland config to Lua): leave it and list it in the summary
+  with the link.
+
+Put each fix in its own commit, after the lock commit and before the build,
+so one build covers everything. A warning fix that breaks the build is
+reverted, not repaired at length; the update matters more.
 
 ## What may compile
 
@@ -160,10 +198,8 @@ learns the patterns; keep entries to a few lines.
   https://github.com/NixOS/nixpkgs/pull/573099
 - 2026-10-14 — `nix-nightly plan` printed nothing for either host. Cause: a
   dry run does not copy the derivations to the builder, so it answers "don't
-  know how to build these paths" and the filter hides that. Until the script
-  is fixed, get the list with `nix copy --derivation --to ssh-ng://nix-builder
-  <toplevel drvPath>` and then `nix build --dry-run --store
-  ssh-ng://nix-builder '<drvPath>^*'`.
+  know how to build these paths" and the filter hid that. Fixed in the
+  script: it now copies the .drv closure first.
 - 2026-10-14 — `vmware-workstation` failed on the homelab with `bwrap: setting
   up uid map: Permission denied`. Cause: Ubuntu 24.04 on the node sets
   `kernel.apparmor_restrict_unprivileged_userns=1`. Fix: copied the PC's
