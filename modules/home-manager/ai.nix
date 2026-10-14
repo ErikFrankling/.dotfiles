@@ -1,4 +1,6 @@
 {
+  config,
+  osConfig,
   pkgs,
   otherPkgs,
   lib,
@@ -9,41 +11,73 @@
 
 let
   system = pkgs.stdenv.hostPlatform.system;
-  codexCli = inputs.llm-agents.packages.${system}.codex;
-  codexDesktopUpstream = inputs.codex-desktop-linux.packages.${system}.codex-desktop-computer-use-ui;
-  computerUseMcpConfig = pkgs.writeText "codex-computer-use-mcp.json" (
-    builtins.toJSON {
-      mcpServers.computer-use = {
-        command = "./bin/codex-computer-use-linux";
-        args = [ "mcp" ];
-        cwd = ".";
-        env.CODEX_COMPUTER_USE_SCREENSHOT_BACKEND = "gnome-screenshot";
-      };
-    }
-  );
-  codexDesktop = codexDesktopUpstream.overrideAttrs (old: {
-    postInstall = (old.postInstall or "") + ''
-      computer_use_plugin="$out/opt/codex-desktop/resources/plugins/openai-bundled/plugins/computer-use"
-      install -m 0644 ${computerUseMcpConfig} "$computer_use_plugin/.mcp.json"
+  agentDesktopEnabled = config.programs.agent-desktop.enable or false;
+  codexCliUpstream = inputs.llm-agents.packages.${system}.codex;
+  claudeCliUpstream = inputs.llm-agents.packages.${system}.claude-code;
+  # Before Executor: each harness launched the computer-use MCP over stdio
+  # itself. Computer use now reaches every agent through Executor instead.
+  # agentDesktopHarnesses = import ./computer-use/harness-integration.nix {
+  #   inherit pkgs lib;
+  #   runtimePackage = config.programs.agent-desktop.package;
+  #   codexPackage = codexCliUpstream;
+  #   claudePackage = claudeCliUpstream;
+  # };
+  # codexCli = if agentDesktopEnabled then agentDesktopHarnesses.codex else codexCliUpstream;
+  # claudeCli = if agentDesktopEnabled then agentDesktopHarnesses.claude else claudeCliUpstream;
+  executorKeyFile = osConfig.sops.secrets.executor-api-key.path;
+  executorHarnesses = import ./executor-harness.nix {
+    inherit pkgs lib;
+    keyFile = executorKeyFile;
+    codexPackage = codexCliUpstream;
+    claudePackage = claudeCliUpstream;
+    # Computer use on this host: agent browser (Playwright), Cua Driver and
+    # the agent seat. Local stdio, so screenshots reach the model directly.
+    localMcpServers = lib.optionalAttrs agentDesktopEnabled config.programs.agent-desktop.mcpServers;
+  };
+  codexCli = executorHarnesses.codex;
+  claudeCli = executorHarnesses.claude;
+  # Upstream reworked the launcher on 2026-08-13: the computer-use variant now
+  # builds Rust feature helpers whose source filter drops Cargo.lock, so it fails
+  # to build, and start.sh no longer has the plugin-cache lines patched below.
+  # Until that is fixed upstream, install plain codex-desktop from the flake.
+  codexDesktopUpstream = inputs.codex-desktop-linux.packages.${system}.codex-desktop;
+  codexDesktop = codexDesktopUpstream;
 
-      # The launcher only compared the helper binaries before deciding whether
-      # to refresh the user plugin cache. Include the MCP manifest so changes to
-      # its environment reach the app-server as well.
-      substituteInPlace "$out/opt/codex-desktop/start.sh" \
-        --replace-fail \
-          $'local source_backend="$source_plugin/bin/codex-computer-use-linux"\n    local source_cosmic_helper="$source_plugin/bin/codex-computer-use-cosmic"' \
-          $'local source_backend="$source_plugin/bin/codex-computer-use-linux"\n    local source_cosmic_helper="$source_plugin/bin/codex-computer-use-cosmic"\n    local source_mcp="$source_plugin/.mcp.json"' \
-        --replace-fail \
-          $'local cache_backend\n    local cache_cosmic_helper' \
-          $'local cache_backend\n    local cache_cosmic_helper\n    local cache_mcp' \
-        --replace-fail \
-          $'cache_backend="$cache_plugin/bin/codex-computer-use-linux"\n    cache_cosmic_helper="$cache_plugin/bin/codex-computer-use-cosmic"' \
-          $'cache_backend="$cache_plugin/bin/codex-computer-use-linux"\n    cache_cosmic_helper="$cache_plugin/bin/codex-computer-use-cosmic"\n    cache_mcp="$cache_plugin/.mcp.json"' \
-        --replace-fail \
-          'cmp -s "$source_cosmic_helper" "$cache_cosmic_helper"; then' \
-          $'cmp -s "$source_cosmic_helper" "$cache_cosmic_helper" && \\\n        cmp -s "$source_mcp" "$cache_mcp"; then'
-    '';
-  });
+  # Computer-use MCP wiring. Needs codex-desktop-computer-use-ui, which is broken
+  # upstream right now. Re-enable this whole block together with the package above.
+  #   computerUseMcpConfig = pkgs.writeText "codex-computer-use-mcp.json" (
+  #     builtins.toJSON {
+  #       mcpServers.computer-use = {
+  #         command = "./bin/codex-computer-use-linux";
+  #         args = [ "mcp" ];
+  #         cwd = ".";
+  #         env.CODEX_COMPUTER_USE_SCREENSHOT_BACKEND = "gnome-screenshot";
+  #       };
+  #     }
+  #   );
+  #   codexDesktop = codexDesktopUpstream.overrideAttrs (old: {
+  #     postInstall = (old.postInstall or "") + ''
+  #       computer_use_plugin="$out/opt/codex-desktop/resources/plugins/openai-bundled/plugins/computer-use"
+  #       install -m 0644 ${computerUseMcpConfig} "$computer_use_plugin/.mcp.json"
+  #
+  #       # The launcher only compared the helper binaries before deciding whether
+  #       # to refresh the user plugin cache. Include the MCP manifest so changes to
+  #       # its environment reach the app-server as well.
+  #       substituteInPlace "$out/opt/codex-desktop/start.sh" \
+  #         --replace-fail \
+  #           $'local source_backend="$source_plugin/bin/codex-computer-use-linux"\n    local source_cosmic_helper="$source_plugin/bin/codex-computer-use-cosmic"' \
+  #           $'local source_backend="$source_plugin/bin/codex-computer-use-linux"\n    local source_cosmic_helper="$source_plugin/bin/codex-computer-use-cosmic"\n    local source_mcp="$source_plugin/.mcp.json"' \
+  #         --replace-fail \
+  #           $'local cache_backend\n    local cache_cosmic_helper' \
+  #           $'local cache_backend\n    local cache_cosmic_helper\n    local cache_mcp' \
+  #         --replace-fail \
+  #           $'cache_backend="$cache_plugin/bin/codex-computer-use-linux"\n    cache_cosmic_helper="$cache_plugin/bin/codex-computer-use-cosmic"' \
+  #           $'cache_backend="$cache_plugin/bin/codex-computer-use-linux"\n    cache_cosmic_helper="$cache_plugin/bin/codex-computer-use-cosmic"\n    cache_mcp="$cache_plugin/.mcp.json"' \
+  #         --replace-fail \
+  #           'cmp -s "$source_cosmic_helper" "$cache_cosmic_helper"; then' \
+  #           $'cmp -s "$source_cosmic_helper" "$cache_cosmic_helper" && \\\n        cmp -s "$source_mcp" "$cache_mcp"; then'
+  #     '';
+  #   });
   codexFirefoxShim = pkgs.writeShellScriptBin "firefox" ''
     unset LD_LIBRARY_PATH
     exec /run/current-system/sw/bin/firefox "$@"
@@ -129,6 +163,7 @@ in
   imports = [
     inputs.codex-desktop-linux.homeManagerModules.default
     ./omp
+    ./t3code-connection.nix
   ];
 
   nixpkgs.config.allowBroken = true;
@@ -161,9 +196,19 @@ in
   #   '';
   # };
 
+  # Package the pinned source fork with local dictation and deployment auth;
+  # reuse nixpkgs master's T3 build recipe and resource-monitor sidecar.
+  nixpkgs.overlays = [
+    (import ../../overlays/t3code.nix {
+      inherit inputs otherPkgs;
+      codexPackage = codexCli;
+      claudePackage = claudeCli;
+    })
+  ];
+
   home.packages = with pkgs; [
     # claude-code
-    inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.claude-code
+    claudeCli
     # code-cursor-fhs
     # opencode
     # codex
@@ -171,7 +216,7 @@ in
     codexCli
     codexGnomeScreenshotShim
     codexYdotool
-    inputs.t3code-nix.packages.${system}.t3code
+    pkgs.t3code
     inputs.llm-agents.packages.${system}.grok
     # kiro-fhs
     # vscode-fhs
@@ -234,6 +279,34 @@ in
       permission = "allow";
 
       mcp = {
+        # Replaced by Executor, which proxies computer use to every agent.
+        # agent-desktop = lib.mkIf agentDesktopEnabled {
+        #   type = "local";
+        #   command = [
+        #     agentDesktopHarnesses.command
+        #     "mcp"
+        #   ];
+        #   enabled = true;
+        #   timeout = 30000;
+        # };
+      }
+      // lib.optionalAttrs agentDesktopEnabled (
+        lib.mapAttrs (_: server: {
+          type = "local";
+          command = [ server.command ] ++ server.args;
+          environment = server.env;
+          enabled = true;
+          timeout = 30000;
+        }) config.programs.agent-desktop.mcpServers
+      )
+      // {
+        executor = {
+          type = "remote";
+          url = executorHarnesses.url;
+          headers.Authorization = "Bearer {file:${executorKeyFile}}";
+          enabled = true;
+          timeout = 30000;
+        };
         neptune-dxp = {
           type = "remote";
           url = "https://p9eval.erikfrankling.duckdns.org/mcp";

@@ -29,7 +29,15 @@ in
   home.file.".thunderbird/default/user.js".text = ''
     // Thunderbird declarative config — managed by home-manager
 
-    user_pref("mail.accountmanager.accounts", "account_frankling,account_gmail1,account_gmail2,account_kth,account_outlook");
+    // Local Folders has to be in this list. Left out, Thunderbird found no
+    // local account at every start and made a fresh one (account1..account38).
+    user_pref("mail.accountmanager.accounts", "account_frankling,account_gmail1,account_gmail2,account_kth,account_outlook,account_local");
+    user_pref("mail.accountmanager.localfoldersserver", "server1");
+    user_pref("mail.account.account_local.server", "server1");
+    user_pref("mail.server.server1.type", "none");
+    user_pref("mail.server.server1.hostname", "Local Folders");
+    user_pref("mail.server.server1.userName", "nobody");
+    user_pref("mail.server.server1.name", "Local Folders");
     user_pref("mail.accountmanager.defaultaccount", "account_frankling");
     user_pref("mail.smtpservers", "smtp_frankling,smtp_gmail1,smtp_gmail2,smtp_kth,smtp_outlook");
     user_pref("mail.smtp.defaultserver", "smtp_frankling");
@@ -121,7 +129,9 @@ in
     user_pref("mail.smtpserver.smtp_kth.hostname", "smtp.kth.se");
     user_pref("mail.smtpserver.smtp_kth.port", 587);
     user_pref("mail.smtpserver.smtp_kth.try_ssl", 2);
-    user_pref("mail.smtpserver.smtp_kth.username", "ug.kth.se\\erikfran");
+    // smtp.kth.se only accepts the bare KTH username. The ug.kth.se\ form that
+    // IMAP wants is rejected here with "535 authentication failed".
+    user_pref("mail.smtpserver.smtp_kth.username", "erikfran");
     user_pref("mail.smtpserver.smtp_kth.authMethod", 3);
 
     // ===== Outlook.com — erik.frankling@outlook.com (OAuth2) =====

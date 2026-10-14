@@ -1,0 +1,41 @@
+From fa3d330e719ae5db5eaf38ce1799140668488df6 Mon Sep 17 00:00:00 2001
+From: Vaxry <vaxry@vaxry.net>
+Date: Tue, 15 Sep 2026 17:14:45 +0300
+Subject: [PATCH] drm: release output on disconnect manually
+
+regular commit will reject it otherwise
+---
+ src/backend/drm/DRM.cpp | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/src/backend/drm/DRM.cpp b/src/backend/drm/DRM.cpp
+index 431c83fa..431247b5 100644
+--- a/src/backend/drm/DRM.cpp
++++ b/src/backend/drm/DRM.cpp
+@@ -2133,6 +2133,26 @@ void Aquamarine::SDRMConnector::disconnect() {
+     backend->cancelAsyncOutput(output.get());
+     invalidateFrame();
+ 
++    // normal output commits reject disconnected connectors, so disable KMS
++    // directly before releasing the output and its framebuffer references.
++    if (crtc && backend->backend->session && backend->backend->session->active && output->enabledState) {
++        const auto QUEUE_KEY = crtc->id;
++        if (backend->pauseCommitQueue(QUEUE_KEY)) {
++            CScopeGuard             resume([this, QUEUE_KEY] { backend->resumeCommitQueue(QUEUE_KEY); });
++            SDRMConnectorCommitData data = {};
++            data.modeset                 = true;
++            data.blocking                = true;
++            data.committed               = COutputState::AQ_OUTPUT_STATE_ENABLED;
++
++            if (backend->impl->commit(self.lock(), data)) {
++                output->enabledState = false;
++                backend->log(AQ_LOG_DEBUG, std::format("drm: Disabled KMS output {} before disconnect", szName));
++            } else
++                backend->log(AQ_LOG_ERROR, std::format("drm: Failed to disable KMS output {} before disconnect", szName));
++        } else
++            backend->log(AQ_LOG_ERROR, std::format("drm: Failed to pause commit queue for disconnect of {}", szName));
++    }
++
+     status = DRM_MODE_DISCONNECTED;
+     releaseFBReferences();
+ 

@@ -22,6 +22,7 @@
     # ./eww
     # ./ags
     ./thunderbird.nix
+    ./mime-apps.nix
     ./zen.nix
     ./kitty.nix
     ./ai.nix
@@ -35,7 +36,8 @@
     spotifywm
     # spotify-qt
     pavucontrol
-    otherPkgs.pkgsStable.google-chrome
+    # otherPkgs.pkgsStable.google-chrome # 2026-10-14: release-25.05 is frozen on Chrome 143, whose .deb Google has deleted, so a store that lacks it cannot build this
+    google-chrome
     # gparted
     # virtualbox
     syncthingtray-minimal
@@ -53,6 +55,9 @@
     ghostty
     code-cursor
     zed-editor
+    # Grok Bot desktop agent. See the grok-bot input in flake.nix for why this
+    # flake and not the other one. Needs a SuperGrok or Cursor plan to log in.
+    inputs.grok-bot.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 
   nixpkgs.config.permittedInsecurePackages = [

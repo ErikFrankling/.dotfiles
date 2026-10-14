@@ -27,7 +27,7 @@ let
           "http://192.168.50.232:8000/v1/chat/completions",
       )
       model = os.environ.get("VOXTYPE_LLM_MODEL", "qwen3.5-27b")
-      timeout = int(os.environ.get("VOXTYPE_LLM_TIMEOUT_SECS", "55"))
+      timeout = int(os.environ.get("VOXTYPE_LLM_TIMEOUT_SECS", "10"))
       context = os.environ.get("VOXTYPE_CONTEXT", "").strip()
 
       system_prompt = """You are the final cleanup pass for technical voice dictation.
@@ -49,7 +49,8 @@ let
 
       payload = {
           "model": model,
-          "temperature": 0,
+          # Dictation cleanup must not spend its budget generating hidden reasoning.
+          "chat_template_kwargs": {"enable_thinking": False},
           "max_tokens": 4096,
           "messages": [
               {"role": "system", "content": system_prompt},
@@ -67,7 +68,10 @@ let
       try:
           with urllib.request.urlopen(request, timeout=timeout) as response:
               data = json.loads(response.read().decode("utf-8"))
-          cleaned = data["choices"][0]["message"]["content"]
+          choice = data["choices"][0]
+          if choice.get("finish_reason") == "length":
+              raise ValueError("cleanup was truncated; keeping the original transcript")
+          cleaned = choice["message"]["content"]
       except Exception as exc:
           print(f"voxtype cleanup failed: {exc}", file=sys.stderr)
           sys.exit(1)
@@ -120,7 +124,7 @@ in
       output.pre_type_delay_ms = 250;
       output.notification.on_transcription = false;
       output.post_process.command = "${voxtypeTranscriptCleanup}/bin/voxtype-transcript-cleanup";
-      output.post_process.timeout_ms = 60000;
+      output.post_process.timeout_ms = 12000;
 
       # Guard the final paste keystroke with the empty Hyprland submap used by
       # the existing `voxtype_suppress` integration.

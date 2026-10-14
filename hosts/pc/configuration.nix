@@ -9,6 +9,11 @@
 }:
 
 {
+  services.local-stt.enable = true;
+
+  # Daily: pull main and switch to the system the homelab built.
+  autoUpdate.enable = true;
+
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
@@ -19,7 +24,13 @@
     # so membership adds nothing and conflicts with Mullvad's lockdown. Other
     # tailnet devices reach it through the subnet router.
     # ../../modules/nixos/laptop.nix
+    ../../modules/nixos/mullvad.nix
+    ../../modules/nixos/dev-preview.nix
+    ../../modules/nixos/local-stt.nix
     ../../modules/nixos/desktop.nix
+    # Was disabled for a while: under getty autologin PAM never unlocked the
+    # keyring, so every Secret Service request prompted for a password nobody
+    # knew. The module now seeds a passwordless, always-unlocked keyring.
     ../../modules/nixos/keyring.nix
     ../../modules/nixos/game.nix
     # ../../modules/nixos/ollama.nix
@@ -27,7 +38,9 @@
     ../../modules/nixos/secure-boot.nix
     ../../modules/nixos/neptune.nix
     ../../modules/nixos/llama-swap.nix
-    inputs.private.nixosModules.default
+    # ../../modules/nixos/executor.nix # local container; Executor runs on the homelab k3s instead
+    # inputs.private.nixosModules.default # extra llama-swap models, no longer used (see flake.nix)
+    ../../modules/nixos/auto-update.nix
     # ../../modules/nixos/llama-cpp.nix
     # ../../modules/nixos/ai-server.nix
     # ../../modules/nixos/vm-host.nix
@@ -42,8 +55,6 @@
   services.udev.extraRules = ''
     ACTION=="add", SUBSYSTEM=="drm", DRIVERS=="amdgpu", KERNEL=="card1", ATTR{device/power_dpm_force_performance_level}="profile_peak"
   '';
-
-  services.mullvad-vpn.enable = true;
 
   services.openssh = {
     settings.PasswordAuthentication = true;
@@ -141,8 +152,24 @@
     6789 # husk localhost web UI — reachable on the LAN for dev review
   ];
 
-  # T3 Code web UI — reachable only through the physical LAN interface.
-  networking.firewall.interfaces.eno1.allowedTCPPorts = [ 3773 ];
+  # T3 Code web UI and wayvnc — reachable only through the physical LAN
+  # interface (tailnet devices come in through the subnet router, so they
+  # arrive here too). wayvnc runs without auth on purpose; this interface
+  # scoping is the guard. 5900 = both monitors, 5901/5902 = single monitors
+  # (see hosts/pc/home.nix).
+  networking.firewall.interfaces.eno1.allowedTCPPorts = [
+    3773
+    5900
+    5901
+    5902
+  ];
+  # Computer-use MCP bridge (agent-computer-use-http, :4790) for Executor on
+  # the homelab. It has no auth of its own and drives this desktop, so only
+  # the k3s VM (node IP .200, VIP .100) may connect -- never the whole LAN.
+  networking.firewall.extraCommands = ''
+    iptables -A nixos-fw -i eno1 -p tcp --dport 4790 -s 192.168.50.200 -j nixos-fw-accept
+    iptables -A nixos-fw -i eno1 -p tcp --dport 4790 -s 192.168.50.100 -j nixos-fw-accept
+  '';
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;

@@ -32,6 +32,16 @@ in
         # on Linux has its own certificate store. Deploy the same verified CA
         # through Firefox's enterprise policy so every managed NixOS profile
         # trusts WARP-private HTTPS without a manual per-profile import.
+        # Accept all cookies, third-party included, with no partitioning (Total
+        # Cookie Protection). Blocking them breaks Microsoft 365's silent token
+        # renewal and forces a daily Teams login; locked so the profile's
+        # custom tracking-protection setting can't turn it back on.
+        Cookies = {
+          Behavior = "accept";
+          BehaviorPrivateBrowsing = "accept";
+          Locked = true;
+        };
+
         Certificates = {
           Install = [ ../../certificates/cloudflare-gateway-ca.pem ];
         };
@@ -91,10 +101,14 @@ in
             install_url = "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi";
             installation_mode = "force_installed";
           };
-          # Privacy Badger:
+          # Privacy Badger: removed. It blocks login.microsoftonline.com as a
+          # third party, which breaks the silent 24h token renewal Teams/Outlook
+          # web rely on and forces a full Microsoft login every day. "blocked"
+          # uninstalls it from existing profiles instead of just unpinning it.
           "jid1-MnnxcxisBPnSXQ@jetpack" = {
-            install_url = "https://addons.mozilla.org/firefox/downloads/latest/privacy-badger17/latest.xpi";
-            installation_mode = "force_installed";
+            # install_url = "https://addons.mozilla.org/firefox/downloads/latest/privacy-badger17/latest.xpi";
+            # installation_mode = "force_installed";
+            installation_mode = "blocked";
           };
           # LastPass:
           "support@lastpass.com" = {

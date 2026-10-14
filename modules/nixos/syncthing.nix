@@ -41,6 +41,13 @@
         "SM-S901B" = {
           id = "6N4J2HT-JPZLVQF-RSHUGEA-G6YV2YP-CEPIAL2-Q2TTTUX-KUZ36BR-Z5RJEQY";
         };
+        # The Pixel was added by hand in the web UI at some point, which this
+        # declarative list silently deletes on every rebuild — the phone then
+        # gets "connection rejected: unknown device" until someone re-adds it.
+        # Devices must live HERE, never only in the GUI.
+        "pixel-10-pro" = {
+          id = "3XUOQPM-KF2ACVF-QXBWWMB-2FNW5XI-3O7VP56-LJONGMX-36CKMX5-6MSCFAA";
+        };
         "pc" = {
           id = "K5DEIGZ-CITG2IN-INC6HIG-23BMQE7-E7IRNNG-3T7OHHZ-LG5GYHX-T5ICNAT";
         };
@@ -56,6 +63,7 @@
             "ubuntu-hp"
             "framework"
             "SM-S901B"
+            "pixel-10-pro"
             "pc"
             "wsl"
           ];

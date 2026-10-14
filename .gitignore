@@ -1,2 +1,5 @@
 .codex
 noct4/
+
+# Agent scratch dirs — never commit (AGENTS.md)
+.claude/

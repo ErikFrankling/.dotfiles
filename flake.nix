@@ -2,6 +2,10 @@
   description = "Nixos config flake";
 
   inputs = {
+    t3code-src = {
+      url = "github:ErikFrankling/t3code/erik/local-dictation";
+      flake = false;
+    };
     # nixpkgs.url = "github:nixos/nixpkgs/master";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     # nixpkgs.url = "github:nixos/nixpkgs?rev=77b584d61ff80b4cef9245829a6f1dfad5afdfa3";
@@ -46,6 +50,11 @@
 
     nix-matlab.url = "gitlab:doronbehar/nix-matlab";
     nix-matlab.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Cua Driver: computer-use driver (accessibility trees, window capture,
+    # element actions) for agents on the agent monitor. Pinned to a release tag.
+    cua.url = "github:trycua/cua/cua-driver-rs-v0.30.4";
+    cua.inputs.nixpkgs.follows = "nixpkgs";
 
     time.url = "github:ErikFrankling/time";
     time.inputs.nixpkgs.follows = "nixpkgs";
@@ -122,15 +131,25 @@
     claude-desktop.url = "github:aaddrick/claude-desktop-debian";
     claude-desktop.inputs.nixpkgs.follows = "nixpkgs";
 
-    t3code-nix.url = "github:Sawrz/t3code-nix";
-    t3code-nix.inputs.nixpkgs.follows = "nixpkgs";
-
     opencode-desktop-nix.url = "github:tomsch/opencode-desktop-nix";
     opencode-desktop-nix.inputs.nixpkgs.follows = "nixpkgs";
 
     codex-desktop-linux.url = "github:ilysenko/codex-desktop-linux";
-    codex-desktop-linux.inputs.nixpkgs.follows = "nixpkgs";
+    # Do NOT follow nixpkgs: with the 2026-10-07 nixos-unstable the asar repack
+    # step lists an empty archive layout and the build dies with "Official
+    # app.asar layout is empty". Its own pinned nixpkgs builds fine.
+    # codex-desktop-linux.inputs.nixpkgs.follows = "nixpkgs";
     codex-desktop-linux.inputs.flake-utils.follows = "flake-utils";
+
+    # Grok Bot, xAI's desktop agent app (proprietary, ships only as a .deb).
+    # Not in nixpkgs yet (draft PR #558990). This flake extracts app.asar from
+    # the official .deb and runs it on nixpkgs electron_42, so it keeps the
+    # Chromium sandbox on; the other flake (jordangarrison/grok-bot-flake)
+    # keeps upstream's bundled Electron and needs --no-sandbox to work around
+    # an upstream webview crash. The native modules are ABI-tied to Electron
+    # 42, so following nixpkgs is fine as long as nixpkgs still carries it.
+    grok-bot.url = "github:d-513/grok-bot-nix";
+    grok-bot.inputs.nixpkgs.follows = "nixpkgs";
 
     # llamacpp-rocm.url = "github:hellas-ai/nix-strix-halo/feat/bootable-usb";
     # llamacpp-rocm.inputs.nixpkgs.follows = "nixpkgs";
@@ -140,7 +159,10 @@
     # Private NixOS additions (llama-swap models etc.). Local path while
     # developing — rebuild picks up changes without committing. Only used on
     # this machine.
-    private.url = "path:/home/erikf/projects/personal/private-nix";
+    # Disabled 2026-10-14: the two RP models it added to llama-swap are no
+    # longer used, and a path input only this machine has cannot be evaluated
+    # anywhere else.
+    # private.url = "path:/home/erikf/projects/personal/private-nix";
 
     voxtype.url = "github:peteonrails/voxtype";
     # Do NOT follow nixpkgs: voxtype's vulkan build needs its own pinned nixpkgs

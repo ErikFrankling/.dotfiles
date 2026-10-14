@@ -1,0 +1,8 @@
+[["browser_tabs", {"action":"new","url":"https://github.com/login"}],
+ ["browser_click", {"element":"username","target":"#login_field"}],
+ ["browser_evaluate", {"function":"async () => { await new Promise(r=>setTimeout(r,1500)); return 1 }"}],
+ ["browser_mouse_click_xy", {"x":413, "y":310}],
+ ["browser_evaluate", {"function":"async () => { await new Promise(r=>setTimeout(r,1500)); return {user: document.querySelector('#login_field').value, pwLen: document.querySelector('#password').value.length} }"}],
+ ["browser_click", {"element":"Sign in button","target":"input[type=submit][value='Sign in']"}],
+ ["browser_evaluate", {"function":"async () => { await new Promise(r=>setTimeout(r,3000)); return location.href + ' | ' + document.title }"}],
+ ["browser_take_screenshot", {"scale":"css","filename":"/home/erikf/.dotfiles/bench/lp2.png"}]]

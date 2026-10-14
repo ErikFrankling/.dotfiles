@@ -1,0 +1,10 @@
+Reading additional input from stdin...
+2026-09-30T21:32:43.826258Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer realm=\"OAuth\", resource_metadata=\"https://mcp.cloudflare.com/.well-known/oauth-protected-resource/mcp\", scope=\"user:read account:read\"" })
+2026-09-30T21:32:44.299807Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer realm=\"OAuth\", resource_metadata=\"https://mcp.cloudflare.com/.well-known/oauth-protected-resource/mcp\", scope=\"user:read account:read\"" })
+2026-09-30T21:32:44.776469Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when UnexpectedServerResponse("HTTP 502: Bad Gateway")
+2026-09-30T21:32:45.031008Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when UnexpectedServerResponse("HTTP 502: Bad Gateway")
+2026-09-30T21:32:46.034984Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when UnexpectedServerResponse("HTTP 502: Bad Gateway")
+2026-09-30T21:33:03.950393Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when UnexpectedServerResponse("HTTP 502: Bad Gateway")
+2026-09-30T21:33:03.962106Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when AuthRequired(AuthRequiredError { www_authenticate_header: "Bearer realm=\"OAuth\", resource_metadata=\"https://mcp.cloudflare.com/.well-known/oauth-protected-resource/mcp\", scope=\"user:read account:read\"" })
+2026-09-30T21:33:04.204661Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when UnexpectedServerResponse("HTTP 502: Bad Gateway")
+2026-09-30T21:33:05.208007Z ERROR rmcp::transport::worker: worker quit with fatal: Transport channel closed, when UnexpectedServerResponse("HTTP 502: Bad Gateway")

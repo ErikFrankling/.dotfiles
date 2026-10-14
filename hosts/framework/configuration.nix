@@ -19,8 +19,14 @@
     # override on top of the '~.' default route Tailscale installs.
     ../../modules/nixos/husk-dns.nix
     ../../modules/nixos/laptop.nix
+    ../../modules/nixos/auto-update.nix
     ../../modules/nixos/desktop.nix
-    ../../modules/nixos/keyring.nix
+    # ../../modules/nixos/keyring.nix -- disabled: the default keyring on disk
+    # was Default_Keyring, not login.keyring, so PAM never unlocked it and
+    # every Secret Service request prompted for a password nobody knew.
+    # Trade-off: Claude Desktop safeStorage falls back to basic_text and
+    # signs out on restart. Re-enable (and reset ~/.local/share/keyrings) if
+    # that becomes annoying again.
     ../../modules/nixos/game.nix
     inputs.home-manager.nixosModules.default
     ../../modules/nixos/vm-host.nix
@@ -42,6 +48,14 @@
   #     };
   #   in
   #   pkgs.linuxKernel.packagesFor kernel;
+
+  # Daily: pull main and switch to the system the homelab built. Only on
+  # mains power and on the home network, so it never spends battery or
+  # somebody else's data.
+  autoUpdate = {
+    enable = true;
+    homeNetworkOnly = true;
+  };
 
   sops.defaultSopsFile = ./secrets/secrets.yaml;
   sops.defaultSopsFormat = "yaml";

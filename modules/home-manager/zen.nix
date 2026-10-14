@@ -142,8 +142,10 @@
           "browser.topsites.contile.enabled" = false;
 
           "privacy.resistFingerprinting" = true;
-          "privacy.firstparty.isolate" = true;
-          "network.cookie.cookieBehavior" = 5;
+          # Third-party cookie blocking/isolation is off: it breaks logins
+          # (Microsoft 365 logs out daily). Was: isolate = true, cookieBehavior = 5.
+          "privacy.firstparty.isolate" = false;
+          "network.cookie.cookieBehavior" = 0;
           "dom.battery.enabled" = false;
 
           "gfx.webrender.all" = true;

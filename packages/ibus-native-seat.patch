@@ -1,0 +1,17 @@
+--- a/client/wayland/ibuswaylandim.c
++++ b/client/wayland/ibuswaylandim.c
+@@ -2450,6 +2450,14 @@ registry_handle_global (void               *data,
+         priv->panel = wl_registry_bind (registry, name,
+                                         &zwp_input_panel_v1_interface, 1);
+     } else if (!g_strcmp0 (interface, wl_seat_interface.name)) {
++        /* This Hyprland desktop has one native input-method relay. Its
++         * independent agent seat must not replace the active native seat:
++         * a second IME is unavailable, but switching priv->seat would send
++         * the first IME's callbacks through that unavailable seat anyway.
++         * Native Hyprland advertises its seat before the agent plugin.
++         */
++        if (priv->seat)
++            return;
+         IBusWaylandSeat *seat = g_slice_new0 (IBusWaylandSeat);
+         if (version >= 5)
+             version = 5;

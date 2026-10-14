@@ -21,6 +21,10 @@ in
     enable = true;
     settings = {
       shell = "${zellijKittyShell}/bin/zellij-kitty-shell";
+      # Kitty saves "maximized" in ~/.cache/kitty/main.json when a window is
+      # closed while maximized, then asks Hyprland to maximize every new window
+      # instead of letting it tile. Hyprland sizes the windows anyway.
+      remember_window_size = false;
     };
     keybindings = {
       # Disable kitty's unicode input

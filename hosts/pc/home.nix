@@ -7,67 +7,8 @@
 }:
 
 let
-  system = pkgs.stdenv.hostPlatform.system;
   codexHome = "${config.home.homeDirectory}/.codex";
   t3CodexHome = "${config.home.homeDirectory}/.codex-t3";
-  codexCli = inputs.llm-agents.packages.${system}.codex;
-  t3Cli =
-    (inputs.t3code-nix.packages.${system}.t3code-cli.override { codex = codexCli; }).overrideAttrs
-      (oldAttrs: {
-        postPatch = (oldAttrs.postPatch or "") + ''
-          node <<'NODE'
-          const fs = require("fs");
-          const bundlePath = "dist/bin.mjs";
-          let source = fs.readFileSync(bundlePath, "utf8");
-
-          function replaceOnce(before, after, description) {
-            if (!source.includes(before)) {
-              throw new Error("T3 compatibility patch no longer matches: " + description);
-            }
-            source = source.replace(before, after);
-          }
-
-          replaceOnce(
-            "const V2ModelListResponse__ReasoningEffort = Schema.Literals([\n\t\"none\",\n\t\"minimal\",\n\t\"low\",\n\t\"medium\",\n\t\"high\",\n\t\"xhigh\"\n]).annotate",
-            "const V2ModelListResponse__ReasoningEffort = Schema.String.annotate",
-            "Codex model reasoning effort schema",
-          );
-          replaceOnce(
-            "const REASONING_EFFORT_LABELS = {\n\tnone: \"None\",\n\tminimal: \"Minimal\",\n\tlow: \"Low\",\n\tmedium: \"Medium\",\n\thigh: \"High\",\n\txhigh: \"Extra High\"\n};",
-            "const REASONING_EFFORT_LABELS = {\n\tnone: \"None\",\n\tminimal: \"Minimal\",\n\tlow: \"Low\",\n\tmedium: \"Medium\",\n\thigh: \"High\",\n\txhigh: \"Extra High\",\n\tmax: \"Max\",\n\tultra: \"Ultra\"\n};",
-            "Codex reasoning effort labels",
-          );
-
-          const labelNeedle = "label: REASONING_EFFORT_LABELS[reasoningEffort]";
-          const labelCount = source.split(labelNeedle).length - 1;
-          if (labelCount !== 2) {
-            throw new Error("T3 compatibility patch found " + labelCount + " reasoning labels");
-          }
-          source = source.replaceAll(
-            labelNeedle,
-            "label: REASONING_EFFORT_LABELS[reasoningEffort] ?? reasoningEffort",
-          );
-
-          replaceOnce(
-            "const toProtocolMessage = (requestId, fields) => ({\n\tid: requestId,",
-            "const toProtocolMessage = (requestId, fields) => ({\n\tjsonrpc: \"2.0\",\n\tid: requestId,",
-            "Codex JSON-RPC response envelope",
-          );
-          replaceOnce(
-            "\t\tyield* offerOutgoing({\n\t\t\tid: requestId,\n\t\t\tmethod,",
-            "\t\tyield* offerOutgoing({\n\t\t\tjsonrpc: \"2.0\",\n\t\t\tid: requestId,\n\t\t\tmethod,",
-            "Codex JSON-RPC request envelope",
-          );
-          replaceOnce(
-            "\tconst notify = (method, payload) => offerOutgoing({\n\t\tmethod,",
-            "\tconst notify = (method, payload) => offerOutgoing({\n\t\tjsonrpc: \"2.0\",\n\t\tmethod,",
-            "Codex JSON-RPC notification envelope",
-          );
-
-          fs.writeFileSync(bundlePath, source);
-          NODE
-        '';
-      });
   t3CodexPrepare = pkgs.writeShellScript "t3-code-codex-prepare" ''
     mkdir -p ${lib.escapeShellArg t3CodexHome}
     if [[ ! -e ${lib.escapeShellArg "${t3CodexHome}/state_5.sqlite"} ]]; then
@@ -83,9 +24,19 @@ in
     ../../modules/home-manager/desktop.nix
     ../../modules/home-manager/print
     ../../modules/home-manager/vm-host.nix
+    ../../modules/home-manager/wayvnc.nix
+    ../../modules/home-manager/computer-use
+    ../../modules/home-manager/ibus-native-seat.nix
+    ../../modules/home-manager/auto-update
+    ../../modules/home-manager/dev-preview
     inputs.time.homeManagerModules.default
     # ../../modules/home-manager/noctalia.nix
   ];
+
+  programs.agent-desktop.enable = true;
+
+  # This machine drives the nightly flake update and the homelab build.
+  autoUpdateNightly.enable = true;
 
   # Minute-by-minute activity tracking. The agent only screenshots and posts;
   # the server in the cluster holds the API key and does the classifying.
@@ -93,6 +44,14 @@ in
     enable = true;
     server = "https://time.erikfrankling.duckdns.org";
     device = "pc";
+    # Near-live dashboard numbers: scan local git and agent transcripts every
+    # minute (cheap — mtime caches skip unchanged sources) and post them.
+    collect = {
+      enable = true;
+      roots = [ "~/projects" ];
+      githubUser = "ErikFrankling";
+    };
+    metrics.enable = true;
     note = ''
       This machine runs AI computer-use sessions (codex). An agent can open
       windows, type, and drive the screen with nobody present, and one monitor
@@ -113,20 +72,62 @@ in
     ".codex-t3/skills".source = config.lib.file.mkOutOfStoreSymlink "${codexHome}/skills";
     ".codex-t3/rules".source = config.lib.file.mkOutOfStoreSymlink "${codexHome}/rules";
     ".codex-t3/plugins".source = config.lib.file.mkOutOfStoreSymlink "${codexHome}/plugins";
-  };
+  }
+  # math-video skill lives in the mathvid repo (~/projects/mathvid/skill); a live
+  # symlink so improvements to the workflow doc apply without a rebuild.
+  //
+    lib.genAttrs
+      [
+        ".claude/skills/math-video"
+        ".agents/skills/math-video"
+        ".codex/skills/math-video"
+      ]
+      (_: {
+        source = config.lib.file.mkOutOfStoreSymlink "/home/erikf/projects/mathvid/skill";
+      });
 
   home.packages = with pkgs; [
     prismlauncher
-    t3Cli
+  ];
+
+  # VNC into this desktop from the laptop and the phone (LAN/tailnet only —
+  # the ports are opened on eno1 alone in configuration.nix). One port per
+  # view because wayvnc captures one output per process: 5900 is both 4K
+  # monitors side by side (fine on the laptop), 5901/5902 are the single
+  # monitors (what the phone wants — half the pixels, and AVNC fits the
+  # remote resolution to the screen). Monitor names match the hyprland
+  # monitors block below.
+  wayvnc.instances = [
+    {
+      name = "desktop";
+      port = 5900;
+    }
+    {
+      name = "left";
+      port = 5901;
+      output = "DP-3";
+    }
+    {
+      name = "right";
+      port = 5902;
+      output = "HDMI-A-1";
+    }
   ];
 
   systemd.user.services.t3code = {
     Unit.Description = "T3 Code web server";
+    # Rebuilds update CLI dependencies too. Restarting this server interrupts
+    # every active agent turn; apply updates on the next deliberate restart.
+    Unit.X-SwitchMethod = "keep-old";
 
     Service = {
       ExecStartPre = t3CodexPrepare;
-      ExecStart = "${t3Cli}/bin/t3 serve --host 0.0.0.0 --port 3773";
-      Environment = [ "CODEX_HOME=${t3CodexHome}" ];
+      ExecStart = "${pkgs.t3code}/bin/t3 serve --host 0.0.0.0 --port 3773";
+      Environment = [
+        "CODEX_HOME=${t3CodexHome}"
+        # LAN/VPN-only deployment: serve without pairing, cookies, or tokens.
+        "T3CODE_UNSAFE_NO_AUTH=1"
+      ];
       Restart = "on-failure";
       RestartSec = 5;
       WorkingDirectory = config.home.homeDirectory;

@@ -21,6 +21,65 @@
 - `rebuild` with no arguments defaults to `switch`. Pass arguments through when needed, e.g. `rebuild test`, `rebuild boot`, or `rebuild switch`.
 - After changing this NixOS/Home Manager configuration, always run a real rebuild with `rebuild` before yielding unless Erik explicitly says not to apply the change.
 
+### Hard Rule: Pull From a Binary Cache, Do Not Compile (Erik, 2026-10-08)
+
+**If a rebuild is compiling something, that is probably a mistake.** Packages
+must come from a binary cache almost always. A rebuild that takes a long time
+is a bug to analyze, not something to wait out.
+
+- **Before a real rebuild after any input change, check what would build
+  locally:** `nix build --dry-run .#nixosConfigurations.<host>.config.system.build.toplevel`
+  and read the "will be built" list. Ignore trivial entries (wrappers, units,
+  fish completions, fhsenv/bwrap shells, repacked upstream binaries). For every
+  real compile, find out why it misses the cache and fix that first.
+- **Usual causes of a cache miss:** an input with `inputs.nixpkgs.follows`
+  whose own cache was built against a different nixpkgs; an override or overlay
+  on a cached package; a package taken from `nixpkgs_master` before Hydra built
+  it; an unfree package (never cached, but those are binary repacks).
+- **Never compile a browser, Electron, a compiler toolchain, or anything of
+  that size.** If one shows up in the build list, stop and change the config
+  (pin back, drop the override, use the input's own nixpkgs) until it is
+  fetched.
+- **Local builds are the exception**, acceptable only for:
+  - Erik's own forks and projects (t3code fork, erikshell, time, nvim, ...)
+  - Coding harnesses Erik wants on the cutting edge, and only when no cache
+    has the latest release yet. Check first: if nixos-unstable or a cached
+    flake already has the same version, use that instead.
+- **A local build must actually succeed.** Build it on its own
+  (`nix build --no-link ...`) before the real rebuild, so a failure does not
+  cost a full rebuild cycle.
+- **Low disk makes everything rebuild.** `min-free` is 10 GiB; below that Nix
+  garbage-collects during the build and deletes fresh unrooted outputs, so
+  failed attempts start from scratch. Check `df -h /` before a big update and
+  tell Erik if it is nearly full.
+
+### Automatic Daily Updates (Erik, 2026-10-14)
+
+The machines update themselves; nothing compiles on them.
+
+- **03:00, PC:** `nix-nightly.timer` starts a T3 Code session in its own clone
+  (`~/.local/state/nix-nightly/dotfiles`). It runs `nix flake update`, builds
+  the `pc` and `framework` closures on the homelab build server
+  (`nix-nightly build`), repairs breakage following the `nix-update-doctor`
+  skill, and pushes to `main` only when both closures are built.
+- **06:00, each machine:** `auto-update.timer` (user unit) pulls `main` and
+  fetches the system with `--max-jobs 0`, then activates it in a separate
+  system unit (`auto-update-switch-*`). Uncommitted or unpushed work in
+  `~/.dotfiles` is first committed and pushed by a headless Claude session
+  (`dotfiles-sync` skill). The laptop only runs on mains power on the home LAN.
+- **The cache** is `https://nix-cache.erikfrankling.duckdns.org`, the build
+  server's own store (homelab repo, `docs/nix-builder.md`). `ssh nix-builder`
+  reaches it from the PC.
+- **The contract:** whatever is on `main` is built and cached. A push to `main`
+  that the homelab has not built makes the 06:00 update stop with a
+  notification until the next nightly build catches up. That is harmless for
+  ordinary config edits; for anything that needs a real compile, run
+  `nix-nightly build` from a clean checkout on the PC before pushing.
+- Code: `modules/nixos/auto-update.nix` (cache, 06:00 job),
+  `modules/home-manager/auto-update/` (nightly job, both skills).
+- Logs: `journalctl --user -u auto-update`, `~/.local/state/auto-update/`,
+  `~/.local/state/nix-nightly/`, and the nightly thread in T3 Code.
+
 ---
 
 ## Understanding the Config
@@ -300,6 +359,22 @@ someOption = "custom-value";
 
 ## Local LLM System Overview
 
+### CPU Offload Policy (Erik, 2026-09-19)
+
+Do not run large LLMs partially or fully on the CPU on this desktop. They make
+the machine lag and retain too much RAM. Large models must fit fully on the GPU
+with safe desktop headroom, or be excluded from the local setup and benchmarks.
+Small, genuinely lightweight CPU models are acceptable. Do not leave a large
+model resident in CPU RAM between requests or experiments. This supersedes the
+historical partial-offload examples below; those are measurements, not current
+deployment recommendations.
+
+GPU-resident models may remain loaded for longer when safe desktop VRAM
+headroom is preserved. There is no requirement to unload after every request.
+The concern is persistent system-RAM use competing with browsers and builds,
+causing swapping or OOM. Prefer GPU residency; unload RAM-heavy models after
+use and measure host RAM separately because GPU offload does not eliminate it.
+
 ### The Problem
 
 The local LLM server runs on a desktop shared with Hyprland (the compositor). GPU VRAM is a shared resource — if the LLM uses too much VRAM, it will conflict with Hyprland and crash the entire system.
@@ -452,6 +527,13 @@ If VRAM is safe (~15-16GB used), you can:
 
 This ensures quality is preserved. Even "Q4_K_S" or "IQ4_XS" (smaller 4-bit variants) are acceptable.
 
+**Exception (Erik, 2026-08-17): Unsloth UD dynamic 3-bit (UD-Q3_K_XL) is
+allowed when 4-bit weights + mmproj cannot fully fit the GPU.** CPU-offloaded
+layers halve decode speed; for Qwen3.8-27B with vision the choice was 3-bit
+fully on GPU over 4-bit at half speed. Naive 3-bit (plain Q3_K/IQ3) remains
+forbidden — the exception is only for Unsloth's dynamic UD variants, and the
+quality cost should be measured with a `time reclassify` A/B when it matters.
+
 ---
 
 ## Current Models (RX 7900 XT - 20GB VRAM)
@@ -463,6 +545,20 @@ All tested and working at 192k context:
 | Qwen3.5-27B         | IQ4_NL (Unsloth)    | 14.6GB | 19.6GB      | Base model       |
 | Qwen3.5-27B Opus    | IQ4_XS (imatrix)    | 14.7GB | 19.7GB      | Claude distilled |
 | Qwen3.5-35B-A3B MoE | UD-IQ4_NL (Unsloth) | 17.8GB | 19.0GB      | 3B active params |
+| Qwen3.8-27B vision  | IQ4_XS (Unsloth)    | 15.7GB | see note    | + mmproj-F16 0.9GB |
+
+**Qwen3.8-27B (tested 2026-08-15):** weights + mmproj = 16.6GB, which is over
+the usual budget, so it runs with **60 of 65 layers on GPU** (5 on CPU) at
+`-c 40960`, `-ub 256`, q8_0 KV → 19.5GB used, 0.5GB free, 15.3 tok/s, stable
+across batched multi-image vision requests. Full offload (999 layers) hits
+19.9GB at 4k context — crash band — so partial offload is the trade that buys
+context and vision. Its hybrid attention keeps KV at ~32KB/token (q8_0): 16 of
+64 layers hold KV, so context is cheap and the weights are the bottleneck.
+Vision adds ~0.3GB after the first image; `-ub 256` keeps the encode buffer
+small. Reasoning must be capped (`--reasoning-budget 2048`) or the model can
+spend an entire completion budget thinking and return zero content. Serves the
+time tracker via aliases `time-vision`/`time-text` (same model on purpose —
+distinct models would thrash swaps).
 
 **Context testing results:**
 

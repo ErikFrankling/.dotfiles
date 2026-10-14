@@ -13,6 +13,9 @@
       cfg = config.hyprland;
     in
     {
+      # Home Manager has its own package set; patch its Hyprland launcher too.
+      nixpkgs.overlays = [ (import ../../../overlays/aquamarine.nix) ];
+
       home.pointerCursor = {
         gtk.enable = true;
         # x11.enable = true;
@@ -68,6 +71,22 @@
         enable = true;
         xwayland.enable = true;
 
+        # Hand the scaling/Wayland session variables to the systemd user
+        # manager too. The shell (erikshell) is a user unit, so every app
+        # started from its launcher inherits the manager's environment, not
+        # Hyprland's. Without GDK_SCALE there, XWayland apps (Steam, Spotify)
+        # render at 1x on the 2x monitors because of force_zero_scaling.
+        # The `import_env system` exec-once below was meant to cover
+        # XCURSOR_SIZE but the script is not executable, so it never ran.
+        systemd.variables = [
+          "DISPLAY"
+          "HYPRLAND_INSTANCE_SIGNATURE"
+          "WAYLAND_DISPLAY"
+          "XDG_CURRENT_DESKTOP"
+          "XDG_SESSION_TYPE"
+        ]
+        ++ builtins.attrNames config.home.sessionVariables;
+
         extraConfig = ''
           # exec-once = hyprctl output create headless
           # exec-once = hyprctl keyword monitor HEADLESS-1,1920x1080@60,0x0,1
@@ -104,7 +123,10 @@
           # exec-once = ibus-daemon -dr
           # exec-once = ${pkgs.ibus}/bin/ibus-daemon --daemonize --xim 
           # exec-once = ${pkgs.ibus}/libexec/ibus-ui-gtk3 --panel
-          exec-once = ibus start --type wayland
+          # On pc, the patched IBus frontend is owned by ibus-wayland.service.
+          ${lib.optionalString (
+            !(config.services.ibus-native-seat.enable or false)
+          ) "exec-once = ibus start --type wayland"}
 
           exec-once = lxqt-policykit-agent
 
