@@ -25,6 +25,7 @@
     # tailnet devices reach it through the subnet router.
     # ../../modules/nixos/laptop.nix
     ../../modules/nixos/mullvad.nix
+    ../../modules/nixos/dev-preview.nix
     ../../modules/nixos/local-stt.nix
     ../../modules/nixos/desktop.nix
     # Was disabled for a while: under getty autologin PAM never unlocked the
