@@ -152,6 +152,18 @@ Append one entry per night that needed a repair, newest first: date, symptom,
 cause, what fixed it, link. Commit it with the fix. This is how the next run
 learns the patterns; keep entries to a few lines.
 
+- 2026-10-14 — `sesh` failed because its build dependency `go-mockery` 3.8.0
+  cannot read Go 1.27 export data ("export data version 5 is greater than
+  maximum supported version 4"). Cause: nixos-unstable moved to Go 1.27 before
+  the 3.8.1 bump reached the channel. Fix: `otherPkgs.pkgsMaster.sesh` in
+  `modules/home-manager/tmux.nix` (repair 2).
+  https://github.com/NixOS/nixpkgs/pull/573099
+- 2026-10-14 — `nix-nightly plan` printed nothing for either host. Cause: a
+  dry run does not copy the derivations to the builder, so it answers "don't
+  know how to build these paths" and the filter hides that. Until the script
+  is fixed, get the list with `nix copy --derivation --to ssh-ng://nix-builder
+  <toplevel drvPath>` and then `nix build --dry-run --store
+  ssh-ng://nix-builder '<drvPath>^*'`.
 - 2026-10-14 — `vmware-workstation` failed on the homelab with `bwrap: setting
   up uid map: Permission denied`. Cause: Ubuntu 24.04 on the node sets
   `kernel.apparmor_restrict_unprivileged_userns=1`. Fix: copied the PC's
