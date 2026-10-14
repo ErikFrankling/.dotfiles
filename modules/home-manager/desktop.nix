@@ -36,7 +36,8 @@
     spotifywm
     # spotify-qt
     pavucontrol
-    otherPkgs.pkgsStable.google-chrome
+    # otherPkgs.pkgsStable.google-chrome # 2026-10-14: release-25.05 is frozen on Chrome 143, whose .deb Google has deleted, so a store that lacks it cannot build this
+    google-chrome
     # gparted
     # virtualbox
     syncthingtray-minimal
