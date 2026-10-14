@@ -67,6 +67,13 @@ The machines update themselves; nothing compiles on them.
   system unit (`auto-update-switch-*`). Uncommitted or unpushed work in
   `~/.dotfiles` is first committed and pushed by a headless Claude session
   (`dotfiles-sync` skill). The laptop only runs on mains power on the home LAN.
+- **07:00, PC:** `systems-check.timer` starts a second T3 Code session
+  (`systems-check` skill, clones in `~/.local/state/systems-check/`). It runs
+  `systems-check status`, checks that the pc, the framework (`ssh framework`,
+  through the Proxmox Tailscale node) and the homelab (Flux, pods, cache,
+  certificate) are in working order, repairs what is not, and sends Erik one
+  notification (`systems-check report`). A 10:00 watchdog notifies if no
+  report arrived.
 - **The cache** is `https://nix-cache.erikfrankling.duckdns.org`, the build
   server's own store (homelab repo, `docs/nix-builder.md`). `ssh nix-builder`
   reaches it from the PC.

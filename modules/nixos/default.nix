@@ -213,8 +213,16 @@
         Hostname 192.168.50.232
         User erikf
         KexAlgorithms curve25519-sha256
+      # Through the Proxmox host, which is on the tailnet: the laptop's LAN
+      # address changes with DHCP and it is off the LAN when away, but its
+      # tailnet address is fixed and reachable from proxmox either way. The
+      # pc cannot route to it directly (not a tailnet node, and WARP owns
+      # 100.96.0.0/12). The alias keeps the pinned host key valid.
       Host framework
-        Hostname 192.168.50.137
+        Hostname 100.107.78.44
+        ProxyJump proxmox
+        HostKeyAlias framework
+        ConnectTimeout 15
         User erikf
       Host octopi
         Hostname 192.168.50.162
@@ -229,6 +237,9 @@
         Hostname 192.168.50.200
         User ubuntu
     ";
+    # Pinned so unattended sessions (the morning systems check) can connect
+    # in BatchMode without a first-contact prompt.
+    knownHosts.framework.publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICZdbNRoE0KoFkRepeyTaxn/H0C84wlU/0zKguASTub5";
   };
 
   # Open ports in the firewall.
