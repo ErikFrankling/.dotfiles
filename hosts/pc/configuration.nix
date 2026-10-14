@@ -11,6 +11,9 @@
 {
   services.local-stt.enable = true;
 
+  # Daily: pull main and switch to the system the homelab built.
+  autoUpdate.enable = true;
+
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
@@ -35,7 +38,8 @@
     ../../modules/nixos/neptune.nix
     ../../modules/nixos/llama-swap.nix
     # ../../modules/nixos/executor.nix # local container; Executor runs on the homelab k3s instead
-    inputs.private.nixosModules.default
+    # inputs.private.nixosModules.default # extra llama-swap models, no longer used (see flake.nix)
+    ../../modules/nixos/auto-update.nix
     # ../../modules/nixos/llama-cpp.nix
     # ../../modules/nixos/ai-server.nix
     # ../../modules/nixos/vm-host.nix

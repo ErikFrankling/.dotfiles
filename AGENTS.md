@@ -53,6 +53,32 @@ is a bug to analyze, not something to wait out.
   failed attempts start from scratch. Check `df -h /` before a big update and
   tell Erik if it is nearly full.
 
+### Automatic Daily Updates (Erik, 2026-10-14)
+
+The machines update themselves; nothing compiles on them.
+
+- **03:00, PC:** `nix-nightly.timer` starts a T3 Code session in its own clone
+  (`~/.local/state/nix-nightly/dotfiles`). It runs `nix flake update`, builds
+  the `pc` and `framework` closures on the homelab build server
+  (`nix-nightly build`), repairs breakage following the `nix-update-doctor`
+  skill, and pushes to `main` only when both closures are built.
+- **06:00, each machine:** `auto-update.timer` (user unit) pulls `main` and
+  runs `nh os switch --max-jobs 0`. Uncommitted or unpushed work in
+  `~/.dotfiles` is first committed and pushed by a headless Claude session
+  (`dotfiles-sync` skill). The laptop only runs on mains power on the home LAN.
+- **The cache** is `https://nix-cache.erikfrankling.duckdns.org`, the build
+  server's own store (homelab repo, `docs/nix-builder.md`). `ssh nix-builder`
+  reaches it from the PC.
+- **The contract:** whatever is on `main` is built and cached. A push to `main`
+  that the homelab has not built makes the 06:00 update stop with a
+  notification until the next nightly build catches up. That is harmless for
+  ordinary config edits; for anything that needs a real compile, run
+  `nix-nightly build` from a clean checkout on the PC before pushing.
+- Code: `modules/nixos/auto-update.nix` (cache, 06:00 job),
+  `modules/home-manager/auto-update/` (nightly job, both skills).
+- Logs: `journalctl --user -u auto-update`, `~/.local/state/auto-update/`,
+  `~/.local/state/nix-nightly/`, and the nightly thread in T3 Code.
+
 ---
 
 ## Understanding the Config

@@ -10,6 +10,7 @@
     ../../modules/home-manager
     ../../modules/home-manager/desktop.nix
     ../../modules/home-manager/print
+    ../../modules/home-manager/auto-update
     inputs.time.homeManagerModules.default
   ];
 

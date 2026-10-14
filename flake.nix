@@ -159,7 +159,10 @@
     # Private NixOS additions (llama-swap models etc.). Local path while
     # developing — rebuild picks up changes without committing. Only used on
     # this machine.
-    private.url = "path:/home/erikf/projects/personal/private-nix";
+    # Disabled 2026-10-14: the two RP models it added to llama-swap are no
+    # longer used, and a path input only this machine has cannot be evaluated
+    # anywhere else.
+    # private.url = "path:/home/erikf/projects/personal/private-nix";
 
     voxtype.url = "github:peteonrails/voxtype";
     # Do NOT follow nixpkgs: voxtype's vulkan build needs its own pinned nixpkgs

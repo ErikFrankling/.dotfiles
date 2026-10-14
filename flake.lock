@@ -1090,22 +1090,6 @@
     },
     "nixpkgs_8": {
       "locked": {
-        "lastModified": 1791260994,
-        "narHash": "sha256-Miqqk/ammqnTUxaoCyvtwoPeLbI1ksFyLxi/CazZpWY=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "151fa4e8ddfdd8dd25d945ad94ed54a13de9f6e4",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_9": {
-      "locked": {
         "lastModified": 1787736819,
         "narHash": "sha256-cV5xEJJK3BvhU8rEd4mC9UsmDi5qscv/kzGPhBRC5WA=",
         "owner": "NixOS",
@@ -1276,20 +1260,6 @@
         "type": "github"
       }
     },
-    "private": {
-      "inputs": {
-        "nixpkgs": "nixpkgs_8"
-      },
-      "locked": {
-        "narHash": "sha256-07W5K9maaft0u2BftJbauTbRa7xV8qf7T6IWIpgsYYc=",
-        "path": "/home/erikf/projects/personal/private-nix",
-        "type": "path"
-      },
-      "original": {
-        "path": "/home/erikf/projects/personal/private-nix",
-        "type": "path"
-      }
-    },
     "root": {
       "inputs": {
         "ags": "ags",
@@ -1316,7 +1286,6 @@
         "noctalia": "noctalia",
         "nvim": "nvim",
         "opencode-desktop-nix": "opencode-desktop-nix",
-        "private": "private",
         "sops-nix": "sops-nix",
         "t3code-src": "t3code-src",
         "time": "time",
@@ -1535,7 +1504,7 @@
     "voxtype": {
       "inputs": {
         "flake-utils": "flake-utils_5",
-        "nixpkgs": "nixpkgs_9"
+        "nixpkgs": "nixpkgs_8"
       },
       "locked": {
         "lastModified": 1790474872,

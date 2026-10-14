@@ -16,6 +16,7 @@
     # ../../modules/nixos/openvpn.nix # archived: home VPN is Tailscale now
     ../../modules/nixos/tailscale.nix
     ../../modules/nixos/laptop.nix
+    ../../modules/nixos/auto-update.nix
     ../../modules/nixos/desktop.nix
     # ../../modules/nixos/keyring.nix -- disabled: the default keyring on disk
     # was Default_Keyring, not login.keyring, so PAM never unlocked it and
@@ -44,6 +45,14 @@
   #     };
   #   in
   #   pkgs.linuxKernel.packagesFor kernel;
+
+  # Daily: pull main and switch to the system the homelab built. Only on
+  # mains power and on the home network, so it never spends battery or
+  # somebody else's data.
+  autoUpdate = {
+    enable = true;
+    homeNetworkOnly = true;
+  };
 
   sops.defaultSopsFile = ./secrets/secrets.yaml;
   sops.defaultSopsFormat = "yaml";
