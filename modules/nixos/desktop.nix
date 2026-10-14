@@ -2,6 +2,7 @@
   pkgs,
   username,
   inputs,
+  config,
   ...
 }:
 
@@ -30,21 +31,12 @@
     vlc
     xrdb
     inputs.helium.packages.${pkgs.stdenv.hostPlatform.system}.default
-    # inputs.claude-desktop.packages.${system}.claude-desktop-fhs
-    # Claude Desktop (FHS variant — needed for MCP servers: npx/uvx/docker),
-    # wrapped to force 2x scaling. Electron ignores GDK_SCALE / the Hyprland
-    # monitor scale, so we force it here. The Nix launcher forwards "$@" to
-    # Electron (run_electron_and_cleanup), and the .desktop Exec is a bare
-    # `claude-desktop` resolved from PATH, so this wrapper applies everywhere.
-    (pkgs.symlinkJoin {
-      name = "claude-desktop-fhs-scaled";
-      paths = [ pkgs.claude-desktop-fhs ];
-      nativeBuildInputs = [ pkgs.makeWrapper ];
-      postBuild = ''
-        wrapProgram $out/bin/claude-desktop \
-          --add-flags "--force-device-scale-factor=2"
-      '';
-    })
+    # Claude Desktop (FHS variant — needed for MCP servers: npx/uvx/docker).
+    # Deliberately unscaled: --force-device-scale-factor also doubles the
+    # native Window Controls Overlay buttons that Electron paints for the
+    # frameless main window, so they end up wildly out of proportion to the
+    # web UI. Use the app's own zoom (Ctrl +) to size the content instead.
+    pkgs.claude-desktop-fhs
   ];
   # nixpkgs.config.permittedInsecurePackages = [ "tightvnc-1.3.10" ];
 
@@ -71,6 +63,26 @@
         <string>small-forest-3d80</string>
         <key>auto_connect</key>
         <integer>0</integer>
+        ${
+          # On the framework, Tailscale owns DNS (tailnet override -> AdGuard),
+          # so WARP must run "Secure Web Gateway without DNS filtering"
+          # (tunnelonly): the include-mode split tunnel to the Husk ingress IPs
+          # keeps working, but warp-svc no longer rewrites /etc/resolv.conf or
+          # intercepts port 53 -- in the default warp+doh mode the two daemons
+          # fight over DNS and connecting to the tailnet kills all resolution.
+          # Caveat: hostname-based include entries are inert in this mode (they
+          # rely on WARP snooping DNS answers), and so is Gateway's private-DNS
+          # resolver policy, which never sees a query. The *.husk-security.dev
+          # names are therefore resolved on the host by ./husk-dns.nix, which
+          # maps them to the ingress VIPs (10.0.127.250/.251); the IP include
+          # entries above are what actually routes them.
+          # The pc keeps the default mode: it is off the tailnet, and its
+          # Mullvad/WARP interplay is a separate question.
+          pkgs.lib.optionalString (config.networking.hostName == "framework") ''
+            <key>service_mode</key>
+            <string>tunnelonly</string>
+          ''
+        }
       </dict>
     ''}"
   ];
