@@ -185,6 +185,10 @@ Append one entry per night that needed a repair, newest first: date, symptom,
 cause, what fixed it, link. Commit it with the fix. This is how the next run
 learns the patterns; keep entries to a few lines.
 
+- 2026-10-15 — the plan listed `electron-unwrapped-44.7.2` (a source build)
+  for t3code. Cause: t3code comes from `pkgsMaster`, and master `ef8ffae`
+  bumped electron before Hydra built it (404 on cache.nixos.org). Fix: held
+  `nixpkgs_master` at `5e59cd3` (repair 1); unhold once the narinfo exists.
 - 2026-10-14 — `sesh` failed because its build dependency `go-mockery` 3.8.0
   cannot read Go 1.27 export data ("export data version 5 is greater than
   maximum supported version 4"). Cause: nixos-unstable moved to Go 1.27 before
