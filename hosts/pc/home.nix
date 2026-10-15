@@ -17,6 +17,34 @@ let
         ".backup '${t3CodexHome}/state_5.sqlite'"
     fi
   '';
+  # Grok Build (the `grok` CLI from llm-agents, see modules/home-manager/ai.nix)
+  # is a built-in T3 provider, but it starts switched off. settings.json is the
+  # server's own mutable state, so only flip that one flag and keep the rest;
+  # the server watches the file and applies the change without a restart.
+  t3EnableGrok = pkgs.writeShellApplication {
+    name = "t3code-enable-grok";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.jq
+    ];
+    text = ''
+      file="$HOME/.t3/userdata/settings.json"
+      current='{}'
+      if [ -e "$file" ]; then
+        if ! current=$(jq -e . "$file" 2>/dev/null); then
+          echo "t3code: cannot parse $file, leaving it alone" >&2
+          exit 0
+        fi
+      fi
+      if jq -e '.providers.grok.enabled == true' <<<"$current" >/dev/null; then
+        exit 0
+      fi
+      mkdir -p "$(dirname "$file")"
+      jq '.providers.grok.enabled = true' <<<"$current" >"$file.tmp"
+      mv "$file.tmp" "$file"
+      echo "t3code: enabled the Grok provider in $file"
+    '';
+  };
 in
 {
   imports = [
@@ -135,6 +163,10 @@ in
 
     Install.WantedBy = [ "default.target" ];
   };
+
+  home.activation.t3codeEnableGrok = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run ${lib.getExe t3EnableGrok}
+  '';
 
   home.sessionVariables = {
     # LIBSEAT_BACKEND = "logind";
