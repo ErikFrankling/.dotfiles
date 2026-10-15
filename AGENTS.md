@@ -74,6 +74,14 @@ The machines update themselves; nothing compiles on them.
   certificate) are in working order, repairs what is not, and sends Erik one
   notification (`systems-check report`). A 10:00 watchdog notifies if no
   report arrived.
+- **Always, PC:** `health-watch.timer` reads the Gatus health checks on the
+  homelab every 2 minutes (homelab repo,
+  `kubernetes/homelab/config/gatus/config.yaml`; page at
+  `http://192.168.50.200:18080`). A check that keeps failing, or is flaky,
+  starts a repair session (systems-check skill, "Incident procedure"; T3 Code,
+  or headless `claude` when T3 Code is down). At most one an hour and six a
+  day; log in `~/.local/state/health-watch/incidents.log`. No alerts to Erik:
+  the goal is that things work when he uses them.
 - **The cache** is `https://nix-cache.erikfrankling.duckdns.org`, the build
   server's own store (homelab repo, `docs/nix-builder.md`). `ssh nix-builder`
   reaches it from the PC.
