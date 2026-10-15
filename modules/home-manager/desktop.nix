@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   otherPkgs,
@@ -100,6 +101,10 @@
     # from ~/.config/gtk-4.0/gtk.css at user priority. Without this every GTK 4
     # app fell through to the light @define-colors.
     colorScheme = "dark";
+
+    # Home Manager stopped applying gtk.theme to GTK 4 by default (stateVersion
+    # 26.05). Keep the old behaviour so GTK 4 apps stay on adw-gtk3-dark.
+    gtk4.theme = config.gtk.theme;
   };
 
   dconf.settings."org/gnome/desktop/interface" = {
