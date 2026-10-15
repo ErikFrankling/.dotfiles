@@ -71,6 +71,9 @@
       wayland.windowManager.hyprland = {
         enable = true;
         xwayland.enable = true;
+        # Home Manager's default is now "lua" for stateVersion 26.05+. This
+        # config is written in hyprlang; converting it is a separate job.
+        configType = "hyprlang";
 
         # Hand the scaling/Wayland session variables to the systemd user
         # manager too. The shell (erikshell) is a user unit, so every app
