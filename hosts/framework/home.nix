@@ -11,6 +11,7 @@
     ../../modules/home-manager/desktop.nix
     ../../modules/home-manager/print
     ../../modules/home-manager/auto-update
+    ../../modules/home-manager/machines
     inputs.time.homeManagerModules.default
   ];
 
