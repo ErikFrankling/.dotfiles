@@ -175,6 +175,19 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-16 14:17 (health-watch) — `lan/t3code` and `phone/t3code` timed
+  out for ~5 minutes. T3 Code was fine; the PC was swapping (load 114,
+  memory/IO pressure ~58% full, "event loop stalled for 16 s" in the t3code
+  log). An agent session in `~/projects/agent` had started ~28 parallel
+  `codex exec` image jobs (`docs/company/brand/logos200/run.sh`: 20 at once,
+  `logos-liked/run.sh`: `xargs -P 8`). Agent tools run inside
+  `t3code.service`, which peaked at 16 GB RAM + 13 GB swap. It cleared on its
+  own when the jobs finished; nothing was restarted. Look for this first:
+  `memory.peak`/`memory.swap.peak` under the t3code.service cgroup, and
+  `journalctl -k | grep 'Under memory pressure'`. Not fixed at the root:
+  agent sessions share the server's cgroup, so a runaway job stalls T3 Code
+  too.
+
 - 2026-10-15 — Homelab not applying anything since 2026-08-21: the Flux
   Kustomization had `suspend: true`, and later changes were applied by hand
   with `kubectl`. 315 dead pods had piled up. Fix: diffed live against git,
