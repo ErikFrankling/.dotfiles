@@ -1,9 +1,4 @@
-{
-  pkgs,
-  lib,
-  otherPkgs,
-  ...
-}:
+{ pkgs, lib, ... }:
 let
   # # TODO: move to official trepo
   # t-smart-manager = pkgs.tmuxPlugins.mkTmuxPlugin
@@ -63,12 +58,7 @@ in
   # };
 
   home.packages = with pkgs; [
-    # nix-update-doctor: 2026-10-14 https://github.com/NixOS/nixpkgs/pull/573099
-    # sesh's build dependency go-mockery 3.8.0 fails with Go 1.27 on
-    # nixos-unstable; 3.8.1 is on master, not in the channel yet. Switch back
-    # to the line below once the PR reaches nixos-unstable.
-    # sesh
-    otherPkgs.pkgsMaster.sesh
+    sesh
     lsof
     moreutils
     # for tmux super fingers
