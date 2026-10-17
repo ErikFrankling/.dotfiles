@@ -91,8 +91,11 @@ let
       fi
 
       # Replace any older copy of the PC entry so a changed URL takes effect;
-      # keep every other connection the app has saved.
+      # keep every other connection the app has saved. The app can switch an
+      # environment off (it did after the v0.1 upgrade), so turn the PC back on.
       updated=$(jq -c --argjson e ${lib.escapeShellArg entry} '
+        .disabledEnvironmentIds = [(.disabledEnvironmentIds // [])[] | select(. != $e.target.environmentId)]
+        |
         .targets = ([.targets[] | select(.connectionId != $e.target.connectionId)] + [$e.target])
         | .profiles = ([.profiles[] | select(.connectionId != $e.profile.connectionId)] + [$e.profile])
         | .credentials = (
