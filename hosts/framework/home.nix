@@ -12,6 +12,7 @@
     ../../modules/home-manager/print
     ../../modules/home-manager/auto-update
     ../../modules/home-manager/machines
+    ../../modules/home-manager/bro
     inputs.time.homeManagerModules.default
   ];
 

@@ -59,6 +59,7 @@ in
     ../../modules/home-manager/dev-preview
     ../../modules/home-manager/company-brain.nix
     ../../modules/home-manager/machines
+    ../../modules/home-manager/bro
     inputs.time.homeManagerModules.default
     # ../../modules/home-manager/noctalia.nix
   ];
