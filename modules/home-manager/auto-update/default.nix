@@ -470,6 +470,7 @@ let
       pkgs.curl
       pkgs.jq
       pkgs.iputils
+      pkgs.iproute2
       pkgs.coreutils
       pkgs.gnugrep
       pkgs.gawk
@@ -515,6 +516,20 @@ let
         mv "$windows.tmp" "$windows"
       fi
       maintenance=$(jq -Rn '[inputs | split("\t") | {end: (.[0] | tonumber), pattern: .[1]}]' < <(cat "$windows" 2> /dev/null))
+
+      # The pc itself off the home LAN (2026-10-17: its cable ended up in a
+      # second router, 192.168.0.0/24) makes every check look dead, and no
+      # repair session can plug a cable back in. Note it once and wait.
+      if ! ip -4 -o addr show scope global | grep -q ' 192\.168\.50\.'; then
+        if [ ! -f "$dir/off-lan" ]; then
+          log "pc is not on the home LAN ($(ip -4 -o route show default | awk '{print "gateway " $3 " on " $5}' | head -n 1)); not watching until it is back"
+          touch "$dir/off-lan"
+        fi
+        exit 0
+      elif [ -f "$dir/off-lan" ]; then
+        log "pc is back on the home LAN"
+        rm -f "$dir/off-lan"
+      fi
 
       if statuses=$(curl -fsS --max-time 20 ${gatusApi}); then
         failing=$(jq -r --argjson windows "$maintenance" '

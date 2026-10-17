@@ -177,6 +177,16 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-17 23:19 (health-watch) — Every homelab check dead from the pc,
+  ping to 192.168.50.200 and .169 lost. The homelab was not the fault: the
+  pc's ethernet link dropped for two minutes and came back on a TP-Link
+  router (gateway 192.168.0.1, MAC 20:e1:5d:…, own public IP), so the pc
+  was off the ASUS LAN 192.168.50.0/24 (`ip -br addr`, `journalctl -k |
+  grep eno1`). DNS still gave 192.168.50.100, which is correct but
+  unreachable from that network. A physical cable/router change; only Erik
+  can fix it. health-watch now skips while the pc has no 192.168.50.x
+  address (logs "pc is not on the home LAN").
+
 - 2026-10-16 14:17 (health-watch) — `lan/t3code` and `phone/t3code` timed
   out for ~5 minutes. T3 Code was fine; the PC was swapping (load 114,
   memory/IO pressure ~58% full, "event loop stalled for 16 s" in the t3code
