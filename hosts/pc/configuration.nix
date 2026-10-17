@@ -100,6 +100,8 @@
 
   sops.secrets.syncthing-cert = { };
   sops.secrets.syncthing-key = { };
+  # Bearer token for the company brain (homelab), read by brain-skill-sync.
+  sops.secrets.brain-token.owner = username;
   sops.secrets.kth-password = {
     owner = username;
   };

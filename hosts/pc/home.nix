@@ -57,6 +57,7 @@ in
     ../../modules/home-manager/ibus-native-seat.nix
     ../../modules/home-manager/auto-update
     ../../modules/home-manager/dev-preview
+    ../../modules/home-manager/company-brain.nix
     ../../modules/home-manager/machines
     inputs.time.homeManagerModules.default
     # ../../modules/home-manager/noctalia.nix

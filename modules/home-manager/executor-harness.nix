@@ -1,11 +1,14 @@
-# Give every agent harness the one Executor MCP (homelab, see the homelab repo's
-# kubernetes/homelab/apps/executor.yaml) at launch, without owning mutable
-# user configs. Executor fronts every integration, including the PC's
-# computer-use MCP, so this is the only MCP the harnesses need.
+# Give every agent harness the one Executor MCP (Executor 2 on the homelab, see
+# the homelab repo's kubernetes/homelab/apps/executor.yaml) at launch, without
+# owning mutable user configs. Every integration, and every skill (the brain
+# app serves the company brain's skills), is added once in Executor and
+# reaches Claude Code, Codex and OpenCode with no change here.
 #
-# The API key is read from the sops secret at launch and handed over as
-# EXECUTOR_API_KEY. Without the key file the harness starts with no Executor
-# rather than a broken server entry.
+# The API key is an Executor personal access token limited to the "Erik"
+# organization, so the bare /mcp URL needs no organization header. It is read
+# from the sops secret at launch and handed over as EXECUTOR_API_KEY. Without
+# the key file the harness starts with no Executor rather than a broken server
+# entry.
 {
   pkgs,
   lib,
