@@ -82,6 +82,13 @@ The machines update themselves; nothing compiles on them.
   or headless `claude` when T3 Code is down). At most one an hour and six a
   day; log in `~/.local/state/health-watch/incidents.log`. No alerts to Erik:
   the goal is that things work when he uses them.
+- **Planned outages:** before taking something down on purpose (restarting
+  T3 Code, a homelab pod, a reboot), run
+  `health-watch maintenance MINUTES "reason" [check-regex]`, e.g.
+  `health-watch maintenance 5 "restart t3code for v0.1.1" t3code`. Matching
+  Gatus checks (`group/name`, default all) are ignored until the window ends,
+  and failures from inside it never count, so no repair session starts.
+  `health-watch maintenance` lists the open windows.
 - **The cache** is `https://nix-cache.erikfrankling.duckdns.org`, the build
   server's own store (homelab repo, `docs/nix-builder.md`). `ssh nix-builder`
   reaches it from the PC.

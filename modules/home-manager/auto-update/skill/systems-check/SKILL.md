@@ -72,7 +72,9 @@ works again. Your clones are in `~/.local/state/health-watch/`.
    in the report tell which.
 3. Find the cause and repair it, cheapest and most reversible first:
    restart the one service or pod; then a git change (dotfiles or homelab);
-   only then anything bigger. A dead k3s VM (no ping, no SSH for ten minutes)
+   only then anything bigger. Open a window before restarting anything
+   (`health-watch maintenance 5 "reason" check-regex`) so your own restart
+   does not start another session. A dead k3s VM (no ping, no SSH for ten minutes)
    may be started or reset with `qm start 200` / `qm reset 200` on proxmox;
    nothing else is ever rebooted.
 4. Verify against the original signal: the same Gatus check must pass again

@@ -472,15 +472,58 @@ let
       pkgs.iputils
       pkgs.coreutils
       pkgs.gnugrep
+      pkgs.gawk
     ];
     text = ''
       dir=${incidentDir}
       mkdir -p "$dir"
       log() { echo "$(date -Iseconds) $*" | tee -a "$dir/incidents.log"; }
 
+      # Planned outages: `health-watch maintenance MINUTES REASON [CHECK-REGEX]`
+      # ignores the matching checks (default: all) until the window ends, and
+      # their results from inside it afterwards, so a restart someone did on
+      # purpose never starts a repair session. One line per window:
+      # end-epoch, regex, reason (tab-separated).
+      windows="$dir/maintenance"
+      case "''${1:-}" in
+        maintenance)
+          if [ $# -eq 1 ]; then
+            now=$(date +%s)
+            while IFS=$'\t' read -r end pattern reason; do
+              [ "$end" -gt "$now" ] && echo "until $(date -d "@$end" +%H:%M) [$pattern] $reason"
+            done < <(cat "$windows" 2> /dev/null)
+            exit 0
+          fi
+          if [ $# -lt 3 ] || ! [[ $2 =~ ^[0-9]+$ ]]; then
+            echo "usage: health-watch maintenance MINUTES REASON [CHECK-REGEX]" >&2
+            exit 2
+          fi
+          end=$(($(date +%s) + $2 * 60))
+          printf '%s\t%s\t%s\n' "$end" "''${4:-.}" "$3" >> "$windows"
+          log "maintenance until $(date -d "@$end" +%H:%M) for checks matching ''${4:-.}: $3"
+          exit 0
+          ;;
+        "") ;;
+        *)
+          echo "usage: health-watch [maintenance MINUTES REASON [CHECK-REGEX]]" >&2
+          exit 2
+          ;;
+      esac
+      # Windows that ended over a day ago no longer hide any results.
+      if [ -f "$windows" ]; then
+        awk -F'\t' -v cutoff=$(($(date +%s) - 86400)) '$1 > cutoff' "$windows" > "$windows.tmp"
+        mv "$windows.tmp" "$windows"
+      fi
+      maintenance=$(jq -Rn '[inputs | split("\t") | {end: (.[0] | tonumber), pattern: .[1]}]' < <(cat "$windows" 2> /dev/null))
+
       if statuses=$(curl -fsS --max-time 20 ${gatusApi}); then
-        failing=$(jq -r '
-          .[] | (.results // []) as $r | ($r | length) as $n
+        failing=$(jq -r --argjson windows "$maintenance" '
+          .[]
+          | "\(.group)/\(.name)" as $key
+          | ([$windows[] | select(. as $w | $key | test($w.pattern)) | .end] | max // 0) as $cutoff
+          | (.results // []
+             | map(select(.timestamp | sub("\\.[0-9]+"; "") | fromdateiso8601 > $cutoff))) as $r
+          | ($r | length) as $n
           | ([$r[] | select(.success | not)] | length) as $f
           | ($r[-3:] | map(.success) | any) as $recent_ok
           | select(($n >= 3 and ($recent_ok | not)) or ($n >= 10 and $f * 5 > $n))
