@@ -18,10 +18,10 @@ in
         # Upstream moved to electron_44 itself, so no electron override is needed.
         t3codeBase.passthru.unwrapped.overrideAttrs (
           finalAttrs: oldAttrs: {
-            version = "0.0.45";
+            version = "0.1.1";
             src = inputs.t3code-src;
             # Upstream postPatch now copies the SPDX license data itself.
-            # Upstream updates and Mermaid change the fork's dependency lock.
+            # Upstream nightlies move past the nixpkgs release, so the lock differs.
             pnpmDeps = otherPkgs.pkgsMaster.fetchPnpmDeps {
               inherit (finalAttrs)
                 pname
@@ -31,7 +31,7 @@ in
                 ;
               pnpm = otherPkgs.pkgsMaster.pnpm_11;
               fetcherVersion = 4;
-              hash = "sha256-a8gRFaP0ALQjUdCV4xI2MpqlUTOeq8en3O/WE7omv9M=";
+              hash = "sha256-mjfKnjQuCRYydNtD368e9WBqdtfaDAjhouEtlwr1Li4=";
             };
 
             # node-pty ships a prebuilt pty.node that needs libstdc++ but has no

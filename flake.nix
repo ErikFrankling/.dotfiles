@@ -3,7 +3,7 @@
 
   inputs = {
     t3code-src = {
-      url = "github:ErikFrankling/t3code/erik/local-dictation";
+      url = "github:ErikFrankling/t3code/erik/main";
       flake = false;
     };
     # nixpkgs.url = "github:nixos/nixpkgs/master";

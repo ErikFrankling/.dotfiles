@@ -1445,16 +1445,16 @@
     "t3code-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1791407638,
-        "narHash": "sha256-FB59H1JfWiv9K/wjXeeoLrRMpv4ZzRdwd9/OzB9wWEo=",
+        "lastModified": 1792204489,
+        "narHash": "sha256-nK+TQ8nyvlopkLgD5JS7alWu8t9Yo5PHrSfHGomeVR0=",
         "owner": "ErikFrankling",
         "repo": "t3code",
-        "rev": "e3b09949ae290c85a0a81be1d79757ecc2f04b9f",
+        "rev": "b811cceb2b7496a374e9369f74527fb95596bc17",
         "type": "github"
       },
       "original": {
         "owner": "ErikFrankling",
-        "ref": "erik/local-dictation",
+        "ref": "erik/main",
         "repo": "t3code",
         "type": "github"
       }

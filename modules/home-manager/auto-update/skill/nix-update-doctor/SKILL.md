@@ -25,6 +25,8 @@ You start in a dedicated clone, clean and at `origin/main`. Never touch
 1. `nix flake update`, then commit `flake.lock` alone ("Update flake inputs").
    If nothing changed, skip the commit and still do step 2: yesterday's push may
    have been someone else's and not built yet.
+1b. Rebase Erik's T3 Code fork onto the newest upstream nightly (see "T3 Code
+   fork"). Hand this to a subagent and wait for it; it ends in its own commit.
 2. `nix-nightly plan` — lists what the homelab would have to build for each
    host. Read it (see "What may compile").
 3. Clear the evaluation warnings (see "Evaluation warnings"). Evaluate both
@@ -81,6 +83,49 @@ release notes. Then:
 Put each fix in its own commit, after the lock commit and before the build,
 so one build covers everything. A warning fix that breaks the build is
 reverted, not repaired at length; the update matters more.
+
+## T3 Code fork
+
+Erik runs his own fork: `github.com/ErikFrankling/t3code`, branch `erik/main`,
+pinned as the `t3code-src` flake input and built by `overlays/t3code.nix`. It
+is a handful of commits (dictation, no-auth mode, the personal agent, a desktop
+keyring fix) on top of the newest upstream **nightly tag**
+(`v<version>-nightly.<date>.<n>` in `pingdotgg/t3code`). It follows nightlies,
+not every commit on `main`, so each daily rebase stays small.
+
+Give the subagent this brief:
+
+1. Work in `~/.local/state/nix-nightly/t3code` (clone
+   `git@github.com:ErikFrankling/t3code.git` there if missing, add
+   `https://github.com/pingdotgg/t3code.git` as `upstream`). Never touch
+   `~/projects/personal/t3code`; that is Erik's working copy.
+2. `git fetch upstream --tags`, check out `erik/main` at `origin/erik/main`.
+   Find the newest nightly tag
+   (`git tag --sort=-creatordate | grep -m1 nightly`). If `erik/main` already
+   sits on it, report "already current" and stop.
+3. Tag the current state `backup/erik-main-<date>` and push the tag, then
+   `git rebase --onto <tag> <old-base-tag> erik/main` (the old base is
+   `git describe --tags --abbrev=0 --match '*nightly*'`).
+4. Resolve conflicts by keeping upstream's code and re-applying the fork's
+   intent. Read `docs/local-dictation.md` and `docs/personal-agent.md` first.
+   If upstream now does something a fork commit did, drop that commit.
+5. Use `nix shell nixpkgs#nodejs_24 nixpkgs#pnpm_11` for node. Run
+   `CI=true pnpm install --frozen-lockfile`, then typecheck (`tsc-rs --noEmit`)
+   `packages/contracts`, `packages/client-runtime`, `apps/server` and
+   `apps/web`, and run the fork's tests:
+   `vp test run apps/server/src/DictationDeliveryQueue.test.ts apps/server/src/auth/EnvironmentAuth.test.ts packages/client-runtime/src/operations/commands.test.ts apps/web/src/composer-logic.test.ts`.
+   Unset `T3CODE_UNSAFE_NO_AUTH` for the tests; the live server's value breaks
+   the auth tests. If any of this fails and cannot be fixed with confidence,
+   push nothing, report what broke, and leave the fork where it was.
+6. Force-push `erik/main` (`--force-with-lease`).
+7. In the dotfiles clone: `nix flake update t3code-src`, set `version` in
+   `overlays/t3code.nix` to the tag's version, set the `pnpmDeps` hash to
+   `lib.fakeHash`, build once to read the real hash, put it in, and build
+   `.#nixosConfigurations.pc.config.home-manager.users.erikf.home.path` with
+   `--no-link`. Commit "Rebase the T3 Code fork onto <tag>".
+
+If the fork cannot be rebased tonight, the rest of the update still ships: the
+flake keeps the previous fork commit, which is still built.
 
 ## What may compile
 
