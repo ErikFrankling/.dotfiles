@@ -70,6 +70,15 @@ is Erik's call.
   on HTTPS and the server thinks it is on plain HTTP at localhost. The proxy
   sends `X-Forwarded-Proto: https`.
 
+- **Another project's favicon on the tab.** Browsers keep favicons per page
+  URL and origin. A page that declares no icon, served by a server that 404s
+  `/favicon.ico` (`python -m http.server`), shows whatever an earlier project on
+  that port left behind. Example: the agent-company manifesto on
+  `localhost:8081` showed the Neptune icon in Erik's Firefox, because NaiaClaw
+  had run on 8081. When you serve a page that has no `<link rel="icon">`, add
+  one, even `<link rel="icon" href="data:,">`. Also pick an uncommon port in the
+  ranges above rather than the first default (8080, 8081, 3000, 5173).
+
 ## How it works (for debugging)
 
 ```
