@@ -178,14 +178,17 @@ short rev, no log excerpts; the thread has the details.
 Newest first; one entry per morning that needed a real repair.
 
 - 2026-10-17 23:19 (health-watch) — Every homelab check dead from the pc,
-  ping to 192.168.50.200 and .169 lost. The homelab was not the fault: the
-  pc's ethernet link dropped for two minutes and came back on a TP-Link
-  router (gateway 192.168.0.1, MAC 20:e1:5d:…, own public IP), so the pc
-  was off the ASUS LAN 192.168.50.0/24 (`ip -br addr`, `journalctl -k |
-  grep eno1`). DNS still gave 192.168.50.100, which is correct but
-  unreachable from that network. A physical cable/router change; only Erik
-  can fix it. health-watch now skips while the pc has no 192.168.50.x
-  address (logs "pc is not on the home LAN").
+  ping to 192.168.50.200 and .169 lost. Erik's TP-Link router (MAC
+  20:e1:5d:e4:2e:e0) dropped the link for two minutes and came back on
+  factory defaults: LAN 192.168.0.1/24, new public IP. The pc took a
+  192.168.0.x lease; proxmox and VM 200 (static, gateway 192.168.50.1)
+  were stranded on the same wire with no gateway or internet, so Tailscale
+  and phone access died too. Confirm with a temporary
+  `sudo ip addr add 192.168.50.232/24 dev eno1` and `arping -I eno1
+  192.168.50.169`. Only Erik can fix it in the router UI: LAN
+  192.168.50.1/24, DHCP pool clear of .100/.169/.200, pc reserved at .232,
+  DHCP DNS 192.168.50.100. The `ASUS_78VJ` Wi-Fi is a neighbour's.
+  health-watch now skips while the pc has no 192.168.50.x address.
 
 - 2026-10-16 14:17 (health-watch) — `lan/t3code` and `phone/t3code` timed
   out for ~5 minutes. T3 Code was fine; the PC was swapping (load 114,
