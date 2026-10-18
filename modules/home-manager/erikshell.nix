@@ -168,6 +168,7 @@ in
       Unit = {
         After = lib.mkForce [ "hyprland-session.target" ];
         PartOf = lib.mkForce [ "hyprland-session.target" ];
+        StartLimitIntervalSec = 0;
       };
       Install.WantedBy = lib.mkForce [ "hyprland-session.target" ];
 
@@ -178,6 +179,16 @@ in
         # The shell repo has since grown the same line; once the input is bumped
         # past fa0366a this one is redundant and can go.
         KillMode = "process";
+
+        # When Hyprland dies the shell exits with it, and the default 100 ms
+        # RestartSec burned the five-starts-in-ten-seconds limit before the next
+        # compositor was up (2026-10-18: 4 restarts in 25 s, then `failed`, no
+        # bar). Back off from 1 s to 30 s and never give up, so it reattaches to
+        # whichever Hyprland comes up next. A broken QML file now retries every
+        # 30 s instead of latching; `erikshell-dev` still resets either way.
+        RestartSec = "1s";
+        RestartSteps = 5;
+        RestartMaxDelaySec = "30s";
 
         ExecStart = lib.mkIf cfg.localDev.enable (lib.mkForce runFromTree);
       };
