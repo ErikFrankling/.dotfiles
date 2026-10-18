@@ -66,6 +66,17 @@
         CLAUDE_USE_WAYLAND = "1";
       };
 
+      # The same 2x scale over XSETTINGS, for X11 GTK apps that never see
+      # GDK_SCALE: pkexec wipes the environment, so GParted running as root
+      # rendered at 1x under force_zero_scaling.
+      services.xsettingsd = {
+        enable = true;
+        settings = {
+          "Gdk/WindowScalingFactor" = 2;
+          "Gdk/UnscaledDPI" = 98304; # 96 * 1024, so fonts are not scaled twice
+        };
+      };
+
       xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
 
       wayland.windowManager.hyprland = {
