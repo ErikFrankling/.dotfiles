@@ -1,0 +1,177 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,"><title>Small voices at 1.2×</title><style>
+:root{--bg:#101114;--fg:#e8e8ea;--mut:#9a9ca3;--card:#1a1b20;--line:#2a2c33;--acc:#f0c040}
+@media (prefers-color-scheme: light){:root{--bg:#f6f6f4;--fg:#1c1d20;--mut:#62646b;--card:#fff;--line:#e2e2de}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
+main{max-width:1500px;margin:auto;padding:20px 16px 90px}h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:28px 0 8px}
+p.lead{color:var(--mut);max-width:80ch}blockquote{margin:10px 0;padding:10px 14px;border-left:3px solid var(--acc);background:var(--card);border-radius:0 10px 10px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.card.fav{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}.card header{display:flex;justify-content:space-between;align-items:center}
+h3{margin:0;font-size:15px}.star{background:none;border:0;color:var(--acc);font-size:22px;cursor:pointer;line-height:1}
+.meta{display:flex;flex-wrap:wrap;gap:6px}.b{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mut)}audio{width:100%}
+#picks{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;font-size:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+#picks button{font:inherit;padding:5px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+</style></head><body><main><h1>Small voices at 1.2×</h1>
+<p class="lead">Every voice of the TTS models small enough for the homelab GTX 1060, all reading Gemma 4 E4B's summary at 1.2× speed, sentence by sentence.
+This voice reads aloud while you have dictated in the last 30 minutes. Kokoro voices can also be blended, for example two parts of one voice and one part of another. Grades are Kokoro's own quality ratings.</p>
+<blockquote>Basically, your current setup won&#x27;t work well because the speech recognition and text-to-speech models are too big for your main graphics card. For summarizing, the recommendation is to use a cheap cloud model via one API call. For the voice, the recommendation is to use Kokoro on your older homelab GPU. If we do this, the summary will stream to Kokoro, starting audio a couple of seconds after you click. I need a Claude API key to build this, or you can pay through opencode&#x27;s models. Do you want me to build option A plus Kokoro, or would you rather keep everything local and accept the GPU tradeoffs?</blockquote><h2>Your big voice (Higgs, for reference)</h2><div class="grid"><article class="card"><header><h3>Higgs · erik · 1.0×</h3>
+<button class="star" data-key="higgs-erik-1.0" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">PC GPU, when dictation is idle</span></div><audio controls preload="none" src="private/audio/voices/higgs-erik-1.0.opus"></audio></article><article class="card"><header><h3>Higgs · erik · 1.2×</h3>
+<button class="star" data-key="higgs-erik-1.2" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">PC GPU, when dictation is idle</span></div><audio controls preload="none" src="private/audio/voices/higgs-erik-1.2.opus"></audio></article></div><h2>Kokoro · American female</h2><div class="grid"><article class="card"><header><h3>af_bella</h3>
+<button class="star" data-key="kokoro-cpu-af_bella" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade A-</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_bella.opus"></audio></article><article class="card"><header><h3>af_heart</h3>
+<button class="star" data-key="kokoro-cpu-af_heart" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade A</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_heart.opus"></audio></article><article class="card"><header><h3>af_nicole</h3>
+<button class="star" data-key="kokoro-cpu-af_nicole" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade B-</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_nicole.opus"></audio></article><article class="card"><header><h3>af_alloy</h3>
+<button class="star" data-key="kokoro-cpu-af_alloy" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade C</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_alloy.opus"></audio></article><article class="card"><header><h3>af_aoede</h3>
+<button class="star" data-key="kokoro-cpu-af_aoede" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade C+</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_aoede.opus"></audio></article><article class="card"><header><h3>af_kore</h3>
+<button class="star" data-key="kokoro-cpu-af_kore" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade C+</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_kore.opus"></audio></article><article class="card"><header><h3>af_nova</h3>
+<button class="star" data-key="kokoro-cpu-af_nova" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade C</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_nova.opus"></audio></article><article class="card"><header><h3>af_sarah</h3>
+<button class="star" data-key="kokoro-cpu-af_sarah" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade C+</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_sarah.opus"></audio></article><article class="card"><header><h3>af_sky</h3>
+<button class="star" data-key="kokoro-cpu-af_sky" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade C-</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_sky.opus"></audio></article><article class="card"><header><h3>af_jessica</h3>
+<button class="star" data-key="kokoro-cpu-af_jessica" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade D</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_jessica.opus"></audio></article><article class="card"><header><h3>af_river</h3>
+<button class="star" data-key="kokoro-cpu-af_river" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade D</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_river.opus"></audio></article><article class="card"><header><h3>af_amelia_inno</h3>
+<button class="star" data-key="kokoro-cpu-af_amelia_inno" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_amelia_inno.opus"></audio></article><article class="card"><header><h3>af_goodall_inno</h3>
+<button class="star" data-key="kokoro-cpu-af_goodall_inno" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_goodall_inno.opus"></audio></article><article class="card"><header><h3>af_jadzia</h3>
+<button class="star" data-key="kokoro-cpu-af_jadzia" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_jadzia.opus"></audio></article><article class="card"><header><h3>af_v0</h3>
+<button class="star" data-key="kokoro-cpu-af_v0" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_v0.opus"></audio></article><article class="card"><header><h3>af_v0bella</h3>
+<button class="star" data-key="kokoro-cpu-af_v0bella" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_v0bella.opus"></audio></article><article class="card"><header><h3>af_v0irulan</h3>
+<button class="star" data-key="kokoro-cpu-af_v0irulan" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_v0irulan.opus"></audio></article><article class="card"><header><h3>af_v0nicole</h3>
+<button class="star" data-key="kokoro-cpu-af_v0nicole" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_v0nicole.opus"></audio></article><article class="card"><header><h3>af_v0sarah</h3>
+<button class="star" data-key="kokoro-cpu-af_v0sarah" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_v0sarah.opus"></audio></article><article class="card"><header><h3>af_v0sky</h3>
+<button class="star" data-key="kokoro-cpu-af_v0sky" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-af_v0sky.opus"></audio></article></div><h2>Kokoro · American male</h2><div class="grid"><article class="card"><header><h3>am_fenrir</h3>
+<button class="star" data-key="kokoro-cpu-am_fenrir" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade C+</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-am_fenrir.opus"></audio></article><article class="card"><header><h3>am_michael</h3>
+<button class="star" data-key="kokoro-cpu-am_michael" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade C+</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-am_michael.opus"></audio></article><article class="card"><header><h3>am_puck</h3>
+<button class="star" data-key="kokoro-cpu-am_puck" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade C+</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-am_puck.opus"></audio></article><article class="card"><header><h3>am_echo</h3>
+<button class="star" data-key="kokoro-cpu-am_echo" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade D</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-am_echo.opus"></audio></article><article class="card"><header><h3>am_eric</h3>
+<button class="star" data-key="kokoro-cpu-am_eric" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade D</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-am_eric.opus"></audio></article><article class="card"><header><h3>am_liam</h3>
+<button class="star" data-key="kokoro-cpu-am_liam" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade D</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-am_liam.opus"></audio></article><article class="card"><header><h3>am_onyx</h3>
+<button class="star" data-key="kokoro-cpu-am_onyx" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade D</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-am_onyx.opus"></audio></article><article class="card"><header><h3>am_santa</h3>
+<button class="star" data-key="kokoro-cpu-am_santa" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade D-</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-am_santa.opus"></audio></article><article class="card"><header><h3>am_adam</h3>
+<button class="star" data-key="kokoro-cpu-am_adam" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade F+</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-am_adam.opus"></audio></article><article class="card"><header><h3>am_price_inno</h3>
+<button class="star" data-key="kokoro-cpu-am_price_inno" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-am_price_inno.opus"></audio></article><article class="card"><header><h3>am_v0adam</h3>
+<button class="star" data-key="kokoro-cpu-am_v0adam" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-am_v0adam.opus"></audio></article><article class="card"><header><h3>am_v0gurney</h3>
+<button class="star" data-key="kokoro-cpu-am_v0gurney" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-am_v0gurney.opus"></audio></article><article class="card"><header><h3>am_v0michael</h3>
+<button class="star" data-key="kokoro-cpu-am_v0michael" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-am_v0michael.opus"></audio></article></div><h2>Kokoro · British female</h2><div class="grid"><article class="card"><header><h3>bf_emma</h3>
+<button class="star" data-key="kokoro-cpu-gb-bf_emma" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade B-</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-gb-bf_emma.opus"></audio></article><article class="card"><header><h3>bf_isabella</h3>
+<button class="star" data-key="kokoro-cpu-gb-bf_isabella" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade C</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-gb-bf_isabella.opus"></audio></article><article class="card"><header><h3>bf_alice</h3>
+<button class="star" data-key="kokoro-cpu-gb-bf_alice" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade D</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-gb-bf_alice.opus"></audio></article><article class="card"><header><h3>bf_lily</h3>
+<button class="star" data-key="kokoro-cpu-gb-bf_lily" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade D</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-gb-bf_lily.opus"></audio></article><article class="card"><header><h3>bf_v0emma</h3>
+<button class="star" data-key="kokoro-cpu-bf_v0emma" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-bf_v0emma.opus"></audio></article><article class="card"><header><h3>bf_v0isabella</h3>
+<button class="star" data-key="kokoro-cpu-bf_v0isabella" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-bf_v0isabella.opus"></audio></article></div><h2>Kokoro · British male</h2><div class="grid"><article class="card"><header><h3>bm_fable</h3>
+<button class="star" data-key="kokoro-cpu-gb-bm_fable" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade C</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-gb-bm_fable.opus"></audio></article><article class="card"><header><h3>bm_george</h3>
+<button class="star" data-key="kokoro-cpu-gb-bm_george" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade C</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-gb-bm_george.opus"></audio></article><article class="card"><header><h3>bm_daniel</h3>
+<button class="star" data-key="kokoro-cpu-gb-bm_daniel" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade D</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-gb-bm_daniel.opus"></audio></article><article class="card"><header><h3>bm_lewis</h3>
+<button class="star" data-key="kokoro-cpu-gb-bm_lewis" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">grade D+</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-gb-bm_lewis.opus"></audio></article><article class="card"><header><h3>bm_atten_inno</h3>
+<button class="star" data-key="kokoro-cpu-bm_atten_inno" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-bm_atten_inno.opus"></audio></article><article class="card"><header><h3>bm_v0george</h3>
+<button class="star" data-key="kokoro-cpu-bm_v0george" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-bm_v0george.opus"></audio></article><article class="card"><header><h3>bm_v0lewis</h3>
+<button class="star" data-key="kokoro-cpu-bm_v0lewis" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">community voice</span></div><audio controls preload="none" src="private/audio/voices/kokoro-cpu-bm_v0lewis.opus"></audio></article></div><h2>Supertonic 3</h2><div class="grid"><article class="card"><header><h3>F1</h3>
+<button class="star" data-key="supertonic-F1" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">F = female, M = male</span></div><audio controls preload="none" src="private/audio/voices/supertonic-F1.opus"></audio></article><article class="card"><header><h3>F2</h3>
+<button class="star" data-key="supertonic-F2" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">F = female, M = male</span></div><audio controls preload="none" src="private/audio/voices/supertonic-F2.opus"></audio></article><article class="card"><header><h3>F3</h3>
+<button class="star" data-key="supertonic-F3" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">F = female, M = male</span></div><audio controls preload="none" src="private/audio/voices/supertonic-F3.opus"></audio></article><article class="card"><header><h3>F4</h3>
+<button class="star" data-key="supertonic-F4" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">F = female, M = male</span></div><audio controls preload="none" src="private/audio/voices/supertonic-F4.opus"></audio></article><article class="card"><header><h3>F5</h3>
+<button class="star" data-key="supertonic-F5" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">F = female, M = male</span></div><audio controls preload="none" src="private/audio/voices/supertonic-F5.opus"></audio></article><article class="card"><header><h3>M1</h3>
+<button class="star" data-key="supertonic-M1" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">F = female, M = male</span></div><audio controls preload="none" src="private/audio/voices/supertonic-M1.opus"></audio></article><article class="card"><header><h3>M2</h3>
+<button class="star" data-key="supertonic-M2" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">F = female, M = male</span></div><audio controls preload="none" src="private/audio/voices/supertonic-M2.opus"></audio></article><article class="card"><header><h3>M3</h3>
+<button class="star" data-key="supertonic-M3" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">F = female, M = male</span></div><audio controls preload="none" src="private/audio/voices/supertonic-M3.opus"></audio></article><article class="card"><header><h3>M4</h3>
+<button class="star" data-key="supertonic-M4" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">F = female, M = male</span></div><audio controls preload="none" src="private/audio/voices/supertonic-M4.opus"></audio></article><article class="card"><header><h3>M5</h3>
+<button class="star" data-key="supertonic-M5" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">F = female, M = male</span></div><audio controls preload="none" src="private/audio/voices/supertonic-M5.opus"></audio></article></div><h2>Pocket TTS</h2><div class="grid"><article class="card"><header><h3>alba</h3>
+<button class="star" data-key="pocket-alba" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-alba.opus"></audio></article><article class="card"><header><h3>anna</h3>
+<button class="star" data-key="pocket-anna" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-anna.opus"></audio></article><article class="card"><header><h3>azelma</h3>
+<button class="star" data-key="pocket-azelma" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-azelma.opus"></audio></article><article class="card"><header><h3>charles</h3>
+<button class="star" data-key="pocket-charles" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-charles.opus"></audio></article><article class="card"><header><h3>cosette</h3>
+<button class="star" data-key="pocket-cosette" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-cosette.opus"></audio></article><article class="card"><header><h3>eponine</h3>
+<button class="star" data-key="pocket-eponine" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-eponine.opus"></audio></article><article class="card"><header><h3>eve</h3>
+<button class="star" data-key="pocket-eve" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-eve.opus"></audio></article><article class="card"><header><h3>fantine</h3>
+<button class="star" data-key="pocket-fantine" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-fantine.opus"></audio></article><article class="card"><header><h3>george</h3>
+<button class="star" data-key="pocket-george" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-george.opus"></audio></article><article class="card"><header><h3>jane</h3>
+<button class="star" data-key="pocket-jane" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-jane.opus"></audio></article><article class="card"><header><h3>javert</h3>
+<button class="star" data-key="pocket-javert" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-javert.opus"></audio></article><article class="card"><header><h3>jean</h3>
+<button class="star" data-key="pocket-jean" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-jean.opus"></audio></article><article class="card"><header><h3>marius</h3>
+<button class="star" data-key="pocket-marius" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-marius.opus"></audio></article><article class="card"><header><h3>mary</h3>
+<button class="star" data-key="pocket-mary" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-mary.opus"></audio></article><article class="card"><header><h3>michael</h3>
+<button class="star" data-key="pocket-michael" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-michael.opus"></audio></article><article class="card"><header><h3>paul</h3>
+<button class="star" data-key="pocket-paul" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-paul.opus"></audio></article><article class="card"><header><h3>vera</h3>
+<button class="star" data-key="pocket-vera" aria-label="favourite">☆</button></header>
+<div class="meta"><span class="b">sped up afterwards (no native speed)</span></div><audio controls preload="none" src="private/audio/voices/pocket-vera.opus"></audio></article></div></main>
+<div id="picks"><strong>Your picks:</strong><span id="pickl">none yet</span><button id="copy">Copy</button></div>
+<script>
+const KEY='read-aloud-voice-picks';const picks=new Set(JSON.parse(localStorage.getItem(KEY)||'[]'));
+function render(){document.querySelectorAll('.star').forEach(b=>{const on=picks.has(b.dataset.key);b.textContent=on?'★':'☆';b.closest('.card').classList.toggle('fav',on)});
+document.getElementById('pickl').textContent=picks.size?[...picks].join(' · '):'none yet';localStorage.setItem(KEY,JSON.stringify([...picks]))}
+document.querySelectorAll('.star').forEach(b=>b.onclick=()=>{picks.has(b.dataset.key)?picks.delete(b.dataset.key):picks.add(b.dataset.key);render()});
+document.getElementById('copy').onclick=()=>navigator.clipboard.writeText(document.getElementById('pickl').textContent);
+document.addEventListener('play',ev=>document.querySelectorAll('audio').forEach(a=>{if(a!==ev.target)a.pause()}),true);render();
+</script></body></html>
