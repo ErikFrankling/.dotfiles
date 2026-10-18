@@ -1,0 +1,57 @@
+{
+  "breeze2": {
+    "recall": 1.0,
+    "extra_words": 0,
+    "transcript": "Okay, so I've looked at your setup and found that your current GPU can't handle both dictation and listening at the same time because it would constantly reload models causing long delays. The solution is to use a cheap cloud model for quick summaries instead of running a local one. For the voice, we should use Kokoro on your old 1060 graphics card, which is faster and won't conflict with dictation. This means we'll add a button to read messages aloud, stream the summary immediately, and show subtitles as it speaks. I need to know if you want me to build this cloud summary and Kokoro voice setup now or if you prefer to keep everything local and deal with the slower speeds."
+  },
+  "chatterbox-turbo": {
+    "recall": 1.0,
+    "extra_words": 0,
+    "transcript": "Okay, so I've looked at your setup and found that your current GPU can't handle both dictation and listening at the same time because it would constantly reload models causing long delays. The solution is to use a cheap cloud model for quick summaries instead of running a local one. For the voice, we should use Kokoro on your old 1060 graphics card, which is faster and won't conflict with dictation. This means we'll add a button to read messages aloud, stream the summary immediately, and show subtitles as it speaks. I need to know if you want me to build this cloud summary and Kokoro voice setup now, or if you prefer to keep everything local and deal with the slower speeds."
+  },
+  "higgs3-4b": {
+    "recall": 0.886,
+    "extra_words": 0,
+    "transcript": "Okay, so I've looked at your setup and found that your current GPU can't handle both dictation and listening at the same time, because it would constantly reload models, causing long delays. The solution is to use a cheap cloud model for quick summaries instead of running a local one. For the voice, we should use Kokoro on your old 1060 graphics card, which is faster and won't conflict with dictation. This means we'll add a button to read messages aloud, stream the summary immediately, and show subtitles as it speaks. I need to know if you want me to build this cloud summary and Kokoro voice setup now."
+  },
+  "kokoro-cpu-michael": {
+    "recall": 1.0,
+    "extra_words": 0,
+    "transcript": "Okay, so I've looked at your setup and found that your current GPU can't handle both dictation and listening at the same time because it would constantly reload models, causing long delays. The solution is to use a cheap cloud model for quick summaries instead of running a local one. For the voice, we should use Kokoro on your old 1060 graphics card, which is faster and won't conflict with dictation. This means we'll add a button to read messages aloud, stream the summary immediately, and show subtitles as it speaks. I need to know if you want me to build this cloud summary and Kokoro voice setup now, or if you prefer to keep everything local and deal with the slower speeds."
+  },
+  "kokoro-cpu": {
+    "recall": 0.992,
+    "extra_words": 1,
+    "transcript": "OK, so I've looked at your setup and found that your current GPU can't handle both dictation and listening at the same time because it would constantly reload models, causing long delays. The solution is to use a cheap cloud model for quick summaries, instead of running a local one. For the voice, we should use Kokoro on your old 1060 graphics card, which is faster and won't conflict with dictation. This means we'll add a button to read messages aloud, stream the summary immediately, and show subtitles as it speaks. I need to know if you want me to build this cloud summary and Kokoro voice setup now, or if you prefer to keep everything local and deal with the slower speeds."
+  },
+  "kokoro-gpu": {
+    "recall": 1.0,
+    "extra_words": 0,
+    "transcript": "Okay, so I've looked at your setup and found that your current GPU can't handle both dictation and listening at the same time, because it would constantly reload models, causing long delays. The solution is to use a cheap cloud model for quick summaries, instead of running a local one. For the voice, we should use Kokoro on your old 1060 graphics card, which is faster and won't conflict with dictation. This means we'll add a button to read messages aloud, stream the summary immediately, and show subtitles as it speaks. I need to know if you want me to build this cloud summary and Kokoro voice setup now, or if you prefer to keep everything local and deal with the slower speeds."
+  },
+  "pocket": {
+    "recall": 1.0,
+    "extra_words": 0,
+    "transcript": "Okay, so I've looked at your setup and found that your current GPU can't handle both dictation and listening at the same time because it would constantly reload models, causing long delays. The solution is to use a cheap cloud model for quick summaries instead of running a local one. For the voice, we should use Kokoro on your old 1060 graphics card, which is faster and won't conflict with dictation. This means we'll add a button to read messages aloud, stream the summary immediately, and show subtitles as it speaks. I need to know if you want me to build this cloud summary and Kokoro voice setup now, or if you prefer to keep everything local and deal with the slower speeds."
+  },
+  "qwen3tts-0.6b": {
+    "recall": 0.984,
+    "extra_words": 2,
+    "transcript": "Ok, so I've looked at your setup and found that your current GPU can't handle both dictation and listening at the same time because it would constantly reload models, causing long delays. The solution is to use a cheap cloud model for quick summaries instead of running a local one. For the voice we should use Kokoro on your old CED60 graphics card, which is faster and won't conflict with dictation. This means we'll add a button to read messages aloud, stream the summary immediately and show subtitles as it speaks. I need to know if you want me to build this cloud summary and Kokoro voice setup now, or if you prefer to keep everything local and deal with the slower speeds."
+  },
+  "qwen3tts-1.7b": {
+    "recall": 0.984,
+    "extra_words": 5,
+    "transcript": "Okay, so I've looked at your setup and found that your current GPU can't handle both dictation and listening at the same time because it would constantly reload models causing long delays. The solution is to use a cheap cloud model for quick summaries instead of running a local one. For the voice, we should use Kokoro on your old up to 60 graphics card which is faster and won't conflict with dictation. This means we'll add a button to read messages aloud, stream the summary immediately, and show subtitles as it speaks. I need to know if you want me to build this cloud summary in a Kokoro voice setup now or if you prefer to keep everything local and deal with the slower speeds."
+  },
+  "supertonic3": {
+    "recall": 0.984,
+    "extra_words": 2,
+    "transcript": "OK, so I've looked at your setup and found that your current GPU can't handle both dictation and listening at the same time because it would constantly reload models, causing long delays. The solution is to use a cheap cloud model for quick summaries instead of running a local one. For the voice, we should use Kokoro on your old N60 graphics card, which is faster and won't conflict with dictation. This means we'll add a button to read messages aloud, stream the summary immediately, and show subtitles as it speaks. I need to know if you want me to build this cloud summary and Kokoro voice setup now, or if you prefer to keep everything local and deal with the slower speeds."
+  },
+  "vibevoice-rt": {
+    "recall": 0.992,
+    "extra_words": 1,
+    "transcript": "Okay, so I've looked at your setup and found that your current GPU can't handle both dictation and listening at the same time, because it would constantly reload models causing long delays. The solution is to use a cheap cloud model for quick summaries instead of running a local one. For the voice, we should use Kokoro on your old Tensity graphics card which is faster and won't conflict with dictation. This means we'll add a button to read messages aloud, stream the summary immediately, and show subtitles as it speaks. I need to know if you want me to build this cloud summary and Kokoro voice setup now or if you prefer to keep everything local and deal with the slower speeds."
+  }
+}

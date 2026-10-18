@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,"><title>Read-aloud taste test · 2026-10-18</title>
+<style>
+:root{--bg:#101114;--fg:#e8e8ea;--mut:#9a9ca3;--card:#1a1b20;--line:#2a2c33;--ok:#3fb27f;--warn:#d9a43a;--info:#5b8def;--acc:#f0c040}
+@media (prefers-color-scheme: light){:root{--bg:#f6f6f4;--fg:#1c1d20;--mut:#62646b;--card:#fff;--line:#e2e2de}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
+main{max-width:1500px;margin:auto;padding:20px 16px 80px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:18px;margin:34px 0 8px}p.lead{color:var(--mut);margin:0 0 6px;max-width:80ch}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.tabbtn{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;font:inherit}
+.tabbtn.on{border-color:var(--acc);color:var(--acc)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px;margin-top:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.card.dim{opacity:.6}.card.fav{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+.card header{display:flex;justify-content:space-between;align-items:center}h3{margin:0;font-size:16px}
+.star{background:none;border:0;color:var(--acc);font-size:22px;cursor:pointer;line-height:1}
+.meta{display:flex;flex-wrap:wrap;gap:6px}
+.b{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mut)}
+.b.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 45%,transparent)}
+.b.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.b.info{color:var(--info);border-color:color-mix(in srgb,var(--info) 45%,transparent)}
+.summary{margin:0;white-space:pre-wrap;flex:1}
+.nums{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin:0;font-size:13px}
+.nums div{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:4px}dt{color:var(--mut)}dd{margin:0 0 0 8px;font-variant-numeric:tabular-nums;white-space:nowrap}
+audio{width:100%}.note{margin:0;font-size:13px;color:var(--mut)}details{margin:8px 0}summary{cursor:pointer;color:var(--mut)}
+pre{white-space:pre-wrap;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;max-height:420px;overflow:auto}
+blockquote{margin:10px 0;padding:10px 14px;border-left:3px solid var(--acc);background:var(--card);border-radius:0 10px 10px 0}
+#picks{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;font-size:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+#picks button{font:inherit;padding:5px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+</style></head><body><main>
+<h1>Read-aloud taste test</h1>
+<p class="lead">Every model got the same prompt and the same assistant messages from this thread. All ran locally on the RX 7900 XT, one at a time, Q4_K_M, thinking off.
+Badges show whether a model can stay loaded next to dictation (about 3.7 GB of room). Tap ☆ on the ones you like; your picks show at the bottom.</p>
+<details><summary>The prompt every summary model got</summary><pre>You turn one message from an AI coding assistant into a short spoken briefing. Text-to-speech will read your output aloud to the person who got the message. They are listening, not reading, so they hear every word once, in order, and cannot skim or scroll back.
+
+Say what the message says, much more simply, like explaining it to a smart friend. Re-explain only: never answer questions, add advice, or invent facts that are not in the message.
+
+What to include, in this order:
+1. The point: what happened, what was found or what was decided.
+2. Only the details that change what the listener understands or does.
+3. What happens next, or what the message is asking the listener to decide. If it ends with a question, end with that question.
+
+How it must sound:
+- Plain spoken English. Short sentences. Casual and direct, a light &quot;ok so&quot; or &quot;basically&quot; is fine, but no jokes or filler.
+- No markdown, no headings, no bullet points, no lists, no tables, no emoji, no code.
+- Never read out file paths, URLs, commands, code, IDs or version strings. Name the thing instead (&quot;the llama-swap config&quot;, &quot;your T3 Code fork&quot;).
+- Write numbers the way you would say them: &quot;about twenty gigabytes&quot;, &quot;two to three seconds&quot;. Keep only the numbers that matter.
+- Drop caveats, hedging and side notes unless they change the decision.
+- Usually three to eight sentences. Go longer only if the message really contains more that matters, never more than about 150 words.
+
+Output only the words to be spoken, nothing else.
+</pre></details>
+
+<h2>1 · Summary models</h2>
+<div class="tabs"><button class="tabbtn on" data-tab="options">Message 1: the options answer</button><button class="tabbtn" data-tab="vram-plan">Message 2: the VRAM plan answer</button></div>
+<section class="tab" data-tab="options" >
+<details><summary>Show the original message (677 words)</summary><pre>I&#x27;ve finished looking around your setup. The answer depends on a few things already on your machines, so here&#x27;s what I found and what I&#x27;d build.
+
+## What you already have, and the problem with it
+
+- **Dictation** (`local-stt`) keeps a ~10 GB recogniser loaded on the PC&#x27;s GPU.
+- **Breeze TTS 2** is already in llama-swap. It needs ~7.7 GB of video memory, and when it starts it unloads dictation first (`releaseStt` in `modules/nixos/llama-swap.nix`).
+- 10 + 7.7 + ~3.5 GB for Hyprland is more than the 20 GB card has. So &quot;dictate, listen, dictate, listen&quot; with Breeze would keep unloading and reloading both models. Every reload is a cold start: Docker plus loading the model, likely tens of seconds.
+- **The homelab GPU** is a GTX 1060 with **3 GB**, passed into k3s and sitting idle. Breeze and any useful LLM are too big for it. A small TTS model fits easily.
+
+## Step 1: the summary (rewrite the message for listening)
+
+| Option | Speed | Problem |
+|---|---|---|
+| **A. One API call to a cheap cloud model** (Haiku 5.5) from the T3 server, outside the chat | ~1 s to first words, streams | Costs a fraction of a cent per message. The text already goes to a cloud model anyway. |
+| B. Headless `claude -p` / `codex exec` / opencode session | 5–15 s to start each time, ~0.5–1 GB RAM | Slow for a quick &quot;read this&quot;, and heavier than it needs to be |
+| C. Tiny local LLM (Qwen 4B, ~3 GB) on the PC | Fast once loaded | Takes video memory from dictation, so the same reload problem |
+| D. Tiny LLM on the 1060 | Fits only ~1.5B models | Takes the room TTS needs, and 1.5B models write poor summaries |
+
+**Recommendation: A.** It never touches the chat&#x27;s context, because it&#x27;s a separate one-shot request whose result is never written into the conversation. The system prompt would be the `/bro` skill plus spoken-style rules: no markdown, lists, paths or code, just what happened, what it means for you and what&#x27;s next. It also scales with the message: a few sentences normally, longer when there&#x27;s more to say.
+
+## Step 2: the voice
+
+| Option | Quality | Problem |
+|---|---|---|
+| **Kokoro (82M) on the homelab 1060**, always loaded | Good, not Breeze-level | Doesn&#x27;t touch the PC&#x27;s GPU and is faster than real time |
+| Breeze on the PC | Best | Fights dictation and starts cold, as above |
+| Browser built-in speech | Robotic | No setup at all, so it works as a fallback |
+
+**Recommendation: Kokoro on the homelab.** I haven&#x27;t tested it on the 1060 yet. The card is old (Pascal), and new PyTorch builds may no longer support it, so I&#x27;d use the ONNX version of Kokoro or an older CUDA build. Breeze can stay as an optional &quot;nice voice&quot; for when you aren&#x27;t dictating.
+
+## Step 3: putting it together
+
+The summary streams in, and each finished sentence goes straight to Kokoro. Audio starts about 1–2 s after you click, not after the whole summary is written.
+
+**UI in the T3 Code fork:**
+- A speaker icon in each message&#x27;s action row (next to copy) that reads that message.
+- A pinned floating &quot;read latest&quot; button near the composer, plus a keyboard shortcut.
+- A subtitle panel at the bottom that shows the summary with the current sentence highlighted, with pause, skip sentence, speed, and &quot;read full message instead&quot;. Word-by-word highlighting may also be possible: some Kokoro servers return word timings, but I haven&#x27;t checked.
+- Summaries and audio are cached per message, so replays are instant.
+
+**The work:** a Kokoro deployment in the homelab repo, plus a `/api/read-aloud` endpoint and the UI in the T3 Code fork. I&#x27;d need a Claude API key (through `request_secret`) unless you&#x27;d rather pay through opencode&#x27;s cheap models.
+
+Want me to build A + Kokoro, or would you rather keep everything local and accept the GPU tradeoffs?
+</pre></details>
+<div class="grid">
+<article class="card" data-key="qwen3.5-2b">
+  <header><h3>Qwen3.5-2B</h3><button class="star" data-kind="llm" data-key="qwen3.5-2b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">fits next to dictation · 1.47 GB</span><span class="b">2026-03</span></div>
+  <p class="summary">You&#x27;ve finished reviewing your setup and found that your current GPU is too small for the heavy models you want to run.
+
+The best option is to send your messages to a cheap cloud model for summaries, but keep your own voice generation on the old 1060 card using a smaller model.
+
+You should deploy a Kokoro model on the 1060 and add a new feature that reads the summary aloud when you click a message.
+
+Do you want me to build this feature for you, or do you prefer to keep everything local and accept the performance tradeoffs?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>0.8 s</dd></div>
+    <div><dt>speed</dt><dd>213.2 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>2.0 s</dd></div>
+    <div><dt>length</dt><dd>99 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="gemma4-e2b">
+  <header><h3>Gemma 4 E2B</h3><button class="star" data-kind="llm" data-key="gemma4-e2b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">fits next to dictation · 1.55 GB</span><span class="b">2026-04</span></div>
+  <p class="summary">The best approach is to use a cheap cloud model for the summary. This costs very little. You should use the Kokoro voice model on your homelab GPU. The system will stream the summary, and each finished sentence will go to the Kokoro voice. You should add a speaker icon to each message. You should also add a button to read the latest message. Do you want me to build the cloud summary and Kokoro voice, or do you want to keep everything local?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>1.41 s</dd></div>
+    <div><dt>speed</dt><dd>173.1 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>7.2 s</dd></div>
+    <div><dt>length</dt><dd>84 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="lfm2.5-2.6b">
+  <header><h3>LFM2.5-2.6B</h3><button class="star" data-kind="llm" data-key="lfm2.5-2.6b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">fits next to dictation · 1.91 GB</span><span class="b info">thinks first</span><span class="b">2026-08</span></div>
+  <p class="summary">Here&#x27;s the summary: the best approach is to use a cheap cloud model like Haiku 5.5 through the T3 server. This avoids the GPU memory conflicts between dictation and TTS since the cloud call doesn&#x27;t fight for video memory. For voice, I recommend Kokoro on your homelab&#x27;s GTX 1060 - it&#x27;s an 82M model that&#x27;s always loaded and runs fast. You&#x27;ll need to add a read-aloud API endpoint and some UI changes in the T3 Code fork to show a speaker icon and a read-latest button. The work is deploying Kokoro in the homelab repo and wiring up the API. Would you like me to go ahead and build option A with Kokoro, or keep everything local and accept the GPU tradeoffs?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>11.18 s</dd></div>
+    <div><dt>speed</dt><dd>222.0 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>1.4 s</dd></div>
+    <div><dt>length</dt><dd>122 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="qwen3.5-4b">
+  <header><h3>Qwen3.5-4B</h3><button class="star" data-kind="llm" data-key="qwen3.5-4b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">fits next to dictation · 3.17 GB</span><span class="b">2026-03</span></div>
+  <p class="summary">Okay, so I&#x27;ve looked at your setup and found that your current GPU can&#x27;t handle both dictation and listening at the same time because it would constantly reload models, causing long delays. The solution is to use a cheap cloud model for quick summaries instead of running a local one. For the voice, we should use Kokoro on your old 1060 graphics card, which is faster and won&#x27;t conflict with dictation. This means we&#x27;ll add a button to read messages aloud, stream the summary immediately, and show subtitles as it speaks. I need to know if you want me to build this cloud summary and Kokoro voice setup now, or if you prefer to keep everything local and deal with the slower speeds.</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>1.62 s</dd></div>
+    <div><dt>speed</dt><dd>130.0 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>5.6 s</dd></div>
+    <div><dt>length</dt><dd>123 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="granite4.2-3b">
+  <header><h3>Granite 4.2 3B</h3><button class="star" data-kind="llm" data-key="granite4.2-3b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">fits next to dictation · 3.32 GB</span><span class="b">2026-08</span></div>
+  <p class="summary">Here’s the summary:  
+You have dictation using ~10 GB on the PC’s GPU, Breeze TTS needing ~7.7 GB video memory, and Hyprland using ~3.5 GB, all adding up to more than the 20 GB card you have, causing reloads and delays. The homelab GPU is a GTX 1060 with 3 GB, which is too small for Breeze or most useful LLMs.  
+
+Recommendation: Use a cheap cloud model (Haiku 5.5) from the T3 server, outside the chat, because it avoids the GPU memory problem and keeps the system lightweight.  
+
+What happens next: I’ll build option A – a one‑API call to Haiku 5.5 that streams the result without touching the chat context. If you’d rather stay local, let me know.</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>1.6 s</dd></div>
+    <div><dt>speed</dt><dd>160.2 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>4.6 s</dd></div>
+    <div><dt>length</dt><dd>119 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="gemma4-e4b">
+  <header><h3>Gemma 4 E4B</h3><button class="star" data-kind="llm" data-key="gemma4-e4b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">fits next to dictation · 3.32 GB</span><span class="b">2026-04</span></div>
+  <p class="summary">Basically, your current setup won&#x27;t work well because the speech recognition and text-to-speech models are too big for your main graphics card. For summarizing, the recommendation is to use a cheap cloud model via one API call. For the voice, the recommendation is to use Kokoro on your older homelab GPU. If we do this, the summary will stream to Kokoro, starting audio a couple of seconds after you click. I need a Claude API key to build this, or you can pay through opencode&#x27;s models. Do you want me to build option A plus Kokoro, or would you rather keep everything local and accept the GPU tradeoffs?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>1.59 s</dd></div>
+    <div><dt>speed</dt><dd>119.3 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>13.4 s</dd></div>
+    <div><dt>length</dt><dd>108 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="ministral3-3b">
+  <header><h3>Ministral 3 3B</h3><button class="star" data-kind="llm" data-key="ministral3-3b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">fits next to dictation · 3.65 GB</span><span class="b">2025-12</span></div>
+  <p class="summary">Okay, here’s what I found and what we need to do.
+
+You’ve got a GPU that’s too small for both dictation and a big TTS model at the same time. Right now, when you use the TTS, it crashes the dictation because it’s using too much memory. The old GPU—your GTX 1060—isn’t big enough for any useful local LLM or TTS model, so we’re stuck reloading everything every time.
+
+The best way to fix this is to use a cloud model for quick summaries. It’ll only take about a second to start speaking, and it won’t interfere with your dictation. The text would go to a separate cloud API, like Haiku 5.5, and then it’d speak the summary straight away.
+
+For the voice, we’d use a small local model called Kokoro on the old GPU. It’s good quality and doesn’t use the main PC’s GPU, so it won’t slow down your dictation. If you don’t want to use cloud models, we could keep everything local—but then you’d have to deal with the GPU not being big enough for both things at once.
+
+Should I set up the cloud model and Kokoro, or would you prefer to keep everything local?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>2.01 s</dd></div>
+    <div><dt>speed</dt><dd>164.0 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>10.4 s</dd></div>
+    <div><dt>length</dt><dd>199 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="lfm2.5-8b-a1b">
+  <header><h3>LFM2.5-8B-A1B (MoE)</h3><button class="star" data-kind="llm" data-key="lfm2.5-8b-a1b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b warn">too big to stay loaded · 5.08 GB</span><span class="b info">thinks first</span><span class="b">2026-05</span></div>
+  <p class="summary">I&#x27;ve finished looking around your setup and found the problem. The dictation model and Breeze TTS together exceed the 20 GB GPU limit, causing repeated unloads and cold starts. I evaluated four options and concluded that the cheap cloud API call (option A) is the best because it never touches the chat context and avoids GPU overload, and I recommend using Kokoro on the homelab 1060 as the local voice. What should I do next?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>3.42 s</dd></div>
+    <div><dt>speed</dt><dd>283.8 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>11.6 s</dd></div>
+    <div><dt>length</dt><dd>75 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="qwen3.5-9b">
+  <header><h3>Qwen3.5-9B</h3><button class="star" data-kind="llm" data-key="qwen3.5-9b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b warn">too big to stay loaded · 5.43 GB</span><span class="b">2026-03</span></div>
+  <p class="summary">Okay so I looked at your setup and found that running both dictation and the Breeze voice model on your main PC would cause constant slow restarts because they don&#x27;t fit in your GPU memory at the same time. The solution is to send the summary request to a fast cloud model instead of running it locally, and to run the voice generation on your separate homelab GPU using a smaller, compatible model called Kokoro. This way, the summary appears instantly and the audio starts playing within a second or two without blocking your main computer. I need to know if you want me to build this cloud and homelab solution, or if you prefer to keep everything local despite the performance tradeoffs.</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>2.39 s</dd></div>
+    <div><dt>speed</dt><dd>89.1 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>13.2 s</dd></div>
+    <div><dt>length</dt><dd>123 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="gemma4-12b">
+  <header><h3>Gemma 4 12B</h3><button class="star" data-kind="llm" data-key="gemma4-12b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b warn">too big to stay loaded · 7.41 GB</span><span class="b">2026-05</span></div>
+  <p class="summary">The current setup has a memory problem because your GPU cannot hold the dictation model, the speech model, and your desktop environment all at once. This causes the system to constantly unload and reload models, creating long delays every time you switch between listening and speaking.
+
+To fix this, the recommendation is to use a cheap cloud model for generating summaries and run a smaller voice model called Kokoro on your homelab GPU. This keeps the main PC&#x27;s memory free and ensures the audio starts playing almost instantly.
+
+The plan is to add a speaker icon to each message, a floating button to read the latest update, and a subtitle panel at the bottom. This would involve setting up the voice server in your homelab and adding a new endpoint and UI to your code fork.
+
+Do you want me to build this cloud and homelab setup, or would you rather keep everything local and accept the GPU trade-offs?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>4.37 s</dd></div>
+    <div><dt>speed</dt><dd>65.9 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>15.0 s</dd></div>
+    <div><dt>length</dt><dd>159 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="qwen3.5-27b">
+  <header><h3>Qwen3.5-27B (reference)</h3><button class="star" data-kind="llm" data-key="qwen3.5-27b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b warn">reference only · ~16 GB</span><span class="b">2026-02</span></div>
+  <p class="summary">I checked your setup and found that running both dictation and high-quality voice on your main PC causes constant reloading because they fight for video memory. The best fix is to use a cheap cloud service just for summarizing messages, which avoids those delays entirely. For the actual speaking voice, I recommend running a smaller model called Kokoro on your older homelab GPU so it never interferes with your dictation. This setup would let you hear summaries start within two seconds of clicking a new speaker icon in your chat interface. The only thing left to decide is whether you want me to build this cloud-plus-homelab solution, or if you prefer keeping everything local and accepting the slower performance tradeoffs.</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>7.6 s</dd></div>
+    <div><dt>speed</dt><dd>32.3 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>— s</dd></div>
+    <div><dt>length</dt><dd>120 words</dd></div>
+  </dl>
+</article></div></section><section class="tab" data-tab="vram-plan" hidden>
+<details><summary>Show the original message (433 words)</summary><pre>The key fact: with nothing loaded in llama-swap, the PC is using **14.2 GB right now**. That&#x27;s dictation plus the desktop, so 5.7 GB is free. A small summary model fits next to dictation permanently. The voice model goes on the homelab, so the two models you switch between never push each other out.
+
+**How the plan works:**
+
+1. **Dictation stays loaded all the time,** same as today.
+2. **A ~4B summary model (around 3 GB with its context memory) stays loaded too,** in its own llama-swap group set to never swap out and stay loaded. It must not use the `releaseStt` wrapper, or it would kick dictation out. Once it&#x27;s always loaded, there&#x27;s no load time when you click. On the 7900 XT a 4B model reads a long message in about a second.
+3. **Kokoro runs on the 1060 in the homelab, always loaded.** It doesn&#x27;t touch the PC&#x27;s GPU at all.
+4. **The 27B models and Breeze stay &quot;big mode&quot;, exclusive like now.** Loading one unloads dictation and the summary model, and both come back when it times out. If you never ask for a 27B or Breeze, nothing ever gets kicked out.
+
+**Risks:**
+
+- **The worst case leaves only ~1.2 GB of room.** The tightest moment is your dictation finishing its final pass while a summary runs. If browsers take more GPU memory than usual, the monitor that stops dictation above 19.5 GiB could kill it. The fallback is a ~2B model (~1.8 GB), which leaves about 2.5 GB of room but writes weaker summaries. I&#x27;d test the 4B first and measure.
+- **Some numbers are estimates.** The ~3.5 GB desktop / ~10.7 GB dictation split is my estimate from the 14.2 GB measurement. The Kokoro size isn&#x27;t measured, and I still need to check that Kokoro runs on the 1060 (the ONNX build is the likely route). The 3 GB for the 4B model is from typical sizes, not tested here.
+- **The chart above wasn&#x27;t checked before showing.** The HTML preview tool needs browser libraries this host doesn&#x27;t have, so I couldn&#x27;t render it first.
+
+**All-local vs. the cloud option:** this plan gives up ~3 GB of the PC&#x27;s GPU and gets summaries that are a bit weaker than Haiku&#x27;s. In return nothing leaves your network and nothing costs money. If the 4B summaries turn out bad, switching only that step to the cloud keeps the rest of the plan the same.
+
+Should I build it this way: summary-model group in `modules/nixos/llama-swap.nix`, Kokoro in the homelab repo, then the endpoint and UI in the T3 Code fork?
+</pre></details>
+<div class="grid">
+<article class="card" data-key="qwen3.5-2b">
+  <header><h3>Qwen3.5-2B</h3><button class="star" data-kind="llm" data-key="qwen3.5-2b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">fits next to dictation · 1.47 GB</span><span class="b">2026-03</span></div>
+  <p class="summary">Basically, yes, that is the plan. You need a summary model group in the NixOS config, Kokoro running on your laptop, and the endpoint and UI in your T3 fork.
+
+Here is what you need to do:
+1. Put a summary model in the NixOS config so it loads alongside dictation.
+2. Run Kokoro on your laptop so it doesn&#x27;t use the PC&#x27;s GPU.
+3. Build the endpoint and UI in your T3 fork.
+
+Make sure the summary model doesn&#x27;t use the `releaseStt` wrapper, or it will break dictation. Also, test the 4B model first to check how much room you have left. If the summaries are too weak, you can switch just that part to the cloud later.</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>0.88 s</dd></div>
+    <div><dt>speed</dt><dd>215.2 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>2.0 s</dd></div>
+    <div><dt>length</dt><dd>119 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="gemma4-e2b">
+  <header><h3>Gemma 4 E2B</h3><button class="star" data-kind="llm" data-key="gemma4-e2b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">fits next to dictation · 1.55 GB</span><span class="b">2026-04</span></div>
+  <p class="summary">The plan is to keep dictation loaded always. A small four billion parameter summary model will also stay loaded in its own group. Kokoro will run on the homelab and not use the PC&#x27;s GPU. The larger models will stay in big mode, so nothing gets kicked out unless you specifically ask for them. If things run out of memory, you can fall back to a two billion parameter model. Should you build it with the summary model group in the llama-swap file, Kokoro in the homelab repo, and the endpoint and user interface in the T3 Code fork?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>0.8 s</dd></div>
+    <div><dt>speed</dt><dd>185.8 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>7.2 s</dd></div>
+    <div><dt>length</dt><dd>99 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="lfm2.5-2.6b">
+  <header><h3>LFM2.5-2.6B</h3><button class="star" data-kind="llm" data-key="lfm2.5-2.6b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">fits next to dictation · 1.91 GB</span><span class="b info">thinks first</span><span class="b">2026-08</span></div>
+  <p class="summary">The plan is to keep dictation loaded all the time while a ~4B summary model stays permanently loaded in its own llama-swap group that never swaps out. Kokoro runs on the homelab&#x27;s 1060 GPU and stays loaded, and the 27B and Breeze models remain in exclusive &quot;big mode.&quot; The main risk is memory pressure—with 14.2 GB total, you could drop to about 1.2 GB free if dictation finishes while a summary runs, with a fallback to a smaller ~2B model. Should I build it this way: the summary-model group in `modules/nixos/llama-swap.nix`, Kokoro in the homelab repo, then the endpoint and UI in the T3 Code fork?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>4.29 s</dd></div>
+    <div><dt>speed</dt><dd>223.8 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>1.4 s</dd></div>
+    <div><dt>length</dt><dd>106 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="qwen3.5-4b">
+  <header><h3>Qwen3.5-4B</h3><button class="star" data-kind="llm" data-key="qwen3.5-4b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">fits next to dictation · 3.17 GB</span><span class="b">2026-03</span></div>
+  <p class="summary">So basically, we&#x27;re keeping the dictation model running all the time on your PC, and adding a small 4 billion parameter summary model to stay loaded too, so you get instant responses. The voice model stays on your homelab, and the big models remain exclusive so they don&#x27;t kick out the smaller ones. This plan uses about 14 gigabytes of your GPU right now, leaving roughly 5 gigabytes free for the new summary model.
+
+The main thing to watch is that if you run both dictation and the summary model at the same time, you might only have about 1.2 gigabytes left, which is tight. If your browser uses more memory than usual, it could stop the dictation. The fallback is a smaller model that leaves more room but gives weaker summaries, so it&#x27;s best to test the 4 billion parameter model first to see if it works well.
+
+Should I build it this way with the summary model in the nixos config, Kokoro on the homelab, and the rest in the T3 Code fork?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>1.96 s</dd></div>
+    <div><dt>speed</dt><dd>131.0 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>5.6 s</dd></div>
+    <div><dt>length</dt><dd>175 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="granite4.2-3b">
+  <header><h3>Granite 4.2 3B</h3><button class="star" data-kind="llm" data-key="granite4.2-3b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">fits next to dictation · 3.32 GB</span><span class="b">2026-08</span></div>
+  <p class="summary">Ok so the plan is to set up the summary model group in modules/nixos/llama-swap.nix, run Kokoro on the homelab, and keep the endpoint and UI in the T3 Code fork. Should I build it this way?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>0.52 s</dd></div>
+    <div><dt>speed</dt><dd>162.3 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>4.6 s</dd></div>
+    <div><dt>length</dt><dd>36 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="gemma4-e4b">
+  <header><h3>Gemma 4 E4B</h3><button class="star" data-kind="llm" data-key="gemma4-e4b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">fits next to dictation · 3.32 GB</span><span class="b">2026-04</span></div>
+  <p class="summary">Basically, the plan is to keep dictation running all the time, and also keep a small summary model loaded permanently. This summary model won&#x27;t kick out dictation. Kokoro will run on your homelab computer, not your main PC. The big models will still load and unload as they do now. The tightest spot is when dictation finishes and the summary runs, leaving about one point two gigabytes free. Should I build it this way: summary model group in the llama-swap nix file, Kokoro in the homelab repo, then the endpoint and UI in the T3 Code fork?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>1.29 s</dd></div>
+    <div><dt>speed</dt><dd>119.6 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>13.4 s</dd></div>
+    <div><dt>length</dt><dd>97 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="ministral3-3b">
+  <header><h3>Ministral 3 3B</h3><button class="star" data-kind="llm" data-key="ministral3-3b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">fits next to dictation · 3.65 GB</span><span class="b">2025-12</span></div>
+  <p class="summary">Okay, so right now your PC is using about fourteen point two gigabytes—mostly for dictation and your desktop. That leaves about five point seven gigabytes free, which is enough for a small model to run alongside dictation all the time.
+
+The plan is to keep dictation loaded constantly, like before, and add a big summary model that won’t get swapped out. That model stays loaded too, but it won’t kick dictation if you use the right setup. Kokoro runs on your homelab PC, not the main one, so it doesn’t take up GPU space there.
+
+The big models and Breeze still work like before—they take over when you ask for them, but only if you don’t use them often. If you never ask for those, nothing gets kicked out.
+
+The worst case? If dictation finishes just as the summary model starts, you might only have about one point two gigabytes left. If browsers take up more memory than usual, the system could shut down dictation if it goes over nineteen point five gigabytes. The backup is a smaller model, but it makes summaries weaker.
+
+Some numbers are estimates, like how much Kokoro uses or how big the summary model is. I didn’t test the chart before showing it, but the setup should work.
+
+Should you build it this way? Put the summary model group in your `llama-swap.nix` file, add Kokoro to your homelab repo, and update the endpoint and UI in the T3 Code fork?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>1.99 s</dd></div>
+    <div><dt>speed</dt><dd>173.0 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>10.4 s</dd></div>
+    <div><dt>length</dt><dd>245 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="lfm2.5-8b-a1b">
+  <header><h3>LFM2.5-8B-A1B (MoE)</h3><button class="star" data-kind="llm" data-key="lfm2.5-8b-a1b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b warn">too big to stay loaded · 5.08 GB</span><span class="b info">thinks first</span><span class="b">2026-05</span></div>
+  <p class="summary">Alright, the PC is currently using 14.2 GB, leaving about 5.7 GB free. You want a tiny 4 GB summary model to stay loaded alongside dictation, never swapping out, and keep the 27 GB and Breeze models in their exclusive mode. The risk is that dictation could hit the 19.5 GB limit and kill the model, so a smaller 2 GB fallback would free more space but give weaker summaries. If the 4 GB summaries work, you can keep the rest of the setup as described. Should I go ahead and build the summary‑model group in modules/nixos/llama-swap.nix, run Kokoro in the homelab repo, and place the endpoint and UI in the T3 Code fork?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>2.75 s</dd></div>
+    <div><dt>speed</dt><dd>285.6 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>11.6 s</dd></div>
+    <div><dt>length</dt><dd>114 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="qwen3.5-9b">
+  <header><h3>Qwen3.5-9B</h3><button class="star" data-kind="llm" data-key="qwen3.5-9b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b warn">too big to stay loaded · 5.43 GB</span><span class="b">2026-03</span></div>
+  <p class="summary">Basically, we are proposing to keep your current dictation setup but add a small summary model that stays permanently loaded on your main PC to avoid delays. Your voice model will move to the homelab, and your large models will remain exclusive as they are now. This plan uses about three gigabytes of your GPU, leaving very little room if the browser gets heavy, but it keeps everything local and free. If the summary quality isn&#x27;t good enough, we can just switch that specific step to the cloud later. Should we proceed with building this using the summary model group in the nix config, Kokoro in the homelab repo, and the rest in your T3 Code fork?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>1.99 s</dd></div>
+    <div><dt>speed</dt><dd>89.3 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>13.2 s</dd></div>
+    <div><dt>length</dt><dd>117 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="gemma4-12b">
+  <header><h3>Gemma 4 12B</h3><button class="star" data-kind="llm" data-key="gemma4-12b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b warn">too big to stay loaded · 7.41 GB</span><span class="b">2026-05</span></div>
+  <p class="summary">Basically, the plan is to keep your dictation and a small summary model loaded on your PC at all times. This works because you currently have about five gigabytes of free memory. The voice model will run on your homelab instead, so it won&#x27;t compete for space. When you need a larger model, it will swap the smaller ones out, but if you don&#x27;t use the big models, nothing gets kicked out. There is a small risk of running out of memory if your browser uses too much, but we can switch to an even smaller summary model if that happens. This keeps everything local and free, though the summaries might be slightly weaker than a cloud option. Should I build it this way by setting up the summary model group, the homelab repo, and the UI in your T3 Code fork?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>3.33 s</dd></div>
+    <div><dt>speed</dt><dd>66.7 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>15.0 s</dd></div>
+    <div><dt>length</dt><dd>142 words</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="qwen3.5-27b">
+  <header><h3>Qwen3.5-27B (reference)</h3><button class="star" data-kind="llm" data-key="qwen3.5-27b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b warn">reference only · ~16 GB</span><span class="b">2026-02</span></div>
+  <p class="summary">Here is the plan for your setup: right now, your PC uses about 14 gigabytes of memory just for dictation and the desktop, leaving roughly 6 gigabytes free. We will keep a small summary model loaded permanently alongside dictation so it responds instantly without pushing anything out. Your voice model runs separately on the homelab computer, while larger models stay exclusive and only load when you specifically ask for them. The main risk is running low on memory if your browser uses more than usual, which might force us to use a weaker summary model instead. This approach keeps everything local and free, though the summaries won&#x27;t be quite as good as cloud options. Should I build it this way by setting up the summary group in your config, moving Kokoro to the homelab repo, and updating the code fork?</p>
+  <dl class="nums">
+    <div><dt>time to full summary</dt><dd>6.4 s</dd></div>
+    <div><dt>speed</dt><dd>32.9 tok/s</dd></div>
+    <div><dt>load from disk</dt><dd>— s</dd></div>
+    <div><dt>length</dt><dd>140 words</dd></div>
+  </dl>
+</article></div></section>
+
+<h2>2 · Voices</h2>
+<p class="lead">Every voice reads the same summary (Qwen3.5-4B's version of message 1), sentence by sentence, the way read-aloud will stream it.
+"First sentence ready" is how long you would wait after the summary starts arriving.</p>
+<blockquote>Okay, so I&#x27;ve looked at your setup and found that your current GPU can&#x27;t handle both dictation and listening at the same time because it would constantly reload models, causing long delays. The solution is to use a cheap cloud model for quick summaries instead of running a local one. For the voice, we should use Kokoro on your old 1060 graphics card, which is faster and won&#x27;t conflict with dictation. This means we&#x27;ll add a button to read messages aloud, stream the summary immediately, and show subtitles as it speaks. I need to know if you want me to build this cloud summary and Kokoro voice setup now, or if you prefer to keep everything local and deal with the slower speeds.</blockquote>
+<div class="grid">
+<article class="card" data-key="kokoro-cpu-michael">
+  <header><h3>Kokoro 82M (CPU, male)</h3><button class="star" data-kind="tts" data-key="kokoro-cpu-michael" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">CPU · no GPU memory</span><span class="b">82M</span><span class="b">2025-01</span><span class="b">Apache-2.0</span></div>
+  <audio controls preload="none" src="private/audio/kokoro-cpu-michael.opus"></audio>
+  <dl class="nums">
+    <div><dt>first sentence ready</dt><dd>1.63 s</dd></div>
+    <div><dt>speed vs real time</dt><dd>10.0×</dd></div>
+    <div><dt>voice</dt><dd>am_michael</dd></div>
+    <div><dt>audio length</dt><dd>49.02 s</dd></div>
+    <div><dt>words heard (Whisper)</dt><dd>100%</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="pocket">
+  <header><h3>Pocket TTS (CPU)</h3><button class="star" data-kind="tts" data-key="pocket" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">CPU · no GPU memory</span><span class="b">100M</span><span class="b">2025-12</span><span class="b">CC-BY-4.0</span></div>
+  <audio controls preload="none" src="private/audio/pocket.opus"></audio>
+  <dl class="nums">
+    <div><dt>first sentence ready</dt><dd>1.96 s</dd></div>
+    <div><dt>speed vs real time</dt><dd>4.8×</dd></div>
+    <div><dt>voice</dt><dd>alba</dd></div>
+    <div><dt>audio length</dt><dd>36.37 s</dd></div>
+    <div><dt>words heard (Whisper)</dt><dd>100%</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="kokoro-cpu">
+  <header><h3>Kokoro 82M (CPU)</h3><button class="star" data-kind="tts" data-key="kokoro-cpu" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">CPU · no GPU memory</span><span class="b">82M</span><span class="b">2025-01</span><span class="b">Apache-2.0</span></div>
+  <audio controls preload="none" src="private/audio/kokoro-cpu.opus"></audio>
+  <dl class="nums">
+    <div><dt>first sentence ready</dt><dd>1.67 s</dd></div>
+    <div><dt>speed vs real time</dt><dd>9.1×</dd></div>
+    <div><dt>voice</dt><dd>af_heart</dd></div>
+    <div><dt>audio length</dt><dd>44.65 s</dd></div>
+    <div><dt>words heard (Whisper)</dt><dd>99%</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="supertonic3">
+  <header><h3>Supertonic 3 (CPU)</h3><button class="star" data-kind="tts" data-key="supertonic3" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">CPU · no GPU memory</span><span class="b">99M</span><span class="b">2026-04</span><span class="b">OpenRAIL-M</span></div>
+  <audio controls preload="none" src="private/audio/supertonic3.opus"></audio>
+  <dl class="nums">
+    <div><dt>first sentence ready</dt><dd>4.28 s</dd></div>
+    <div><dt>speed vs real time</dt><dd>2.9×</dd></div>
+    <div><dt>voice</dt><dd>M1</dd></div>
+    <div><dt>audio length</dt><dd>46.25 s</dd></div>
+    <div><dt>words heard (Whisper)</dt><dd>98%</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="kokoro-gpu">
+  <header><h3>Kokoro 82M (GPU)</h3><button class="star" data-kind="tts" data-key="kokoro-gpu" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b ok">GPU · 2.04 GB, fits beside dictation + a 2B summary model</span><span class="b">82M</span><span class="b">2025-01</span><span class="b">Apache-2.0</span></div>
+  <audio controls preload="none" src="private/audio/kokoro-gpu.opus"></audio>
+  <dl class="nums">
+    <div><dt>first sentence ready</dt><dd>1.4 s</dd></div>
+    <div><dt>speed vs real time</dt><dd>6.7×</dd></div>
+    <div><dt>voice</dt><dd>af_heart</dd></div>
+    <div><dt>audio length</dt><dd>44.65 s</dd></div>
+    <div><dt>words heard (Whisper)</dt><dd>100%</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="vibevoice-rt">
+  <header><h3>VibeVoice Realtime 0.5B</h3><button class="star" data-kind="tts" data-key="vibevoice-rt" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b warn">GPU · 3.2 GB, fits beside dictation only with no GPU summary model</span><span class="b">0.5B</span><span class="b">2025-12</span><span class="b">MIT</span></div>
+  <audio controls preload="none" src="private/audio/vibevoice-rt.opus"></audio>
+  <dl class="nums">
+    <div><dt>first sentence ready</dt><dd>3.91 s</dd></div>
+    <div><dt>speed vs real time</dt><dd>3.6×</dd></div>
+    <div><dt>voice</dt><dd>Carter</dd></div>
+    <div><dt>audio length</dt><dd>42.45 s</dd></div>
+    <div><dt>words heard (Whisper)</dt><dd>99%</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="qwen3tts-0.6b">
+  <header><h3>Qwen3-TTS 0.6B</h3><button class="star" data-kind="tts" data-key="qwen3tts-0.6b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b warn">GPU · 3.86 GB, unloads dictation</span><span class="b">0.6B</span><span class="b">2026-01</span><span class="b">Apache-2.0</span></div>
+  <audio controls preload="none" src="private/audio/qwen3tts-0.6b.opus"></audio>
+  <dl class="nums">
+    <div><dt>first sentence ready</dt><dd>9.79 s</dd></div>
+    <div><dt>speed vs real time</dt><dd>1.3×</dd></div>
+    <div><dt>voice</dt><dd>Ryan</dd></div>
+    <div><dt>audio length</dt><dd>50.93 s</dd></div>
+    <div><dt>words heard (Whisper)</dt><dd>98%</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="chatterbox-turbo">
+  <header><h3>Chatterbox Turbo</h3><button class="star" data-kind="tts" data-key="chatterbox-turbo" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b warn">GPU · 4.09 GB, unloads dictation</span><span class="b">350M</span><span class="b">2025-12</span><span class="b">MIT</span></div>
+  <audio controls preload="none" src="private/audio/chatterbox-turbo.opus"></audio>
+  <dl class="nums">
+    <div><dt>first sentence ready</dt><dd>3.28 s</dd></div>
+    <div><dt>speed vs real time</dt><dd>3.0×</dd></div>
+    <div><dt>voice</dt><dd>default</dd></div>
+    <div><dt>audio length</dt><dd>38.77 s</dd></div>
+    <div><dt>words heard (Whisper)</dt><dd>100%</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="qwen3tts-1.7b">
+  <header><h3>Qwen3-TTS 1.7B</h3><button class="star" data-kind="tts" data-key="qwen3tts-1.7b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b warn">GPU · 6.06 GB, unloads dictation</span><span class="b">1.7B</span><span class="b">2026-01</span><span class="b">Apache-2.0</span></div>
+  <audio controls preload="none" src="private/audio/qwen3tts-1.7b.opus"></audio>
+  <dl class="nums">
+    <div><dt>first sentence ready</dt><dd>14.27 s</dd></div>
+    <div><dt>speed vs real time</dt><dd>1.2×</dd></div>
+    <div><dt>voice</dt><dd>Ryan</dd></div>
+    <div><dt>audio length</dt><dd>47.73 s</dd></div>
+    <div><dt>words heard (Whisper)</dt><dd>98%</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="breeze2">
+  <header><h3>Breeze TTS 2</h3><button class="star" data-kind="tts" data-key="breeze2" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b warn">GPU · 8.72 GB, unloads dictation</span><span class="b">3B</span><span class="b">2026-08</span><span class="b">research/non-commercial</span></div>
+  <audio controls preload="none" src="private/audio/breeze2.opus"></audio>
+  <dl class="nums">
+    <div><dt>first sentence ready</dt><dd>19.9 s</dd></div>
+    <div><dt>speed vs real time</dt><dd>0.6×</dd></div>
+    <div><dt>voice</dt><dd>narrator clone</dd></div>
+    <div><dt>audio length</dt><dd>44.61 s</dd></div>
+    <div><dt>words heard (Whisper)</dt><dd>100%</dd></div>
+  </dl>
+</article>
+<article class="card" data-key="higgs3-4b">
+  <header><h3>Higgs TTS 3 4B</h3><button class="star" data-kind="tts" data-key="higgs3-4b" aria-label="favourite">☆</button></header>
+  <div class="meta"><span class="b warn">GPU · 15.0 GB, unloads dictation</span><span class="b">4B</span><span class="b">2026-06</span><span class="b">research/non-commercial</span></div>
+  <audio controls preload="none" src="private/audio/higgs3-4b.opus"></audio><p class="note">Voice cloning broke in vLLM-Omni on ROCm, so the model picked its own voice and spoke the whole text in one request. It dropped the last clause.</p>
+  <dl class="nums">
+    <div><dt>first sentence ready</dt><dd>5.22 s</dd></div>
+    <div><dt>speed vs real time</dt><dd>2.4×</dd></div>
+    <div><dt>voice</dt><dd>model-chosen (cloning broke on ROCm)</dd></div>
+    <div><dt>audio length</dt><dd>31.28 s</dd></div>
+    <div><dt>words heard (Whisper)</dt><dd>89%</dd></div>
+  </dl>
+</article>
+<article class="card dim"><header><h3>Fish Audio S2 Pro</h3></header>
+<div class="meta"><span class="b warn">did not run here</span><span class="b">2026-03</span></div>
+<p class="summary">Needs a 24 GB card. Loaded at 16 GB with a 4k context, then hit 20.0 GB while encoding the reference voice and again while decoding audio; the VRAM guard stopped it both times before the desktop was at risk. Generation itself ran at about 1.5x slower than real time.</p></article>
+<article class="card dim"><header><h3>Voxtral 4B TTS</h3></header>
+<div class="meta"><span class="b warn">did not run here</span><span class="b">2026-03</span></div>
+<p class="summary">vLLM-Omni ROCm v0.28.0 segfaults in the audio decoder warm-up on this GPU (RDNA3), twice, also with MIOpen fast-find.</p></article>
+<article class="card dim"><header><h3>Fish Audio Drama 3</h3></header>
+<div class="meta"><span class="b warn">did not run here</span><span class="b">2026-10</span></div>
+<p class="summary">Newest #1 open-weights voice, but 41 GB of weights and NVIDIA-only (no ROCm). Cannot run on this machine.</p></article></div>
+</main>
+<div id="picks"><strong>Your picks:</strong><span id="pickl">none yet</span><button id="copy">Copy</button></div>
+<script>
+const KEY='read-aloud-picks';const picks=new Set(JSON.parse(localStorage.getItem(KEY)||'[]'));
+function render(){document.querySelectorAll('.star').forEach(b=>{const id=b.dataset.kind+':'+b.dataset.key;const on=picks.has(id);b.textContent=on?'★':'☆';b.closest('.card').classList.toggle('fav',on)});
+const names=[...picks].map(id=>{const [k,key]=id.split(':');const c=document.querySelector(`.star[data-kind="${k}"][data-key="${key}"]`);return (k==='llm'?'summary: ':'voice: ')+(c?c.closest('.card').querySelector('h3').textContent:key)});
+document.getElementById('pickl').textContent=names.length?[...new Set(names)].join(' · '):'none yet';localStorage.setItem(KEY,JSON.stringify([...picks]))}
+document.querySelectorAll('.star').forEach(b=>b.onclick=()=>{const id=b.dataset.kind+':'+b.dataset.key;picks.has(id)?picks.delete(id):picks.add(id);render()});
+document.querySelectorAll('.tabbtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabbtn').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.tab').forEach(s=>s.hidden=s.dataset.tab!==b.dataset.tab)});
+document.getElementById('copy').onclick=()=>navigator.clipboard.writeText(document.getElementById('pickl').textContent);
+document.addEventListener('play',ev=>document.querySelectorAll('audio').forEach(a=>{if(a!==ev.target)a.pause()}),true);
+render();
+</script></body></html>

@@ -1,0 +1,339 @@
+{
+  "qwen3.5-2b": {
+    "label": "Qwen3.5-2B",
+    "file": "unsloth/Qwen3.5-2B-Q4_K_M.gguf",
+    "released": "2026-03",
+    "fits_budget": true,
+    "file_gb": 1.28,
+    "load_s": 2.0,
+    "vram_loaded_gib": 1.47,
+    "vram_peak_total_gib": 15.73,
+    "vram_baseline_gib": 14.22,
+    "runs": {
+      "options": {
+        "text": "You've finished reviewing your setup and found that your current GPU is too small for the heavy models you want to run.\n\nThe best option is to send your messages to a cheap cloud model for summaries, but keep your own voice generation on the old 1060 card using a smaller model.\n\nYou should deploy a Kokoro model on the 1060 and add a new feature that reads the summary aloud when you click a message.\n\nDo you want me to build this feature for you, or do you prefer to keep everything local and accept the performance tradeoffs?",
+        "wall_s": 0.8,
+        "prompt_tokens": 1396,
+        "prefill_ms": 235,
+        "prefill_tps": 5944,
+        "decode_tps": 213.2,
+        "output_tokens": 120
+      },
+      "vram-plan": {
+        "text": "Basically, yes, that is the plan. You need a summary model group in the NixOS config, Kokoro running on your laptop, and the endpoint and UI in your T3 fork.\n\nHere is what you need to do:\n1. Put a summary model in the NixOS config so it loads alongside dictation.\n2. Run Kokoro on your laptop so it doesn't use the PC's GPU.\n3. Build the endpoint and UI in your T3 fork.\n\nMake sure the summary model doesn't use the `releaseStt` wrapper, or it will break dictation. Also, test the 4B model first to check how much room you have left. If the summaries are too weak, you can switch just that part to the cloud later.",
+        "wall_s": 0.88,
+        "prompt_tokens": 653,
+        "prefill_ms": 126,
+        "prefill_tps": 5172,
+        "decode_tps": 215.2,
+        "output_tokens": 163
+      }
+    }
+  },
+  "qwen3.5-4b": {
+    "label": "Qwen3.5-4B",
+    "file": "unsloth/Qwen3.5-4B-Q4_K_M.gguf",
+    "released": "2026-03",
+    "fits_budget": true,
+    "file_gb": 2.74,
+    "load_s": 5.6,
+    "vram_loaded_gib": 3.17,
+    "vram_peak_total_gib": 17.47,
+    "vram_baseline_gib": 14.26,
+    "runs": {
+      "options": {
+        "text": "Okay, so I've looked at your setup and found that your current GPU can't handle both dictation and listening at the same time because it would constantly reload models, causing long delays. The solution is to use a cheap cloud model for quick summaries instead of running a local one. For the voice, we should use Kokoro on your old 1060 graphics card, which is faster and won't conflict with dictation. This means we'll add a button to read messages aloud, stream the summary immediately, and show subtitles as it speaks. I need to know if you want me to build this cloud summary and Kokoro voice setup now, or if you prefer to keep everything local and deal with the slower speeds.",
+        "wall_s": 1.62,
+        "prompt_tokens": 1396,
+        "prefill_ms": 485,
+        "prefill_tps": 2880,
+        "decode_tps": 130.0,
+        "output_tokens": 148
+      },
+      "vram-plan": {
+        "text": "So basically, we're keeping the dictation model running all the time on your PC, and adding a small 4 billion parameter summary model to stay loaded too, so you get instant responses. The voice model stays on your homelab, and the big models remain exclusive so they don't kick out the smaller ones. This plan uses about 14 gigabytes of your GPU right now, leaving roughly 5 gigabytes free for the new summary model.\n\nThe main thing to watch is that if you run both dictation and the summary model at the same time, you might only have about 1.2 gigabytes left, which is tight. If your browser uses more memory than usual, it could stop the dictation. The fallback is a smaller model that leaves more room but gives weaker summaries, so it's best to test the 4 billion parameter model first to see if it works well.\n\nShould I build it this way with the summary model in the nixos config, Kokoro on the homelab, and the rest in the T3 Code fork?",
+        "wall_s": 1.96,
+        "prompt_tokens": 653,
+        "prefill_ms": 276,
+        "prefill_tps": 2363,
+        "decode_tps": 131.0,
+        "output_tokens": 221
+      }
+    }
+  },
+  "gemma4-e2b": {
+    "label": "Gemma 4 E2B",
+    "file": "unsloth/gemma-4-E2B-it-Q4_K_M.gguf",
+    "released": "2026-04",
+    "fits_budget": true,
+    "file_gb": 3.11,
+    "load_s": 7.2,
+    "vram_loaded_gib": 1.55,
+    "vram_peak_total_gib": 15.89,
+    "vram_baseline_gib": 14.29,
+    "runs": {
+      "options": {
+        "text": "The best approach is to use a cheap cloud model for the summary. This costs very little. You should use the Kokoro voice model on your homelab GPU. The system will stream the summary, and each finished sentence will go to the Kokoro voice. You should add a speaker icon to each message. You should also add a button to read the latest message. Do you want me to build the cloud summary and Kokoro voice, or do you want to keep everything local?",
+        "wall_s": 1.41,
+        "prompt_tokens": 1394,
+        "prefill_ms": 840,
+        "prefill_tps": 1659,
+        "decode_tps": 173.1,
+        "output_tokens": 98
+      },
+      "vram-plan": {
+        "text": "The plan is to keep dictation loaded always. A small four billion parameter summary model will also stay loaded in its own group. Kokoro will run on the homelab and not use the PC's GPU. The larger models will stay in big mode, so nothing gets kicked out unless you specifically ask for them. If things run out of memory, you can fall back to a two billion parameter model. Should you build it with the summary model group in the llama-swap file, Kokoro in the homelab repo, and the endpoint and user interface in the T3 Code fork?",
+        "wall_s": 0.8,
+        "prompt_tokens": 660,
+        "prefill_ms": 156,
+        "prefill_tps": 4226,
+        "decode_tps": 185.8,
+        "output_tokens": 120
+      }
+    }
+  },
+  "lfm2.5-2.6b": {
+    "label": "LFM2.5-2.6B",
+    "file": "LiquidAI/LFM2.5-2.6B-Q4_K_M.gguf",
+    "released": "2026-08",
+    "fits_budget": true,
+    "file_gb": 1.67,
+    "load_s": 1.4,
+    "vram_loaded_gib": 1.91,
+    "vram_peak_total_gib": 3.21,
+    "vram_baseline_gib": 1.26,
+    "runs": {
+      "options": {
+        "text": "Here's the summary: the best approach is to use a cheap cloud model like Haiku 5.5 through the T3 server. This avoids the GPU memory conflicts between dictation and TTS since the cloud call doesn't fight for video memory. For voice, I recommend Kokoro on your homelab's GTX 1060 - it's an 82M model that's always loaded and runs fast. You'll need to add a read-aloud API endpoint and some UI changes in the T3 Code fork to show a speaker icon and a read-latest button. The work is deploying Kokoro in the homelab repo and wiring up the API. Would you like me to go ahead and build option A with Kokoro, or keep everything local and accept the GPU tradeoffs?",
+        "wall_s": 11.18,
+        "prompt_tokens": 1361,
+        "prefill_ms": 266,
+        "prefill_tps": 5115,
+        "decode_tps": 222.0,
+        "output_tokens": 2424
+      },
+      "vram-plan": {
+        "text": "The plan is to keep dictation loaded all the time while a ~4B summary model stays permanently loaded in its own llama-swap group that never swaps out. Kokoro runs on the homelab's 1060 GPU and stays loaded, and the 27B and Breeze models remain in exclusive \"big mode.\" The main risk is memory pressure\u2014with 14.2 GB total, you could drop to about 1.2 GB free if dictation finishes while a summary runs, with a fallback to a smaller ~2B model. Should I build it this way: the summary-model group in `modules/nixos/llama-swap.nix`, Kokoro in the homelab repo, then the endpoint and UI in the T3 Code fork?",
+        "wall_s": 4.29,
+        "prompt_tokens": 992,
+        "prefill_ms": 177,
+        "prefill_tps": 5610,
+        "decode_tps": 223.8,
+        "output_tokens": 920
+      }
+    }
+  },
+  "granite4.2-3b": {
+    "label": "Granite 4.2 3B",
+    "file": "ibm-granite/granite-4.2-3b-Q4_K_M.gguf",
+    "released": "2026-08",
+    "fits_budget": true,
+    "file_gb": 2.24,
+    "load_s": 4.6,
+    "vram_loaded_gib": 3.32,
+    "vram_peak_total_gib": 17.63,
+    "vram_baseline_gib": 14.26,
+    "runs": {
+      "options": {
+        "text": "Here\u2019s the summary:  \nYou have dictation using ~10\u202fGB on the PC\u2019s GPU, Breeze TTS needing ~7.7\u202fGB video memory, and Hyprland using ~3.5\u202fGB, all adding up to more than the 20\u202fGB card you have, causing reloads and delays. The homelab GPU is a GTX\u202f1060 with 3\u202fGB, which is too small for Breeze or most useful LLMs.  \n\nRecommendation: Use a cheap cloud model (Haiku\u202f5.5) from the T3 server, outside the chat, because it avoids the GPU memory problem and keeps the system lightweight.  \n\nWhat happens next: I\u2019ll build option A \u2013 a one\u2011API call to Haiku\u202f5.5 that streams the result without touching the chat context. If you\u2019d rather stay local, let me know.",
+        "wall_s": 1.6,
+        "prompt_tokens": 1413,
+        "prefill_ms": 365,
+        "prefill_tps": 3873,
+        "decode_tps": 160.2,
+        "output_tokens": 199
+      },
+      "vram-plan": {
+        "text": "Ok so the plan is to set up the summary model group in modules/nixos/llama-swap.nix, run Kokoro on the homelab, and keep the endpoint and UI in the T3 Code fork. Should I build it this way?",
+        "wall_s": 0.52,
+        "prompt_tokens": 653,
+        "prefill_ms": 172,
+        "prefill_tps": 3796,
+        "decode_tps": 162.3,
+        "output_tokens": 57
+      }
+    }
+  },
+  "ministral3-3b": {
+    "label": "Ministral 3 3B",
+    "file": "mistralai/Ministral-3-3B-Instruct-2512-Q4_K_M.gguf",
+    "released": "2025-12",
+    "fits_budget": true,
+    "file_gb": 2.15,
+    "load_s": 10.4,
+    "vram_loaded_gib": 3.65,
+    "vram_peak_total_gib": 17.98,
+    "vram_baseline_gib": 14.29,
+    "runs": {
+      "options": {
+        "text": "Okay, here\u2019s what I found and what we need to do.\n\nYou\u2019ve got a GPU that\u2019s too small for both dictation and a big TTS model at the same time. Right now, when you use the TTS, it crashes the dictation because it\u2019s using too much memory. The old GPU\u2014your GTX 1060\u2014isn\u2019t big enough for any useful local LLM or TTS model, so we\u2019re stuck reloading everything every time.\n\nThe best way to fix this is to use a cloud model for quick summaries. It\u2019ll only take about a second to start speaking, and it won\u2019t interfere with your dictation. The text would go to a separate cloud API, like Haiku 5.5, and then it\u2019d speak the summary straight away.\n\nFor the voice, we\u2019d use a small local model called Kokoro on the old GPU. It\u2019s good quality and doesn\u2019t use the main PC\u2019s GPU, so it won\u2019t slow down your dictation. If you don\u2019t want to use cloud models, we could keep everything local\u2014but then you\u2019d have to deal with the GPU not being big enough for both things at once.\n\nShould I set up the cloud model and Kokoro, or would you prefer to keep everything local?",
+        "wall_s": 2.01,
+        "prompt_tokens": 1361,
+        "prefill_ms": 399,
+        "prefill_tps": 3411,
+        "decode_tps": 164.0,
+        "output_tokens": 264
+      },
+      "vram-plan": {
+        "text": "Okay, so right now your PC is using about fourteen point two gigabytes\u2014mostly for dictation and your desktop. That leaves about five point seven gigabytes free, which is enough for a small model to run alongside dictation all the time.\n\nThe plan is to keep dictation loaded constantly, like before, and add a big summary model that won\u2019t get swapped out. That model stays loaded too, but it won\u2019t kick dictation if you use the right setup. Kokoro runs on your homelab PC, not the main one, so it doesn\u2019t take up GPU space there.\n\nThe big models and Breeze still work like before\u2014they take over when you ask for them, but only if you don\u2019t use them often. If you never ask for those, nothing gets kicked out.\n\nThe worst case? If dictation finishes just as the summary model starts, you might only have about one point two gigabytes left. If browsers take up more memory than usual, the system could shut down dictation if it goes over nineteen point five gigabytes. The backup is a smaller model, but it makes summaries weaker.\n\nSome numbers are estimates, like how much Kokoro uses or how big the summary model is. I didn\u2019t test the chart before showing it, but the setup should work.\n\nShould you build it this way? Put the summary model group in your `llama-swap.nix` file, add Kokoro to your homelab repo, and update the endpoint and UI in the T3 Code fork?",
+        "wall_s": 1.99,
+        "prompt_tokens": 634,
+        "prefill_ms": 163,
+        "prefill_tps": 3897,
+        "decode_tps": 173.0,
+        "output_tokens": 316
+      }
+    }
+  },
+  "gemma4-e4b": {
+    "label": "Gemma 4 E4B",
+    "file": "unsloth/gemma-4-E4B-it-Q4_K_M.gguf",
+    "released": "2026-04",
+    "fits_budget": false,
+    "file_gb": 4.98,
+    "load_s": 13.4,
+    "vram_loaded_gib": 3.32,
+    "vram_peak_total_gib": 8.38,
+    "vram_baseline_gib": 5.02,
+    "runs": {
+      "options": {
+        "text": "Basically, your current setup won't work well because the speech recognition and text-to-speech models are too big for your main graphics card. For summarizing, the recommendation is to use a cheap cloud model via one API call. For the voice, the recommendation is to use Kokoro on your older homelab GPU. If we do this, the summary will stream to Kokoro, starting audio a couple of seconds after you click. I need a Claude API key to build this, or you can pay through opencode's models. Do you want me to build option A plus Kokoro, or would you rather keep everything local and accept the GPU tradeoffs?",
+        "wall_s": 1.59,
+        "prompt_tokens": 1394,
+        "prefill_ms": 465,
+        "prefill_tps": 3001,
+        "decode_tps": 119.3,
+        "output_tokens": 135
+      },
+      "vram-plan": {
+        "text": "Basically, the plan is to keep dictation running all the time, and also keep a small summary model loaded permanently. This summary model won't kick out dictation. Kokoro will run on your homelab computer, not your main PC. The big models will still load and unload as they do now. The tightest spot is when dictation finishes and the summary runs, leaving about one point two gigabytes free. Should I build it this way: summary model group in the llama-swap nix file, Kokoro in the homelab repo, then the endpoint and UI in the T3 Code fork?",
+        "wall_s": 1.29,
+        "prompt_tokens": 660,
+        "prefill_ms": 251,
+        "prefill_tps": 2630,
+        "decode_tps": 119.6,
+        "output_tokens": 125
+      }
+    }
+  },
+  "lfm2.5-8b-a1b": {
+    "label": "LFM2.5-8B-A1B (MoE)",
+    "file": "LiquidAI/LFM2.5-8B-A1B-Q4_K_M.gguf",
+    "released": "2026-05",
+    "fits_budget": false,
+    "file_gb": 5.16,
+    "load_s": 11.6,
+    "vram_loaded_gib": 5.08,
+    "vram_peak_total_gib": 6.34,
+    "vram_baseline_gib": 1.23,
+    "runs": {
+      "options": {
+        "text": "I've finished looking around your setup and found the problem. The dictation model and Breeze TTS together exceed the 20\u202fGB GPU limit, causing repeated unloads and cold starts. I evaluated four options and concluded that the cheap cloud API call (option A) is the best because it never touches the chat context and avoids GPU overload, and I recommend using Kokoro on the homelab 1060 as the local voice. What should I do next?",
+        "wall_s": 3.42,
+        "prompt_tokens": 1360,
+        "prefill_ms": 217,
+        "prefill_tps": 6279,
+        "decode_tps": 283.8,
+        "output_tokens": 910
+      },
+      "vram-plan": {
+        "text": "Alright, the PC is currently using 14.2\u202fGB, leaving about 5.7\u202fGB free. You want a tiny 4\u202fGB summary model to stay loaded alongside dictation, never swapping out, and keep the 27\u202fGB and Breeze models in their exclusive mode. The risk is that dictation could hit the 19.5\u202fGB limit and kill the model, so a smaller 2\u202fGB fallback would free more space but give weaker summaries. If the 4\u202fGB summaries work, you can keep the rest of the setup as described. Should I go ahead and build the summary\u2011model group in modules/nixos/llama-swap.nix, run Kokoro in the homelab repo, and place the endpoint and UI in the T3 Code fork?",
+        "wall_s": 2.75,
+        "prompt_tokens": 991,
+        "prefill_ms": 142,
+        "prefill_tps": 6980,
+        "decode_tps": 285.6,
+        "output_tokens": 744
+      }
+    }
+  },
+  "qwen3.5-9b": {
+    "label": "Qwen3.5-9B",
+    "file": "unsloth/Qwen3.5-9B-Q4_K_M.gguf",
+    "released": "2026-03",
+    "fits_budget": false,
+    "file_gb": 5.68,
+    "load_s": 13.2,
+    "vram_loaded_gib": 5.43,
+    "vram_peak_total_gib": 10.55,
+    "vram_baseline_gib": 5.08,
+    "runs": {
+      "options": {
+        "text": "Okay so I looked at your setup and found that running both dictation and the Breeze voice model on your main PC would cause constant slow restarts because they don't fit in your GPU memory at the same time. The solution is to send the summary request to a fast cloud model instead of running it locally, and to run the voice generation on your separate homelab GPU using a smaller, compatible model called Kokoro. This way, the summary appears instantly and the audio starts playing within a second or two without blocking your main computer. I need to know if you want me to build this cloud and homelab solution, or if you prefer to keep everything local despite the performance tradeoffs.",
+        "wall_s": 2.39,
+        "prompt_tokens": 1396,
+        "prefill_ms": 798,
+        "prefill_tps": 1749,
+        "decode_tps": 89.1,
+        "output_tokens": 142
+      },
+      "vram-plan": {
+        "text": "Basically, we are proposing to keep your current dictation setup but add a small summary model that stays permanently loaded on your main PC to avoid delays. Your voice model will move to the homelab, and your large models will remain exclusive as they are now. This plan uses about three gigabytes of your GPU, leaving very little room if the browser gets heavy, but it keeps everything local and free. If the summary quality isn't good enough, we can just switch that specific step to the cloud later. Should we proceed with building this using the summary model group in the nix config, Kokoro in the homelab repo, and the rest in your T3 Code fork?",
+        "wall_s": 1.99,
+        "prompt_tokens": 653,
+        "prefill_ms": 433,
+        "prefill_tps": 1508,
+        "decode_tps": 89.3,
+        "output_tokens": 140
+      }
+    }
+  },
+  "gemma4-12b": {
+    "label": "Gemma 4 12B",
+    "file": "unsloth/gemma-4-12b-it-Q4_K_M.gguf",
+    "released": "2026-05",
+    "fits_budget": false,
+    "file_gb": 7.12,
+    "load_s": 15.0,
+    "vram_loaded_gib": 7.41,
+    "vram_peak_total_gib": 12.59,
+    "vram_baseline_gib": 5.09,
+    "runs": {
+      "options": {
+        "text": "The current setup has a memory problem because your GPU cannot hold the dictation model, the speech model, and your desktop environment all at once. This causes the system to constantly unload and reload models, creating long delays every time you switch between listening and speaking.\n\nTo fix this, the recommendation is to use a cheap cloud model for generating summaries and run a smaller voice model called Kokoro on your homelab GPU. This keeps the main PC's memory free and ensures the audio starts playing almost instantly.\n\nThe plan is to add a speaker icon to each message, a floating button to read the latest update, and a subtitle panel at the bottom. This would involve setting up the voice server in your homelab and adding a new endpoint and UI to your code fork.\n\nDo you want me to build this cloud and homelab setup, or would you rather keep everything local and accept the GPU trade-offs?",
+        "wall_s": 4.37,
+        "prompt_tokens": 1398,
+        "prefill_ms": 1559,
+        "prefill_tps": 897,
+        "decode_tps": 65.9,
+        "output_tokens": 186
+      },
+      "vram-plan": {
+        "text": "Basically, the plan is to keep your dictation and a small summary model loaded on your PC at all times. This works because you currently have about five gigabytes of free memory. The voice model will run on your homelab instead, so it won't compete for space. When you need a larger model, it will swap the smaller ones out, but if you don't use the big models, nothing gets kicked out. There is a small risk of running out of memory if your browser uses too much, but we can switch to an even smaller summary model if that happens. This keeps everything local and free, though the summaries might be slightly weaker than a cloud option. Should I build it this way by setting up the summary model group, the homelab repo, and the UI in your T3 Code fork?",
+        "wall_s": 3.33,
+        "prompt_tokens": 664,
+        "prefill_ms": 815,
+        "prefill_tps": 814,
+        "decode_tps": 66.7,
+        "output_tokens": 168
+      }
+    }
+  },
+  "qwen3.5-27b": {
+    "label": "Qwen3.5-27B (reference)",
+    "file": "unsloth/Qwen3.5-27B-IQ4_NL.gguf",
+    "released": "2026-02",
+    "fits_budget": false,
+    "file_gb": 15.7,
+    "load_s": null,
+    "vram_loaded_gib": null,
+    "runs": {
+      "options": {
+        "text": "I checked your setup and found that running both dictation and high-quality voice on your main PC causes constant reloading because they fight for video memory. The best fix is to use a cheap cloud service just for summarizing messages, which avoids those delays entirely. For the actual speaking voice, I recommend running a smaller model called Kokoro on your older homelab GPU so it never interferes with your dictation. This setup would let you hear summaries start within two seconds of clicking a new speaker icon in your chat interface. The only thing left to decide is whether you want me to build this cloud-plus-homelab solution, or if you prefer keeping everything local and accepting the slower performance tradeoffs.",
+        "prompt_tokens": 1396,
+        "prefill_ms": 3169,
+        "prefill_tps": 441,
+        "decode_tps": 32.3,
+        "output_tokens": 143
+      },
+      "vram-plan": {
+        "text": "Here is the plan for your setup: right now, your PC uses about 14 gigabytes of memory just for dictation and the desktop, leaving roughly 6 gigabytes free. We will keep a small summary model loaded permanently alongside dictation so it responds instantly without pushing anything out. Your voice model runs separately on the homelab computer, while larger models stay exclusive and only load when you specifically ask for them. The main risk is running low on memory if your browser uses more than usual, which might force us to use a weaker summary model instead. This approach keeps everything local and free, though the summaries won't be quite as good as cloud options. Should I build it this way by setting up the summary group in your config, moving Kokoro to the homelab repo, and updating the code fork?",
+        "prompt_tokens": 653,
+        "prefill_ms": 1294,
+        "prefill_tps": 504,
+        "decode_tps": 32.9,
+        "output_tokens": 168
+      }
+    }
+  }
+}
