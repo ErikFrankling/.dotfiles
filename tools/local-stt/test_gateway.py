@@ -195,5 +195,59 @@ class ChunkTests(unittest.TestCase):
         self.assertEqual(gateway.merge_transcripts('Really?', 'Why would you do that?'), 'Really? Why would you do that?')
 
 
+class FakeResponse:
+    def __init__(self, payload=None, status=200):
+        self.payload, self.status = payload, status
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
+        return False
+
+    async def json(self):
+        return self.payload
+
+
+class LlamaSwapSharingTests(unittest.IsolatedAsyncioTestCase):
+    def client(self, running):
+        client = MagicMock()
+        client.get = MagicMock(side_effect=lambda url, **_: FakeResponse(
+            {'running': [{'model': m, 'state': 'ready'} for m in running]} if url.endswith('/running') else None))
+        client.post = MagicMock(side_effect=lambda url, **_: FakeResponse())
+        return client
+
+    async def test_make_room_keeps_the_small_summary_model(self):
+        client = self.client(['read-aloud-summary', 'higgs-tts'])
+        calls = []
+        free = lambda: 0 if not calls.append(1) and len(calls) == 1 else 12 * 1024**3
+        with patch.multiple(gateway, LLAMA_SWAP='http://swap', LLAMA_SWAP_KEEP={'read-aloud-summary'}), \
+                patch.object(gateway, 'vram_free', side_effect=free):
+            await gateway.make_room(client)
+        unloaded = [call.args[0] for call in client.post.call_args_list]
+        self.assertEqual(unloaded, ['http://swap/api/models/unload/higgs-tts'])
+        self.assertFalse(any(call.args[0].endswith('/unload') for call in client.get.call_args_list))
+
+    async def test_idle_warm_leaves_a_busy_llama_swap_alone(self):
+        client = self.client(['qwen3.5-27b'])
+        session = MagicMock()
+        session.__aenter__ = AsyncMock(return_value=client)
+        session.__aexit__ = AsyncMock(return_value=False)
+        with patch.multiple(gateway, LLAMA_SWAP='http://swap', LLAMA_SWAP_KEEP={'read-aloud-summary'},
+                            IDLE_WARM_MODEL='higgs-tts'), patch.object(gateway, 'ClientSession', return_value=session):
+            await gateway.warm_idle_model()
+        self.assertEqual([call.args[0] for call in client.get.call_args_list], ['http://swap/running'])
+
+    async def test_idle_warm_starts_the_voice_beside_the_summary_model(self):
+        client = self.client(['read-aloud-summary'])
+        session = MagicMock()
+        session.__aenter__ = AsyncMock(return_value=client)
+        session.__aexit__ = AsyncMock(return_value=False)
+        with patch.multiple(gateway, LLAMA_SWAP='http://swap', LLAMA_SWAP_KEEP={'read-aloud-summary'},
+                            IDLE_WARM_MODEL='higgs-tts'), patch.object(gateway, 'ClientSession', return_value=session):
+            await gateway.warm_idle_model()
+        self.assertIn('http://swap/upstream/higgs-tts/health', [call.args[0] for call in client.get.call_args_list])
+
+
 if __name__ == '__main__':
     unittest.main()

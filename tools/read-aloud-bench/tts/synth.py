@@ -13,8 +13,14 @@ import re
 import sys
 import time
 
+import os
+
 import numpy as np
 import soundfile as sf
+
+
+# Engines with a native speed setting use it; others are sped up afterwards.
+SPEED = float(os.environ.get("TTS_SPEED", "1.0"))
 
 
 def sentences(text):
@@ -41,19 +47,19 @@ def engine_kokoro(_, voice):
     pipe = KPipeline(lang_code="a", repo_id="hexgrad/Kokoro-82M", device="cuda")
 
     def say(s):
-        chunks = [a.cpu().numpy() if hasattr(a, "cpu") else a for _, _, a in pipe(s, voice=voice or "af_heart")]
+        chunks = [a.cpu().numpy() if hasattr(a, "cpu") else a for _, _, a in pipe(s, voice=voice or "af_heart", speed=SPEED)]
         return np.concatenate(chunks), 24000
 
     return say
 
 
-def engine_kokoro_cpu(_, voice):
+def engine_kokoro_cpu(_, voice, lang="a"):
     from kokoro import KPipeline
 
-    pipe = KPipeline(lang_code="a", repo_id="hexgrad/Kokoro-82M", device="cpu")
+    pipe = KPipeline(lang_code=lang, repo_id="hexgrad/Kokoro-82M", device="cpu")
 
     def say(s):
-        chunks = [a.numpy() for _, _, a in pipe(s, voice=voice or "af_heart")]
+        chunks = [a.numpy() for _, _, a in pipe(s, voice=voice or "af_heart", speed=SPEED)]
         return np.concatenate(chunks), 24000
 
     return say
@@ -66,7 +72,7 @@ def engine_supertonic(_, voice):
     style = tts.get_voice_style(voice or "M1")
 
     def say(s):
-        wav, _ = tts.synthesize(s, voice_style=style, lang="en")
+        wav, _ = tts.synthesize(s, voice_style=style, lang="en", speed=1.05 * SPEED)
         return np.asarray(wav).reshape(-1), tts.sample_rate
 
     return say
@@ -139,6 +145,7 @@ ENGINES = {
     "qwen3tts": engine_qwen3tts,
     "kokoro": engine_kokoro,
     "kokoro-cpu": engine_kokoro_cpu,
+    "kokoro-cpu-gb": lambda path, voice: engine_kokoro_cpu(path, voice, lang="b"),  # British voices
     "supertonic": engine_supertonic,
     "pocket": engine_pocket,
     "chatterbox": engine_chatterbox,

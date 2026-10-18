@@ -26,10 +26,15 @@ in
       after = [ "network.target" ];
       environment.STT_RECORDINGS = "/var/lib/local-stt";
       environment.XDG_CACHE_HOME = "/var/lib/local-stt/cache";
-      # GPU sharing with llama-swap: unload the 10 GB final recogniser after 5 h
-      # idle, and ask llama-swap to evict its idle model before loading it.
-      environment.STT_FINAL_IDLE_SECONDS = "18000";
+      # GPU sharing with llama-swap: unload the 10 GB final recogniser after
+      # 30 min idle and lend the GPU to read-aloud's big voice (Higgs); when
+      # dictation needs it back, evict llama-swap's models except the small
+      # read-aloud summary model, which fits beside dictation (Erik, 2026-10-18;
+      # was 5 h idle with no lending).
+      environment.STT_FINAL_IDLE_SECONDS = "1800";
       environment.STT_LLAMA_SWAP_URL = "http://127.0.0.1:8000";
+      environment.STT_LLAMA_SWAP_KEEP = "read-aloud-summary";
+      environment.STT_IDLE_WARM_MODEL = "higgs-tts";
       serviceConfig = {
         ExecStart = "${package}/bin/local-stt-server";
         User = username;

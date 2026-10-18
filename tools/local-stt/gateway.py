@@ -21,6 +21,11 @@ VIBE = os.environ.get("STT_FINAL_URL", "http://127.0.0.1:8783")
 # to unload its idle model before loading itself.
 FINAL_IDLE_SECONDS = float(os.environ.get("STT_FINAL_IDLE_SECONDS", "18000"))
 LLAMA_SWAP = os.environ.get("STT_LLAMA_SWAP_URL", "")
+LLAMA_SWAP_KEEP = set(filter(None, os.environ.get("STT_LLAMA_SWAP_KEEP", "").split(",")))
+# Once dictation has gone idle and its recogniser is unloaded, the GPU is lent
+# to this llama-swap model (read-aloud's big voice), unless llama-swap is busy
+# with something outside LLAMA_SWAP_KEEP.
+IDLE_WARM_MODEL = os.environ.get("STT_IDLE_WARM_MODEL", "")
 FINAL_VRAM_BYTES = 11 * 1024**3
 # The loaded recogniser holds ~9.2 GiB. Below this much free GPU memory a load
 # cannot succeed and would only push the desktop into its crash band.
@@ -87,12 +92,33 @@ def vram_free():
     return max(free, default=0)
 
 
+async def llama_swap_running(client):
+    async with client.get(LLAMA_SWAP + "/running", timeout=ClientTimeout(total=10)) as response:
+        return [entry.get("model", "") for entry in (await response.json()).get("running", [])]
+
+
 async def make_room(client):
-    """Ask llama-swap to unload its (idle) model when the final recogniser won't fit."""
+    """Ask llama-swap to unload its (idle) models when the final recogniser won't fit.
+
+    Models in STT_LLAMA_SWAP_KEEP (the small read-aloud summary model) fit beside
+    dictation and stay; everything else goes first, and all of it only if that
+    was not enough.
+    """
     if LLAMA_SWAP and vram_free() < FINAL_VRAM_BYTES:
         try:
-            async with client.get(LLAMA_SWAP + "/unload", timeout=ClientTimeout(total=30)) as response:
-                status = response.status
+            status = None
+            for model in await llama_swap_running(client):
+                if model not in LLAMA_SWAP_KEEP:
+                    async with client.post(f"{LLAMA_SWAP}/api/models/unload/{model}",
+                                           timeout=ClientTimeout(total=30)) as response:
+                        status = response.status
+            for _ in range(25):
+                if vram_free() >= FINAL_VRAM_BYTES:
+                    break
+                await asyncio.sleep(0.2)
+            if vram_free() < FINAL_VRAM_BYTES:
+                async with client.get(LLAMA_SWAP + "/unload", timeout=ClientTimeout(total=30)) as response:
+                    status = response.status
             # llama-swap answers before its model process has released the GPU.
             for _ in range(25):
                 if vram_free() >= FINAL_VRAM_BYTES:
@@ -103,6 +129,24 @@ async def make_room(client):
             log("worker.make_room_failed", error=str(error))
     if vram_free() < FINAL_LOAD_BYTES:
         raise RuntimeError(f"not enough free GPU memory for the final recogniser ({vram_free() / 1024**3:.1f} GiB)")
+
+
+async def warm_idle_model():
+    if not (LLAMA_SWAP and IDLE_WARM_MODEL):
+        return
+    try:
+        async with ClientSession() as client:
+            running = await llama_swap_running(client)
+            if any(model not in LLAMA_SWAP_KEEP | {IDLE_WARM_MODEL} for model in running):
+                log("worker.idle_warm_skipped", running=running)
+                return
+            log("worker.idle_warm", model=IDLE_WARM_MODEL)
+            # Any request through llama-swap starts the model; it may take minutes.
+            async with client.get(f"{LLAMA_SWAP}/upstream/{IDLE_WARM_MODEL}/health",
+                                  timeout=ClientTimeout(total=600)) as response:
+                log("worker.idle_warmed", model=IDLE_WARM_MODEL, status=response.status)
+    except (OSError, asyncio.TimeoutError, ValueError) as error:
+        log("worker.idle_warm_failed", error=str(error))
 
 
 def active(state):
@@ -164,6 +208,7 @@ async def monitor():
                 and time.monotonic() - last_used.get("final", 0) > FINAL_IDLE_SECONDS):
             log("worker.idle_unload", worker="final")
             await stop_worker("final")
+            spawn(warm_idle_model())
         vram = max((int(p.read_text()) for p in Path("/sys/class/drm").glob("card*/device/mem_info_vram_used")), default=0)
         memory = dict(line.split(":", 1) for line in Path("/proc/meminfo").read_text().splitlines())
         available = int(memory["MemAvailable"].split()[0]) * 1024

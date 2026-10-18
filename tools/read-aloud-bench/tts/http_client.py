@@ -9,6 +9,7 @@ KIND: breeze | fish | openai
 import base64
 import io
 import json
+import os
 import re
 import sys
 import time
@@ -71,7 +72,7 @@ def say(kind, url, s, voice):
         }).encode()
         return wav_pcm(post(url, body, "application/json")[0])
     if kind == "openai":
-        req = {"input": s, "response_format": "wav"}
+        req = {"input": s, "response_format": "wav", "speed": float(os.environ.get("TTS_SPEED", "1.0"))}
         if voice == "ref":
             req["ref_audio"] = "data:audio/wav;base64," + base64.b64encode(REF_WAV.read_bytes()).decode()
             req["ref_text"] = REF_TEXT

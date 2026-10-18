@@ -48,6 +48,23 @@ let
   # is enough and lets erikf download weights here directly.
   ttsDir = "/mnt/data/tts";
   docker = "${pkgs.docker}/bin/docker";
+
+  # Higgs TTS 3 (Boson AI, 4B, research/non-commercial weights): read-aloud's
+  # big voice and the explainer-video narrator. vLLM-Omni's ROCm image, plus a
+  # one-line fix: vLLM v0.28 rejects negative prompt token ids, and Higgs
+  # writes its reference-audio placeholders as -100, which broke voice cloning.
+  # Comparison: research/read-aloud/2026-10-18.
+  higgsDockerfileText = ''
+    FROM vllm/vllm-omni-rocm:v0.28.0
+    RUN f=/usr/local/lib/python3.12/dist-packages/vllm/v1/engine/input_processor.py \
+     && grep -q "            if min_input_id < 0:" "$f" \
+     && sed -i "s/            if min_input_id < 0:/            if min_input_id < 0 and min_input_id != -100:/" "$f"
+    ENTRYPOINT ["vllm"]
+  '';
+  higgsDockerfile = pkgs.writeText "higgs-tts.Dockerfile" higgsDockerfileText;
+  higgsImage = "higgs-tts:${
+    builtins.substring 0 12 (builtins.hashString "sha256" higgsDockerfileText)
+  }";
 in
 {
   services.llama-swap = {
@@ -62,7 +79,82 @@ in
       logLevel = "debug";
       startPort = 5800;
 
+      # Read-aloud in T3 Code: the summary model stays loaded beside dictation
+      # (3.3 GiB), and the big voice joins it while dictation is idle (the
+      # speech gateway lends the GPU after 30 minutes; see local-stt.nix).
+      # swap = false lets both run together; exclusive = true unloads the big
+      # LLMs when either starts, and loading a big LLM unloads both.
+      groups."read-aloud" = {
+        swap = false;
+        exclusive = true;
+        members = [
+          "read-aloud-summary"
+          "higgs-tts"
+        ];
+      };
+
       models = {
+        "read-aloud-summary" = {
+          name = "Gemma 4 E4B Q4_K_M (read-aloud summaries)";
+          description = "Rewrites assistant messages as short spoken briefings for T3 Code's read-aloud button";
+
+          # Erik's pick from the 2026-10-18 taste test. The 5 GB file loads
+          # to 3.3 GiB of VRAM, so it fits beside dictation and stays loaded
+          # (no ttl). No releaseStt: it must never unload dictation.
+          cmd = ''
+            ${llama-cpp}/bin/llama-server \
+            --port 5807 \
+            --model /mnt/data/ai-models/llama-cpp/models/unsloth/gemma-4-E4B-it-GGUF/gemma-4-E4B-it-Q4_K_M.gguf \
+            --n-gpu-layers 999 \
+            -c 16384 \
+            --flash-attn on \
+            --alias read-aloud-summary \
+            --jinja \
+            --reasoning off \
+            --cache-ram 0 \
+            --parallel 2
+          '';
+          proxy = "http://127.0.0.1:5807";
+          aliases = [ "gemma4-e4b" ];
+        };
+
+        "higgs-tts" = {
+          name = "Higgs TTS 3 4B (text-to-speech)";
+          description = "Boson AI Higgs TTS 3 on vLLM-Omni (ROCm, Docker) — OpenAI POST /upstream/higgs-tts/v1/audio/speech, voice \"erik\"";
+
+          # ~10.6 GiB at --gpu-memory-utilization 0.5 (weights + 1.8 GiB KV).
+          # With the summary model and the desktop that is ~17.5 GiB total.
+          # releaseStt unloads dictation's final recogniser first; dictation
+          # in turn unloads this model when it needs the room back.
+          #
+          # Voices: uploads persist in ${ttsDir}/voices/higgs-speakers and are
+          # restored at startup. "erik" is the voice Erik picked (cut from a
+          # Higgs sample, ${ttsDir}/voices/erik.wav). Re-create it with:
+          #   curl -X POST localhost:8000/upstream/higgs-tts/v1/audio/voices \
+          #     -F audio_sample=@${ttsDir}/voices/erik.wav -F name=erik \
+          #     -F consent=true -F "ref_text=$(cat ${ttsDir}/voices/erik.txt)"
+          # Speed: the request's "speed" field (1.0 = model pace).
+          cmd = ''
+            ${releaseStt} ${docker} run --rm --name higgs-tts \
+            --device /dev/kfd --device /dev/dri --security-opt seccomp=unconfined \
+            --ipc=host -p 127.0.0.1:5811:8095 \
+            -v ${ttsDir}/higgs-tts-3-4b:/model:ro \
+            -v ${ttsDir}/cache/hf:/root/.cache/huggingface \
+            -v ${ttsDir}/cache/miopen:/miopen \
+            -v ${ttsDir}/voices/higgs-speakers:/speakers \
+            -e SPEAKER_SAMPLES_DIR=/speakers \
+            -e HF_HUB_OFFLINE=1 \
+            -e MIOPEN_FIND_MODE=FAST -e MIOPEN_USER_DB_PATH=/miopen -e MIOPEN_CUSTOM_CACHE_DIR=/miopen \
+            ${higgsImage} serve /model --omni --trust-remote-code \
+            --host 0.0.0.0 --port 8095 \
+            --gpu-memory-utilization 0.5 --max-model-len 4096 --enforce-eager
+          '';
+          cmdStop = "${docker} stop -t 15 higgs-tts";
+          proxy = "http://127.0.0.1:5811";
+          checkEndpoint = "/health";
+          aliases = [ "higgs" ];
+        };
+
         "qwen3.8-27b" = {
           name = "Qwen3.8 27B UD-Q3_K_XL (vision)";
           description = "Qwen3.8-27B, Unsloth dynamic 3-bit + mmproj — native vision, fully on GPU, used by the time tracker";
@@ -273,6 +365,28 @@ in
     };
   };
 
+  # Same for Higgs: the patched vLLM-Omni image, tag = Dockerfile hash.
+  systemd.services.higgs-tts-image = {
+    description = "Build the Higgs TTS 3 vLLM-Omni ROCm Docker image";
+    wantedBy = [ "multi-user.target" ];
+    after = [
+      "docker.service"
+      "network-online.target"
+    ];
+    wants = [ "network-online.target" ];
+    requires = [ "docker.service" ];
+    path = [ pkgs.docker ];
+    script = ''
+      docker image inspect ${higgsImage} >/dev/null 2>&1 \
+        || docker build -t ${higgsImage} - < ${higgsDockerfile}
+    '';
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      TimeoutStartSec = "2h";
+    };
+  };
+
   systemd.services.llama-swap = {
     after = [ "mnt-data.mount" ];
     requires = [ "mnt-data.mount" ];
@@ -315,6 +429,9 @@ in
     "d ${ttsDir}/cache 0755 erikf users -"
     "d ${ttsDir}/cache/miopen 0755 erikf users -"
     "d ${ttsDir}/cache/triton 0755 erikf users -"
+    "d ${ttsDir}/cache/hf 0755 erikf users -"
+    "d ${ttsDir}/voices 0755 erikf users -"
+    "d ${ttsDir}/voices/higgs-speakers 0755 erikf users -"
   ];
 
   users.users.llama-cpp = {
