@@ -21,6 +21,25 @@ let
     exec "$@"
   '';
 
+  # Starts the command only if this much GPU memory is free (after releaseStt).
+  # releaseStt is refused while a recording is active, and starting anyway
+  # stacked Higgs on the busy recogniser: 20.9 GB total, dictation's memory
+  # guard killed its own worker (2026-10-18). Failing the request is better.
+  gpuRoom = pkgs.writeShellScript "gpu-room" ''
+    need=$(( $1 * 1024 * 1024 * 1024 )); shift
+    for _ in $(seq 1 20); do
+      free=0
+      for used in /sys/class/drm/card*/device/mem_info_vram_used; do
+        total=$(cat "''${used%_used}_total")
+        [ "$total" -gt $(( 4 * 1024 * 1024 * 1024 )) ] && free=$(( total - $(cat "$used") ))
+      done
+      [ "$free" -ge "$need" ] && exec "$@"
+      sleep 0.5
+    done
+    echo "gpu-room: only $(( free / 1024 / 1024 )) MiB GPU memory free (dictation busy?), not starting" >&2
+    exit 1
+  '';
+
   # Breeze TTS 2 (BreezeBlue, #1 open-weight TTS on the Artificial Analysis
   # arena, Sep 2026). Upstream only ships CUDA; this runs its eager PyTorch path
   # on ROCm (gfx1100) in a container built from a pinned ROCm PyTorch image.
@@ -135,7 +154,7 @@ in
           #     -F consent=true -F "ref_text=$(cat ${ttsDir}/voices/erik.txt)"
           # Speed: the request's "speed" field (1.0 = model pace).
           cmd = ''
-            ${releaseStt} ${docker} run --rm --name higgs-tts \
+            ${releaseStt} ${gpuRoom} 11 ${docker} run --rm --name higgs-tts \
             --device /dev/kfd --device /dev/dri --security-opt seccomp=unconfined \
             --ipc=host -p 127.0.0.1:5811:8095 \
             -v ${ttsDir}/higgs-tts-3-4b:/model:ro \
