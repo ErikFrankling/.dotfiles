@@ -70,6 +70,9 @@ in
     description = "Decide whether the closed lid should suspend";
     wantedBy = [ "multi-user.target" ];
     after = [ "NetworkManager.service" ];
+    # NetworkManager restarting fires a burst of dispatcher events; never let
+    # the start rate limit fail the check.
+    startLimitIntervalSec = 0;
     serviceConfig = {
       Type = "oneshot";
       ExecStart = lib.getExe check;
