@@ -25,7 +25,7 @@ let
   incidentDir = "${home}/.local/state/health-watch";
   # Gatus on the k3s node's host network; straight to it, not through
   # Traefik, so a broken ingress is reported rather than hidden.
-  gatusApi = "http://192.168.50.200:18080/api/v1/endpoints/statuses";
+  gatusApi = "http://192.168.50.100:18080/api/v1/endpoints/statuses";
   cacheUrl = "https://nix-cache.erikfrankling.duckdns.org";
   # SSH alias from modules/nixos/default.nix.
   builder = "ssh-ng://nix-builder";
@@ -551,9 +551,9 @@ let
                | join("; ") | .[0:300])
         ' <<< "$statuses")
       else
-        vm=$(ping -c 3 -W 2 192.168.50.200 > /dev/null 2>&1 && echo answers || echo "does NOT answer")
+        vm=$(ping -c 3 -W 2 192.168.50.100 > /dev/null 2>&1 && echo answers || echo "does NOT answer")
         hv=$(ping -c 3 -W 2 192.168.50.169 > /dev/null 2>&1 && echo answers || echo "does NOT answer")
-        failing="monitor/gatus: the health monitor at ${gatusApi} is not answering. Ping: k3s VM 192.168.50.200 $vm, Proxmox host 192.168.50.169 $hv."
+        failing="monitor/gatus: the health monitor at ${gatusApi} is not answering. Ping: k3s VM 192.168.50.100 $vm, Proxmox host 192.168.50.169 $hv."
       fi
 
       if [ -z "$failing" ]; then

@@ -39,7 +39,7 @@ in
       auto_https off
       admin off
       servers {
-        trusted_proxies static 192.168.50.200/32 192.168.50.100/32
+        trusted_proxies static 192.168.50.100/32
       }
     '';
     virtualHosts."http://:3999".extraConfig = ''
@@ -61,11 +61,10 @@ in
     '';
   };
 
-  # Only Traefik may connect, and k3s masquerades it to the node address (.200)
-  # or the VIP (.100) -- same arrangement as the computer-use bridge in
+  # Only Traefik may connect, and k3s masquerades it to the node address
+  # (192.168.50.100) -- same arrangement as the computer-use bridge in
   # ../../hosts/pc/configuration.nix.
   networking.firewall.extraCommands = ''
-    iptables -A nixos-fw -i eno1 -p tcp --dport 3999 -s 192.168.50.200 -j nixos-fw-accept
     iptables -A nixos-fw -i eno1 -p tcp --dport 3999 -s 192.168.50.100 -j nixos-fw-accept
   '';
 }

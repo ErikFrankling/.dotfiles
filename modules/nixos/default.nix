@@ -230,11 +230,8 @@
       Host proxmox
         Hostname 192.168.50.169
         User root
-      Host docker
-        Hostname 192.168.50.100
-        User debian
       Host naiaclaw
-        Hostname 192.168.50.200
+        Hostname 192.168.50.100
         User ubuntu
     ";
     # Pinned so unattended sessions (the morning systems check) can connect

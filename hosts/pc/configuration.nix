@@ -169,9 +169,8 @@
   ];
   # Computer-use MCP bridge (agent-computer-use-http, :4790) for Executor on
   # the homelab. It has no auth of its own and drives this desktop, so only
-  # the k3s VM (node IP .200, VIP .100) may connect -- never the whole LAN.
+  # the k3s VM (192.168.50.100) may connect -- never the whole LAN.
   networking.firewall.extraCommands = ''
-    iptables -A nixos-fw -i eno1 -p tcp --dport 4790 -s 192.168.50.200 -j nixos-fw-accept
     iptables -A nixos-fw -i eno1 -p tcp --dport 4790 -s 192.168.50.100 -j nixos-fw-accept
   '';
   # networking.firewall.allowedUDPPorts = [ ... ];
