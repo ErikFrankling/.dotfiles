@@ -38,7 +38,7 @@
     ../../modules/nixos/secure-boot.nix
     ../../modules/nixos/neptune.nix
     ../../modules/nixos/llama-swap.nix
-    ../../modules/nixos/kokoro-tts.nix # read-aloud small voice (CPU)
+    # ../../modules/nixos/kokoro-tts.nix # read-aloud small voice on the PC CPU; now on the homelab GTX 1060 (saves PC RAM)
     # ../../modules/nixos/executor.nix # local container; Executor runs on the homelab k3s instead
     # inputs.private.nixosModules.default # extra llama-swap models, no longer used (see flake.nix)
     ../../modules/nixos/auto-update.nix

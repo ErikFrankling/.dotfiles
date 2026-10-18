@@ -160,6 +160,13 @@ in
         "T3CODE_UNSAFE_NO_AUTH=1"
         # Android dictation uploads AAC; the fork decodes it for local-stt.
         "T3CODE_FFMPEG=${lib.getExe pkgs.ffmpeg-headless}"
+        # Read aloud: small voice = Kokoro on the homelab GTX 1060 (af_heart,
+        # 1.2x), big voice = Higgs through llama-swap (erik, 1.0x). The other
+        # defaults (summary model, Higgs) live in the fork; see
+        # research/read-aloud/2026-10-18.
+        "T3CODE_READ_ALOUD_SMALL_TTS_URL=http://192.168.50.100:8880/v1/audio/speech"
+        "T3CODE_READ_ALOUD_SMALL_VOICE=af_heart"
+        "T3CODE_READ_ALOUD_SMALL_SPEED=1.2"
       ];
       Restart = "on-failure";
       RestartSec = 5;
