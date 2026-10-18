@@ -41,6 +41,8 @@
     # ../../modules/nixos/executor.nix # local container; Executor runs on the homelab k3s instead
     # inputs.private.nixosModules.default # extra llama-swap models, no longer used (see flake.nix)
     ../../modules/nixos/auto-update.nix
+    # The real GPU % for the shell; profile_peak below makes amdgpu's own read 100.
+    ../../modules/nixos/gpu-busy
     # ../../modules/nixos/llama-cpp.nix
     # ../../modules/nixos/ai-server.nix
     # ../../modules/nixos/vm-host.nix
