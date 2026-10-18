@@ -88,10 +88,21 @@ reverted, not repaired at length; the update matters more.
 
 Erik runs his own fork: `github.com/ErikFrankling/t3code`, branch `erik/main`,
 pinned as the `t3code-src` flake input and built by `overlays/t3code.nix`. It
-is a handful of commits (dictation, no-auth mode, the personal agent, a desktop
-keyring fix) on top of the newest upstream **nightly tag**
+is a handful of commits (dictation, Android dictation and read aloud, no-auth
+mode, the personal agent, a desktop keyring fix) on top of the newest upstream
+**nightly tag**
 (`v<version>-nightly.<date>.<n>` in `pingdotgg/t3code`). It follows nightlies,
 not every commit on `main`, so each daily rebase stays small.
+
+The fork also builds Erik's phone app: every push to `erik/main` runs
+`.github/workflows/erik-android.yml` on GitHub Actions, which publishes an APK
+release that Obtainium installs on his phone. So the force-push in step 6 is
+also the phone update; after it, check the run
+(`gh run list -R ErikFrankling/t3code --workflow erik-android.yml --limit 1`).
+A failed run does not block the rest of the update (the phone keeps the
+previous build), but repair it if the cause is clear: usually a conflict
+re-applied wrongly in `apps/mobile`, or a new upstream native dependency.
+Re-run with `gh workflow run erik-android.yml -R ErikFrankling/t3code --ref erik/main`.
 
 Give the subagent this brief:
 
@@ -111,8 +122,8 @@ Give the subagent this brief:
    If upstream now does something a fork commit did, drop that commit.
 5. Use `nix shell nixpkgs#nodejs_24 nixpkgs#pnpm_11` for node. Run
    `CI=true pnpm install --frozen-lockfile`, then typecheck (`tsc-rs --noEmit`)
-   `packages/contracts`, `packages/client-runtime`, `apps/server` and
-   `apps/web`, and run the fork's tests:
+   `packages/contracts`, `packages/client-runtime`, `apps/server`, `apps/web` and
+   `apps/mobile`, and run the fork's tests:
    `vp test run apps/server/src/DictationDeliveryQueue.test.ts apps/server/src/auth/EnvironmentAuth.test.ts packages/client-runtime/src/operations/commands.test.ts apps/web/src/composer-logic.test.ts`.
    Unset `T3CODE_UNSAFE_NO_AUTH` for the tests; the live server's value breaks
    the auth tests. If any of this fails and cannot be fixed with confidence,

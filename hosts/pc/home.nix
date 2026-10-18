@@ -158,6 +158,8 @@ in
         "CODEX_HOME=${t3CodexHome}"
         # LAN/VPN-only deployment: serve without pairing, cookies, or tokens.
         "T3CODE_UNSAFE_NO_AUTH=1"
+        # Android dictation uploads AAC; the fork decodes it for local-stt.
+        "T3CODE_FFMPEG=${lib.getExe pkgs.ffmpeg-headless}"
       ];
       Restart = "on-failure";
       RestartSec = 5;

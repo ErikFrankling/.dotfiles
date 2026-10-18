@@ -117,6 +117,15 @@ known causes:
 - `NEW KERNEL`: the update is applied but only takes effect after a restart.
   Never reboot anything yourself; tell Erik.
 
+**The phone app** (Erik's T3 Code fork for Android, installed through
+Obtainium) is: the newest `erik-android.yml` run on `ErikFrankling/t3code`
+succeeded, and the newest `android-v*` release is from the current `erik/main`
+(`gh run list -R ErikFrankling/t3code --workflow erik-android.yml --limit 3`,
+`gh release list -R ErikFrankling/t3code --limit 3`). A failed run leaves the
+phone on the previous build: read the log (`gh run view <id> --log-failed`),
+fix it in the fork (`nix-update-doctor`, "T3 Code fork"), and rerun with
+`gh workflow run erik-android.yml -R ErikFrankling/t3code --ref erik/main`.
+
 **The homelab** is: Flux not suspended and applied at homelab `main`; every
 Deployment ready; no pods failing in `homelab`, `flux-system`, `kube-system`,
 `cert-manager` or `traefik`; the nix cache answering; the wildcard certificate
