@@ -19,6 +19,7 @@
     # override on top of the '~.' default route Tailscale installs.
     ../../modules/nixos/husk-dns.nix
     ../../modules/nixos/laptop.nix
+    ./dock-awake.nix
     ../../modules/nixos/auto-update.nix
     ../../modules/nixos/desktop.nix
     # ../../modules/nixos/keyring.nix -- disabled: the default keyring on disk
