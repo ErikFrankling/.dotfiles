@@ -5,7 +5,7 @@ import os
 import subprocess
 
 from desktop import return_focus, run, session
-from supervisor import allowed, decisions, eligible_windows
+from supervisor import allowed, decisions, eligible_windows, paused_by_disconnect
 
 
 class AgentWindowPolicy(unittest.TestCase):
@@ -37,6 +37,15 @@ class AgentWindowPolicy(unittest.TestCase):
         self.assertEqual(list(decisions(state | {"paused": True, "grants": [grant]}, {"a"})),
                          [("revoke", {"id": "g"})])
 
+
+    def test_only_a_disconnect_pause_is_lifted(self):
+        cut = {"event": "supervisor_disconnected"}
+        owner = lambda paused: {"event": "pause", "detail": str(paused).lower()}
+        self.assertTrue(paused_by_disconnect([cut]))
+        self.assertTrue(paused_by_disconnect([owner(True), owner(False), cut, cut]))
+        self.assertFalse(paused_by_disconnect([owner(True)]))
+        self.assertFalse(paused_by_disconnect([owner(True), cut, cut]))
+        self.assertFalse(paused_by_disconnect([{"event": "input"}]))
 
 class SessionLaunch(unittest.TestCase):
     def test_subprocess_cannot_consume_mcp_stdin(self):

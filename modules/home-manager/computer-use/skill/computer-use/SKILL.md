@@ -151,7 +151,7 @@ Two routes. Pick the first that works:
    with `capability:"control"` and `scope:{kind:"window",id:ID}`. A local
    supervisor approves agent-seat windows on workspace `agent` automatically; if
    it says `approval_required`, call `wait_for_permission` with the `request_id`.
-   If computer use is **paused**, Erik paused it: stop and tell him.
+   If it says `paused_by_user`, see "When things fail".
 
    Coordinates are **window-local logical pixels**. If you clicked from a
    downscaled screenshot, convert with its `image_to_window` transform:
@@ -176,6 +176,16 @@ confirm the task's outcome, not just that the clicks were sent.
   seat (missing env/switch, or it joined an existing process). Relaunch it properly.
 - `approval_required` that never resolves: the window isn't an agent-seat window
   on workspace `agent` (maybe it's parked, or it is Erik's).
+- `paused_by_user` / `computer_status` shows `"paused":true`: computer use is
+  meant to be always on. The broker pauses itself whenever the permission
+  supervisor (`agent-desktop-permissions`) disconnects, e.g. a slow compositor
+  under load, and the supervisor lifts that pause when it reconnects. A pause
+  that stays is either Erik's own (tray icon grey, last `pause` event in
+  `~/.local/state/computer-use/audit.jsonl` is `"true"`; never lift it
+  yourself, tell him) or a bug: check
+  `journalctl --user -u agent-desktop-permissions` and start a repair session
+  in `.dotfiles`. Erik resumes from the grey Computer Use tray icon, "Open
+  permission console", "Resume".
 - `agent-desktop status` shows service health. Implementation:
   `~/.dotfiles/modules/home-manager/computer-use/` (Nix-managed; follow
   `~/.dotfiles/AGENTS.md` to change it).
