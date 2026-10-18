@@ -117,6 +117,15 @@
     };
   };
 
+  # The router reserves 192.168.50.137 for the KVM ethernet adapter (r8152,
+  # 34:1b:22:83:55:87), so wired links must keep the real MAC. Wi-Fi gets a MAC
+  # that is stable per network but differs between networks.
+  networking.networkmanager.ethernet.macAddress = "permanent";
+  networking.networkmanager.wifi.macAddress = "stable";
+  # A hand-placed 2024 file that, despite its name, turned on a random MAC for
+  # every connection, which broke the DHCP reservation.
+  systemd.tmpfiles.rules = [ "r /etc/NetworkManager/conf.d/90-disable-randomization.conf" ];
+
   networking.networkmanager.dispatcherScripts = [
     {
       source = pkgs.writeShellScript "framework-disable-wifi-on-ethernet" ''
