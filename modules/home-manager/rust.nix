@@ -26,10 +26,13 @@ let
 
       # Every Cargo target dir under these roots, wherever CARGO_TARGET_DIR
       # put it (husk keeps several outside the projects, in hidden dirs).
-      # Cargo writes .rustc_info.json at the top of each one.
-      find "$HOME/projects" "$HOME/work" /mnt/data -xdev \
-        \( -name node_modules -o -name .git \) -prune -o \
-        -type f -name .rustc_info.json -printf '%h\0' 2>/dev/null |
+      # Cargo writes .rustc_info.json at the top of each one. find exits 1 on
+      # the dirs it may not read (llama-cpp's models), which is fine.
+      {
+        find "$HOME/projects" "$HOME/work" /mnt/data -xdev \
+          \( -name node_modules -o -name .git \) -prune -o \
+          -type f -name .rustc_info.json -printf '%h\0' 2>/dev/null || true
+      } |
         while IFS= read -r -d "" target; do
           # Artifacts not used in 14 days. cargo-sweep goes by atime, which
           # relatime still updates once a day; it breaks on a noatime mount.
