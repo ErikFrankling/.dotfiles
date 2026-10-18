@@ -228,7 +228,7 @@
         Hostname 192.168.50.162
         User pi
       Host proxmox
-        Hostname 192.168.50.169
+        Hostname 192.168.50.10
         User root
       Host naiaclaw
         Hostname 192.168.50.100

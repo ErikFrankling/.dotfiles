@@ -66,7 +66,7 @@ works again. Your clones are in `~/.local/state/health-watch/`.
    happened before.
 2. Reproduce the failure yourself before touching anything. Note which
    vantage point fails: `phone/*` only means the tailnet path (Proxmox
-   `tailscaled`, the subnet route, the pc firewall toward 192.168.50.169);
+   `tailscaled`, the subnet route, the pc firewall toward 192.168.50.10);
    `phone/*` and `lan/*` together mean the service itself or Traefik.
    `monitor/gatus` means the monitor or its whole machine; the ping results
    in the report tell which.

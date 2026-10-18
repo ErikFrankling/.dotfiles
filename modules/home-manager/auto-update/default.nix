@@ -552,8 +552,8 @@ let
         ' <<< "$statuses")
       else
         vm=$(ping -c 3 -W 2 192.168.50.100 > /dev/null 2>&1 && echo answers || echo "does NOT answer")
-        hv=$(ping -c 3 -W 2 192.168.50.169 > /dev/null 2>&1 && echo answers || echo "does NOT answer")
-        failing="monitor/gatus: the health monitor at ${gatusApi} is not answering. Ping: k3s VM 192.168.50.100 $vm, Proxmox host 192.168.50.169 $hv."
+        hv=$(ping -c 3 -W 2 192.168.50.10 > /dev/null 2>&1 && echo answers || echo "does NOT answer")
+        failing="monitor/gatus: the health monitor at ${gatusApi} is not answering. Ping: k3s VM 192.168.50.100 $vm, Proxmox host 192.168.50.10 $hv."
       fi
 
       if [ -z "$failing" ]; then
