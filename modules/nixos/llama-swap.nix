@@ -103,6 +103,10 @@ in
       # speech gateway lends the GPU after 30 minutes; see local-stt.nix).
       # swap = false lets both run together; exclusive = true unloads the big
       # LLMs when either starts, and loading a big LLM unloads both.
+      # Loaded at startup, so the first read-aloud after a restart or rebuild
+      # does not wait ~20 s for the summary model.
+      hooks.on_startup.preload = [ "read-aloud-summary" ];
+
       groups."read-aloud" = {
         swap = false;
         exclusive = true;
