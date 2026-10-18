@@ -336,11 +336,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792291092,
-        "narHash": "sha256-/r0CqHO0PLV0stdyv9vGrTq6fvS3cIZ4s6jXxgm42r4=",
+        "lastModified": 1792291163,
+        "narHash": "sha256-1iIaQgzVgN0wyLo0NFvnocCsIuzjC3jR/JrlkKOqPAI=",
         "owner": "ErikFrankling",
         "repo": "quickshell",
-        "rev": "4548f80f229f31776f65f6d2889917aecd957f5c",
+        "rev": "6d7ab7c217f31b5acb610ccc21bed083c7453c0b",
         "type": "github"
       },
       "original": {
