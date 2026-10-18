@@ -145,7 +145,7 @@ in
             -e SPEAKER_SAMPLES_DIR=/speakers \
             -e HF_HUB_OFFLINE=1 \
             -e MIOPEN_FIND_MODE=FAST -e MIOPEN_USER_DB_PATH=/miopen -e MIOPEN_CUSTOM_CACHE_DIR=/miopen \
-            ${higgsImage} serve /model --omni --trust-remote-code \
+            ${higgsImage} serve /model --omni --trust-remote-code --served-model-name higgs-tts \
             --host 0.0.0.0 --port 8095 \
             --gpu-memory-utilization 0.5 --max-model-len 4096 --enforce-eager
           '';
