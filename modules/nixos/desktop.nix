@@ -152,6 +152,10 @@
   # Trust it system-wide so CLI tools can verify WARP-only HTTPS services.
   security.pki.certificateFiles = [ ../../certificates/cloudflare-gateway-ca.pem ];
   security.polkit.enable = true;
+  # The setuid pkexec wrapper is opt-in since 2026-06. Every nixpkgs desktop
+  # module (GNOME, XFCE, ...) turns it on; Hyprland has none, so GParted and
+  # other GUI admin tools failed with "pkexec must be setuid root".
+  security.polkit.enablePkexecWrapper = true;
 
   programs.wireshark = {
     enable = true;
