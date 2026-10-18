@@ -117,7 +117,7 @@
     };
   };
 
-  # The router reserves 192.168.50.137 for the KVM ethernet adapter (r8152,
+  # The router reserves 192.168.50.133 for the KVM ethernet adapter (r8152,
   # 34:1b:22:83:55:87), so wired links must keep the real MAC. Wi-Fi gets a MAC
   # that is stable per network but differs between networks.
   networking.networkmanager.ethernet.macAddress = "permanent";
