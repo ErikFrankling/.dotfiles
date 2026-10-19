@@ -134,12 +134,14 @@ let
     '';
   };
 
-  # Starts a session through the T3 Code server's HTTP API, the same commands
-  # the web UI sends. The server runs on this machine without auth
+  # Starts a session through the T3 Code server's API, the same
+  # orchestration.launchThread command the web UI sends over its WebSocket.
+  # The server runs on this machine and trusts loopback without auth
   # (hosts/pc/home.nix). The session works in a dotfiles clone of its own: it
   # resets and commits freely, and the real checkout may be mid-edit.
   # The first argument, if given, replaces the prompt. When the T3 Code server
-  # itself is down (it may be the very thing that broke) the session runs as a
+  # is down or its API refuses the launch (it may be the very thing that broke,
+  # or a fork update changed the protocol) the session runs as a
   # headless `claude` in a transient user unit instead, logging to
   # <clone>/../session-<time>.log.
   mkSessionStarter =
@@ -165,6 +167,7 @@ let
         pkgs.systemd
         pkgs.coreutils
         pkgs.libnotify
+        pkgs.websocat
       ];
       text = ''
         t3=http://127.0.0.1:3773
@@ -199,53 +202,59 @@ let
         )}
         cd ${clone}
 
-        if ! curl -fsS --max-time 15 -o /dev/null "$t3/"; then
+        headless() {
           log="$(dirname ${clone})/session-$(date +%Y%m%d-%H%M%S).log"
           systemd-run --user --collect --quiet --unit="${name}-$(date +%s)" \
             --working-directory=${clone} --property=StandardOutput="append:$log" \
             --setenv=PATH=/run/wrappers/bin:${home}/.nix-profile/bin:/etc/profiles/per-user/${config.home.username}/bin:/run/current-system/sw/bin \
             --property=StandardError="append:$log" \
             "$(command -v timeout)" 2h "$(command -v claude)" --print --dangerously-skip-permissions "$prompt" \
-            || fail "T3 Code is down and the headless session did not start either."
-          echo "T3 Code is not answering; started a headless session (log: $log)"
+            || fail "$1, and the headless session did not start either."
+          echo "$1; started a headless session (log: $log)"
           exit 0
-        fi
-
-        dispatch() {
-          curl -fsS --max-time 30 -X POST "$t3/api/orchestration/dispatch" \
-            -H 'Content-Type: application/json' -d "$1" > /dev/null
         }
-        now=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
 
-        project=$(curl -fsS --max-time 30 "$t3/api/orchestration/shell" \
-          | jq -r --arg root ${clone} 'first(.projects[] | select(.workspaceRoot == $root) | .id) // empty') \
-          || fail "The T3 Code server is not answering."
-        if [ -z "$project" ]; then
-          project=$(uuidgen)
-          dispatch "$(jq -n --arg id "$project" --arg cmd "$(uuidgen)" --arg now "$now" \
-            --arg title ${lib.escapeShellArg (lib.toLower label)} \
-            '{type: "project.create", commandId: $cmd, projectId: $id,
-              title: $title, workspaceRoot: "${clone}", createdAt: $now}')" \
-            || fail "Could not create the T3 Code project."
+        if ! curl -fsS --max-time 15 -o /dev/null "$t3/"; then
+          headless "T3 Code is not answering"
         fi
 
-        thread=$(uuidgen)
-        model='${builtins.toJSON cfg.modelSelection}'
-        dispatch "$(jq -n --arg id "$thread" --arg project "$project" --arg cmd "$(uuidgen)" \
-          --arg now "$now" --arg title "${label} $(date +%F)" --argjson model "$model" \
-          '{type: "thread.create", commandId: $cmd, threadId: $id, projectId: $project,
-            title: $title, modelSelection: $model, runtimeMode: "full-access",
-            interactionMode: "default", branch: null, worktreePath: null, createdAt: $now}')" \
-          || fail "Could not create the T3 Code thread."
+        # Orchestration protocol v2: reads over HTTP need the protocol header,
+        # and commands only go over the WebSocket RPC.
+        protocol=2
+        project=$(curl -fsS --max-time 30 -H "x-t3-orchestration-protocol: $protocol" \
+          "$t3/api/orchestration/shell" \
+          | jq -r --arg root ${clone} 'first(.projects[] | select(.workspaceRoot == $root) | .id) // empty') \
+          || headless "The T3 Code orchestration API did not answer"
+        if [ -z "$project" ]; then
+          project=$(curl -fsS --max-time 30 -X POST "$t3/api/projects/mutate" \
+            -H 'Content-Type: application/json' \
+            -d "$(jq -n --arg id "$(uuidgen)" --arg cmd "$(uuidgen)" \
+              --arg title ${lib.escapeShellArg (lib.toLower label)} \
+              '{type: "project.create", commandId: $cmd, projectId: $id,
+                title: $title, workspaceRoot: "${clone}"}')" | jq -er .id) \
+            || headless "Could not create the T3 Code project"
+        fi
 
-        dispatch "$(jq -n --arg id "$thread" --arg cmd "$(uuidgen)" --arg msg "$(uuidgen)" \
-          --arg now "$now" --argjson model "$model" --arg text "$prompt" \
-          '{type: "thread.turn.start", commandId: $cmd, threadId: $id,
-            message: {messageId: $msg, role: "user", text: $text, attachments: []},
-            modelSelection: $model, runtimeMode: "full-access",
-            interactionMode: "default", createdAt: $now}')" \
-          || fail "Could not start the session."
-        echo "started T3 Code thread $thread"
+        # orchestration.launchThread creates the thread and sends the first
+        # message. Effect RPC as JSON: one Request, answered by an Exit with
+        # the same id (stdin stays open so websocat waits for it).
+        model='${builtins.toJSON cfg.modelSelection}'
+        request=$(jq -cn --arg id "$(uuidgen)" --arg project "$project" --arg cmd "$(uuidgen)" \
+          --arg title "${label} $(date +%F)" --argjson model "$model" --arg text "$prompt" \
+          '{_tag: "Request", id: "1", tag: "orchestration.launchThread", headers: [],
+            payload: {commandId: $cmd, creationSource: "server", threadId: $id,
+              projectId: $project, title: $title, modelSelection: $model,
+              runtimeMode: "full-access", interactionMode: "default",
+              workspaceStrategy: {type: "root"},
+              initialMessage: {text: $text, attachments: []}}}')
+        answer=$( { printf '%s\n' "$request"; sleep 60; } \
+          | timeout 60 websocat --text "ws://127.0.0.1:3773/ws?orchestrationProtocol=$protocol" \
+          | jq -c --unbuffered 'select(._tag == "Exit" and .requestId == "1")' \
+          | head -n 1) || true
+        if [ "$(jq -r '.exit._tag // empty' <<< "$answer")" != "Success" ]; then
+          headless "T3 Code did not launch the thread (''${answer:-no answer})"
+        fi
+        echo "started T3 Code thread $(jq -r .exit.value.threadId <<< "$answer")"
       '';
     };
 
