@@ -249,5 +249,22 @@ class LlamaSwapSharingTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn('http://swap/upstream/higgs-tts/health', [call.args[0] for call in client.get.call_args_list])
 
 
+class TidyTests(unittest.TestCase):
+    def test_fillers_and_stutters_go(self):
+        self.assertEqual(
+            gateway.tidy("Two things. Uh, it, like, has, uh, it reads up in, like, sections, right?"),
+            "Two things. It, like, has, it reads up in, like, sections, right?")
+        self.assertEqual(gateway.tidy("In theory, the, the, the, the, the harness should be, uh, scalable."),
+                         "In theory, the harness should be, scalable.")
+        self.assertEqual(gateway.tidy("Um. Also, fix the bug."), "Also, fix the bug.")
+        self.assertEqual(gateway.tidy("and and and and and then it worked"), "And then it worked")
+
+    def test_meaningful_repeats_and_words_stay(self):
+        self.assertEqual(gateway.tidy("I know that that is fine. He had had enough."),
+                         "I know that that is fine. He had had enough.")
+        self.assertEqual(gateway.tidy("The umbrella and the hummus, ahead of Erm-free Herman."),
+                         "The umbrella and the hummus, ahead of Erm-free Herman.")
+
+
 if __name__ == '__main__':
     unittest.main()

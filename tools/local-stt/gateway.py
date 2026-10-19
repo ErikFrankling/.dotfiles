@@ -31,7 +31,9 @@ FINAL_VRAM_BYTES = 11 * 1024**3
 # cannot succeed and would only push the desktop into its crash band.
 FINAL_LOAD_BYTES = 9.5 * 1024**3
 last_used = {}
-MAX_BYTES = 16000 * 2 * 30 * 60
+# Recordings are not time-limited for the user (Erik talks for half an hour
+# and more); this only bounds a runaway client: four hours of 16 kHz PCM.
+MAX_BYTES = 16000 * 2 * 4 * 60 * 60
 sessions = {}
 final_lock = asyncio.Lock()
 workers = {}
@@ -307,8 +309,35 @@ def save(state):
     temporary.replace(path)
 
 
+FILLER = r"(?:u+h+|u+m+|uhm|erm|er|ah|hmm+|mm+)"
+
+
+def tidy(text):
+    """What clients get: no hesitation fillers or stutters (Erik, 2026-10-19).
+
+    The recogniser transcribes "uh" and "the, the, the" faithfully, and a
+    decoder repetition penalty dropped real words in an A/B test, so this is
+    text cleanup; the stored transcript keeps every word. Repeats separated by
+    commas collapse ("the, the" -> "the"); bare repeats only from three on, so
+    "had had" and "that that" survive, while the live draft's "and and and"
+    loops do not.
+    """
+    text = re.sub(rf"(?i)(?<![\w'-])({FILLER})(?![\w'-])[,.;]?\s*", "", text)
+    text = re.sub(r"(?i)\b(\w+(?:'\w+)?)(?:,\s+\1\b)+", r"\1", text)
+    text = re.sub(r"(?i)\b(\w+(?:'\w+)?)(?:\s+\1\b){2,}", r"\1", text)
+    text = re.sub(r"\s+([,.;:!?])", r"\1", text)
+    text = re.sub(r"([,;:])(?:\s*[,;:])+", r"\1", text)
+    text = re.sub(r"^[\s,;:]+|[\s,;:]+$", "", text)
+    text = re.sub(r"[,;:]+([.!?])", r"\1", text)
+    text = re.sub(r" {2,}", " ", text)
+    # A sentence that began with a filler starts with a capital again.
+    return re.sub(r"(^|[.!?]\s+)([a-z])", lambda m: m.group(1) + m.group(2).upper(), text)
+
+
 def result(state):
-    return {k: state[k] for k in ("id", "status", "draft", "final", "error", "bytes")}
+    shown = {k: state[k] for k in ("id", "status", "draft", "final", "error", "bytes")}
+    shown["draft"], shown["final"] = tidy(shown["draft"]), tidy(shown["final"])
+    return shown
 
 
 async def receive(state, ws, base):
