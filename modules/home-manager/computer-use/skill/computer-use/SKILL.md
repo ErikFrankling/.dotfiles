@@ -177,15 +177,12 @@ confirm the task's outcome, not just that the clicks were sent.
 - `approval_required` that never resolves: the window isn't an agent-seat window
   on workspace `agent` (maybe it's parked, or it is Erik's).
 - `paused_by_user` / `computer_status` shows `"paused":true`: computer use is
-  meant to be always on. The broker pauses itself whenever the permission
-  supervisor (`agent-desktop-permissions`) disconnects, e.g. a slow compositor
-  under load, and the supervisor lifts that pause when it reconnects. A pause
-  that stays is either Erik's own (tray icon grey, last `pause` event in
-  `~/.local/state/computer-use/audit.jsonl` is `"true"`; never lift it
-  yourself, tell him) or a bug: check
+  always on and cannot stay paused. The permission supervisor
+  (`agent-desktop-permissions`) undoes any pause within a second, including
+  the one the broker sets when the supervisor disconnects. Wait a few seconds
+  and retry. If it is still paused, the supervisor is down or broken: check
   `journalctl --user -u agent-desktop-permissions` and start a repair session
-  in `.dotfiles`. Erik resumes from the grey Computer Use tray icon, "Open
-  permission console", "Resume".
+  in `.dotfiles`.
 - `agent-desktop status` shows service health. Implementation:
   `~/.dotfiles/modules/home-manager/computer-use/` (Nix-managed; follow
   `~/.dotfiles/AGENTS.md` to change it).

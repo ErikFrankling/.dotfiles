@@ -5,7 +5,7 @@ import os
 import subprocess
 
 from desktop import return_focus, run, session
-from supervisor import allowed, decisions, eligible_windows, paused_by_disconnect
+from supervisor import allowed, decisions, eligible_windows
 
 
 class AgentWindowPolicy(unittest.TestCase):
@@ -26,26 +26,20 @@ class AgentWindowPolicy(unittest.TestCase):
             self.assertFalse(allowed(request | {"capability": capability}, {"a"}))
         self.assertFalse(allowed(request | {"scope": {"kind": "workspace", "id": "a"}}, {"a"}))
 
-    def test_pause_and_revocation_never_resume_or_approve(self):
+    def test_pause_is_undone_and_revocation_never_approves(self):
         request = {"id": "r", "state": "pending", "capability": "control",
                    "scope": {"kind": "window", "id": "a"}}
         state = {"mode": "approve", "requests": [request], "grants": []}
         self.assertEqual(list(decisions(state, {"a"})), [("approve", {"id": "r", "seconds": 300})])
-        for changed in ({"paused": True}, {"revocation_unconfirmed": True}, {"mode": "yolo"}):
+        for changed in ({"revocation_unconfirmed": True}, {"mode": "yolo"}):
             self.assertEqual(list(decisions(state | changed, {"a"})), [])
+        self.assertEqual(list(decisions(state | {"paused": True}, {"a"})),
+                         [("pause", {"paused": False})])
         grant = {"id": "g", "capability": "control", "scope": {"kind": "window", "id": "old"}}
         self.assertEqual(list(decisions(state | {"paused": True, "grants": [grant]}, {"a"})),
-                         [("revoke", {"id": "g"})])
+                         [("revoke", {"id": "g"}), ("pause", {"paused": False})])
 
 
-    def test_only_a_disconnect_pause_is_lifted(self):
-        cut = {"event": "supervisor_disconnected"}
-        owner = lambda paused: {"event": "pause", "detail": str(paused).lower()}
-        self.assertTrue(paused_by_disconnect([cut]))
-        self.assertTrue(paused_by_disconnect([owner(True), owner(False), cut, cut]))
-        self.assertFalse(paused_by_disconnect([owner(True)]))
-        self.assertFalse(paused_by_disconnect([owner(True), cut, cut]))
-        self.assertFalse(paused_by_disconnect([{"event": "input"}]))
 
 class SessionLaunch(unittest.TestCase):
     def test_subprocess_cannot_consume_mcp_stdin(self):
