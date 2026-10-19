@@ -41,6 +41,28 @@
   };
 
   programs.nix-ld.enable = true;
+  # Added to nix-ld's base set. These are what the chrome-headless-shell T3
+  # Code downloads to ~/.t3/tools needs (html_preview / preview_* tools);
+  # `t3 browser setup` would apt-get them, which does nothing on NixOS.
+  programs.nix-ld.libraries = with pkgs; [
+    glib
+    nspr
+    nss
+    at-spi2-core # libatk, libatk-bridge, libatspi
+    dbus
+    expat
+    libgbm
+    libxkbcommon
+    libx11
+    libxcb
+    libxcomposite
+    libxdamage
+    libxext
+    libxfixes
+    libxrandr
+    udev
+    alsa-lib
+  ];
 
   # virtualisation.podman = {
   #   enable = true;
