@@ -20,6 +20,8 @@ in
           finalAttrs: oldAttrs: {
             version = "0.1.1";
             src = inputs.t3code-src;
+            # Thread config must extend, not replace, the harness's MCP overrides.
+            patches = (oldAttrs.patches or [ ]) ++ [ ./t3code-preserve-mcp.patch ];
             # Upstream postPatch now copies the SPDX license data itself.
             # Upstream nightlies move past the nixpkgs release, so the lock differs.
             pnpmDeps = otherPkgs.pkgsMaster.fetchPnpmDeps {
