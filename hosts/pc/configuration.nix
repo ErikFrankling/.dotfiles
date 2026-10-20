@@ -108,6 +108,8 @@
   sops.secrets.kth-password = {
     owner = username;
   };
+  # Canvas API token for agents (agent-canvas-token, computer-use/logins.nix).
+  sops.secrets.canvas-token.owner = username;
 
   networking.hostName = "${hostName}"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.

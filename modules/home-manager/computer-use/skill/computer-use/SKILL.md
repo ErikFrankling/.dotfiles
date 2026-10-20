@@ -12,7 +12,9 @@ use his accounts: he has given you that access deliberately. Figure out the UI,
 recover from mistakes, and verify the result. Only stop to ask when something is
 truly impossible from here (a code sent to his phone, a physical key) and say
 exactly what you need. Use normal judgement for irreversible actions outside the
-task (mailing other people, deleting data, payments).
+task (mailing other people, deleting data, payments). One hard rule: **never set
+off a sign-in prompt on Erik's phone (Authenticator, Google, LinkedIn, SMS)
+without warning him first**. See "The phone rule" in **browser-use**.
 
 Related skills: **browser-use** (websites, logins, LastPass) and
 **screen-recording** (videos, demos with captions). Load them when relevant.

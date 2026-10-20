@@ -111,6 +111,8 @@ let
   };
 in
 {
+  imports = [ ./logins.nix ];
+
   options.programs.agent-desktop.enable = lib.mkEnableOption "agent desktop with independent keyboard and pointer";
   options.programs.agent-desktop.mcpServers = lib.mkOption {
     type = lib.types.attrs;
