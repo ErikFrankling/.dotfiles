@@ -241,6 +241,16 @@ Append one entry per night that needed a repair, newest first: date, symptom,
 cause, what fixed it, link. Commit it with the fix. This is how the next run
 learns the patterns; keep entries to a few lines.
 
+- 2026-10-20 — pc failed in `linux-6.18.57-modules` (the module aggregator).
+  Cause: nixpkgs `09063bd` makes `aggregateModules` merge per-module
+  `.ko.cer` files (#571181), and external modules that skip Kbuild's
+  `modules_install` have none: `vmware-modules` (pc) fails with "cat:
+  misc/vmmon.ko.cer: No such file". v4l2loopback 0.15.4 also collides on
+  `modules.dep` (fix: #575861, works as an `overrideAttrs` with
+  `installFlags = [ "DEPMOD=true" "INSTALL_MOD_PATH=..." ]`). No vmware fix
+  upstream yet. Fix: held `nixpkgs` at `55bfb4d` (repair 1); unhold when
+  vmware-modules and v4l2loopback build with the new aggregator.
+  https://github.com/NixOS/nixpkgs/issues/575192
 - 2026-10-15 — the plan listed `electron-unwrapped-44.7.2` (a source build)
   for t3code. Cause: t3code comes from `pkgsMaster`, and master `ef8ffae`
   bumped electron before Hydra built it (404 on cache.nixos.org). Fix: held
