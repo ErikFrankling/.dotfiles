@@ -249,6 +249,14 @@ class LlamaSwapSharingTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn('http://swap/upstream/higgs-tts/health', [call.args[0] for call in client.get.call_args_list])
 
 
+    def test_health_reports_dictation_holding_the_gpu(self):
+        final = MagicMock(returncode=None)
+        with patch.dict(gateway.workers, {"final": final}, clear=True), patch.object(gateway, "busy", return_value=False):
+            self.assertEqual(gateway.dictation_state(), {"busy": False, "final_loaded": True, "active": True})
+        with patch.dict(gateway.workers, {}, clear=True), patch.object(gateway, "busy", return_value=False):
+            self.assertEqual(gateway.dictation_state(), {"busy": False, "final_loaded": False, "active": False})
+
+
 class TidyTests(unittest.TestCase):
     def test_fillers_and_stutters_go(self):
         self.assertEqual(

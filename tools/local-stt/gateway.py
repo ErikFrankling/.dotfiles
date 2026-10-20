@@ -161,6 +161,19 @@ def busy():
     return any(active(s) for s in sessions.values())
 
 
+def dictation_state():
+    """Whether dictation holds the GPU: a recording in progress, or the final
+    recogniser still loaded (it unloads after STT_FINAL_IDLE_SECONDS idle)."""
+    final = workers.get("final")
+    loaded = bool(final and final.returncode is None)
+    return {"busy": busy(), "final_loaded": loaded, "active": busy() or loaded}
+
+
+async def health(_request):
+    # Read aloud asks this before picking a voice: the big one only while dictation is idle.
+    return web.json_response({"ok": True, "dictation": dictation_state()})
+
+
 async def release_gpu(_request):
     """Called by llama-swap before it loads a model: unload the idle final recogniser."""
     process = workers.get("final")
@@ -336,6 +349,9 @@ def tidy(text):
 
 def result(state):
     shown = {k: state[k] for k in ("id", "status", "draft", "final", "error", "bytes")}
+    # The next append's sequence: a client (or T3's AAC uploader) that lost its
+    # place after a restart continues from here instead of resending.
+    shown["sequence"] = state.get("sequence", 0)
     shown["draft"], shown["final"] = tidy(shown["draft"]), tidy(shown["final"])
     return shown
 
@@ -742,6 +758,6 @@ if __name__ == "__main__":
     app = web.Application(client_max_size=512000)
     app.cleanup_ctx.append(lifecycle)
     app.router.add_post("/dictation", action)
-    app.router.add_get("/health", lambda _: web.json_response({"ok": True}))
+    app.router.add_get("/health", health)
     app.router.add_post("/release-gpu", release_gpu)
     web.run_app(app, host="127.0.0.1", port=int(os.environ.get("STT_PORT", "8781")), access_log=None)

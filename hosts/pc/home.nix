@@ -66,6 +66,9 @@ in
 
   programs.agent-desktop.enable = true;
 
+  # Agents read email codes from Thunderbird on this machine.
+  thunderbird.autostart = true;
+
   # This machine drives the nightly flake update and the homelab build.
   autoUpdateNightly.enable = true;
 

@@ -107,7 +107,11 @@ Logins often send a code or "confirm it's you" link by email. You can read
 Erik's mail yourself; don't ask him to copy codes. His accounts:
 `erik.frankling@frankling.se` (Office 365), `erik.frankling@gmail.com`,
 `ef.pro454@gmail.com`, KTH (`erikfran`), `erik.frankling@outlook.com`.
-Thunderbird is always running on his desktop with all of them. In order:
+Thunderbird runs on his PC desktop with all of them, as the user unit
+`thunderbird.service` (restarts on its own if closed or crashed). If
+`systemctl --user is-active thunderbird` is not `active`, or `pgrep -x
+.thunderbird-wr` finds nothing, run `systemctl --user restart thunderbird`,
+wait ~60 s for it to sync, then continue. In order:
 
 1. **Webmail in your browser**, if that mailbox is already logged in there
    (`https://mail.google.com`, `https://outlook.office.com`): open it in a
