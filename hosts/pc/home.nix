@@ -149,6 +149,8 @@ in
     Unit.Description = "T3 Code web server";
     # Rebuilds update CLI dependencies too. Restarting this server interrupts
     # every active agent turn; apply updates on the next deliberate restart.
+    # In particular, rebuilding the MCP adapter patch does not repair live
+    # Codex sessions. See research/t3code-executor-activation.md.
     Unit.X-SwitchMethod = "keep-old";
 
     Service = {
