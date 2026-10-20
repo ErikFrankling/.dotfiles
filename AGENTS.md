@@ -20,6 +20,8 @@
 - `rebuild` is a real executable on `PATH`, defined in `modules/home-manager/fish.nix` as `rebuildScript`. It is intentionally a Fish script containing Erik's rebuild code. If the behavior matters, read that file instead of guessing what the command does.
 - `rebuild` with no arguments defaults to `switch`. Pass arguments through when needed, e.g. `rebuild test`, `rebuild boot`, or `rebuild switch`.
 - After changing this NixOS/Home Manager configuration, always run a real rebuild with `rebuild` before yielding unless Erik explicitly says not to apply the change.
+- After updating a shared flake input, build and cache both host closures and run `rebuild` on **both PC and Framework**. Do not stop after updating the lock file or rebuilding only one host.
+- Keep `t3code-src` tracking `github:ErikFrankling/t3code/erik/main`. Ship fork changes to the latest `erik/main`, then run `nix flake update t3code-src` and rebuild both hosts. Do not replace the branch URL with a commit pin.
 
 ### Hard Rule: Pull From a Binary Cache, Do Not Compile (Erik, 2026-10-08)
 
