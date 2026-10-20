@@ -142,6 +142,10 @@ running, VM 100 stopped; disk and memory not near full on the VM and the host.
 - The `naiaclaw-system`, `p9` and `nc-*` namespaces are Erik's other
   projects, not homelab infrastructure. Report their failures in one line;
   do not repair them.
+- Low free memory on the Proxmox host (~0.5 GB) is normal and by design:
+  VM 200 has a fixed 60 GB of the host's 64 GB and nothing else runs there.
+  Do not mention it. Only report host memory with evidence of real pressure
+  (OOM kills, heavy swapping, `kvm` or `tailscaled` killed or stalling).
 
 ## Limits
 
