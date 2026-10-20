@@ -21,6 +21,7 @@
 - `rebuild` with no arguments defaults to `switch`. Pass arguments through when needed, e.g. `rebuild test`, `rebuild boot`, or `rebuild switch`.
 - After changing this NixOS/Home Manager configuration, always run a real rebuild with `rebuild` before yielding unless Erik explicitly says not to apply the change.
 - After updating a shared flake input, build and cache both host closures and run `rebuild` on **both PC and Framework**. Do not stop after updating the lock file or rebuilding only one host.
+- Changes to **any of Erik's own software consumed as a flake input** are not finished until deployed to every machine that uses it. Push the software change, update only its relevant flake input(s), build/cache the affected host closures, rebuild each affected machine, and verify activation. Do not perform a full flake update unless requested; do not stop at a source commit or leave deployment for the nightly job.
 - Keep `t3code-src` tracking `github:ErikFrankling/t3code/erik/main`. Ship fork changes to the latest `erik/main`, then run `nix flake update t3code-src` and rebuild both hosts. Do not replace the branch URL with a commit pin.
 
 ### Hard Rule: Pull From a Binary Cache, Do Not Compile (Erik, 2026-10-08)
