@@ -50,12 +50,11 @@ let
 
     # Writing as Erik
 
-    Whenever you write or edit text Erik will hand in or send as his own (homework, reports, essays, emails, applications, posts), load the `erik-writing-style` skill first and follow it: plain student voice, only the references needed, no subjective big claims, exact terms from sources, never mention process.
+    Before writing text Erik will hand in or send, load the brain skill `erik-writing-style`.
   '';
   # Skills that ship with this module, installed for every harness.
   skills = {
     model-tiers = ./model-tiers;
-    erik-writing-style = ./erik-writing-style;
   };
 
   sync = pkgs.writeShellApplication {
