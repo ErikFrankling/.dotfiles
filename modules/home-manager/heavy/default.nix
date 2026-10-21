@@ -29,9 +29,15 @@ let
     ];
     text = ''
       # -F /dev/null: the PC's ssh_config has GSSAPI options this openssh rejects.
-      ssh_opts=(-F /dev/null -p ${toString port} -o UserKnownHostsFile=${knownHosts}
+      ssh_base=(-F /dev/null -p ${toString port} -o UserKnownHostsFile=${knownHosts}
         -o StrictHostKeyChecking=yes -o BatchMode=yes -o ConnectTimeout=10
         -o ServerAliveInterval=30 -o ServerAliveCountMax=6 -o LogLevel=ERROR)
+      # One SSH connection per couple of minutes instead of five per run: the
+      # worker's node is often loaded and each handshake costs a second.
+      # Tunnels (systemd units) keep their own connection (ssh_base).
+      ssh_opts=("''${ssh_base[@]}" -o ControlMaster=auto
+        -o ControlPath="$HOME/.cache/heavy/cm-%C" -o ControlPersist=120)
+      mkdir -p "$HOME/.cache/heavy"
       target=root@${host}
       adb_port=15037
 
@@ -55,8 +61,7 @@ let
             Expo, APK builds, emulator tests; up to 10 GB) and one small job
             (up to 3 GB); the rest wait in order ("waiting for the ... slot").
             A job that runs out of its memory is killed alone. While waiting it
-            prints its place and an estimated wait; if that is too long and
-            Erik is away, `when-idle` can run it on the PC instead.
+            prints its place and an estimated wait.
             --big | --small  override the guess (big if the command, or a
                            script it names, mentions gradle/expo/emulator/...).
                            Pass --small for typechecks, lint and unit tests,
@@ -80,12 +85,15 @@ let
                                 to the emulator (reach them at 10.0.2.2).
                                 --big/--small instead queue it as a batch job.
         heavy stop NAME         stop that background job
-        heavy logs NAME         its last 100 log lines
+        heavy logs [-f] NAME    its last 100 log lines; -f follows until it ends
+                                (reattach to a background job)
         heavy jobs              background jobs on the worker
         heavy forward PORT [LOCAL]
                                 tunnel worker port PORT to 127.0.0.1:LOCAL here
                                 (default LOCAL = PORT) until `heavy forward
                                 stop PORT`
+        heavy sync              only sync this repository (incremental: unchanged
+                                files are skipped)
         heavy pull PATH...      copy PATHs (relative to here) back from the worker
         heavy shell             interactive shell in the workspace
         heavy status | queue    worker load, memory, running and waiting jobs,
@@ -100,10 +108,25 @@ let
                                 alongside it, other big jobs wait. Stop it
                                 when you are done; Ctrl-C does not leave
                                 the queue, `heavy emulator stop` does
+                                Audio for measured tests: it runs with
+                                -allow-host-audio -grpc 8554; the gRPC
+                                EmulatorController (streamAudio captures what
+                                it plays, injectAudio feeds the mic only once
+                                the app has opened its recorder) is at
+                                127.0.0.1:8554 in heavy jobs and tunnelled to
+                                the PC. `emulator-python` in jobs has grpcio,
+                                grpcio-tools and protobuf, e.g.
+                                emulator-python scripts/voice-e2e/android/emulator_audio.py capture 8554 out.wav 10
         heavy emulator stop|status
         heavy adb ARGS...       adb on this PC against the worker's emulator
                                 (or export ADB_SERVER_SOCKET=tcp:127.0.0.1:15037
                                 after `heavy emulator start`)
+
+      Covered on the worker: Gradle/APK builds, test suites, typechecks
+      (small by default), Python/uv, bun and ML batch jobs, and `nix build`
+      (in the worker's own store, from the homelab cache). Caches for
+      Gradle, the pnpm store, npm, cargo, pip/uv, bun and Android persist
+      between runs; workspaces untouched for 3 days are deleted.
       USAGE
       }
 
@@ -189,7 +212,7 @@ let
       tunnel() { # tunnel UNIT LOCAL REMOTE
         systemctl --user stop "$1" 2> /dev/null || true
         systemd-run --user --quiet --collect --unit="$1" \
-          ssh "''${ssh_opts[@]}" -N -o ExitOnForwardFailure=yes \
+          ssh "''${ssh_base[@]}" -N -o ExitOnForwardFailure=yes \
           -L "127.0.0.1:$2:127.0.0.1:$3" "$target"
         sleep 2
         systemctl --user is-active --quiet "$1" || die "tunnel $2 -> worker:$3 failed (port in use?)"
@@ -201,9 +224,14 @@ let
             remote bash /config/heavy-emulator.sh start || exit 1
             tunnel heavy-adb-tunnel "$adb_port" 5037
             echo "PC adb: heavy adb devices, or export ADB_SERVER_SOCKET=tcp:127.0.0.1:$adb_port"
+            if (tunnel heavy-emulator-grpc 8554 8554); then
+              echo "emulator gRPC (audio): 127.0.0.1:8554 here, and in heavy jobs on the worker"
+            else
+              echo "emulator gRPC: 127.0.0.1:8554 in heavy jobs (port 8554 is taken here; heavy forward 8554 OTHERPORT)"
+            fi
             ;;
           stop)
-            systemctl --user stop heavy-adb-tunnel 2> /dev/null || true
+            systemctl --user stop heavy-adb-tunnel heavy-emulator-grpc 2> /dev/null || true
             remote bash /config/heavy-emulator.sh stop
             ;;
           status) remote bash /config/heavy-emulator.sh status ;;
@@ -231,7 +259,15 @@ let
         shell) sync_up; exec ssh -t "''${ssh_opts[@]}" "$target" "cd $(q "$ws/$rel") && exec bash -l" ;;
         jobs) exec ssh "''${ssh_opts[@]}" "$target" bash /config/heavy-bg.sh list ;;
         stop) exec ssh "''${ssh_opts[@]}" "$target" "$(q bash /config/heavy-bg.sh stop "$ws" "''${2:?name}")" ;;
-        logs) exec ssh "''${ssh_opts[@]}" "$target" "$(q bash /config/heavy-bg.sh logs "$ws" "''${2:?name}")" ;;
+        logs)
+          shift
+          follow=0
+          if [ "''${1:-}" = -f ]; then follow=1; shift; fi
+          name=''${1:?usage: heavy logs [-f] NAME}
+          if [ "''${2:-}" = -f ]; then follow=1; fi
+          exec ssh "''${ssh_opts[@]}" "$target" "HEAVY_LOG_FOLLOW=$follow $(q bash /config/heavy-bg.sh logs "$ws" "$name")"
+          ;;
+        sync) sync_up; echo "synced to the worker ($ws)"; exit 0 ;;
         bg)
           shift
           # --light is the old name for the default (a service).
