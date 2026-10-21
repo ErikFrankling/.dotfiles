@@ -25,6 +25,10 @@ includes on his phone, and it includes the session you are running in.
 
 ### Heavy work runs on the homelab (Erik, 2026-10-21)
 
+**In short:** heavy work = `heavy -- <cmd>`; emulator = `heavy emulator start`;
+nix = `rebuild` / `nix-remote`. There is no "wait until Erik is away" path:
+long or heavy work always goes to the homelab, light work stays on the pc.
+
 The pc is for Erik plus light agent work: editing, chat, git, small commands
 and short checks. Anything long-running or CPU/disk/memory heavy runs on the
 homelab, even though it is slower there:
@@ -53,16 +57,6 @@ One big job (Gradle/APK/emulator tests, up to 10 GB) and one small job (up
 to 3 GB) run at once on the worker; the rest queue. A job that runs out of
 memory is killed alone. Use `--no-daemon` for Gradle. Sync is one way and
 exactly git's file list (never `.git/info/exclude`d files or `.git`).
-
-**Idle windows:** while Erik has had no keyboard or mouse input for 10
-minutes, heavy jobs may run on the pc (one emulator at most, up to 12
-threads and 20 GB for all agents). `pc-idle` tells you (exit 0 = idle);
-`when-idle <cmd>` waits for idle, then runs the command. The moment he
-touches the pc, lag-guard pauses those jobs (SIGSTOP; the job gets a note
-on its stderr) and resumes them at his next idle window. If he needs the
-memory, the biggest paused jobs are killed. Use idle windows only for work
-that really needs the pc (e.g. an emulator test with audio capture);
-everything else goes to the homelab.
 
 ### Enforcement on the pc (`modules/nixos/agent-priority`)
 

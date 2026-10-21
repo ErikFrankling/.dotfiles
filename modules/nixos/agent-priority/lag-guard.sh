@@ -33,13 +33,6 @@ NIX_RSS=${NIX_RSS:-700000}
 NOTIFY_EVERY=${NOTIFY_EVERY:-900}
 ERIK_UID=${ERIK_UID:-1000}
 DRY_RUN=${DRY_RUN:-0}
-IDLE_FLAG=${IDLE_FLAG:-/run/user/$ERIK_UID/erik-idle}
-BUSY_MEM_HIGH=${BUSY_MEM_HIGH:-9G}
-BUSY_MEM_MAX=${BUSY_MEM_MAX:-11G}
-IDLE_MEM_HIGH=${IDLE_MEM_HIGH:-18G}
-IDLE_MEM_MAX=${IDLE_MEM_MAX:-20G}
-BUSY_CPU=${BUSY_CPU:-400000 100000}
-IDLE_CPU=${IDLE_CPU:-1200000 100000}
 
 agents=/sys/fs/cgroup/user.slice/user-$ERIK_UID.slice/user@$ERIK_UID.service/app.slice/app-t3code.slice
 nixd=/sys/fs/cgroup/system.slice/nix-daemon.service
@@ -106,7 +99,6 @@ denied_reason() { # pid -> why it may not run on the pc (empty: allowed)
 check_denied() {
   local pid reason
   for pid in $(agent_pids); do
-    [ -n "${paused[$pid]:-}" ] && continue
     reason=$(denied_reason "$pid")
     [ -n "$reason" ] && stop "$pid" "$reason"
   done
@@ -128,8 +120,7 @@ check_cpu() {
       # cores. Many small workers (make -j16, stress) count together.
       local list=() total=0 left keep
       for pid in $(agent_pids); do
-        [ -n "${paused[$pid]:-}" ] && continue
-        comm=$(cat "/proc/$pid/comm" 2>/dev/null) || continue
+            comm=$(cat "/proc/$pid/comm" 2>/dev/null) || continue
         [[ $comm =~ $providers ]] && continue
         t=$(ticks_of "$pid")
         [ -n "$t" ] || continue
@@ -220,136 +211,8 @@ flush_notify() {
     "Stopped agent work on the pc: ${list%; }. It belongs on the homelab." || true
 }
 
-# Idle windows: while Erik has been away from keyboard and mouse for 10
-# minutes (erik-idle.service keeps $IDLE_FLAG), agents may run heavy jobs on
-# the pc, one emulator at most, with more CPU and memory. When he is back,
-# those jobs are paused (SIGSTOP) within a second, and resumed at the next
-# idle window. If pausing leaves Erik short of memory, the biggest paused
-# jobs are killed instead.
-declare -A paused=() idle_ticks=()
-cg_write() { [ "$DRY_RUN" = 1 ] || echo "$2" >"$agents/$1" 2>/dev/null; }
-
-tell() { # pid message
-  # shellcheck disable=SC2016
-  timeout 1 sh -c 'printf "\n[lag-guard] %s\n" "$2" > "/proc/$1/fd/2"' _ "$1" "$2" 2>/dev/null
-}
-
-enter_idle() {
-  local pid t
-  echo "Erik is idle: heavy agent jobs allowed"
-  cg_write cpu.max "$IDLE_CPU"
-  cg_write memory.max "$IDLE_MEM_MAX"
-  cg_write memory.high "$IDLE_MEM_HIGH"
-  for pid in "${!paused[@]}"; do
-    [ "$DRY_RUN" = 1 ] || kill -CONT "$pid" 2>/dev/null
-    tell "$pid" "Resumed: Erik is idle again."
-  done
-  paused=()
-  idle_ticks=()
-  for pid in $(agent_pids); do
-    t=$(ticks_of "$pid")
-    [ -n "$t" ] && idle_ticks[$pid]=$t
-  done
-}
-
-idle_tick() {
-  local pid comm emus=() mem
-  for pid in $(agent_pids); do
-    comm=$(cat "/proc/$pid/comm" 2>/dev/null) || continue
-    [[ $comm == qemu-system* ]] && emus+=("$pid")
-  done
-  # One emulator at a time: the oldest keeps running.
-  if [ ${#emus[@]} -gt 1 ]; then
-    mapfile -t emus < <(ps -o pid= --sort=start_time -p "$(
-      IFS=,
-      echo "${emus[*]}"
-    )")
-    for pid in "${emus[@]:1}"; do stop "${pid// /}" "only one emulator runs on the pc, even while Erik is away"; done
-  fi
-  mem=$(full memory)
-  [ "${mem:-0}" -gt 40 ] && MEM_FULL=40 check_pressure
-  return 0
-}
-
-leave_idle() {
-  local pid comm t base started avail cur max rss best best_pid
-  echo "Erik is back: pausing heavy agent jobs"
-  for pid in $(agent_pids); do
-    comm=$(cat "/proc/$pid/comm" 2>/dev/null) || continue
-    [[ $comm =~ $providers ]] && continue
-    t=$(ticks_of "$pid") || continue
-    base=${idle_ticks[$pid]:-0}
-    started=0
-    # when-idle exports WHEN_IDLE_JOB=1; every child inherits it.
-    tr '\0' '\n' <"/proc/$pid/environ" 2>/dev/null | grep -qx 'WHEN_IDLE_JOB=1' && started=1
-    # The whole when-idle job (Gradle wrapper included), anything that used
-    # over 10 s of CPU in the window, and anything denied, which would
-    # otherwise be killed a moment later.
-    if [ "$started" = 1 ] || [ $((${t:-0} - base)) -gt $((10 * hz)) ] ||
-      [ -n "$(denied_reason "$pid")" ]; then
-      [ "$DRY_RUN" = 1 ] || kill -STOP "$pid" 2>/dev/null
-      paused[$pid]=1
-      echo "paused $pid $comm"
-      tell "$pid" "Paused $comm (pid $pid): Erik is back at the pc. It resumes at his next idle window (pc-idle)."
-    fi
-  done
-  cg_write cpu.max "$BUSY_CPU"
-  cg_write memory.high "$BUSY_MEM_HIGH"
-  # Never set memory.max below what is in use (that would OOM-kill).
-  cur=$(cat "$agents/memory.current" 2>/dev/null)
-  max=$(numfmt --from=iec "$BUSY_MEM_MAX")
-  [ "${cur:-0}" -gt "$max" ] && max=$((cur + 512 * 1024 * 1024))
-  cg_write memory.max "$max"
-  # Keep at least 4 GB available for Erik: kill the biggest paused jobs.
-  while :; do
-    avail=$(awk '/^MemAvailable/ { print $2 }' /proc/meminfo)
-    [ "${avail:-0}" -lt 4000000 ] || break
-    best=0 best_pid=""
-    for pid in "${!paused[@]}"; do
-      rss=$(rss_of "$pid")
-      if [ "${rss:-0}" -gt "$best" ]; then
-        best=$rss
-        best_pid=$pid
-      fi
-    done
-    [ -n "$best_pid" ] || break
-    [ "$DRY_RUN" = 1 ] || kill -CONT "$best_pid" 2>/dev/null
-    unset "paused[$best_pid]"
-    stop "$best_pid" "Erik is back and needs the memory"
-    [ "$DRY_RUN" = 1 ] && break
-    sleep 1
-  done
-}
-
-busy_tick() {
-  local pid cur max
-  for pid in "${!paused[@]}"; do
-    [ -d "/proc/$pid" ] || unset "paused[$pid]"
-  done
-  # memory.max back to normal once usage allows it.
-  max=$(numfmt --from=iec "$BUSY_MEM_MAX")
-  cur=$(cat "$agents/memory.current" 2>/dev/null)
-  if [ "$(cat "$agents/memory.max" 2>/dev/null)" != "$max" ] && [ "${cur:-0}" -lt "$max" ]; then
-    cg_write memory.max "$max"
-  fi
-}
-
-echo "lag-guard: agents=$agents cpu>=$CPU_CORES cores/${CPU_WINDOW}s io>$IO_FULL% mem>$MEM_FULL% idle-flag=$IDLE_FLAG"
-idle=0
+echo "lag-guard: agents=$agents cpu>=$CPU_CORES cores/${CPU_WINDOW}s io>$IO_FULL% mem>$MEM_FULL%"
 while true; do
-  if [ -e "$IDLE_FLAG" ]; then
-    [ "$idle" = 1 ] || enter_idle
-    idle=1
-    idle_tick
-    sleep 1
-    continue
-  fi
-  if [ "$idle" = 1 ]; then
-    leave_idle
-    idle=0
-    usage_then=""
-  fi
-  busy_tick
   check_denied
   check_cpu
   check_pressure

@@ -107,20 +107,6 @@ let
       )
     );
 
-  pcIdle = pkgs.writeShellApplication {
-    name = "pc-idle";
-    runtimeInputs = [ pkgs.coreutils ];
-    text = builtins.readFile ./pc-idle.sh;
-  };
-  whenIdle = pkgs.writeShellApplication {
-    name = "when-idle";
-    runtimeInputs = [
-      pcIdle
-      pkgs.coreutils
-    ];
-    text = builtins.readFile ./when-idle.sh;
-  };
-
   lagGuard = pkgs.writeShellApplication {
     name = "lag-guard";
     runtimeInputs = [
@@ -176,26 +162,7 @@ in
           (agentRebuild "nixos-rebuild" "${config.system.build.nixos-rebuild}/bin/nixos-rebuild")
           nixRemote
           nixosRemoteSwitch
-          pcIdle
-          whenIdle
         ];
-
-        # Keeps $XDG_RUNTIME_DIR/erik-idle while Erik has had no keyboard or
-        # mouse input for 10 minutes (Wayland ext-idle-notify). lag-guard lets
-        # agents run heavy jobs while it exists and pauses them on resume.
-        systemd.user.services.erik-idle = {
-          description = "Mark when Erik is away from the pc";
-          wantedBy = [ "graphical-session.target" ];
-          partOf = [ "graphical-session.target" ];
-          after = [ "graphical-session.target" ];
-          serviceConfig = {
-            ExecStartPre = "${pkgs.coreutils}/bin/rm -f %t/erik-idle";
-            ExecStart = "${lib.getExe pkgs.swayidle} -w timeout 600 '${pkgs.coreutils}/bin/touch %t/erik-idle' resume '${pkgs.coreutils}/bin/rm -f %t/erik-idle'";
-            ExecStopPost = "${pkgs.coreutils}/bin/rm -f %t/erik-idle";
-            Restart = "always";
-            RestartSec = 2;
-          };
-        };
 
         # The user manager gets the io controller too, so the agent slice's
         # disk caps apply (the default delegates only cpu, memory and pids).
