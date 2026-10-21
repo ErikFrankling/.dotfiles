@@ -46,14 +46,21 @@ let
             Then run CMD in the same subdirectory there. Output streams
             back and the exit code is CMD's. Ctrl-C or killing heavy kills the
             remote job. Nothing comes back unless you `heavy pull` it.
+            The job, and its place in the queue, live only as long as this
+            heavy command: if your tool call times out or your session ends,
+            the job dies. For long or unattended chains, run the client under
+            `systemd-run --user --collect --unit=NAME heavy -- ...` (output:
+            journalctl --user -u NAME) or use `heavy bg --big NAME -- ...`.
             Jobs are scheduled on the worker: one big job at a time (Gradle,
             Expo, APK builds, emulator tests; up to 10 GB) and one small job
             (up to 3 GB); the rest wait in order ("waiting for the ... slot").
             A job that runs out of its memory is killed alone. While waiting it
             prints its place and an estimated wait; if that is too long and
             Erik is away, `when-idle` can run it on the PC instead.
-            --big | --small  override the guess (big if the command, or the
-                           script it runs, mentions gradle/expo/emulator/...)
+            --big | --small  override the guess (big if the command, or a
+                           script it names, mentions gradle/expo/emulator/...).
+                           Pass --small for typechecks, lint and unit tests,
+                           so they do not wait behind APK builds
             --shell NAME   run inside the flake's devShell NAME (`android` or
                            `.#android`); default: the default devShell when
                            flake.nix has one
@@ -86,7 +93,13 @@ let
         heavy emulator start    boot the one shared emulator on the worker
                                 (pixel_7, API 36 google_apis x86_64). `adb` in
                                 heavy commands sees it as the only device; it
-                                reaches their servers at 10.0.2.2
+                                reaches their servers at 10.0.2.2. It waits
+                                for and then holds the big job slot until
+                                `heavy emulator stop` (or 30 idle minutes):
+                                big jobs that use adb or the emulator run
+                                alongside it, other big jobs wait. Stop it
+                                when you are done; Ctrl-C does not leave
+                                the queue, `heavy emulator stop` does
         heavy emulator stop|status
         heavy adb ARGS...       adb on this PC against the worker's emulator
                                 (or export ADB_SERVER_SOCKET=tcp:127.0.0.1:15037
