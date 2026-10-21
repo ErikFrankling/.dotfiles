@@ -49,21 +49,29 @@ let
             Jobs are scheduled on the worker: one big job at a time (Gradle,
             Expo, APK builds, emulator tests; up to 10 GB) and one small job
             (up to 3 GB); the rest wait in order ("waiting for the ... slot").
-            A job that runs out of its memory is killed alone.
+            A job that runs out of its memory is killed alone. While waiting it
+            prints its place and an estimated wait; if that is too long and
+            Erik is away, `when-idle` can run it on the PC instead.
             --big | --small  override the guess (big if the command, or the
                            script it runs, mentions gradle/expo/emulator/...)
             --shell NAME   run inside the flake's devShell NAME (`android` or
                            `.#android`); default: the default devShell when
                            flake.nix has one
             --no-develop   do not enter a devShell
-            -e VAR[=VAL]   pass an environment variable (repeatable); VAR alone
-                           takes its value from here
+            -e VAR[=VAL]   pass an environment variable (repeatable; VAR alone
+                           takes its value from here). Values never appear in
+                           command lines or `heavy status`; prefer this over
+                           inline VAR=value for secrets
             --no-sync      skip the sync (rerun on what is already there)
-        heavy bg [--light] NAME [OPTIONS] [--] CMD...
-                                start CMD as a background job that outlives
-                                this command. It takes a job slot, unless
-                                --light: small servers next to the emulator
-                                (no queue; 768 MB, 1 core)
+        heavy bg NAME [OPTIONS] [--] CMD...
+                                run a server (or other long-running process)
+                                that outlives this command, as a *service*:
+                                no job slot, up to 1 GB, low CPU priority, at
+                                most 3 on the worker; it stops after 3 hours
+                                without CPU use or when the emulator it was
+                                started with stops. Use this for servers next
+                                to the emulator (reach them at 10.0.2.2).
+                                --big/--small instead queue it as a batch job.
         heavy stop NAME         stop that background job
         heavy logs NAME         its last 100 log lines
         heavy jobs              background jobs on the worker
@@ -152,7 +160,17 @@ let
         done
         [ $# -gt 0 ] || { usage; exit 2; }
         cmd=("$@")
-        [ ''${#envs[@]} -eq 0 ] || cmd=(env "''${envs[@]}" "$@")
+      }
+
+      # -e values never go on a command line: they travel in a one-shot 0600
+      # file on the worker, which heavy-run reads into the job's environment
+      # and deletes. Sets envfile (empty without -e).
+      send_envs() {
+        envfile=""
+        [ ''${#envs[@]} -gt 0 ] || return 0
+        envfile="/work/.envs/$(head -c 12 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+        printf '%s\0' "''${envs[@]}" | remote "umask 077 && mkdir -p /work/.envs && cat > $envfile" \
+          || die "could not pass the -e variables to the worker"
       }
 
       tunnel() { # tunnel UNIT LOCAL REMOTE
@@ -203,13 +221,16 @@ let
         logs) exec ssh "''${ssh_opts[@]}" "$target" "$(q bash /config/heavy-bg.sh logs "$ws" "''${2:?name}")" ;;
         bg)
           shift
-          light=0
-          if [ "''${1:-}" = --light ]; then light=1; shift; fi
-          name=''${1:?usage: heavy bg [--light] NAME [OPTIONS] -- CMD...}
+          # --light is the old name for the default (a service).
+          [ "''${1:-}" != --light ] || shift
+          name=''${1:?usage: heavy bg NAME [OPTIONS] -- CMD...}
           shift
           parse_run "$@"
+          # A background job is a service unless --big/--small asks for a slot.
+          [ "$class" != auto ] || class=service
           [ "$sync" = 0 ] || sync_up
-          exec ssh "''${ssh_opts[@]}" "$target" "HEAVY_LIGHT=$light HEAVY_CLASS=$class $(q bash /config/heavy-bg.sh start "$ws" "$rel" "$develop" "$name" "''${cmd[@]}")"
+          send_envs
+          exec ssh "''${ssh_opts[@]}" "$target" "HEAVY_ENVFILE=$envfile HEAVY_CLASS=$class $(q bash /config/heavy-bg.sh start "$ws" "$rel" "$develop" "$name" "''${cmd[@]}")"
           ;;
         pull)
           shift
@@ -226,10 +247,11 @@ let
 
       parse_run "$@"
       [ "$sync" = 0 ] || sync_up
+      send_envs
 
       # The remote job lives as long as this SSH channel's stdin stays open:
       # feed it from a process that never writes, and close it to kill the job.
-      ssh "''${ssh_opts[@]}" "$target" "HEAVY_CLASS=$class $(q bash /config/heavy-run.sh "$ws" "$rel" "$develop" "''${cmd[@]}")" \
+      ssh "''${ssh_opts[@]}" "$target" "HEAVY_ENVFILE=$envfile HEAVY_CLASS=$class $(q bash /config/heavy-run.sh "$ws" "$rel" "$develop" "''${cmd[@]}")" \
         < <(exec sleep 2147483647) &
       ssh_pid=$!
       keep=$(pgrep -P $$ -x sleep | head -1 || true)
