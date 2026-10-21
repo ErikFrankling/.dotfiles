@@ -1,35 +1,34 @@
-# lag-guard: agents do not run heavy work on the pc. Runs as root every
-# INTERVAL seconds over every process in the agent slice (app-t3code.slice,
-# except Erik's own T3 terminals):
+# lag-guard: a safety net against LONG heavy agent work on the pc. Short
+# compiles, builds, typechecks and tests are fine here (fast CPU, and the
+# agent slice caps keep the desktop smooth); what Erik minds is something
+# hogging the pc for minutes. Runs as root every INTERVAL seconds over every
+# process in the agent slice (app-t3code.slice, except Erik's T3 terminals):
 #
-#   - Denied outright, killed on sight: Android emulators (qemu), Gradle and
-#     Kotlin daemons, compilers (rustc, cc1, clang), llama-server, a `nix`
-#     evaluation over NIX_RSS, and node/python/tsgo processes over BIG_RSS.
-#   - CPU: when the agents together averaged over CPU_CORES cores for the
-#     last CPU_WINDOW seconds, every non-provider process that used over half
-#     a core in that window is killed.
-#   - Pressure: when the whole pc stalls on disk IO or memory (avg10 over
-#     IO_FULL / MEM_FULL for SUSTAIN samples), it stops local Nix builds and
-#     the biggest agent process.
+#   - Sustained CPU: when the agents together averaged CPU_CORES+ cores (the
+#     slice quota is 4) over the last CPU_WINDOW seconds, the biggest
+#     consumers are killed until what is left is under CPU_CORES - 1.
+#   - Long emulators: an Android emulator running longer than EMU_MAX.
+#   - Pressure: when Erik's own cgroups stall on disk IO or memory (avg10 over
+#     IO_FULL / MEM_FULL for SUSTAIN samples), local Nix builds and the
+#     biggest agent job are stopped.
 #
-# Each stopped process first gets the reason on its stderr, which is the
-# owning agent's tool output, so the agent learns why. Erik gets one
-# notification per NOTIFY_EVERY seconds listing what was stopped.
+# A killed process gets the reason on its stderr (the agent's tool output),
+# telling the agent to re-run it on the homelab with `heavy`. Erik gets one
+# notification per NOTIFY_EVERY seconds.
 #
-# Environment: INTERVAL, CPU_CORES, CPU_WINDOW, IO_FULL, MEM_FULL, SUSTAIN,
-# BIG_RSS, NIX_RSS (KiB), NOTIFY_EVERY, ERIK_UID, DRY_RUN=1.
+# Environment: INTERVAL, CPU_CORES, CPU_WINDOW, EMU_MAX, IO_FULL, MEM_FULL,
+# SUSTAIN, NOTIFY_EVERY, ERIK_UID, DRY_RUN=1.
 
 # A watchdog must not die on a failed test or a vanished pid.
 set +o errexit +o pipefail
 
 INTERVAL=${INTERVAL:-2}
 CPU_CORES=${CPU_CORES:-3}
-CPU_WINDOW=${CPU_WINDOW:-60}
+CPU_WINDOW=${CPU_WINDOW:-300}
+EMU_MAX=${EMU_MAX:-900}
 IO_FULL=${IO_FULL:-20}
 MEM_FULL=${MEM_FULL:-10}
 SUSTAIN=${SUSTAIN:-5}
-BIG_RSS=${BIG_RSS:-2000000}
-NIX_RSS=${NIX_RSS:-700000}
 NOTIFY_EVERY=${NOTIFY_EVERY:-900}
 ERIK_UID=${ERIK_UID:-1000}
 DRY_RUN=${DRY_RUN:-0}
@@ -38,9 +37,7 @@ agents=/sys/fs/cgroup/user.slice/user-$ERIK_UID.slice/user@$ERIK_UID.service/app
 nixd=/sys/fs/cgroup/system.slice/nix-daemon.service
 hz=$(getconf CLK_TCK)
 providers='^(\.?claude(-wrapped)?|\.?codex.*|\.?opencode.*|\.?cursor-agent.*|\.?grok.*)$'
-denied_comm='^(qemu-system.*|emulator|emulator64.*|llama-server|rustc|cc1|cc1plus|cc1obj|clang|clang\+\+|clang-[0-9]+|ld\.lld)$'
-denied_java='GradleDaemon|GradleWrapperMain|org\.gradle\.|KotlinCompileDaemon'
-homelab_hint="Heavy work runs on the homelab, not on Erik's pc: heavy -- <cmd> (builds, tests, emulator: heavy emulator start), rebuild, nix-remote build|eval."
+homelab_hint="That was a long job for Erik's pc: re-run it on the homelab with heavy -- <cmd> (emulator: heavy emulator start; Nix: nix-remote or rebuild --remote). Short builds and tests are fine on the pc."
 
 # All agent pids, minus Erik's T3 terminals.
 agent_pids() {
@@ -70,37 +67,12 @@ stop() { # pid reason
   ) &
 }
 
-denied_reason() { # pid -> why it may not run on the pc (empty: allowed)
-  local pid=$1 comm rss
-  comm=$(cat "/proc/$pid/comm" 2>/dev/null) || return 0
-  [[ $comm =~ $providers ]] && return 0
-  if [[ $comm =~ $denied_comm ]]; then
-    echo "$comm does not run on the pc"
-    return 0
-  fi
-  case $comm in
-    java)
-      if tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -Eq "$denied_java"; then
-        echo "Gradle/Kotlin builds do not run on the pc"
-      fi
-      ;;
-    nix)
-      rss=$(rss_of "$pid")
-      [ "${rss:-0}" -gt "$NIX_RSS" ] && echo "a local Nix evaluation"
-      ;;
-    node | MainThread | python* | tsgo | tsc | bun | deno)
-      rss=$(rss_of "$pid")
-      [ "${rss:-0}" -gt "$BIG_RSS" ] && echo "over $((BIG_RSS / 1000000)) GB of memory"
-      ;;
-  esac
-  return 0
-}
-
-check_denied() {
-  local pid reason
+check_emulators() {
+  local pid age
   for pid in $(agent_pids); do
-    reason=$(denied_reason "$pid")
-    [ -n "$reason" ] && stop "$pid" "$reason"
+    case $(cat "/proc/$pid/comm" 2>/dev/null) in qemu-system* | emulator*) ;; *) continue ;; esac
+    age=$(ps -o etimes= -p "$pid" 2>/dev/null)
+    [ "${age:-0}" -gt "$EMU_MAX" ] && stop "$pid" "an emulator ran over $((EMU_MAX / 60)) minutes on the pc"
   done
   return 0
 }
@@ -133,7 +105,7 @@ check_cpu() {
       keep=$(((CPU_CORES - 1) * span * hz))
       while read -r t pid; do
         [ "$left" -gt "$keep" ] || break
-        stop "$pid" "agents averaged $cores cores for a minute"
+        stop "$pid" "agents averaged $cores cores for $((span / 60)) minutes"
         left=$((left - t))
       done < <(printf "%s\n" "${list[@]}" | sort -rn)
     fi
@@ -213,7 +185,7 @@ flush_notify() {
 
 echo "lag-guard: agents=$agents cpu>=$CPU_CORES cores/${CPU_WINDOW}s io>$IO_FULL% mem>$MEM_FULL%"
 while true; do
-  check_denied
+  check_emulators
   check_cpu
   check_pressure
   flush_notify

@@ -1,7 +1,7 @@
 # nh / nixos-rebuild, as agents see them (shadow the real ones on PATH).
-# From inside the agent slice a system rebuild means nixos-remote-switch:
-# evaluate and build on the homelab builder, activate here. Anything else
-# that would evaluate or build locally is refused. Outside the agent slice,
+# From inside the agent slice a system rebuild means nixos-remote-switch
+# (the deploy guards, evaluation here, activation). Anything else
+# is refused (it would skip the deploy guards). Outside the agent slice,
 # and in Erik's T3 terminals, it is the real command.
 real=@real@
 name=@name@
@@ -30,9 +30,9 @@ esac
 
 case "$action" in
   switch | boot | test | build | dry-build)
-    echo "$name (agent guard): evaluating and building on the homelab builder, then activating here (nixos-remote-switch $action)" >&2
+    echo "$name (agent guard): building with the deploy guards, then activating (nixos-remote-switch $action)" >&2
     exec nixos-remote-switch "$action"
     ;;
 esac
-echo "$name (agent guard): '$*' would evaluate or build on the pc. Agents use: rebuild [switch|boot|test|build|dry-build], nix-remote ..., or heavy -- <cmd>." >&2
+echo "$name (agent guard): '$*' is not supported for agents. Use: rebuild [switch|boot|test|build|dry-build] [--remote], nix build, nix-remote, or heavy -- <cmd>." >&2
 exit 1

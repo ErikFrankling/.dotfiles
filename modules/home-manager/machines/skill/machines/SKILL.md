@@ -23,79 +23,46 @@ The pc is the machine Erik is sitting at. When it runs out of memory it does
 not crash, it swaps. The desktop freezes and T3 Code stops answering. That
 includes on his phone, and it includes the session you are running in.
 
-### Heavy work runs on the homelab (Erik, 2026-10-21)
+### Short jobs on the pc, long jobs on the homelab (Erik, 2026-10-21)
 
-**In short:** heavy work = `heavy -- <cmd>`; emulator = `heavy emulator start`;
-nix = `rebuild` / `nix-remote`. There is no "wait until Erik is away" path:
-long or heavy work always goes to the homelab, light work stays on the pc.
+The pc has a fast CPU: compile, build, typecheck and test on it as usual.
+What Erik minds is something hogging it for minutes. **Rule of thumb: if a job
+will take ~10+ minutes, or turns out to, run it on the homelab.**
 
-The pc is for Erik plus light agent work: editing, chat, git, small commands
-and short checks. Anything long-running or CPU/disk/memory heavy runs on the
-homelab, even though it is slower there:
-
-| Work | How |
+| Long job | How |
 |---|---|
-| Anything heavy in a repo (Gradle/APK builds, test suites, typechecks of big monorepos, embeddings and ML batch jobs, data processing, compiles) | `heavy -- <cmd>`: syncs the repo to the homelab worker and runs it there; `heavy pull <path>` brings results back |
-| Android emulator | `heavy emulator start` (KVM on the homelab, adb forwarded to the pc); `heavy emulator stop` when done |
-| Nix builds and NixOS evaluations | `rebuild` (evaluates and builds on the builder, activates here), `nix-remote build/eval ...`; uncached builds go to the builder by themselves |
-
-Never start an emulator, a Gradle/NDK build, llama-server or another model
-server, a long test run or a NixOS evaluation on the pc. Never run them on
-the pc "because the homelab is slow"; Erik explicitly prefers slow.
+| Big Gradle/APK release builds, long test suites, embedding/ML batches, data processing | `heavy -- <cmd>` (synced copy on the homelab worker; `heavy pull <path>` brings results back) |
+| An emulator you need for more than a few minutes | `heavy emulator start` (adb forwarded to the pc; gRPC/audio on 8554) |
+| Long Nix builds | `nix-remote build ...`, `rebuild --remote` |
 
 `heavy` in short (`heavy --help` for all of it):
 
 ```
 heavy [--big|--small] [--shell .#android] [-e VAR] -- CMD   run in a synced copy on the worker
 heavy pull PATH...                       copy results back (nothing else comes back)
-heavy bg NAME -- CMD | heavy logs|stop NAME   background jobs
+heavy bg NAME -- CMD | heavy logs NAME -f | heavy stop NAME   background jobs and servers
 heavy emulator start|stop|status         the one shared emulator; heavy adb ARGS from the pc
 heavy status | heavy queue               what runs and what waits
 ```
 
-One big job (Gradle/APK/emulator tests, up to 10 GB) and one small job (up
-to 3 GB) run at once on the worker; the rest queue. A job that runs out of
-memory is killed alone. Use `--no-daemon` for Gradle. Sync is one way and
-exactly git's file list (never `.git/info/exclude`d files or `.git`).
+One big job (up to 10 GB) and one small job (up to 3 GB) run at once on the
+worker; the rest queue, and a job that runs out of memory is killed alone.
+A foreground `heavy` job dies with its client: for unattended chains use
+`systemd-run --user --collect --unit=NAME heavy -- ...` or `heavy bg --big`.
 
-### Enforcement on the pc (`modules/nixos/agent-priority`)
+### The safety net on the pc (`modules/nixos/agent-priority`)
 
-Every T3 Code agent session (claude, codex, opencode, grok, cursor) and all it
-spawns runs under `app-t3code.slice`:
-
-- **CPU:** idle class and a hard quota of 4 of the 16 threads for all agents
-  together. **Disk caps:** 150 MB/s read, 60 MB/s write (the disk is a
-  DRAM-less NV3 that stalls every reader when something writes flat out).
-- **Memory:** all agents together are throttled above 9 GB and killed above
-  11 GB of RAM, with at most 2 GB of swap. There is no disk swap, only zram.
-  systemd-oomd kills the agent scope that thrashes hardest. T3 then reports
-  the session as killed for memory: move the work to the homelab, do not
-  retry it here.
-- **`systemd-run --user` stays inside** the slice (a wrapper adds
-  `--slice-inherit --nice=10` and makes the job the first OOM victim). Do not
-  escape with `--slice=`, Docker, sudo or system units. Docker containers
-  are capped per container anyway.
-- **`nix`, `nh`, `nixos-rebuild` and `rebuild` route to the homelab** from an
-  agent: `nix build` of any flake and `nix flake check` run on the builder
-  through `nix-remote`, evaluation included (`--eval-store auto --store
-  ssh-ng://...` still evaluates locally, so it is rerouted too); `nix eval`
-  of a system configuration goes there as well; `nh os` / `nixos-rebuild`
-  / `rebuild` mean `nixos-remote-switch` (build on the homelab, activate
-  here). `nix build -f`/`--expr` is refused: use `heavy`.
-- **lag-guard** (root, every 2 s) kills on sight, in any agent process
-  however it was started: emulators (qemu), Gradle/Kotlin daemons, compilers
-  (rustc, cc1, clang), llama-server, a local `nix` evaluation over 700 MB, and
-  node/python/bun/tsgo over 2 GB. It also kills every non-agent process using
-  over half a core when the agents averaged 3+ cores for a minute, and the
-  biggest agent job when the pc stalls on disk or memory. The killed process
-  gets the reason on its stderr (your tool output) and Erik gets a
-  notification. Getting killed means: move it to the homelab, do not retry.
-
-### Light-work rules on the pc
-
-- Cap parallelism for whatever small work remains (`-j4`, `xargs -P 4`).
-- One typecheck or test run at a time per session, and only small ones.
-- Clean up: no background dev servers, browsers or models left running.
+- Agent sessions run in `app-t3code.slice`: idle CPU priority, at most 4 of
+  the 16 threads, 9/11 GB RAM, 2 GB swap, 150/60 MB/s disk. Short builds fit
+  fine; never escape the slice with `--slice=`, Docker, sudo or system units.
+- `nix` and `rebuild` evaluate here. Whole-system evaluations (3-4 GB, ~2
+  minutes) wait for each other under one lock; uncached builds go to the
+  homelab builder by themselves. `rebuild` refuses a checkout behind
+  origin/main (it would revert others' deploys).
+- lag-guard kills agent jobs that keep the agents at their CPU budget for 5+
+  minutes, emulators running over 15 minutes, and the biggest job when
+  Erik's desktop stalls. The killed process gets the reason on its stderr:
+  re-run that job with `heavy`, do not retry it on the pc.
 
 This has happened: on 2026-10-16 an agent started about 28 `codex exec` image
 jobs at once (20 backgrounded with `&`, 8 more through `xargs -P 8`). They
@@ -111,11 +78,12 @@ Before starting anything that runs in parallel or uses a lot of memory:
 2. **Check what is free:** `free -g`, and `cat /proc/pressure/memory`
    (anything above a few percent under `full` means it is already swapping).
    Erik's browsers and apps normally use 10–15 GB on their own.
-3. **Cap parallelism.** Keep the total new load to about 2 GB on the pc:
+3. **Cap parallelism.** Keep the total new load to a few GB on the pc:
    `xargs -P 4`, a worker pool, or batches, never one `&` per item over a
    long list. Start small, watch `free -g`, then scale up if there is room.
-4. **Move heavy work off the pc**: `heavy -- <cmd>` for jobs, `rebuild` and
-   `nix-remote` for Nix, and long-running services belong in the homelab. Local LLMs must fit fully in
+4. **Move long work off the pc**: `heavy -- <cmd>` for jobs that take ~10+
+   minutes, `nix-remote` for long Nix builds; long-running services belong
+   in the homelab. Local LLMs must fit fully in
    GPU memory (see `~/.dotfiles/AGENTS.md`).
 5. **Clean up.** Do not leave background jobs, dev servers or loaded models
    running when you are done.

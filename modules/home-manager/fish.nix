@@ -51,15 +51,23 @@ let
       set argv "switch"
     end
 
-    # On the pc the evaluation and build run on the homelab builder and only
-    # the activation runs here (modules/nixos/agent-priority). `rebuild --local`
-    # is the old local nh path, for when the homelab is down.
+    # nixos-remote-switch (modules/nixos/agent-priority): the deploy guards,
+    # evaluation here (uncached builds go to the homelab builder), activation.
+    # `rebuild --remote` evaluates and builds on the homelab instead.
+    # `rebuild --local` is the old nh path without the guards, Erik's fallback.
     if contains -- --local $argv; and test $agent = 1
-      echo "rebuild --local is Erik's fallback; agents build on the homelab (plain rebuild)." >&2
+      echo "rebuild --local skips the deploy guards; agents use plain rebuild (or --remote)." >&2
       exit 1
     end
+    set -l action (string match -v -- '--*' $argv)[1]
+    test -n "$action"; or set action switch
     if command -q nixos-remote-switch; and not contains -- --local $argv
-      nixos-remote-switch $argv[1] $dir; or exit 1
+      if contains -- --remote $argv
+        set -lx NIXOS_SWITCH_REMOTE 1
+        nixos-remote-switch $action $dir; or exit 1
+      else
+        nixos-remote-switch $action $dir; or exit 1
+      end
     else
       set argv (string match -v -- --local $argv)
       test -n "$argv"; or set argv switch

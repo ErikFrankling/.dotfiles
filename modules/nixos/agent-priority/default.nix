@@ -1,6 +1,7 @@
-# The pc is Erik's; agents get what he leaves over, and heavy agent work
-# runs on the homelab (Erik, 2026-10-21: "use the home lab for long running cpu
-# heavy stuff, i need my pc not to lag, idc if it takes long"). Twice that
+# The pc is Erik's; agents get what he leaves over. Short builds and tests run
+# here (fast CPU); long jobs (~10+ minutes) go to the homelab with `heavy`
+# (Erik, 2026-10-21: "of course you can compile things locally ... just if this
+# takes 10 min, consider offloading"). Twice that
 # night the desktop froze: first load 69 and 45 GB in swap (an APK build with
 # ~18 clang++, a local nix build, two emulators), then at 05:20, with CPU
 # already idle-weighted, IO 50% "full" from swap and a local evaluation of the
@@ -13,15 +14,16 @@
 #   which T3 never touches: idle CPU, small memory and swap caps, hard disk
 #   bandwidth caps, and systemd-oomd.
 # - `systemd-run --user` from an agent stays in the agent slice (wrapper).
-# - `nix` from an agent sends NixOS/Home Manager evaluations to the homelab
-#   builder (nix-remote), and `rebuild` on this host evaluates and builds
-#   there too (nixos-remote-switch). The nix daemon builds at idle priority
-#   with disk caps, and anything not cached is built on the homelab.
+# - `nix` from an agent serializes whole-system evaluations under one lock;
+#   `rebuild` (nixos-remote-switch) adds deploy guards, evaluates here and
+#   activates (`--remote`: on the builder). The nix daemon builds at idle
+#   priority with disk caps, and anything not cached is built on the homelab.
 # - Docker containers get per-container caps.
 # - No disk swap: only zram, so a runaway is killed instead of thrashing.
-# - lag-guard stops agent heavy jobs, emulators first, when the pc keeps
-#   stalling, and notifies Erik.
-# - Heavy jobs go to the homelab worker with `heavy` (../../home-manager/heavy).
+# - lag-guard kills agent jobs that stay at the CPU budget for 5+ minutes,
+#   emulators over 15 minutes, and the biggest job when Erik's desktop
+#   stalls, telling the agent to re-run it with `heavy`.
+# - Long jobs go to the homelab worker with `heavy` (../../home-manager/heavy).
 #
 # Rules for agents: modules/home-manager/machines/skill/machines/SKILL.md.
 {
@@ -80,6 +82,7 @@ let
   nixosRemoteSwitch = pkgs.writeShellApplication {
     name = "nixos-remote-switch";
     runtimeInputs = [
+      config.nix.package # the real nix, ahead of the agent wrapper
       pkgs.git
       nixRemote
       pkgs.nvd
@@ -94,7 +97,7 @@ let
   # agent slice, evaluation and builds run on the homelab builder.
   agentNix = lib.hiPrio (
     pkgs.writeShellScriptBin "nix" (
-      builtins.replaceStrings [ "@realNix@" "@nixRemote@" ] [ realNix (lib.getExe nixRemote) ] (
+      builtins.replaceStrings [ "@realNix@" "@flock@" ] [ realNix "${pkgs.util-linux}/bin/flock" ] (
         builtins.readFile ./agent-nix.sh
       )
     )

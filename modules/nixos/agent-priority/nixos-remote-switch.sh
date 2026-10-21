@@ -1,13 +1,27 @@
 # nixos-remote-switch [switch|boot|test|build|dry-build] [flake-dir]
 #
-# What `rebuild` does on the pc: evaluate and build this host's system on the
-# homelab builder (nix-remote), fetch it from the binary cache, show what
-# changed, then activate it here. Nothing heavy runs on this machine.
+# What `rebuild` does on the pc: evaluate and build this host's system, show
+# what changed, then activate it. The evaluation runs here by default (about
+# 2 minutes on this CPU, one at a time under a lock); anything not in a cache
+# is built on the homelab builder anyway (nix.buildMachines).
+# NIXOS_SWITCH_REMOTE=1 (`rebuild --remote`) evaluates and builds on the
+# builder instead (nix-remote) and fetches the result from the binary cache.
 # HOST is set by the Nix wrapper.
 
 action=${1:-switch}
 dir=${2:-$HOME/.dotfiles}
 attr="nixosConfigurations.$HOST.config.system.build.toplevel"
+remote=${NIXOS_SWITCH_REMOTE:-0}
+evallock=${XDG_RUNTIME_DIR:-/tmp}/nixos-eval.lock
+
+# One system evaluation at a time on this machine (3-4 GB each).
+build_system() {
+  if [ "$remote" = 1 ]; then
+    nix-remote build "$@"
+  else
+    flock "$evallock" nix build "$@"
+  fi
+}
 
 case $action in
   switch | boot | test | build | dry-build) ;;
@@ -81,14 +95,19 @@ case $action in
 esac
 
 if [ "$action" = dry-build ]; then
-  exec nix-remote build --dry-run ".#$attr"
+  build_system --dry-run ".#$attr"
+  exit $?
 fi
 
-echo "== evaluating and building $HOST on the homelab builder"
-out=$(nix-remote build --no-link --print-out-paths ".#$attr") || exit 1
+if [ "$remote" = 1 ]; then
+  echo "== evaluating and building $HOST on the homelab builder"
+else
+  echo "== evaluating $HOST here (uncached builds go to the homelab builder)"
+fi
+out=$(build_system --no-link --print-out-paths ".#$attr") || exit 1
 out=$(tail -n 1 <<<"$out")
 if [[ ! $out =~ ^/nix/store/[a-z0-9]{32}-nixos-system-$HOST- ]]; then
-  echo "nixos-remote-switch: the builder returned no system path ('$out')" >&2
+  echo "nixos-remote-switch: the build returned no system path ('$out')" >&2
   exit 1
 fi
 
@@ -116,7 +135,7 @@ fi
 status=0
 sudo systemd-run --unit="nixos-remote-switch-$(date +%s)" --collect --quiet \
   --wait --pipe --service-type=exec \
-  --description="Switch to the system built by the homelab" \
+  --description="Switch to the new system (rebuild)" \
   "$out/bin/switch-to-configuration" "$action" || status=$?
 
 if [ "$action" != boot ] && [ "$(readlink -f /run/current-system)" = "$out" ]; then

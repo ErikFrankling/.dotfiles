@@ -19,7 +19,7 @@
 - **Use the `rebuild` command for real rebuilds.** Do not bypass it with raw `nixos-rebuild`, `home-manager switch`, or hand-written `nh os ...` commands unless Erik explicitly asks for that.
 - `rebuild` is a real executable on `PATH`, defined in `modules/home-manager/fish.nix` as `rebuildScript`. It is intentionally a Fish script containing Erik's rebuild code. If the behavior matters, read that file instead of guessing what the command does.
 - `rebuild` with no arguments defaults to `switch`. Pass arguments through when needed, e.g. `rebuild test`, `rebuild boot`, or `rebuild switch`.
-- **On the PC, `rebuild` evaluates and builds on the homelab builder** (`nixos-remote-switch`, `modules/nixos/agent-priority`) and only activates locally; `rebuild dry-build` shows what would be built. Never evaluate a NixOS configuration on the PC yourself: use `nix-remote build|eval ...` (the agent `nix` wrapper reroutes `nix build/eval` of `nixosConfigurations` there anyway). `rebuild --local` is Erik's fallback for when the homelab is down, not for agents.
+- **On the PC, `rebuild` runs `nixos-remote-switch`**: deploy guards (refuses a checkout behind origin/main or missing the last deploy), evaluation here (one whole-system evaluation at a time under a lock, ~2 minutes), uncached builds on the homelab builder, then activation. `rebuild --remote` evaluates and builds on the homelab instead; `rebuild dry-build` shows what would be built. `rebuild --local` (plain nh, no guards) is Erik's fallback, not for agents.
 - After changing this NixOS/Home Manager configuration, always run a real rebuild with `rebuild` before yielding unless Erik explicitly says not to apply the change.
 - After updating a shared flake input, build and cache both host closures and run `rebuild` on **both PC and Framework**. Do not stop after updating the lock file or rebuilding only one host.
 - Changes to **any of Erik's own software consumed as a flake input** are not finished until deployed to every machine that uses it. Push the software change, update only its relevant flake input(s), build/cache the affected host closures, rebuild each affected machine, and verify activation. Do not perform a full flake update unless requested; do not stop at a source commit or leave deployment for the nightly job.
@@ -32,7 +32,7 @@ must come from a binary cache almost always. A rebuild that takes a long time
 is a bug to analyze, not something to wait out.
 
 - **Before a real rebuild after any input change, check what would build
-  locally:** `nix-remote build --dry-run .#nixosConfigurations.<host>.config.system.build.toplevel`
+  locally:** `rebuild dry-build` (or `nix build --dry-run .#nixosConfigurations.<host>.config.system.build.toplevel`)
   and read the "will be built" list. Ignore trivial entries (wrappers, units,
   fish completions, fhsenv/bwrap shells, repacked upstream binaries). For every
   real compile, find out why it misses the cache and fix that first.
