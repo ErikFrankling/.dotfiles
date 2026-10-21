@@ -87,37 +87,22 @@ let
     text = builtins.readFile ./nixos-remote-switch.sh;
   };
 
-  # Shadows nix on PATH. From inside the agent slice, evaluating a NixOS or
-  # Home Manager configuration (3-4 GB, minutes of disk IO) goes to the
-  # homelab builder instead.
+  # Agents' nix, nh and nixos-rebuild (shadow the real ones on PATH): from the
+  # agent slice, evaluation and builds run on the homelab builder.
   agentNix = lib.hiPrio (
-    pkgs.writeShellScriptBin "nix" ''
-      case "$(cat /proc/self/cgroup 2>/dev/null)" in
-        */app-t3code.slice/*) ;;
-        *) exec ${realNix} "$@" ;;
-      esac
-      [ -n "''${NIX_LOCAL_EVAL:-}" ] && exec ${realNix} "$@"
-      case " $* " in
-        *" --store "* | *" --eval-store "*) exec ${realNix} "$@" ;;
-        *nixosConfigurations* | *homeConfigurations*) ;;
-        *) exec ${realNix} "$@" ;;
-      esac
-      sub=
-      for arg in "$@"; do
-        case "$arg" in -*) ;; *) sub=$arg; break ;; esac
-      done
-      case "$sub" in
-        build | eval | path-info | derivation | why-depends | log)
-          echo "nix: NixOS evaluations do not run on the pc; running this on the homelab builder (nix-remote)." >&2
-          exec ${lib.getExe nixRemote} "$@"
-          ;;
-        *)
-          echo "nix: '$sub' on a NixOS configuration would evaluate it on the pc. Use nix-remote build/eval, or rebuild." >&2
-          exit 1
-          ;;
-      esac
-    ''
+    pkgs.writeShellScriptBin "nix" (
+      builtins.replaceStrings [ "@realNix@" "@nixRemote@" ] [ realNix (lib.getExe nixRemote) ] (
+        builtins.readFile ./agent-nix.sh
+      )
+    )
   );
+  agentRebuild =
+    name: real:
+    lib.hiPrio (
+      pkgs.writeShellScriptBin name (
+        builtins.replaceStrings [ "@real@" "@name@" ] [ real name ] (builtins.readFile ./agent-rebuild.sh)
+      )
+    );
 
   lagGuard = pkgs.writeShellApplication {
     name = "lag-guard";
@@ -169,6 +154,8 @@ in
         environment.systemPackages = [
           agentSystemdRun
           agentNix
+          (agentRebuild "nh" (lib.getExe config.programs.nh.package))
+          (agentRebuild "nixos-rebuild" "${config.system.build.nixos-rebuild}/bin/nixos-rebuild")
           nixRemote
           nixosRemoteSwitch
         ];
@@ -183,6 +170,8 @@ in
             # cpu.idle: agents get the CPU Erik's apps leave unused, and his
             # input always preempts them.
             CPUWeight = "idle";
+            # And never more than 4 of the 16 threads, whatever is idle.
+            CPUQuota = "400%";
             MemoryHigh = cfg.memoryHigh;
             MemoryMax = cfg.memoryMax;
             # Hardly any swap: past their RAM, agents get killed instead of
@@ -212,6 +201,7 @@ in
           MemorySwapMax = "2G";
           OOMScoreAdjust = 500;
           IOWeight = 10;
+          CPUQuota = "400%";
         }
         // ioCaps "200M" "100M";
 
