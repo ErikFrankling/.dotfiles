@@ -39,6 +39,16 @@ Never start an emulator, a Gradle/NDK build, llama-server or another model
 server, a long test run or a NixOS evaluation on the pc. Never run them on
 the pc "because the homelab is slow"; Erik explicitly prefers slow.
 
+**Idle windows:** while Erik has had no keyboard or mouse input for 10
+minutes, heavy jobs may run on the pc (one emulator at most, up to 12
+threads and 20 GB for all agents). `pc-idle` tells you (exit 0 = idle);
+`when-idle <cmd>` waits for idle, then runs the command. The moment he
+touches the pc, lag-guard pauses those jobs (SIGSTOP; the job gets a note
+on its stderr) and resumes them at his next idle window. If he needs the
+memory, the biggest paused jobs are killed. Use idle windows only for work
+that really needs the pc (e.g. an emulator test with audio capture);
+everything else goes to the homelab.
+
 ### Enforcement on the pc (`modules/nixos/agent-priority`)
 
 Every T3 Code agent session (claude, codex, opencode, grok, cursor) and all it
