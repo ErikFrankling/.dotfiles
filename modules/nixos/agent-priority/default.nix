@@ -233,6 +233,9 @@ in
         # swaps on it by itself, whatever swapDevices says (it did right after
         # the first swapoff). NixOS mounts everything from fstab.
         boot.kernelParams = [ "systemd.gpt_auto=0" ];
+        # And masked for the running boot, where the generator already ran (a
+        # switch would start it again).
+        systemd.units."dev-disk-by\\x2ddiskseq-1\\x2dpart3.swap".enable = false;
 
         systemd.oomd.enable = true;
 
