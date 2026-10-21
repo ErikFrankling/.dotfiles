@@ -73,7 +73,6 @@ let
           fi
           rev=$(git rev-parse HEAD)
           stamp=$(date +%Y%m%d-%H%M%S)
-          paths=()
           for host in ${lib.concatStringsSep " " hosts}; do
             log=${stateDir}/build-$host.log
             echo "== building $host on the homelab (log: $log)"
@@ -89,27 +88,29 @@ let
               exit 1
             fi
             echo "$host $out"
-            paths+=("$host=$out")
-          done
-
-          # Root the results so the builder's garbage collector keeps them, and
-          # keep only the newest few per host. Then collect if the node's disk
-          # is getting low; nix.conf on the builder does the same mid-build.
-          for entry in "''${paths[@]}"; do
-            host=''${entry%%=*}
-            out=''${entry#*=}
+            # Root it right away, before the next host's build: the builder
+            # garbage-collects during builds (min-free), and a result rooted
+            # only at the end was already gone (2026-10-21). Keep only the
+            # newest few per host.
             # Deliberately expanded here: the remote shell gets literal values.
             # shellcheck disable=SC2029
-            ssh nix-builder "
+            if ! ssh nix-builder "
               set -e
               export PATH=/nix/var/builder/bin:\$PATH
+              test -e $out
               roots=/nix/var/nix/gcroots/auto-update
               mkdir -p \$roots
               ln -sfn $out \$roots/$host-$stamp
               ls -1 \$roots | grep '^$host-' | sort -r | tail -n +${toString (keepPerHost + 1)} \
                 | while read -r old; do rm -f \$roots/\$old; done
-            "
+            "; then
+              echo "== $host: could not root $out on the builder (garbage-collected already?)" >&2
+              exit 1
+            fi
           done
+
+          # Collect if the node's disk is getting low; nix.conf on the builder
+          # does the same mid-build.
           ssh nix-builder '
             export PATH=/nix/var/builder/bin:$PATH
             free=$(df --output=avail -BG /nix | tail -n 1 | tr -dc 0-9)

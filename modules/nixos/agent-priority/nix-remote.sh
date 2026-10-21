@@ -41,10 +41,25 @@ archive() { # local flake dir -> store path on the builder
   local ref=$1
   if [ -z "${archived[$ref]:-}" ]; then
     echo "nix-remote: copying $ref to the homelab builder" >&2
-    archived[$ref]=$(nix flake archive --json --to "$builder_store" "$ref" | jq -r .path) || {
+    local json
+    json=$(nix flake archive --json --to "$builder_store" "$ref") || {
       echo "nix-remote: could not copy $ref to the builder (is the homelab up? ssh nix-builder)" >&2
       exit 1
     }
+    archived[$ref]=$(jq -r .path <<<"$json")
+    # The builder sits near its min-free and garbage-collects during builds;
+    # unrooted, the copied flake and its inputs were deleted mid-evaluation
+    # (2026-10-21). Root them for a day; each run clears older roots.
+    # shellcheck disable=SC2029
+    ssh nix-builder "
+      export PATH=/nix/var/builder/bin:\$PATH
+      roots=/nix/var/nix/gcroots/nix-remote
+      mkdir -p \$roots
+      find \$roots -maxdepth 1 -type l -mmin +1440 -delete
+      for p in $(jq -r '.. | .path? // empty' <<<"$json" | sort -u | tr '\n' ' '); do
+        ln -sfn \$p \$roots/\$(basename \$p)
+      done
+    " || echo "nix-remote: warning: could not root the copy on the builder" >&2
   fi
   printf "%s" "${archived[$ref]}"
 }
