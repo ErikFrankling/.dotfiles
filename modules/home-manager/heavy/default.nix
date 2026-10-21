@@ -46,6 +46,12 @@ let
             Then run CMD in the same subdirectory there. Output streams
             back and the exit code is CMD's. Ctrl-C or killing heavy kills the
             remote job. Nothing comes back unless you `heavy pull` it.
+            Jobs are scheduled on the worker: one big job at a time (Gradle,
+            Expo, APK builds, emulator tests; up to 10 GB) and one small job
+            (up to 3 GB); the rest wait in order ("waiting for the ... slot").
+            A job that runs out of its memory is killed alone.
+            --big | --small  override the guess (big if the command, or the
+                           script it runs, mentions gradle/expo/emulator/...)
             --shell NAME   run inside the flake's devShell NAME (`android` or
                            `.#android`); default: the default devShell when
                            flake.nix has one
@@ -53,9 +59,11 @@ let
             -e VAR[=VAL]   pass an environment variable (repeatable); VAR alone
                            takes its value from here
             --no-sync      skip the sync (rerun on what is already there)
-        heavy bg NAME [OPTIONS] [--] CMD...
+        heavy bg [--light] NAME [OPTIONS] [--] CMD...
                                 start CMD as a background job that outlives
-                                this command (a server next to the emulator)
+                                this command. It takes a job slot, unless
+                                --light: small servers next to the emulator
+                                (no queue; 768 MB, 1 core)
         heavy stop NAME         stop that background job
         heavy logs NAME         its last 100 log lines
         heavy jobs              background jobs on the worker
@@ -65,7 +73,8 @@ let
                                 stop PORT`
         heavy pull PATH...      copy PATHs (relative to here) back from the worker
         heavy shell             interactive shell in the workspace
-        heavy status            worker load, memory, jobs, emulator, disk
+        heavy status | queue    worker load, memory, running and waiting jobs,
+                                emulator, disk
         heavy emulator start    boot the one shared emulator on the worker
                                 (pixel_7, API 36 google_apis x86_64). `adb` in
                                 heavy commands sees it as the only device; it
@@ -124,10 +133,12 @@ let
       # Shared by `heavy CMD` and `heavy bg`: options, then the command,
       # prefixed with `env` for -e variables.
       parse_run() {
-        sync=1 develop=auto envs=()
+        sync=1 develop=auto envs=() class=auto
         while [ $# -gt 0 ]; do
           case "$1" in
             --no-sync) sync=0; shift ;;
+            --big) class=big; shift ;;
+            --small) class=small; shift ;;
             --no-develop) develop=no; shift ;;
             --shell) [ $# -ge 2 ] || die "--shell needs a name"; develop=''${2#.#}; shift 2 ;;
             -e)
@@ -171,7 +182,7 @@ let
 
       case "''${1:-}" in
         "" | -h | --help) usage; exit 0 ;;
-        status) exec ssh "''${ssh_opts[@]}" "$target" bash /config/heavy-status.sh ;;
+        status | queue) exec ssh "''${ssh_opts[@]}" "$target" bash /config/heavy-status.sh ;;
         emulator) shift; emulator "$@"; exit $? ;;
         adb)
           shift
@@ -191,11 +202,14 @@ let
         stop) exec ssh "''${ssh_opts[@]}" "$target" "$(q bash /config/heavy-bg.sh stop "$ws" "''${2:?name}")" ;;
         logs) exec ssh "''${ssh_opts[@]}" "$target" "$(q bash /config/heavy-bg.sh logs "$ws" "''${2:?name}")" ;;
         bg)
-          name=''${2:?usage: heavy bg NAME [OPTIONS] -- CMD...}
-          shift 2
+          shift
+          light=0
+          if [ "''${1:-}" = --light ]; then light=1; shift; fi
+          name=''${1:?usage: heavy bg [--light] NAME [OPTIONS] -- CMD...}
+          shift
           parse_run "$@"
           [ "$sync" = 0 ] || sync_up
-          exec ssh "''${ssh_opts[@]}" "$target" "$(q bash /config/heavy-bg.sh start "$ws" "$rel" "$develop" "$name" "''${cmd[@]}")"
+          exec ssh "''${ssh_opts[@]}" "$target" "HEAVY_LIGHT=$light HEAVY_CLASS=$class $(q bash /config/heavy-bg.sh start "$ws" "$rel" "$develop" "$name" "''${cmd[@]}")"
           ;;
         pull)
           shift
@@ -215,7 +229,7 @@ let
 
       # The remote job lives as long as this SSH channel's stdin stays open:
       # feed it from a process that never writes, and close it to kill the job.
-      ssh "''${ssh_opts[@]}" "$target" "$(q bash /config/heavy-run.sh "$ws" "$rel" "$develop" "''${cmd[@]}")" \
+      ssh "''${ssh_opts[@]}" "$target" "HEAVY_CLASS=$class $(q bash /config/heavy-run.sh "$ws" "$rel" "$develop" "''${cmd[@]}")" \
         < <(exec sleep 2147483647) &
       ssh_pid=$!
       keep=$(pgrep -P $$ -x sleep | head -1 || true)
