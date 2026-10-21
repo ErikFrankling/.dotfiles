@@ -66,6 +66,7 @@ in
     ../../modules/home-manager/notify # phone notifications skill
     ../../modules/home-manager/company-brain.nix
     ../../modules/home-manager/canvas-archive.nix
+    ../../modules/home-manager/x-graph.nix
     ../../modules/home-manager/machines
     ../../modules/home-manager/heavy # `heavy`: heavy agent work on the homelab worker
     ../../modules/home-manager/bro
