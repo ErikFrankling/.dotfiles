@@ -234,6 +234,13 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-22 00:13 (health-watch) — `alert/SystemdUnitFailed/pc/fcm-first-test`.
+  A leftover transient `systemd-run --path` one-shot (`PathExists=push-devices.json`,
+  script in `~/.local/state/notify-erik/`) re-ran every 20 s because the file
+  stays; notify-erik refused the duplicate (exit 3). Fix: `systemctl --user stop
+  fcm-first-test.path fcm-first-test.service`. One-shot path units must remove
+  their trigger or stop themselves.
+
 - 2026-10-21 06:10 (Discord-export agent) — x-graph-embed answered in 3-7 s
   instead of ~20 ms, and the PC's `kubectl` failed with "no route to host".
   Kubectl: `~/.kube/config` still pointed at 192.168.50.200, which stopped
