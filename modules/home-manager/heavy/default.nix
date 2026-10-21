@@ -1,12 +1,3 @@
-        # A git worktree's .git is a file pointing into the main checkout,
-        # which the worker does not have: give it a repository of its own
-        # instead, so git and `nix develop` (tracked files only) still work.
-        worktree=0
-        if [ -f "$local_root/.git" ]; then worktree=1; filters+=(--exclude=/.git); fi
-        if [ "$worktree" = 1 ]; then
-          remote "cd '$ws' && { [ -d .git ] || git init -q; } && git add -A" \
-            || die "could not set up git in the worker's copy"
-        fi
 # `heavy`: run an agent's long-running or CPU/IO-heavy work on the homelab
 # instead of this PC (policy since 2026-10-21: the PC is for Erik plus light
 # agent work). It rsyncs the current repository one way to the agent-worker pod
