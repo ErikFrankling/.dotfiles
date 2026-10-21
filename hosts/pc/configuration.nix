@@ -120,6 +120,13 @@
   sops.secrets.canvas-token.owner = username;
   # OpenCode Go API key (modules/home-manager/ai.nix merges it into opencode auth.json).
   sops.secrets.opencode-go-key.owner = username;
+  # FCM service account of the Firebase project "t3code-erik-push": the T3
+  # server sends native push to Erik's T3 app with it (hosts/pc/home.nix,
+  # modules/nixos/notify). The app's google-services.json is in the same file.
+  sops.secrets.t3code-fcm-service-account = {
+    sopsFile = ../../secrets/notify.yaml;
+    owner = username;
+  };
 
   networking.hostName = "${hostName}"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.

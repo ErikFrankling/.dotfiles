@@ -1,6 +1,8 @@
-# Phone notifications for agents and scripts: the `notify-erik` CLI posts to
-# Erik's private Discord server "Agents" (the app on his phone pushes it) and
-# mirrors to the self-hosted ntfy (homelab repo, docs/notifications.md). The
+# Phone notifications for agents and scripts: the `notify-erik` CLI asks the
+# T3 server on the PC to push natively to Erik's T3 app (FCM; key in
+# hosts/pc/configuration.nix), copies it to his private Discord server
+# "Agents" (the fallback, loud only when the native push failed) and mirrors
+# to the self-hosted ntfy (homelab repo, docs/notifications.md). The
 # `notify` skill (modules/home-manager/notify) tells agents when to use it.
 # Agents with Executor can also call `tools.notify.send`, which follows the
 # same limits.

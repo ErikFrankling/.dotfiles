@@ -182,6 +182,9 @@ in
         "T3CODE_READ_ALOUD_SMALL_TTS_URL=http://192.168.50.100:8880/v1/audio/speech"
         "T3CODE_READ_ALOUD_SMALL_VOICE=af_heart"
         "T3CODE_READ_ALOUD_SMALL_SPEED=1.2"
+        # Native push to Erik's T3 app (the fork's apps/server/src/erikPush.ts):
+        # agents' notify-erik / Executor notify send through /api/push/send.
+        "T3CODE_FCM_SERVICE_ACCOUNT_FILE=/run/secrets/t3code-fcm-service-account"
       ];
       Restart = "on-failure";
       RestartSec = 5;

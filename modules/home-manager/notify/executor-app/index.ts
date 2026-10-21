@@ -1,7 +1,9 @@
-// Executor app `notify`: push notifications to Erik's phone. Delivered as a
-// Discord message in his private server "Agents" (the Discord app is already
-// on his phone) and mirrored to the self-hosted ntfy (homelab repo,
-// docs/notifications.md), the backbone for a native T3 app channel. Source of truth:
+// Executor app `notify`: push notifications to Erik's phone. Delivered natively
+// by his T3 Code app: the T3 server on his PC sends it through FCM
+// (/api/push/send, apps/server/src/erikPush.ts in the fork). A copy goes to
+// his private Discord server "Agents" (silent when the native push went out,
+// the usual ping when it did not), and a mirror to the self-hosted ntfy
+// (homelab repo, docs/notifications.md). Source of truth:
 // ~/.dotfiles/modules/home-manager/notify/executor-app; deploy with ../deploy.sh.
 // Same limits as the `notify-erik` CLI on the PCs.
 import {
@@ -31,6 +33,8 @@ const PC_ENVIRONMENT = "638dd505-c97b-41e7-b7a7-7d91b3b9fd67";
 const APP_SCHEME = "t3code-preview";
 // Discord only links http(s): a tap opens the thread in T3 web.
 const T3_WEB = "https://t3code.erikfrankling.duckdns.org";
+// The T3 server that holds the phone's push registration (Erik's PC, LAN).
+const T3_PUSH = "http://192.168.50.232:3773/api/push/send";
 
 const ntfy = defineProvider({
   name: "ntfy",
@@ -106,16 +110,20 @@ async function sha(text: string): Promise<string> {
     .join("");
 }
 
-type Links = { app?: string; web?: string };
+type Links = { app?: string; web?: string; path?: string };
 
 function threadLinks(threadId?: string, environmentId?: string, link?: string): Links {
   if (!threadId) return { app: link, web: link };
   const path = `${encodeURIComponent(environmentId ?? PC_ENVIRONMENT)}/${encodeURIComponent(threadId)}`;
-  return { app: `${APP_SCHEME}://threads/${path}`, web: `${T3_WEB}/${path}` };
+  return {
+    app: `${APP_SCHEME}://threads/${path}`,
+    web: `${T3_WEB}/${path}`,
+    path: `/threads/${path}`,
+  };
 }
 
 type Outcome =
-  | { sent: true; id: string; messageId: string | null }
+  | { sent: true; id: string; app: boolean; messageId: string | null }
   | { sent: false; reason: string; advice: string };
 
 async function deliver(
@@ -190,16 +198,42 @@ async function deliver(
       ? { actions: [{ action: "copy", label: "Copy code", value: input.code, clear: false }] }
       : {}),
   };
-  // Discord: urgent, high and codes also @mention Erik; low is sent silently.
+  // Native push in the T3 app first. It only counts when the server says a
+  // device took it, so an older server without the route keeps Discord loud.
+  let app = false;
+  try {
+    const response = await ctx.fetch(T3_PUSH, {
+      method: "POST",
+      signal: ctx.signal,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: input.title,
+        message: input.message,
+        class: input.class,
+        ...(input.links.path
+          ? { path: input.links.path }
+          : input.links.web?.match(/^https?:\/\//)
+            ? { url: input.links.web }
+            : {}),
+        ...(input.code ? { code: input.code } : {}),
+      }),
+    });
+    if (response.ok) app = (((await response.json()) as { delivered?: number }).delivered ?? 0) > 0;
+  } catch {
+    app = false;
+  }
+
+  // Discord: the fallback. Without a native push, urgent, high and codes
+  // @mention Erik and low is silent; after one, a silent copy.
   const hook = ctx.app.accounts.discord.fields;
-  const ping = ["urgent", "high", "code"].includes(input.class);
+  const ping = !app && ["urgent", "high", "code"].includes(input.class);
   const icon = { urgent: "🚨 ", high: "❗ ", normal: "", low: "", code: "🔑 " }[input.class];
   const content =
     `${ping ? `<@${hook.mentionUserId}> ` : ""}${icon}**${input.title}**\n${input.message}` +
     (input.code ? `\n\`\`\`\n${input.code}\n\`\`\`` : "") +
     (input.links.web ? `\n[Open thread](${input.links.web})` : "") +
     (input.source ? `\n-# from ${input.source}` : "");
-  let messageId: string;
+  let messageId: string | null = null;
   try {
     const response = await ctx.fetch(
       `https://discord.com/api/webhooks/${hook.webhookId}/${hook.webhookToken}?wait=true`,
@@ -212,16 +246,18 @@ async function deliver(
           content,
           allowed_mentions: { users: ping ? [hook.mentionUserId] : [] },
           // 4: no link previews; 4096: silent (low priority)
-          flags: 4 + (input.class === "low" ? 4096 : 0),
+          flags: 4 + (input.class === "low" || app ? 4096 : 0),
         }),
       },
     );
     messageId = (await decodeJson(response, object({ id: string() }))).id;
-    ctx.sql.exec("UPDATE sends SET status = 'sent', message_id = ? WHERE id = ?", messageId, id);
   } catch (error) {
-    ctx.sql.exec("UPDATE sends SET status = 'failed' WHERE id = ?", id);
-    throw error;
+    if (!app) {
+      ctx.sql.exec("UPDATE sends SET status = 'failed' WHERE id = ?", id);
+      throw error;
+    }
   }
+  ctx.sql.exec("UPDATE sends SET status = 'sent', message_id = ? WHERE id = ?", messageId, id);
 
   // ntfy: best effort, it does not change the outcome.
   await ctx
@@ -232,7 +268,7 @@ async function deliver(
       body: JSON.stringify(body),
     })
     .catch(() => undefined);
-  return { sent: true, id, messageId };
+  return { sent: true, id, app, messageId };
 }
 
 const PRIORITIES = ["urgent", "high", "normal", "low"] as const;
@@ -347,8 +383,8 @@ const status = query(
   },
 );
 
-const instructions = `Push notifications to Erik's phone: a message in his private Discord server "Agents"
-(the Discord app pushes it; "Open thread" opens your T3 thread).
+const instructions = `Push notifications to Erik's phone: a native notification in his T3 Code app
+(tapping it opens your T3 thread), with a copy in his private Discord server "Agents" as fallback.
 
 Use send only when Erik must know or act soon:
 - urgent: something important is broken and you cannot fix it, security issue, data at risk.
