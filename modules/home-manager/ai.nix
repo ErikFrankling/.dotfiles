@@ -251,6 +251,18 @@ in
     '';
   };
 
+  # The second Claude account (~/.claude_2, T3 Code instance claudeAgent_claude_2)
+  # shares the first account's transcript store, so a thread switched between
+  # accounts (by hand or by T3's usage-limit failover) resumes the same session.
+  # T3 also copies transcripts when the directories are separate; this only
+  # links when nothing is there yet, so an existing directory is never replaced.
+  home.activation.claudeSharedProjects = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if [ -d "$HOME/.claude_2" ] && [ ! -e "$HOME/.claude_2/projects" ]; then
+      run mkdir -p "$HOME/.claude/projects"
+      run ln -s "$HOME/.claude/projects" "$HOME/.claude_2/projects"
+    fi
+  '';
+
   dconf.settings."org/gnome/desktop/interface".toolkit-accessibility = true;
 
   programs.codexDesktopLinux = {
