@@ -194,6 +194,21 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-21 05:36 (health-watch) — `phone/executor` and `phone/openclaw`
+  (lan-only routes) got 403 and `lan/x-graph-embed` refused connections,
+  right after a deploy restarted the Gatus pod (05:32). x-graph-embed: Pod
+  Pending on "Insufficient cpu" (node 98% requested), Flux waiting on its
+  health check; healed itself when the 50m-CPU commit applied. The 403s:
+  Gatus' first requests after the restart went out before the tailscale
+  sidecar had its subnet route, so tailscaled dialled 192.168.50.100:443
+  directly (Traefik then sees the node's own address) and the pooled CONNECT
+  tunnels for those two hosts stayed open and kept 403ing. Fix without a
+  restart: on naiaclaw `sudo ss -K state established dst 192.168.50.100
+  dport = :443` kills tailscaled's stale tunnels; Gatus reconnects through
+  the proxy. Spot them with `ss -tnp | grep tailscaled | grep
+  192.168.50.100:443`. (busybox wget in the sidecar ignores https_proxy, so
+  it 403s for every host; do not test with it.)
+
 - 2026-10-17 23:19 (health-watch) — Every homelab check dead from the pc,
   ping to 192.168.50.200 and .169 lost. Erik's TP-Link router (MAC
   20:e1:5d:e4:2e:e0) dropped the link for two minutes and came back on
