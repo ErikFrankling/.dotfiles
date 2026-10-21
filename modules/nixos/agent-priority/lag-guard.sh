@@ -77,32 +77,40 @@ stop() { # pid reason
   ) &
 }
 
+denied_reason() { # pid -> why it may not run on the pc (empty: allowed)
+  local pid=$1 comm rss
+  comm=$(cat "/proc/$pid/comm" 2>/dev/null) || return 0
+  [[ $comm =~ $providers ]] && return 0
+  if [[ $comm =~ $denied_comm ]]; then
+    echo "$comm does not run on the pc"
+    return 0
+  fi
+  case $comm in
+    java)
+      if tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -Eq "$denied_java"; then
+        echo "Gradle/Kotlin builds do not run on the pc"
+      fi
+      ;;
+    nix)
+      rss=$(rss_of "$pid")
+      [ "${rss:-0}" -gt "$NIX_RSS" ] && echo "a local Nix evaluation"
+      ;;
+    node | MainThread | python* | tsgo | tsc | bun | deno)
+      rss=$(rss_of "$pid")
+      [ "${rss:-0}" -gt "$BIG_RSS" ] && echo "over $((BIG_RSS / 1000000)) GB of memory"
+      ;;
+  esac
+  return 0
+}
+
 check_denied() {
-  local pid comm rss
+  local pid reason
   for pid in $(agent_pids); do
     [ -n "${paused[$pid]:-}" ] && continue
-    comm=$(cat "/proc/$pid/comm" 2>/dev/null) || continue
-    [[ $comm =~ $providers ]] && continue
-    if [[ $comm =~ $denied_comm ]]; then
-      stop "$pid" "$comm does not run on the pc"
-      continue
-    fi
-    case $comm in
-      java)
-        if tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -Eq "$denied_java"; then
-          stop "$pid" "Gradle/Kotlin builds do not run on the pc"
-        fi
-        ;;
-      nix)
-        rss=$(rss_of "$pid")
-        [ "${rss:-0}" -gt "$NIX_RSS" ] && stop "$pid" "a local Nix evaluation"
-        ;;
-      node | MainThread | python* | tsgo | tsc | bun | deno)
-        rss=$(rss_of "$pid")
-        [ "${rss:-0}" -gt "$BIG_RSS" ] && stop "$pid" "over $((BIG_RSS / 1000000)) GB of memory"
-        ;;
-    esac
+    reason=$(denied_reason "$pid")
+    [ -n "$reason" ] && stop "$pid" "$reason"
   done
+  return 0
 }
 
 declare -A ticks_then=()
@@ -264,15 +272,21 @@ idle_tick() {
 }
 
 leave_idle() {
-  local pid comm t base avail cur max rss best best_pid
+  local pid comm t base started avail cur max rss best best_pid
   echo "Erik is back: pausing heavy agent jobs"
   for pid in $(agent_pids); do
     comm=$(cat "/proc/$pid/comm" 2>/dev/null) || continue
     [[ $comm =~ $providers ]] && continue
     t=$(ticks_of "$pid") || continue
     base=${idle_ticks[$pid]:-0}
-    # Anything that used over 10 s of CPU during the window, or is denied.
-    if [ $((${t:-0} - base)) -gt $((10 * hz)) ] || [[ $comm =~ $denied_comm ]]; then
+    started=0
+    # when-idle exports WHEN_IDLE_JOB=1; every child inherits it.
+    tr '\0' '\n' <"/proc/$pid/environ" 2>/dev/null | grep -qx 'WHEN_IDLE_JOB=1' && started=1
+    # The whole when-idle job (Gradle wrapper included), anything that used
+    # over 10 s of CPU in the window, and anything denied, which would
+    # otherwise be killed a moment later.
+    if [ "$started" = 1 ] || [ $((${t:-0} - base)) -gt $((10 * hz)) ] ||
+      [ -n "$(denied_reason "$pid")" ]; then
       [ "$DRY_RUN" = 1 ] || kill -STOP "$pid" 2>/dev/null
       paused[$pid]=1
       echo "paused $pid $comm"

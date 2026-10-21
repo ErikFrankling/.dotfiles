@@ -10,5 +10,7 @@ if ! pc-idle >/dev/null; then
   echo "when-idle: waiting until Erik is away from the pc (check: pc-idle)" >&2
   until pc-idle >/dev/null; do sleep 15; done
 fi
+# lag-guard pauses (never kills) every process carrying this when Erik is back.
+export WHEN_IDLE_JOB=1
 echo "when-idle: Erik is idle, starting: $*" >&2
 exec "$@"
