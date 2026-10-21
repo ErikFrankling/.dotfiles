@@ -40,8 +40,10 @@ let
       heavy: run heavy agent work on the homelab worker, never on this PC.
 
         heavy [OPTIONS] [--] CMD...
-            Sync this git repository (or the current directory) one way to the
-            worker, then run CMD in the same subdirectory there. Output streams
+            Sync this repository one way to the worker: exactly the files git
+            lists (tracked + untracked, minus .gitignore, .git/info/exclude and
+            core.excludesFile; no .git), or the current directory outside git.
+            Then run CMD in the same subdirectory there. Output streams
             back and the exit code is CMD's. Ctrl-C or killing heavy kills the
             remote job. Nothing comes back unless you `heavy pull` it.
             --shell NAME   run inside the flake's devShell NAME (`android` or
@@ -86,25 +88,36 @@ let
       q() { printf '%q ' "$@"; }
 
       sync_up() {
-        remote "mkdir -p '$ws'" || die "cannot reach the worker (${host}:${toString port}); nothing was run locally"
-        # Ignored and excluded paths are never deleted on the worker, so its
-        # node_modules, build outputs and caches survive between runs.
-        filters=(--filter=':- .gitignore' --exclude=node_modules/ --exclude=.direnv/
-          --exclude=/result --exclude='result-*' --exclude=.venv/ --exclude=.turbo/
-          --exclude=.gradle/ --exclude=.cxx/ --exclude=.expo/ --exclude=/.heavy/)
-        # A git worktree's .git is a file pointing into the main checkout,
-        # which the worker does not have: give the copy a repository of its
-        # own, so git and `nix develop` (tracked files only) still work.
-        worktree=0
-        if [ -f "$local_root/.git" ]; then worktree=1; filters+=(--exclude=/.git); fi
+        remote "mkdir -p $(q "$ws/.heavy")" || die "cannot reach the worker (${host}:${toString port}); nothing was run locally"
         # Exit 24: files vanished while syncing (another session at work); fine.
         rc=0
-        rsync -az --no-owner --no-group --delete "''${filters[@]}" -e "ssh ''${ssh_opts[*]}" \
-          "$local_root/" "$target:$ws/" || rc=$?
-        [ "$rc" = 0 ] || [ "$rc" = 24 ] || die "sync to the worker failed; nothing was run locally"
-        if [ "$worktree" = 1 ]; then
-          remote "cd '$ws' && { [ -d .git ] || git init -q; } && git add -A" \
-            || die "could not set up git in the worker's copy"
+        if git -C "$local_root" rev-parse --git-dir > /dev/null 2>&1; then
+          # Exactly the files git would show: tracked plus untracked, minus
+          # everything ignored by .gitignore, .git/info/exclude (a worktree's
+          # common dir included) and core.excludesFile. Agents keep scratch
+          # and keys in those excludes; they must never leave this PC. .git is
+          # not synced either; the worker's copy gets a repository of its own.
+          list=$(mktemp)
+          git -C "$local_root" ls-files -z --cached --others --exclude-standard > "$list"
+          rsync -az --no-owner --no-group --from0 --files-from="$list" --ignore-missing-args \
+            -e "ssh ''${ssh_opts[*]}" "$local_root/" "$target:$ws/" || rc=$?
+          [ "$rc" = 0 ] || [ "$rc" = 24 ] || { rm -f "$list"; die "sync to the worker failed; nothing was run locally"; }
+          # Delete on the worker what an earlier sync put there and this one
+          # no longer lists; leave everything the worker made itself
+          # (node_modules, build outputs, caches).
+          remote "cd $(q "$ws") && cat > .heavy/manifest.new \
+            && { [ ! -f .heavy/manifest ] || comm -z -23 <(sort -z .heavy/manifest) <(sort -z .heavy/manifest.new) | xargs -0 -r rm -f --; } \
+            && mv .heavy/manifest.new .heavy/manifest \
+            && { [ -d .git ] || git init -q; } && git add -A" < "$list" \
+            || { rm -f "$list"; die "could not finish the worker's copy"; }
+          rm -f "$list"
+        else
+          # Not a repository: the whole directory, minus the usual bulk.
+          filters=(--exclude=node_modules/ --exclude=.direnv/ --exclude=/result --exclude='result-*'
+            --exclude=.venv/ --exclude=.gradle/ --exclude=/.heavy/)
+          rsync -az --no-owner --no-group --delete "''${filters[@]}" -e "ssh ''${ssh_opts[*]}" \
+            "$local_root/" "$target:$ws/" || rc=$?
+          [ "$rc" = 0 ] || [ "$rc" = 24 ] || die "sync to the worker failed; nothing was run locally"
         fi
       }
 
