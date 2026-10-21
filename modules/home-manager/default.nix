@@ -16,7 +16,6 @@
     ./rust.nix
     ./scripts
     ./zellij
-    ./shopping # shopping research skill
   ];
 
   nixpkgs.config.allowUnfree = true;

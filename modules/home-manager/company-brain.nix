@@ -51,6 +51,10 @@ let
     # Writing as Erik
 
     Before writing text Erik will hand in or send, load the brain skill `erik-writing-style`.
+
+    # Shopping
+
+    For shopping research, load the brain skill `shopping`.
   '';
   # Skills that ship with this module, installed for every harness.
   skills = {
