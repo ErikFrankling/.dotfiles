@@ -80,6 +80,7 @@ let
   nixosRemoteSwitch = pkgs.writeShellApplication {
     name = "nixos-remote-switch";
     runtimeInputs = [
+      pkgs.git
       nixRemote
       pkgs.nvd
       pkgs.coreutils

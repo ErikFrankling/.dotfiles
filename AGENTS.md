@@ -210,6 +210,11 @@ other hosts at all.
 - Still never commit secrets in plaintext; sops-encrypted files are fine
 - Pulling and fetching still need to be asked for, since they can clobber
   local work
+- Exception: when `rebuild` refuses because `~/.dotfiles` is behind `origin/main`,
+  run `git -C ~/.dotfiles pull --rebase --autostash` (it keeps everyone's
+  uncommitted work), or deploy a clean worktree of `origin/main` with
+  `nixos-remote-switch switch <dir>`. Never deploy a checkout that is behind:
+  it rolls back what other sessions already shipped.
 
 ---
 

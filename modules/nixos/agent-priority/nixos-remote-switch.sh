@@ -18,6 +18,24 @@ case $action in
 esac
 
 cd "$dir" || exit 1
+
+# A checkout behind origin/main would roll back what other sessions already
+# pushed and deployed (it happened all morning on 2026-10-21). Agents must
+# update first; Erik gets a warning.
+if git rev-parse --git-dir >/dev/null 2>&1 && git fetch -q origin 2>/dev/null; then
+  behind=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo 0)
+  if [ "${behind:-0}" -gt 0 ]; then
+    msg="$dir is $behind commit(s) behind origin/main; deploying it would revert them on this machine."
+    case "$(cat /proc/self/cgroup)" in
+      */t3code-terminal-*) echo "warning: $msg" >&2 ;;
+      */app-t3code.slice/*)
+        echo "nixos-remote-switch: $msg Rebase onto origin/main first (or deploy a clean worktree of origin/main: nixos-remote-switch $action <dir>)." >&2
+        exit 1
+        ;;
+      *) echo "warning: $msg" >&2 ;;
+    esac
+  fi
+fi
 if [ "$action" = dry-build ]; then
   exec nix-remote build --dry-run ".#$attr"
 fi
