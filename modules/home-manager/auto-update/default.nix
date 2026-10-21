@@ -55,15 +55,11 @@ let
       case "''${1:-}" in
         plan)
           # What the homelab would have to build, per host. Substitutions are
-          # not listed; only real builds matter. A dry run against a remote
-          # store only knows derivations that are already there, so the .drv
-          # closure is copied over first; without that the builder answers
-          # "don't know how to build" and this printed nothing.
+          # not listed; only real builds matter. The evaluation runs on the
+          # builder too (nix-remote): a local one is killed by the lag-guard.
           for host in ${lib.concatStringsSep " " hosts}; do
             echo "== $host"
-            drv=$(nix eval --raw "$(attr "$host").drvPath")
-            nix copy --to ${builder} "$drv"
-            nix build --dry-run --store ${builder} "$drv^*" 2>&1 \
+            /run/current-system/sw/bin/nix-remote build --dry-run "$(attr "$host")" 2>&1 \
               | sed -n '/will be built:/,/will be fetched/p' \
               | sed 's|^  /nix/store/[a-z0-9]*-|  |' \
               | grep -v 'will be fetched' || true
@@ -271,7 +267,7 @@ let
     # A previous session that is still building owns the clone; resetting it
     # underneath would wreck that run.
     preflight = ''
-      if pgrep -u "$(id -u)" -f 'nix build .*--store ${builder}' > /dev/null; then
+      if pgrep -u "$(id -u)" -f 'nix-nightly build' > /dev/null; then
         fail "Last night's update is still building on the homelab, so tonight's was not started."
       fi
     '';
@@ -354,7 +350,7 @@ let
             echo "last nightly build: none recorded"
           fi
           [ -f ${stateDir}/last-notify ] && echo "last nightly alert: $(cat ${stateDir}/last-notify)"
-          pgrep -u "$(id -u)" -f 'nix build .*--store ${builder}' > /dev/null \
+          pgrep -u "$(id -u)" -f 'nix-nightly build' > /dev/null \
             && echo "a nightly build is STILL RUNNING"
           echo "nightly clone: $(git -C ${clone} log -1 --format='%h %s' 2>/dev/null), $(git -C ${clone} status --porcelain 2>/dev/null | wc -l) uncommitted files"
 

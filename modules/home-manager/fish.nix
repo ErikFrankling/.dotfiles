@@ -9,7 +9,20 @@
 let
   rebuildScript = pkgs.writeScriptBin "rebuild" ''
     #!${pkgs.fish}/bin/fish
-    cd /home/${username}/.dotfiles
+    # Builds the dotfiles checkout it is run from (a clone or worktree of this
+    # repo), else ~/.dotfiles.
+    set -l dir /home/${username}/.dotfiles
+    set -l top (git rev-parse --show-toplevel 2>/dev/null)
+    if test -n "$top"; and test -f "$top/flake.nix"; and test -d "$top/modules/nixos/agent-priority"
+      set dir $top
+    end
+    cd $dir
+    echo "rebuild: deploying $dir"
+    set -l cg (cat /proc/self/cgroup)
+    set -l agent 0
+    if string match -q '*/app-t3code.slice/*' -- $cg; and not string match -q '*/t3code-terminal-*' -- $cg
+      set agent 1
+    end
 
     if [ -f /home/${username}/.ssh/id_ed25519 ]
       if [ ! -f /home/${username}/.config/sops/age/keys.txt ]
@@ -22,7 +35,17 @@ let
       'scp ~/.ssh/id_ed25519.pub erikf@$pc:~/.ssh/'"
     end
 
-    git add -A
+    # A flake only sees files git knows. Erik's rebuild stages everything; an
+    # agent's does not, because ~/.dotfiles holds other sessions' scratch files
+    # and half-done work (agents commit their own files first).
+    if test $agent = 0
+      git add -A
+    else
+      set -l untracked (git ls-files --others --exclude-standard -- flake.nix hosts modules)
+      if test -n "$untracked"
+        echo "rebuild: not in the build until committed or git-added: $untracked" >&2
+      end
+    end
 
     if [ -z "$argv" ]
       set argv "switch"
@@ -31,13 +54,12 @@ let
     # On the pc the evaluation and build run on the homelab builder and only
     # the activation runs here (modules/nixos/agent-priority). `rebuild --local`
     # is the old local nh path, for when the homelab is down.
-    set -l cg (cat /proc/self/cgroup)
-    if contains -- --local $argv; and string match -q '*/app-t3code.slice/*' -- $cg; and not string match -q '*/t3code-terminal-*' -- $cg
+    if contains -- --local $argv; and test $agent = 1
       echo "rebuild --local is Erik's fallback; agents build on the homelab (plain rebuild)." >&2
       exit 1
     end
     if command -q nixos-remote-switch; and not contains -- --local $argv
-      nixos-remote-switch $argv[1] /home/${username}/.dotfiles; or exit 1
+      nixos-remote-switch $argv[1] $dir; or exit 1
     else
       set argv (string match -v -- --local $argv)
       test -n "$argv"; or set argv switch

@@ -84,6 +84,7 @@ let
       nixRemote
       pkgs.nvd
       pkgs.coreutils
+      pkgs.util-linux # flock
     ];
     runtimeEnv.HOST = config.networking.hostName;
     text = builtins.readFile ./nixos-remote-switch.sh;

@@ -215,6 +215,11 @@ other hosts at all.
   uncommitted work), or deploy a clean worktree of `origin/main` with
   `nixos-remote-switch switch <dir>`. Never deploy a checkout that is behind:
   it rolls back what other sessions already shipped.
+- `rebuild` deploys the dotfiles checkout you run it from (a clone or worktree),
+  else `~/.dotfiles`. For agents it does not `git add -A`: commit your files
+  first. It also refuses a checkout that lacks the commit this machine last
+  deployed through `rebuild`, and serializes activations under a lock.
+  Overriding is for Erik only (`NIXOS_REMOTE_SWITCH_FORCE=1`).
 
 ---
 

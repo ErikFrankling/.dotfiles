@@ -56,7 +56,7 @@ releases later if left alone. Collect them for both hosts:
 
 ```bash
 for h in pc framework; do
-  nix eval --raw .#nixosConfigurations.$h.config.system.build.toplevel.drvPath 2>&1 >/dev/null \
+  nix-remote eval --raw .#nixosConfigurations.$h.config.system.build.toplevel.drvPath 2>&1 >/dev/null \
     | grep -A8 "evaluation warning"
 done
 ```

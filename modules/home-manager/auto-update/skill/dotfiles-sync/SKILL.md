@@ -51,7 +51,7 @@ Before committing, read the diff of every file you are about to add.
      out with the edit applied inside the comment only if that is clearly what
      both meant; otherwise prefer the side that is newer in time.
 5. Check that the config still evaluates for this host:
-   `nix eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath`.
+   `nix-remote eval --raw .#nixosConfigurations.<host>.config.system.build.toplevel.drvPath`.
    Fix what the merge broke. If the local work itself does not evaluate and the
    fix is not obvious, still commit and push it only if main keeps evaluating
    for both hosts; otherwise stop and report.
