@@ -97,8 +97,11 @@ let
         # own, so git and `nix develop` (tracked files only) still work.
         worktree=0
         if [ -f "$local_root/.git" ]; then worktree=1; filters+=(--exclude=/.git); fi
+        # Exit 24: files vanished while syncing (another session at work); fine.
+        rc=0
         rsync -az --no-owner --no-group --delete "''${filters[@]}" -e "ssh ''${ssh_opts[*]}" \
-          "$local_root/" "$target:$ws/" || die "sync to the worker failed; nothing was run locally"
+          "$local_root/" "$target:$ws/" || rc=$?
+        [ "$rc" = 0 ] || [ "$rc" = 24 ] || die "sync to the worker failed; nothing was run locally"
         if [ "$worktree" = 1 ]; then
           remote "cd '$ws' && { [ -d .git ] || git init -q; } && git add -A" \
             || die "could not set up git in the worker's copy"
