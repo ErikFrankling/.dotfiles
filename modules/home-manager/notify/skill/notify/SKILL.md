@@ -59,7 +59,9 @@ see `docs/notifications.md` in the homelab repo.
 - **Always link your thread** (`threadId` / `--thread`) so a tap opens it.
 - **Codes:** only short-lived codes. Never passwords, tokens or recovery
   codes. When a login sends a code to Erik's email and you need him to type
-  it on his phone or another device, send it with `sendCode`. When you need
+  it on his phone or another device, send it with `sendCode`. To read
+  that code from his personal Gmail, use the Executor `gmail` tools
+  (`searchThreads`, `getThread`) before any browser or Thunderbird. When you need
   a code *from* him, ask in your thread and send a `high` notification that
   links it.
 - Tests: `test: true` / `--test` prefixes the title with `[TEST]`.
