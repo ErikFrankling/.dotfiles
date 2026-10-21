@@ -117,12 +117,16 @@ known causes:
 - `NEW KERNEL`: the update is applied but only takes effect after a restart.
   Never reboot anything yourself; tell Erik.
 
-**The phone app** (Erik's T3 Code fork for Android, installed through
-Obtainium) is: the newest `erik-android.yml` run on `ErikFrankling/t3code`
-succeeded, and the newest `android-v*` release is from the current `erik/main`
-(`gh run list -R ErikFrankling/t3code --workflow erik-android.yml --limit 3`,
-`gh release list -R ErikFrankling/t3code --limit 3`). A failed run leaves the
-phone on the previous build: read the log (`gh run view <id> --log-failed`),
+**The phone app** (Erik's T3 Code fork for Android; it updates itself, see the
+fork's `docs/erik-updates.md`) is: the newest `erik-android.yml` run on
+`ErikFrankling/t3code` succeeded, and the update index names the current
+`erik/main` (`gh run list -R ErikFrankling/t3code --workflow erik-android.yml --limit 3`;
+`curl -sL https://github.com/ErikFrankling/t3code/releases/download/android-ota/index.json | jq '{apk: .apk.commit, js: [.runtimes[].commit]}'`:
+the APK commit or one of the JS commits is `erik/main`'s tip). The update server
+is `https://t3-updates.erikfrankling.duckdns.org/healthz` (Gatus `phone/t3-updates`).
+A run that fails in "Plan" with "lacks work already shipped" refused to roll the
+phone back: find out why `erik/main` lost those commits before anything else.
+A failed run leaves the phone on the previous build: read the log (`gh run view <id> --log-failed`),
 fix it in the fork (`nix-update-doctor`, "T3 Code fork"), and rerun with
 `gh workflow run erik-android.yml -R ErikFrankling/t3code --ref erik/main`.
 

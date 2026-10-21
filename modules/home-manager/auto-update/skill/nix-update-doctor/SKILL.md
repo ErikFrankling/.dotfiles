@@ -95,9 +95,12 @@ mode, the personal agent, a desktop keyring fix) on top of the newest upstream
 not every commit on `main`, so each daily rebase stays small.
 
 The fork also builds Erik's phone app: every push to `erik/main` runs
-`.github/workflows/erik-android.yml` on GitHub Actions, which publishes an APK
-release that Obtainium installs on his phone. So the force-push in step 6 is
-also the phone update; after it, check the run
+`.github/workflows/erik-android.yml` on GitHub Actions, which publishes a signed
+JS update or, after a native change, an APK; the app installs either by itself
+(the fork's `docs/erik-updates.md`). So the force-push in step 6 is also the
+phone update. The run refuses to publish if `erik/main` lost a commit that was
+already shipped (same patch or same subject counts as kept), so never drop or
+reword fork commits in the rebase; after it, check the run
 (`gh run list -R ErikFrankling/t3code --workflow erik-android.yml --limit 1`).
 A failed run does not block the rest of the update (the phone keeps the
 previous build), but repair it if the cause is clear: usually a conflict
