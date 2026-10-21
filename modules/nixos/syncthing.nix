@@ -35,8 +35,10 @@
         "ubuntu-hp" = {
           id = "J6ZOL7B-OJY3YCW-FXJIFME-LTCOXSW-4VMXDWZ-ISUONNV-Z4W4ZMU-63YDKA2";
         };
+        # Rotated 2026-10-21: the old identity (N3IDYYF-...) was the key in
+        # myconfig/key.pem, committed to this public repo in April 2025.
         "framework" = {
-          id = "N3IDYYF-3ZANKMD-NIQN2ZJ-HKTS2OP-HVKYCZY-SF7XB6G-7U2DWTD-YIHHJQI";
+          id = "HHSEWCM-ZVJ5AUA-QISSPIB-4Z7CJYM-5M3L55R-HKUMVVE-DYBO34Z-RVQ34AV";
         };
         "SM-S901B" = {
           id = "6N4J2HT-JPZLVQF-RSHUGEA-G6YV2YP-CEPIAL2-Q2TTTUX-KUZ36BR-Z5RJEQY";

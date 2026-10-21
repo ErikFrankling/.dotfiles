@@ -15,6 +15,7 @@
     # ./yubikey-gpg.nix
     ./qmk.nix
     ./secrets.nix
+    ./ca-distrust.nix # roots distrusted before nixpkgs catches up (emSign G3)
     # ./nm.nix
     # ./projects/dtek.nix
     ./syncthing.nix
