@@ -21,7 +21,10 @@ in
             version = "0.1.1";
             src = inputs.t3code-src;
             # Thread config must extend, not replace, the harness's MCP overrides.
-            patches = (oldAttrs.patches or [ ]) ++ [ ./t3code-preserve-mcp.patch ];
+            # The fork carries this fix itself now (dotted "mcp_servers.t3-code" key),
+            # so the patch no longer applies; kept for reference.
+            # patches = (oldAttrs.patches or [ ]) ++ [ ./t3code-preserve-mcp.patch ];
+            patches = oldAttrs.patches or [ ];
             # Upstream postPatch now copies the SPDX license data itself.
             # Upstream nightlies move past the nixpkgs release, so the lock differs.
             pnpmDeps = otherPkgs.pkgsMaster.fetchPnpmDeps {
