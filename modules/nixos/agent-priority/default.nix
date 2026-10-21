@@ -261,9 +261,7 @@ in
 
         # zram only (zramSwap in ../default.nix, half the RAM). The 64 GB disk
         # partition let runaways thrash for minutes instead of being killed.
-        # Disabled until the running system can swapoff the partition (9.5 GB
-        # were on it at the first switch); enabled in the next step.
-        # swapDevices = lib.mkForce [ ];
+        swapDevices = lib.mkForce [ ];
 
         systemd.oomd.enable = true;
 
