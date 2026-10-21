@@ -1,137 +1,193 @@
-# lag-guard: when the pc keeps stalling on disk IO or memory, stop agents'
-# heavy jobs, emulators first, and tell Erik what was stopped. Runs as root
-# (it also stops local Nix builds). Heavy agent work belongs on the homelab
-# (`heavy`, `nix-remote`); this catches what slipped through.
+# lag-guard: agents do not run heavy work on the pc. Runs as root every
+# INTERVAL seconds over every process in the agent slice (app-t3code.slice,
+# except Erik's own T3 terminals):
 #
-# Levels, one per trigger, each followed by a cooldown:
-#   1. Android emulators (qemu) in the agent slice
-#   2. local Nix builds (nix-daemon build users) and big `nix` evaluations
-#   3. compilers, Gradle, llama-server, typecheckers and any agent process
-#      over BIG_RSS, plus every unit an agent started with systemd-run
+#   - Denied outright, killed on sight: Android emulators (qemu), Gradle and
+#     Kotlin daemons, compilers (rustc, cc1, clang), llama-server, a `nix`
+#     evaluation over NIX_RSS, and node/python/tsgo processes over BIG_RSS.
+#   - CPU: when the agents together averaged over CPU_CORES cores for the
+#     last CPU_WINDOW seconds, every non-provider process that used over half
+#     a core in that window is killed.
+#   - Pressure: when the whole pc stalls on disk IO or memory (avg10 over
+#     IO_FULL / MEM_FULL for SUSTAIN samples), it stops local Nix builds and
+#     the biggest agent process.
 #
-# Environment: IO_FULL / MEM_FULL (avg10 % thresholds), SUSTAIN (samples),
-# INTERVAL (s), COOLDOWN (s), BIG_RSS (KiB), ERIK_UID, DRY_RUN=1.
+# Each stopped process first gets the reason on its stderr, which is the
+# owning agent's tool output, so the agent learns why. Erik gets one
+# notification per NOTIFY_EVERY seconds listing what was stopped.
+#
+# Environment: INTERVAL, CPU_CORES, CPU_WINDOW, IO_FULL, MEM_FULL, SUSTAIN,
+# BIG_RSS, NIX_RSS (KiB), NOTIFY_EVERY, ERIK_UID, DRY_RUN=1.
 
 # A watchdog must not die on a failed test or a vanished pid.
 set +o errexit +o pipefail
 
+INTERVAL=${INTERVAL:-2}
+CPU_CORES=${CPU_CORES:-3}
+CPU_WINDOW=${CPU_WINDOW:-60}
 IO_FULL=${IO_FULL:-20}
 MEM_FULL=${MEM_FULL:-10}
-SUSTAIN=${SUSTAIN:-3}
-INTERVAL=${INTERVAL:-5}
-COOLDOWN=${COOLDOWN:-60}
-BIG_RSS=${BIG_RSS:-1500000}
+SUSTAIN=${SUSTAIN:-5}
+BIG_RSS=${BIG_RSS:-2000000}
+NIX_RSS=${NIX_RSS:-700000}
+NOTIFY_EVERY=${NOTIFY_EVERY:-900}
 ERIK_UID=${ERIK_UID:-1000}
 DRY_RUN=${DRY_RUN:-0}
 
 agents=/sys/fs/cgroup/user.slice/user-$ERIK_UID.slice/user@$ERIK_UID.service/app.slice/app-t3code.slice
 nixd=/sys/fs/cgroup/system.slice/nix-daemon.service
-heavy_comm='^(java|clang.*|cc1.*|c\+\+|g\+\+|gcc|ld|ld\.lld|lld|rustc|cargo|make|ninja|cmake|llama-server|tsgo|tsc|ffmpeg|stress-ng.*|qemu-system.*|emulator.*)$'
+hz=$(getconf CLK_TCK)
+providers='^(\.?claude(-wrapped)?|\.?codex.*|\.?opencode.*|\.?cursor-agent.*|\.?grok.*)$'
+denied_comm='^(qemu-system.*|emulator|emulator64.*|llama-server|rustc|cc1|cc1plus|cc1obj|clang|clang\+\+|clang-[0-9]+|ld\.lld)$'
+denied_java='GradleDaemon|GradleWrapperMain|org\.gradle\.|KotlinCompileDaemon'
+homelab_hint="Heavy work runs on the homelab, not on Erik's pc: heavy -- <cmd> (builds, tests, emulator: heavy emulator start), rebuild, nix-remote build|eval."
+
+# All agent pids, minus Erik's T3 terminals.
+agent_pids() {
+  find "$agents" -name cgroup.procs -not -path '*/t3code-terminal-*' -exec cat {} + 2>/dev/null
+}
+
+rss_of() { awk '/^VmRSS/ { print $2; exit }' "/proc/$1/status" 2>/dev/null; }
+ticks_of() { awk '{ sub(/^.*\) /, ""); print $12 + $13 }' "/proc/$1/stat" 2>/dev/null; }
+
+pending=()
+stop() { # pid reason
+  local pid=$1 reason=$2 comm rss
+  comm=$(cat "/proc/$pid/comm" 2>/dev/null) || return 0
+  rss=$(rss_of "$pid")
+  rss=$(awk -v k="${rss:-0}" 'BEGIN { printf "%.1fG", k / 1048576 }')
+  echo "stopping $pid $comm ($rss): $reason"
+  pending+=("$comm ($rss, $reason)")
+  [ "$DRY_RUN" = 1 ] && return 0
+  # Tell the agent through the process's own stderr; never block on it.
+  # shellcheck disable=SC2016
+  timeout 1 sh -c 'printf "\n[lag-guard] Killed %s (pid %s): %s. %s\n" "$1" "$2" "$3" "$4" > "/proc/$2/fd/2"' \
+    _ "$comm" "$pid" "$reason" "$homelab_hint" 2>/dev/null
+  kill -TERM "$pid" 2>/dev/null
+  (
+    sleep 5
+    kill -KILL "$pid" 2>/dev/null
+  ) &
+}
+
+check_denied() {
+  local pid comm rss
+  for pid in $(agent_pids); do
+    comm=$(cat "/proc/$pid/comm" 2>/dev/null) || continue
+    [[ $comm =~ $providers ]] && continue
+    if [[ $comm =~ $denied_comm ]]; then
+      stop "$pid" "$comm does not run on the pc"
+      continue
+    fi
+    case $comm in
+      java)
+        if tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -Eq "$denied_java"; then
+          stop "$pid" "Gradle/Kotlin builds do not run on the pc"
+        fi
+        ;;
+      nix)
+        rss=$(rss_of "$pid")
+        [ "${rss:-0}" -gt "$NIX_RSS" ] && stop "$pid" "a local Nix evaluation"
+        ;;
+      node | MainThread | python* | tsgo | tsc | bun | deno)
+        rss=$(rss_of "$pid")
+        [ "${rss:-0}" -gt "$BIG_RSS" ] && stop "$pid" "over $((BIG_RSS / 1000000)) GB of memory"
+        ;;
+    esac
+  done
+}
+
+declare -A ticks_then=()
+usage_then=""
+window_start=$SECONDS
+check_cpu() {
+  local usage pid comm t cores span
+  usage=$(awk '/^usage_usec/ { print $2 }' "$agents/cpu.stat" 2>/dev/null)
+  span=$((SECONDS - window_start))
+  if [ -n "$usage_then" ] && [ "$span" -ge "$CPU_WINDOW" ]; then
+    cores=$(awk -v u=$((usage - usage_then)) -v s="$span" 'BEGIN { printf "%.1f", u / s / 1000000 }')
+    if awk -v c="$cores" -v l="$CPU_CORES" 'BEGIN { exit !(c >= l) }'; then
+      echo "agents used $cores cores over ${span}s"
+      for pid in $(agent_pids); do
+        comm=$(cat "/proc/$pid/comm" 2>/dev/null) || continue
+        [[ $comm =~ $providers ]] && continue
+        t=$(ticks_of "$pid")
+        [ -n "$t" ] && [ -n "${ticks_then[$pid]:-}" ] || continue
+        # More than half a core over the window.
+        if [ $(((t - ticks_then[$pid]) * 2)) -gt $((span * hz)) ]; then
+          stop "$pid" "agents averaged $cores cores for a minute"
+        fi
+      done
+    fi
+    usage_then=""
+  fi
+  if [ -z "$usage_then" ]; then
+    usage_then=$usage
+    window_start=$SECONDS
+    ticks_then=()
+    for pid in $(agent_pids); do
+      t=$(ticks_of "$pid")
+      [ -n "$t" ] && ticks_then[$pid]=$t
+    done
+  fi
+}
 
 full() { awk '/^full/ { for (i = 1; i <= NF; i++) if ($i ~ /^avg10=/) { sub("avg10=", "", $i); printf "%d", $i } }' "/proc/pressure/$1"; }
 
-pids_under() { find "$1" -name cgroup.procs -exec cat {} + 2>/dev/null; }
-
-describe() { # pid -> "comm (1.2G)"
-  local comm rss
-  comm=$(cat "/proc/$1/comm" 2>/dev/null) || return 1
-  rss=$(awk '/^VmRSS/ { printf "%.1fG", $2 / 1048576 }' "/proc/$1/status" 2>/dev/null)
-  echo "$comm (${rss:-?})"
-}
-
-stopped=()
-stop_pids() { # pids...
-  local pid d
-  for pid in "$@"; do
-    d=$(describe "$pid") || continue
-    stopped+=("$d")
-    echo "stopping $pid $d"
-    [ "$DRY_RUN" = 1 ] || kill -TERM "$pid" 2>/dev/null
-  done
-  [ "$DRY_RUN" = 1 ] && return
-  sleep 5
-  for pid in "$@"; do kill -KILL "$pid" 2>/dev/null; done
-}
-
-level_emulators() {
-  local pid out=()
-  for pid in $(pids_under "$agents"); do
-    case $(cat "/proc/$pid/comm" 2>/dev/null) in qemu-system* | emulator*) out+=("$pid") ;; esac
-  done
-  [ ${#out[@]} -gt 0 ] && stop_pids "${out[@]}"
-}
-
-level_nix() {
-  local pid uid rss out=()
-  for pid in $(pids_under "$nixd"); do
-    uid=$(awk '/^Uid:/ { print $2 }' "/proc/$pid/status" 2>/dev/null) || continue
-    [ "${uid:-0}" != 0 ] && out+=("$pid")
-  done
-  for pid in $(pids_under "$agents"); do
-    [ "$(cat "/proc/$pid/comm" 2>/dev/null)" = nix ] || continue
-    rss=$(awk '/^VmRSS/ { print $2 }' "/proc/$pid/status" 2>/dev/null)
-    [ "${rss:-0}" -gt 1000000 ] && out+=("$pid")
-  done
-  [ ${#out[@]} -gt 0 ] && stop_pids "${out[@]}"
-}
-
-level_heavy() {
-  local pid comm rss out=() unit
-  for pid in $(pids_under "$agents"); do
-    comm=$(cat "/proc/$pid/comm" 2>/dev/null) || continue
-    case $comm in claude | codex | opencode | cursor-agent | grok) continue ;; esac
-    rss=$(awk '/^VmRSS/ { print $2 }' "/proc/$pid/status" 2>/dev/null)
-    if [[ $comm =~ $heavy_comm ]] || [ "${rss:-0}" -gt "$BIG_RSS" ]; then out+=("$pid"); fi
-  done
-  # Units agents started with systemd-run (the wrapper keeps them here).
-  for unit in "$agents"/app-t3code-agents.slice/*/*.s*; do
-    [ -d "$unit" ] || continue
-    case ${unit##*/} in t3code-*) continue ;; esac
-    for pid in $(pids_under "$unit"); do out+=("$pid"); done
-  done
-  [ ${#out[@]} -gt 0 ] || return 0
-  mapfile -t out < <(printf "%s\n" "${out[@]}" | sort -un)
-  stop_pids "${out[@]}"
-}
-
-notify() {
-  [ "$DRY_RUN" = 1 ] && { echo "would notify: $1"; return; }
-  notify-erik --priority normal --title "PC lag guard" --tags warning "$1" || true
-}
-
 streak=0
-level=1
-echo "lag-guard: io full > $IO_FULL% or memory full > $MEM_FULL% for $SUSTAIN samples of ${INTERVAL}s"
-while true; do
+check_pressure() {
+  local io mem pid uid rss best=0 best_pid="" reason
   io=$(full io)
   mem=$(full memory)
   if [ "${io:-0}" -gt "$IO_FULL" ] || [ "${mem:-0}" -gt "$MEM_FULL" ]; then
     streak=$((streak + 1))
   else
     streak=0
-    level=1
   fi
-
-  if [ "$streak" -ge "$SUSTAIN" ]; then
-    stopped=()
-    while [ "$level" -le 3 ] && [ ${#stopped[@]} -eq 0 ]; do
-      case $level in
-        1) level_emulators ;;
-        2) level_nix ;;
-        3) level_heavy ;;
-      esac
-      level=$((level + 1))
-    done
-    if [ ${#stopped[@]} -gt 0 ]; then
-      list=$(printf '%s, ' "${stopped[@]}")
-      notify "The PC was stalling (disk IO ${io}%, memory ${mem}% full). Stopped agent work: ${list%, }. Heavy jobs belong on the homelab (heavy, nix-remote)."
-    else
-      level=1
-      echo "pressure high (io $io%, mem $mem%) but no agent heavy jobs left to stop"
+  [ "$streak" -ge "$SUSTAIN" ] || return 0
+  streak=0
+  reason="the pc was stalling (disk IO ${io}% / memory ${mem}% full)"
+  # Local Nix builds (build users are not root).
+  local nixpids
+  mapfile -t nixpids < <(find "$nixd" -name cgroup.procs -exec cat {} + 2>/dev/null)
+  for pid in "${nixpids[@]}"; do
+    uid=$(awk '/^Uid:/ { print $2 }' "/proc/$pid/status" 2>/dev/null)
+    [ "${uid:-0}" != 0 ] && stop "$pid" "$reason"
+  done
+  # The biggest agent process that is not an agent itself.
+  for pid in $(agent_pids); do
+    [[ $(cat "/proc/$pid/comm" 2>/dev/null) =~ $providers ]] && continue
+    rss=$(rss_of "$pid")
+    if [ "${rss:-0}" -gt "$best" ]; then
+      best=$rss
+      best_pid=$pid
     fi
-    streak=0
-    sleep "$COOLDOWN"
-    continue
+  done
+  [ -n "$best_pid" ] && [ "$best" -gt 500000 ] && stop "$best_pid" "$reason"
+  return 0
+}
+
+last_notify=-100000
+flush_notify() {
+  [ ${#pending[@]} -gt 0 ] || return 0
+  [ $((SECONDS - last_notify)) -ge "$NOTIFY_EVERY" ] || return 0
+  local list
+  list=$(printf '%s; ' "${pending[@]}" | head -c 600)
+  pending=()
+  last_notify=$SECONDS
+  if [ "$DRY_RUN" = 1 ]; then
+    echo "would notify: $list"
+    return 0
   fi
+  notify-erik --priority normal --title "PC lag guard" --tags warning \
+    "Stopped agent work on the pc: ${list%; }. It belongs on the homelab." || true
+}
+
+echo "lag-guard: agents=$agents cpu>=$CPU_CORES cores/${CPU_WINDOW}s io>$IO_FULL% mem>$MEM_FULL%"
+while true; do
+  check_denied
+  check_cpu
+  check_pressure
+  flush_notify
   sleep "$INTERVAL"
 done

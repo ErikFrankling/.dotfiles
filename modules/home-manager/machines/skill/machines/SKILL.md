@@ -44,9 +44,9 @@ the pc "because the homelab is slow"; Erik explicitly prefers slow.
 Every T3 Code agent session (claude, codex, opencode, grok, cursor) and all it
 spawns runs under `app-t3code.slice`:
 
-- **CPU idle class**, and **disk caps** (150 MB/s read, 60 MB/s write): the
-  disk is a DRAM-less NV3 that stalls every reader when something writes flat
-  out.
+- **CPU:** idle class and a hard quota of 4 of the 16 threads for all agents
+  together. **Disk caps:** 150 MB/s read, 60 MB/s write (the disk is a
+  DRAM-less NV3 that stalls every reader when something writes flat out).
 - **Memory:** all agents together are throttled above 9 GB and killed above
   11 GB of RAM, with at most 2 GB of swap. There is no disk swap, only zram.
   systemd-oomd kills the agent scope that thrashes hardest. T3 then reports
@@ -56,14 +56,21 @@ spawns runs under `app-t3code.slice`:
   `--slice-inherit --nice=10` and makes the job the first OOM victim). Do not
   escape with `--slice=`, Docker, sudo or system units. Docker containers
   are capped per container anyway.
-- **`nix` refuses local NixOS evaluations** from an agent: `nix build/eval`
-  of `nixosConfigurations`/`homeConfigurations` goes to the builder
-  (`nix-remote`) by itself, and `nix repl`/`develop` on them is refused.
-- **lag-guard** watches the pc's disk and memory pressure. When it stays high
-  it kills agent work, in this order: emulators; local Nix builds and big
-  `nix` evaluations; compilers, Gradle, llama-server, typecheckers, any agent
-  process over 1.5 GB and every unit an agent started with systemd-run. It
-  notifies Erik with what it stopped.
+- **`nix`, `nh`, `nixos-rebuild` and `rebuild` route to the homelab** from an
+  agent: `nix build` of any flake and `nix flake check` run on the builder
+  through `nix-remote`, evaluation included (`--eval-store auto --store
+  ssh-ng://...` still evaluates locally, so it is rerouted too); `nix eval`
+  of a system configuration goes there as well; `nh os` / `nixos-rebuild`
+  / `rebuild` mean `nixos-remote-switch` (build on the homelab, activate
+  here). `nix build -f`/`--expr` is refused: use `heavy`.
+- **lag-guard** (root, every 2 s) kills on sight, in any agent process
+  however it was started: emulators (qemu), Gradle/Kotlin daemons, compilers
+  (rustc, cc1, clang), llama-server, a local `nix` evaluation over 700 MB, and
+  node/python/bun/tsgo over 2 GB. It also kills every non-agent process using
+  over half a core when the agents averaged 3+ cores for a minute, and the
+  biggest agent job when the pc stalls on disk or memory. The killed process
+  gets the reason on its stderr (your tool output) and Erik gets a
+  notification. Getting killed means: move it to the homelab, do not retry.
 
 ### Light-work rules on the pc
 

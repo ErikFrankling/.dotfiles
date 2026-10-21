@@ -208,16 +208,19 @@ in
         # Every Docker container (agents' test stacks, the vLLM TTS that
         # llama-swap starts) is a docker-<id>.scope; a prefix drop-in caps
         # each one without restarting dockerd.
-        environment.etc."systemd/system/docker-.scope.d/50-agent-priority.conf".text = ''
-          [Scope]
-          CPUWeight=20
-          IOWeight=10
-          IOReadBandwidthMax=${systemDisk} 150M
-          IOWriteBandwidthMax=${systemDisk} 60M
-          MemoryHigh=8G
-          MemoryMax=10G
-          MemorySwapMax=1G
-        '';
+        # (environment.etc cannot add to etc/systemd/system, a store symlink.)
+        systemd.packages = [
+          (pkgs.writeTextDir "etc/systemd/system/docker-.scope.d/50-agent-priority.conf" ''
+            [Scope]
+            CPUWeight=20
+            IOWeight=10
+            IOReadBandwidthMax=${systemDisk} 150M
+            IOWriteBandwidthMax=${systemDisk} 60M
+            MemoryHigh=8G
+            MemoryMax=10G
+            MemorySwapMax=1G
+          '')
+        ];
 
         # zram only (zramSwap in ../default.nix, half the RAM). The 64 GB disk
         # partition let runaways thrash for minutes instead of being killed.

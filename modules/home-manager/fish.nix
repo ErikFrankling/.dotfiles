@@ -31,6 +31,11 @@ let
     # On the pc the evaluation and build run on the homelab builder and only
     # the activation runs here (modules/nixos/agent-priority). `rebuild --local`
     # is the old local nh path, for when the homelab is down.
+    set -l cg (cat /proc/self/cgroup)
+    if contains -- --local $argv; and string match -q '*/app-t3code.slice/*' -- $cg; and not string match -q '*/t3code-terminal-*' -- $cg
+      echo "rebuild --local is Erik's fallback; agents build on the homelab (plain rebuild)." >&2
+      exit 1
+    end
     if command -q nixos-remote-switch; and not contains -- --local $argv
       nixos-remote-switch $argv[1] /home/${username}/.dotfiles; or exit 1
     else
