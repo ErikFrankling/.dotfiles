@@ -194,6 +194,25 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-21 06:10 (Discord-export agent) — x-graph-embed answered in 3-7 s
+  instead of ~20 ms, and the PC's `kubectl` failed with "no route to host".
+  Kubectl: `~/.kube/config` still pointed at 192.168.50.200, which stopped
+  existing on 2026-10-18 (the node is now only .100); changed `server:` to
+  `https://192.168.50.100:6443`. Slowness: the k3s node (8 cores, CPU
+  pressure avg60 50-70 for hours, load 20-40) is saturated. Biggest consumer
+  is the legacy Helm `alloy` DaemonSet (ns `alloy`, `kubectl apply`'d from
+  outside the homelab repo, naiaclaw-local stack): 3-4 cores for 6+ hours
+  at ~1150 samples/s, with a 25m request; then openclaw-gateway processes in
+  the idle-looking tenant pods, k3s itself, and an Android emulator from
+  `/config/heavy-emulator.sh`. The kubelet runs with `cpu-cfs-quota=false`,
+  so a pod's request is its only CPU weight, and the node is 99% requested
+  (about ten idle `nc-acme-*` tenant pods request 510m each), so x-graph-embed
+  at 50m got a sliver and its 4 busy-waiting llama.cpp threads made every
+  request take seconds. Fix in the homelab repo (eddc41c): `-t 2 --poll 0`,
+  request 100m (all that fits). That gave ~1.5 requests/s, not 50. Real fix
+  needs Erik's call: trim alloy's cost (5 s `naiaclaw_api` scrape, per-pod
+  log tailing) or the 510m requests of idle tenant pods.
+
 - 2026-10-21 05:36 (health-watch) — `phone/executor` and `phone/openclaw`
   (lan-only routes) got 403 and `lan/x-graph-embed` refused connections,
   right after a deploy restarted the Gatus pod (05:32). x-graph-embed: Pod

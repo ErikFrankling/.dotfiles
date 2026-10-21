@@ -1,14 +1,20 @@
 ---
 name: notify
-description: Send Erik a push notification on his phone, or a one-time code (MFA, verification, pairing) that pops up with a Copy button. Load when you need his attention urgently, are blocked on his decision or login, finished something long he asked to hear about, or have a code he must type in. Any agent on Erik's machines can do this, the personal agent included.
+description: Send Erik a push notification on his phone (it arrives through the Discord app he already has), or a one-time code (MFA, verification, pairing) he must type in. Load when you need his attention urgently, are blocked on his decision or login, finished something long he asked to hear about, or have a code he must type in. Any agent on Erik's machines can do this, the personal agent included.
 ---
 
 # Notify Erik on his phone
 
-Erik's phone runs the ntfy app, subscribed to his self-hosted ntfy server
-(homelab repo `docs/notifications.md`). Messages arrive within a second, also
-when every app is closed, as long as the phone is on Tailscale (it always is).
-Tapping a notification opens the T3 thread you link.
+A notification is a message from "Agents" in #notifications of Erik's private
+Discord server "Agents". The Discord app on his phone pushes it like any
+message, with every app closed and off the tailnet; Erik set nothing up.
+"Open thread" in the message opens the T3 thread you link (in T3 web for now).
+Every send is mirrored to the self-hosted ntfy (homelab repo
+`docs/notifications.md`), the backbone for a native T3 app channel.
+
+Discord holds back phone pushes while Erik's account is active in a desktop
+or web client. **Never leave Discord open in the agent browser**: close the
+tab when done, or his phone stops buzzing.
 
 ## How to send
 
@@ -28,7 +34,7 @@ await tools.notify.sendCode({ code: "482913", service: "GitHub", threadId: "<you
 await tools.notify.status({});                // budget and recent sends
 ```
 
-**From a shell, script or systemd unit (PC and framework):**
+**From a shell, script, scheduled task or systemd unit (PC and framework):**
 
 ```sh
 notify-erik -p high -t "Nightly update blocked" --thread "$THREAD_ID" "nix flake update broke hyprland"
@@ -40,17 +46,18 @@ notify-erik status
 `--test`, `--dry-run`). It fills in this machine's T3 environment itself.
 
 **From a pod in the homelab:** plain HTTP to ntfy with the service's own token;
-see `docs/notifications.md` in the homelab repo.
+see `docs/notifications.md` in the homelab repo. (ntfy alone does not reach
+the phone yet; send through Executor's `notify` app if Erik must see it.)
 
 ## When to send (and when not)
 
-| priority | on the phone                        | use for |
-| -------- | ----------------------------------- | ------- |
-| urgent   | pops up, long vibration             | something important broke and you cannot fix it; security; data at risk |
-| high     | pops up, sound                      | you are blocked on Erik (decision, login, approval) and the work stalls |
-| normal   | sound, in the shade                 | a long task he asked to hear about finished; a result he is waiting for |
-| low      | silent                              | FYI that can wait until he looks |
-| code     | pops up with **Copy code** button   | one-time codes he must type somewhere, right now |
+| priority | on the phone                       | use for |
+| -------- | ---------------------------------- | ------- |
+| urgent   | push, @mention, 🚨                 | something important broke and you cannot fix it; security; data at risk |
+| high     | push, @mention, ❗                 | you are blocked on Erik (decision, login, approval) and the work stalls |
+| normal   | push                               | a long task he asked to hear about finished; a reminder; a result he is waiting for |
+| low      | silent message, no push            | FYI that can wait until he looks |
+| code     | push, @mention, code in the text   | one-time codes he must type somewhere, right now |
 
 - **Never** for progress updates, routine success, or anything that is
   already in your final report. One notification per event; batch related
@@ -83,8 +90,10 @@ the message in your final report instead.
 
 - Executor app `notify`: source in
   `~/.dotfiles/modules/home-manager/notify/executor-app`, deploy with
-  `./deploy.sh` there. Account: ntfy token `executor`.
-- CLI: `~/.dotfiles/modules/nixos/notify/` (token in `secrets/notify.yaml`,
-  sops).
-- Server: homelab repo `kubernetes/homelab/apps/ntfy.yaml`, Gatus check
+  `../deploy.sh`. Accounts: Discord webhook, ntfy token `executor`.
+- CLI: `~/.dotfiles/modules/nixos/notify/` (Discord webhook, Erik's Discord
+  user id and the ntfy token in `secrets/notify.yaml`, sops).
+- Discord: server "Agents" (id 1562316035896512532), channel #notifications,
+  webhook "Agents". The agent browser is logged in to Discord.
+- ntfy server: homelab repo `kubernetes/homelab/apps/ntfy.yaml`, Gatus check
   `phone/ntfy`.

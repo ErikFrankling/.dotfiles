@@ -1,5 +1,8 @@
-# notify-erik: send a push notification to Erik's phone through ntfy
-# (homelab repo, docs/notifications.md). The `notify` skill says when to use it.
+# notify-erik: send a push notification to Erik's phone. Delivered as a
+# Discord message in his private server "Agents" (the app is already on his
+# phone), and mirrored to the self-hosted ntfy (homelab repo,
+# docs/notifications.md) as the backbone for a native T3 app channel.
+# The `notify` skill says when to use it.
 # Same policy as the Executor app `notify`; the limits below keep agents from
 # spamming him. Rate-limited or duplicate sends exit 3: do not retry them.
 
@@ -7,6 +10,8 @@ server="https://ntfy.erikfrankling.duckdns.org"
 topic="erik"
 state="${XDG_STATE_HOME:-$HOME/.local/state}/notify-erik"
 token_file="${NOTIFY_ERIK_TOKEN_FILE:-/run/secrets/ntfy-agents-token}"
+discord_file="${NOTIFY_ERIK_DISCORD_FILE:-/run/secrets/discord-webhook-url}"
+discord_user_file="${NOTIFY_ERIK_DISCORD_USER_FILE:-/run/secrets/discord-user-id}"
 
 usage() {
   cat <<'EOF'
@@ -76,24 +81,44 @@ if [ ${#title} -gt 120 ] || [ ${#message} -gt 3000 ]; then
   echo "notify-erik: keep the title under 120 and the message under 3000 characters" >&2; exit 2
 fi
 
-click=""
+web_link="" app_link=""
 if [ -n "$thread" ]; then
   [ -n "$env" ] || env=$(cat "$HOME/.t3/userdata/environment-id" 2>/dev/null || true)
   if [ -z "$env" ]; then echo "notify-erik: no T3 environment id; pass --env" >&2; exit 2; fi
-  click="t3code-preview://threads/$(jq -rn --arg s "$env" '$s|@uri')/$(jq -rn --arg s "$thread" '$s|@uri')"
+  env_uri=$(jq -rn --arg s "$env" '$s|@uri') thread_uri=$(jq -rn --arg s "$thread" '$s|@uri')
+  web_link="https://t3code.erikfrankling.duckdns.org/$env_uri/$thread_uri"
+  app_link="t3code-preview://threads/$env_uri/$thread_uri"
 elif [ -n "$link" ]; then
-  click="$link"
+  web_link="$link" app_link="$link"
 fi
 
+# ntfy: the backbone (and future T3 app channel).
 body=$(jq -n --arg topic "$topic" --arg title "$title" --arg message "$message" \
-  --argjson priority "$prio" --arg tags "$tags" --arg click "$click" --arg code "$code" \
+  --argjson priority "$prio" --arg tags "$tags" --arg click "$app_link" --arg code "$code" \
   --argjson markdown "$markdown" --arg host "$(hostname)" '
   {topic: $topic, title: $title, message: $message, priority: $priority,
    tags: ([$tags | split(",")[] | select(. != "")] + [$host]), markdown: $markdown}
   + (if $click != "" then {click: $click} else {} end)
   + (if $code != "" then {actions: [{action: "copy", label: "Copy code", value: $code, clear: false}]} else {} end)')
 
-if $dry; then echo "$body"; exit 0; fi
+# Discord: what reaches Erik's phone today. A message in his private server
+# "Agents" (#notifications) pushes like any Discord message; urgent, high and
+# codes also @mention him, low is sent silently.
+discord_user=$(cat "$discord_user_file" 2>/dev/null || true)
+discord=$(jq -n --arg title "$title" --arg message "$message" --arg class "$class" \
+  --arg code "$code" --arg link "$web_link" --arg user "$discord_user" --arg host "$(hostname)" '
+  ({urgent: "🚨 ", high: "❗ ", normal: "", low: "", code: "🔑 "}[$class]) as $icon
+  | (if ($class == "urgent" or $class == "high" or $class == "code") and $user != ""
+     then "<@\($user)> " else "" end) as $ping
+  | {username: "Agents",
+     content: ("\($ping)\($icon)**\($title)**\n\($message)"
+       + (if $code != "" then "\n```\n\($code)\n```" else "" end)
+       + (if $link != "" then "\n[Open thread](\($link))" else "" end)
+       + "\n-# from \($host)"),
+     allowed_mentions: {users: (if $user != "" then [$user] else [] end)},
+     flags: (4 + (if $class == "low" then 4096 else 0 end))}')
+
+if $dry; then jq -n --argjson ntfy "$body" --argjson discord "$discord" '{ntfy: $ntfy, discord: $discord}'; exit 0; fi
 
 mkdir -p "$state"
 exec 9>"$state/lock"
@@ -123,16 +148,19 @@ if [ "$class" != code ]; then
   [ "$(count 86400 "")" -lt 40 ] || refuse "40 notifications in the last 24 hours"
 fi
 
-if [ ! -r "$token_file" ]; then echo "notify-erik: cannot read $token_file" >&2; exit 1; fi
-response=$(curl -sS --max-time 20 -H "Authorization: Bearer $(cat "$token_file")" \
-  -H "Content-Type: application/json" -d "$body" -w '\n%{http_code}' "$server/") || {
-  echo "notify-erik: ntfy unreachable ($server)" >&2; exit 1
-}
-status=$(tail -n 1 <<<"$response")
+if [ ! -r "$discord_file" ]; then echo "notify-erik: cannot read $discord_file" >&2; exit 1; fi
+status=$(curl -sS --max-time 20 -o /dev/null -w '%{http_code}' -H "Content-Type: application/json" \
+  -d "$discord" "$(cat "$discord_file")?wait=true") || status=000
 if [ "$status" != 200 ]; then
-  echo "notify-erik: ntfy answered $status: $(head -n 1 <<<"$response")" >&2; exit 1
+  echo "notify-erik: Discord answered $status; not delivered" >&2; exit 1
 fi
 echo "$now $class $digest" >>"$state/sent"
 awk -v t=$((now - 172800)) '$1 >= t' "$state/sent" >"$state/sent.new" && mv "$state/sent.new" "$state/sent"
 echo "$(date -Iseconds) sent ($class): $title" >>"$state/log"
-echo "sent: $(head -n 1 <<<"$response" | jq -r '.id // empty')"
+
+# Best effort: a failure here does not affect delivery.
+if [ -r "$token_file" ]; then
+  curl -sS --max-time 10 -o /dev/null -H "Authorization: Bearer $(cat "$token_file")" \
+    -H "Content-Type: application/json" -d "$body" "$server/" 2>/dev/null || true
+fi
+echo "sent"

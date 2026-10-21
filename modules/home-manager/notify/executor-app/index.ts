@@ -1,5 +1,7 @@
-// Executor app `notify`: push notifications to Erik's phone through his
-// self-hosted ntfy (homelab repo, docs/notifications.md). Source of truth:
+// Executor app `notify`: push notifications to Erik's phone. Delivered as a
+// Discord message in his private server "Agents" (the Discord app is already
+// on his phone) and mirrored to the self-hosted ntfy (homelab repo,
+// docs/notifications.md), the backbone for a native T3 app channel. Source of truth:
 // ~/.dotfiles/modules/home-manager/notify/executor-app; deploy with ../deploy.sh.
 // Same limits as the `notify-erik` CLI on the PCs.
 import {
@@ -12,6 +14,7 @@ import {
   mutation,
   type MutationContext,
   object,
+  plain,
   query,
   type QueryContext,
   router,
@@ -26,6 +29,8 @@ const PC_ENVIRONMENT = "638dd505-c97b-41e7-b7a7-7d91b3b9fd67";
 // Erik's phone runs the fork's "preview" build (com.t3tools.t3code.preview),
 // which registers only this scheme.
 const APP_SCHEME = "t3code-preview";
+// Discord only links http(s): a tap opens the thread in T3 web.
+const T3_WEB = "https://t3code.erikfrankling.duckdns.org";
 
 const ntfy = defineProvider({
   name: "ntfy",
@@ -48,7 +53,32 @@ const ntfy = defineProvider({
   },
 });
 
-const requirements = { app: { accounts: { ntfy } } };
+// What reaches Erik's phone today: a webhook into #notifications of his
+// private Discord server "Agents". The Discord app on his phone pushes it.
+const discord = defineProvider({
+  name: "Discord webhook",
+  hosts: ["discord.com"],
+  auth: {
+    webhook: secrets({
+      label: "Discord webhook (Agents server, #notifications)",
+      fields: object({
+        webhookId: plain(string({ minLength: 1 })),
+        webhookToken: string({ minLength: 1 }),
+        mentionUserId: plain(string({ minLength: 1 })),
+      }),
+    }),
+  },
+  async health({ account, fetch, signal }) {
+    const response = await fetch(
+      `https://discord.com/api/webhooks/${account.fields.webhookId}/${account.fields.webhookToken}`,
+      { signal, headers: { "user-agent": "executor-notify (homelab, 1.0)" } },
+    );
+    const hook = await decodeJson(response, object({ id: string(), name: string() }));
+    return { accountInfo: { externalId: hook.id, displayName: hook.name } };
+  },
+});
+
+const requirements = { app: { accounts: { ntfy, discord } } };
 type MContext = MutationContext<typeof requirements>;
 type QContext = QueryContext<typeof requirements>;
 
@@ -76,10 +106,12 @@ async function sha(text: string): Promise<string> {
     .join("");
 }
 
-function threadLink(threadId?: string, environmentId?: string): string | undefined {
-  if (!threadId) return undefined;
-  const env = environmentId ?? PC_ENVIRONMENT;
-  return `${APP_SCHEME}://threads/${encodeURIComponent(env)}/${encodeURIComponent(threadId)}`;
+type Links = { app?: string; web?: string };
+
+function threadLinks(threadId?: string, environmentId?: string, link?: string): Links {
+  if (!threadId) return { app: link, web: link };
+  const path = `${encodeURIComponent(environmentId ?? PC_ENVIRONMENT)}/${encodeURIComponent(threadId)}`;
+  return { app: `${APP_SCHEME}://threads/${path}`, web: `${T3_WEB}/${path}` };
 }
 
 type Outcome =
@@ -93,7 +125,7 @@ async function deliver(
     title: string;
     message: string;
     source: string;
-    click?: string;
+    links: Links;
     tags: string[];
     markdown: boolean;
     code?: string;
@@ -153,25 +185,54 @@ async function deliver(
     priority: PRIORITY[input.class],
     tags: [...input.tags, ...(input.source ? [input.source] : [])].slice(0, 6),
     markdown: input.markdown,
-    ...(input.click ? { click: input.click } : {}),
+    ...(input.links.app ? { click: input.links.app } : {}),
     ...(input.code
       ? { actions: [{ action: "copy", label: "Copy code", value: input.code, clear: false }] }
       : {}),
   };
+  // Discord: urgent, high and codes also @mention Erik; low is sent silently.
+  const hook = ctx.app.accounts.discord.fields;
+  const ping = ["urgent", "high", "code"].includes(input.class);
+  const icon = { urgent: "🚨 ", high: "❗ ", normal: "", low: "", code: "🔑 " }[input.class];
+  const content =
+    `${ping ? `<@${hook.mentionUserId}> ` : ""}${icon}**${input.title}**\n${input.message}` +
+    (input.code ? `\n\`\`\`\n${input.code}\n\`\`\`` : "") +
+    (input.links.web ? `\n[Open thread](${input.links.web})` : "") +
+    (input.source ? `\n-# from ${input.source}` : "");
+  let messageId: string;
   try {
-    const response = await ctx.fetch(`${SERVER}/`, {
-      method: "POST",
-      signal: ctx.signal,
-      headers: { ...ctx.app.accounts.ntfy.headers(), "content-type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const published = await decodeJson(response, object({ id: string() }));
-    ctx.sql.exec("UPDATE sends SET status = 'sent', message_id = ? WHERE id = ?", published.id, id);
-    return { sent: true, id, messageId: published.id };
+    const response = await ctx.fetch(
+      `https://discord.com/api/webhooks/${hook.webhookId}/${hook.webhookToken}?wait=true`,
+      {
+        method: "POST",
+        signal: ctx.signal,
+        headers: { "content-type": "application/json", "user-agent": "executor-notify (homelab, 1.0)" },
+        body: JSON.stringify({
+          username: "Agents",
+          content,
+          allowed_mentions: { users: ping ? [hook.mentionUserId] : [] },
+          // 4: no link previews; 4096: silent (low priority)
+          flags: 4 + (input.class === "low" ? 4096 : 0),
+        }),
+      },
+    );
+    messageId = (await decodeJson(response, object({ id: string() }))).id;
+    ctx.sql.exec("UPDATE sends SET status = 'sent', message_id = ? WHERE id = ?", messageId, id);
   } catch (error) {
     ctx.sql.exec("UPDATE sends SET status = 'failed' WHERE id = ?", id);
     throw error;
   }
+
+  // ntfy: best effort, it does not change the outcome.
+  await ctx
+    .fetch(`${SERVER}/`, {
+      method: "POST",
+      signal: ctx.signal,
+      headers: { ...ctx.app.accounts.ntfy.headers(), "content-type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    .catch(() => undefined);
+  return { sent: true, id, messageId };
 }
 
 const PRIORITIES = ["urgent", "high", "normal", "low"] as const;
@@ -215,7 +276,7 @@ const send = mutation(
       title: input.test ? `[TEST] ${title}` : title,
       message: input.message,
       source: input.source,
-      click: threadLink(input.threadId, input.environmentId) ?? input.link,
+      links: threadLinks(input.threadId, input.environmentId, input.link),
       tags: [...input.tags],
       markdown: input.markdown,
     });
@@ -249,7 +310,7 @@ const sendCode = mutation(
       title: input.test ? `[TEST] ${title}` : title,
       message: input.message ?? `One-time code ${input.code} (tap Copy code)`,
       source: input.source,
-      click: threadLink(input.threadId, input.environmentId),
+      links: threadLinks(input.threadId, input.environmentId),
       tags: ["key"],
       markdown: false,
       code: input.code,
@@ -286,7 +347,8 @@ const status = query(
   },
 );
 
-const instructions = `Push notifications to Erik's phone (ntfy app; tap opens the T3 thread).
+const instructions = `Push notifications to Erik's phone: a message in his private Discord server "Agents"
+(the Discord app pushes it; "Open thread" opens your T3 thread).
 
 Use send only when Erik must know or act soon:
 - urgent: something important is broken and you cannot fix it, security issue, data at risk.

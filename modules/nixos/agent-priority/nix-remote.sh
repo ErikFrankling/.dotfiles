@@ -23,10 +23,27 @@ fi
 
 declare -A archived=()
 args=()
-sub=""
+sub="" sub2="" positional=0
 dry=0 print=0 json=0 nolink=0
+
+archive() { # local flake dir -> store path on the builder
+  local ref=$1
+  if [ -z "${archived[$ref]:-}" ]; then
+    echo "nix-remote: copying $ref to the homelab builder" >&2
+    archived[$ref]=$(nix flake archive --json --to "$builder_store" "$ref" | jq -r .path) || {
+      echo "nix-remote: could not copy $ref to the builder (is the homelab up? ssh nix-builder)" >&2
+      exit 1
+    }
+  fi
+  printf "%s" "${archived[$ref]}"
+}
+
 for a in "$@"; do
-  if [ -z "$sub" ] && [[ $a != -* ]]; then sub=$a; fi
+  if [[ $a != -* ]]; then
+    if [ -z "$sub" ]; then sub=$a
+    elif [ "$sub" = flake ] && [ -z "$sub2" ]; then sub2=$a
+    else positional=$((positional + 1)); fi
+  fi
   case $a in
     --dry-run) dry=1 ;;
     --print-out-paths) print=1 ;;
@@ -38,19 +55,22 @@ for a in "$@"; do
     attr=${a#*#}
     ref=${ref:-.}
     ref=${ref/#\~/$HOME}
-    if [ -z "${archived[$ref]:-}" ]; then
-      echo "nix-remote: copying $ref to the homelab builder" >&2
-      path=$(nix flake archive --json --to "$builder_store" "$ref" | jq -r .path) || {
-        echo "nix-remote: could not copy $ref to the builder (is the homelab up? ssh nix-builder)" >&2
-        exit 1
-      }
-      archived[$ref]=$path
-    fi
-    args+=("${archived[$ref]}#$attr")
+    path=$(archive "$ref") || exit 1
+    args+=("$path#$attr")
+  elif [[ $a != -* && $a != "$sub" && $a != "$sub2" && $a != /nix/store/* && -f "${a/#\~/$HOME}/flake.nix" ]]; then
+    # A bare local flake: `.`, `./x`, `/path`.
+    path=$(archive "${a/#\~/$HOME}") || exit 1
+    args+=("$path")
   else
     args+=("$a")
   fi
 done
+
+# No installable: the flake in the current directory, like local nix.
+if [ "$positional" = 0 ] && { [ "$sub" = build ] || [ "$sub2" = check ] || [ "$sub2" = show ]; } && [ -f flake.nix ]; then
+  path=$(archive .) || exit 1
+  args+=("$path")
+fi
 
 fetch=0
 if [ "$sub" = build ] && [ "$dry" = 0 ]; then

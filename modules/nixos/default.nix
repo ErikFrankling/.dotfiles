@@ -78,9 +78,13 @@
     # nixos.includeAllModules = true;
   };
 
-  environment.etc."nix/nix.custom.conf".text = ''
-    eval-cores = 0
-  '';
+  # Determinate's NixOS module moves the generated nix.conf to
+  # /etc/nix/nix.custom.conf (determinate 3.23), so defining that file here
+  # collides ("duplicate entry nix/nix.custom.conf"). eval-cores lives in
+  # nix.extraOptions below instead.
+  # environment.etc."nix/nix.custom.conf".text = ''
+  #   eval-cores = 0
+  # '';
   environment.etc."dict.conf".text = "server dict.org";
 
   nix = {
@@ -93,6 +97,7 @@
 
     extraOptions = ''
       min-free = ${toString (1024 * 1024 * 1024 * 10)} # will run GC if less than 10GB is free
+      eval-cores = 0
     '';
 
     optimise.automatic = true;
