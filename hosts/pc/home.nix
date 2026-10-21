@@ -70,7 +70,7 @@ in
     ../../modules/home-manager/machines
     ../../modules/home-manager/heavy # `heavy`: heavy agent work on the homelab worker
     ../../modules/home-manager/bro
-    inputs.time.homeManagerModules.default
+    inputs.time.homeManagerModules.agent-v2
     # ../../modules/home-manager/noctalia.nix
   ];
 
@@ -82,26 +82,17 @@ in
   # This machine drives the nightly flake update and the homelab build.
   autoUpdateNightly.enable = true;
 
-  # Minute-by-minute activity tracking. The agent only screenshots and posts;
-  # the server in the cluster holds the API key and does the classifying.
-  services.time-agent = {
+  # Time v2: what is on screen, input counts, lock, power and network each
+  # minute, to the local Alloy, which forwards to Time in the cluster. Commits
+  # and PRs every 15 minutes, and the nightly off-cluster backup of Time's
+  # database (with a restore test) lands in ~/backups/time on this machine.
+  # Input counts come from physical devices only, so the AI computer-use
+  # sessions on this machine do not count as Erik being here.
+  services.time-agent-v2 = {
     enable = true;
-    server = "https://time.erikfrankling.duckdns.org";
     device = "pc";
-    # Near-live dashboard numbers: scan local git and agent transcripts every
-    # minute (cheap — mtime caches skip unchanged sources) and post them.
-    collect = {
-      enable = true;
-      roots = [ "~/projects" ];
-      githubUser = "ErikFrankling";
-    };
-    metrics.enable = true;
-    note = ''
-      This machine runs AI computer-use sessions (codex). An agent can open
-      windows, type, and drive the screen with nobody present, and one monitor
-      is dedicated to it. Screen activity here is therefore NOT evidence the
-      user is at the machine -- rely on the human input counters for that.
-    '';
+    collect.enable = true;
+    backup.enable = true;
   };
 
   # Keep T3's mutable Codex database separate while sharing the authenticated

@@ -14,14 +14,13 @@
     ../../modules/home-manager/machines
     ../../modules/home-manager/notify # phone notifications skill
     ../../modules/home-manager/bro
-    inputs.time.homeManagerModules.default
+    inputs.time.homeManagerModules.agent-v2
   ];
 
-  # Minute-by-minute activity tracking. The agent only screenshots and posts;
-  # the server in the cluster holds the API key and does the classifying.
-  services.time-agent = {
+  # Time v2: screen, input, lid, lock, battery and Wi-Fi each minute, to the
+  # local Alloy (queued on disk while away from home).
+  services.time-agent-v2 = {
     enable = true;
-    server = "https://time.erikfrankling.duckdns.org";
     device = "framework";
   };
 
