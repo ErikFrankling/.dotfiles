@@ -52,20 +52,28 @@ not for choosing what to click.
 
 ## Tabs and windows
 
+- **Other agents use this browser at the same time.** Always open your own
+  tab first (`browser_tabs` `{action:"new", url}`) and work only in tabs you
+  opened; never navigate or close someone else's tab. Re-check the current
+  tab with `browser_tabs` `{action:"list"}` if a result looks wrong: another
+  agent may have switched it.
 - The agent Chromium runs in the background with no window until you open a
   page. Your first page becomes one full-screen window on AGENT-1; open more
   pages as **tabs** (`browser_tabs` `{action:"new", url}`), switch with
   `{action:"select", index}`, close finished ones with `{action:"close"}`.
 - Every `agent-chromium` window is forced onto AGENT-1 by a Hyprland rule, so
   nothing can open on Erik's monitors. Still, don't open extra windows.
+- Erik's own browsers (Firefox, Helium, Chrome) and windows are off limits:
+  never click, type in, move or capture them.
 - Tabs **persist after your session** (it's a real browser profile). When the
   task is done, close every tab you opened (`browser_tabs` `{action:"close"}`
   per tab) so the next agent starts clean. Logins stay; they live in cookies.
 - Never start another browser (no `chromium`, `google-chrome`, `firefox`,
   `npx playwright`, headless browsers): they have none of the logins and may
-  open on Erik's screens. Erik's own Firefox is off limits.
+  open on Erik's screens.
 - If `browser` can't connect: `systemctl --user status agent-chromium`,
-  `systemctl --user restart agent-chromium` is fine (it's your browser).
+  `systemctl --user restart agent-chromium` is fine (it's your browser), but
+  other agents lose their tabs and session-only logins, so only when needed.
 
 ## Logins
 
@@ -130,6 +138,30 @@ into `hosts/pc/secrets/secrets.yaml` with `sops set --value-stdin`, update
 `canvasTokenId` in `modules/home-manager/computer-use/logins.nix` and rebuild.
 For the Canvas web UI, the synced Firefox session works while Erik's does.
 
+### Microsoft Teams (Neptune Software): strictly read-only
+
+Erik's work Teams (Neptune Software) is open in his Helium browser. You use the
+**agent Chromium's own Neptune Microsoft session**, not his Helium window:
+`https://teams.microsoft.com/v2/` in your own tab opens logged in ("stay signed
+in" session, verified 2026-10-21) with no prompt. Never touch his Helium window.
+
+**"We have to be very careful with this" (Erik).** Teams is read-only for you:
+read chats and channels when a task needs it, and report what you found.
+Never type in a compose box, send, reply, react, edit, delete, start a call,
+change your status, join or leave anything, or open a meeting, without Erik's
+explicit go-ahead for that exact message. Don't click into a chat's compose
+area at all; read with `browser_evaluate` (`innerText`) or snapshots.
+
+Before opening Teams (or any Microsoft app) after a long gap, check that no
+prompt can fire: this sign-in request uses `prompt=none`, so Microsoft either
+signs in silently or returns an error. It never asks for anything:
+
+`https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?client_id=5e3ce6c0-2b1f-4285-8d4b-75ee78787346&response_type=id_token&scope=openid&nonce=x1&response_mode=fragment&prompt=none&redirect_uri=https%3A%2F%2Fteams.microsoft.com%2Fv2`
+
+If it lands on `teams.microsoft.com/v2/#id_token=...`, go ahead. If it lands
+on an `error=` (`login_required`, `interaction_required`), the session has
+expired: the phone rule applies, so ask Erik before logging in.
+
 ### 3. Logging in yourself with LastPass
 
 Only when 1 and 2 don't cover it. When a login form appears (tested on GitHub):
@@ -192,25 +224,21 @@ Logins often send a code or "confirm it's you" link by email. You can read
 Erik's mail yourself; don't ask him to copy codes. His accounts:
 `erik.frankling@frankling.se` (Office 365), `erik.frankling@gmail.com`,
 `ef.pro454@gmail.com`, KTH (`erikfran`), `erik.frankling@outlook.com`.
-Thunderbird runs on his PC desktop with all of them, as the user unit
-`thunderbird.service` (restarts on its own if closed or crashed). If
-`systemctl --user is-active thunderbird` is not `active`, or `pgrep -x
-.thunderbird-wr` finds nothing, run `systemctl --user restart thunderbird`,
-wait ~60 s for it to sync, then continue. In order:
 
-1. **Webmail in your browser**, if that mailbox is already logged in there
-   (`https://mail.google.com`, `https://outlook.office.com`): open it in a
-   tab and read the newest message.
-2. **Look at Thunderbird (read-only).** It is Erik's window on his
-   monitor: never click, type in, or move it. Capture it without touching it:
-   `mcp__cua__list_windows` (find `app_name` `thunderbird`), then
-   `mcp__cua__get_window_state` with that `pid`/`window_id` and
-   `include_accessibility_tree:false` for a screenshot of the window, and
-   `mcp__cua__zoom` to read small text. The message list usually shows the
-   newest mail's sender and subject, which is often enough (many codes are in
-   the subject line). Wait ~20-60 s after triggering the mail and capture again.
-3. **Read the mail store on disk** for the body (code or link inside the
-   message). Thunderbird keeps mbox files; newest messages are at the end:
+Thunderbird syncs all of them as the user unit `thunderbird.service`, **out of
+sight**: its window (class `agent-thunderbird`) always opens on the hidden
+`agent-park` workspace on AGENT-1, never on Erik's monitors (2026-10-21; it
+used to pop up on his screen). If `systemctl --user is-active thunderbird` is
+not `active`, run `systemctl --user restart thunderbird` and wait ~60 s. Never
+start `thunderbird` any other way, and never move its window to Erik's
+monitors. Only he does that, with `open-mail`. In order:
+
+1. **Webmail in your browser** (no GUI needed, freshest). Logged in already:
+   `https://mail.google.com` (check which account), `https://outlook.office.com`
+   (Neptune account; check the identity), `https://webmail.kth.se/owa/`
+   (KTH, password login, no phone). Open it in your own tab and read.
+2. **Read the mail store on disk** (code or link inside the message).
+   Thunderbird keeps mbox files; newest messages are at the end:
 
    ```sh
    for f in ~/.thunderbird/default/ImapMail/*/INBOX*; do
@@ -222,11 +250,32 @@ wait ~60 s for it to sync, then continue. In order:
    tail -c 400000 "FILE" | grep -a -i -A60 '^Subject: .*KEYWORD' | tail -80
    ```
 
-   These files lag behind for some accounts (bodies are stored when
-   Thunderbird syncs or the message is opened), so check the file's timestamp.
+   Check the file timestamp: bodies land when Thunderbird syncs (every few
+   minutes) or a message is opened.
+3. **Look at the Thunderbird window** only if 1 and 2 fail. Windows on
+   `agent-park` are not rendered, so a capture is blank. Move it to your
+   visible workspace on AGENT-1, capture with `mcp__cua__get_window_state`
+   (`include_accessibility_tree:false`) and `mcp__cua__zoom`, then park it
+   again:
 
-If the mail is visible in Thunderbird's list but its body isn't on disk yet and
-you need the body, ask Erik to click that message (or to read you the code).
+   ```sh
+   hyprctl dispatch movetoworkspacesilent 'name:agent,class:^(agent-thunderbird)$'
+   # ... capture ...
+   hyprctl dispatch movetoworkspacesilent 'name:agent-park,class:^(agent-thunderbird)$'
+   ```
+
+   Read only: don't send, delete, move or mark mail.
+
+### Codes that end up on the wrong side
+
+- **A code reaches you** (mail, SMS mirrored to mail) **while Erik is the one
+  on the code screen**: send it to his phone right away with
+  `notify-erik --code CODE "SITE login code"` (or the Executor app `notify`),
+  so he never waits on an entry screen without it. Don't make him ask.
+- **A code reaches Erik** (SMS, authenticator) while you need it: ask for it
+  in chat, say which site it is for, and keep the page open.
+- Never trigger a code or prompt you will not use, and never re-send codes
+  in a loop: every send is another interruption.
 
 ## QA / testing web apps
 
