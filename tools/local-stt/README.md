@@ -69,3 +69,15 @@ Run protocol tests with a Nix Python environment containing aiohttp:
 idempotent chunks and starts, order/format rejection, chunk boundaries,
 finalization through worker failures and restarts, silence, truncation, and
 separation of background and quality checkpoints.
+
+## Monitoring
+
+Every minute the gateway streams a bundled spoken clip to the live recogniser
+and expects words back; a failure restarts that worker and tries again.
+`curl -s http://127.0.0.1:8781/health/deep` returns 503 with the reasons while
+the self-test fails, its last pass is older than five minutes, or a final
+transcription has been stuck for ten. The homelab probes that endpoint
+(`modules/nixos/observability`); five minutes of failure fires
+`LocalServiceDown`, which starts a repair session through health-watch. Look at
+`journalctl -u local-stt` for `selftest.failed`, `preview.interrupted` and
+`recording.retry`.

@@ -25,7 +25,8 @@ let
 
   probes =
     lib.optionalAttrs (config.services.local-stt.enable or false) {
-      local-stt = "http://127.0.0.1:8781/health";
+      # The deep check: fails while dictation would not work end to end.
+      local-stt = "http://127.0.0.1:8781/health/deep";
     }
     // lib.optionalAttrs config.services.llama-swap.enable {
       llama-swap = "http://127.0.0.1:8000/health";

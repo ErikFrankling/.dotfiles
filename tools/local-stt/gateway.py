@@ -46,6 +46,12 @@ QUALITY_SECONDS = 420
 RETRY_WINDOWS = (QUALITY_SECONDS, QUALITY_SECONDS, 120, 120, CHUNK_SECONDS)
 ACTIVE_SECONDS = 120
 background = set()
+# The self-test streams this spoken clip to the live recogniser every
+# SELFTEST_SECONDS; /health/deep fails while it does not come back as words.
+PROBE_PCM = os.environ.get("STT_PROBE_PCM", "")
+SELFTEST_SECONDS = 60
+FINAL_STUCK_SECONDS = 600
+selftest = {"ok": None, "error": "not run yet", "passed": 0.0}
 
 
 class EmptyTranscript(ValueError):
@@ -172,6 +178,72 @@ def dictation_state():
 async def health(_request):
     # Read aloud asks this before picking a voice: the big one only while dictation is idle.
     return web.json_response({"ok": True, "dictation": dictation_state()})
+
+
+def problems():
+    found = []
+    if not selftest["ok"]:
+        found.append(f"live draft self-test failing: {selftest['error']}")
+    elif time.time() - selftest["passed"] > 5 * SELFTEST_SECONDS:
+        found.append("live draft self-test has not passed for 5 minutes")
+    for state in sessions.values():
+        since = state.get("finalizing_since")
+        if state["status"] == "finalizing" and since and time.time() - since > FINAL_STUCK_SECONDS:
+            found.append(f"final transcription of {state['id']} stuck for "
+                         f"{int(time.time() - since)}s, last error: {state.get('last_error', '')}")
+    return found
+
+
+async def deep_health(_request):
+    """What the homelab probes: 503 whenever dictation would not work end to end.
+    Failing for 5 minutes fires an alert that starts a repair session."""
+    found = problems()
+    return web.json_response({"ok": not found, "problems": found, "selftest": selftest},
+                             status=503 if found else 200)
+
+
+async def run_selftest(client):
+    pcm = Path(PROBE_PCM).read_bytes()
+    await asyncio.wait_for(start_worker("preview", client), 60)
+    async with client.ws_connect(NEMO + "/v1/audio/transcriptions/realtime",
+                                 timeout=ClientWSTimeout(ws_close=5)) as ws:
+        await ws.send_json({"type": "session.update", "session": {
+            "sample_rate": 16000, "language": "en", "automatic_punctuation": True,
+        }})
+        state = {"id": "selftest", "draft": ""}
+        reader = asyncio.create_task(receive(state, ws, ""))
+        try:
+            for start in range(0, len(pcm), SAMPLE_BYTES):
+                await ws.send_bytes(pcm[start:start + SAMPLE_BYTES])
+            for _ in range(150):
+                if len(state["draft"].split()) >= 3:
+                    return state["draft"]
+                await asyncio.sleep(0.1)
+        finally:
+            reader.cancel()
+            await asyncio.gather(reader, return_exceptions=True)
+    raise RuntimeError(f"no words came back (draft {state['draft']!r})")
+
+
+async def selftest_loop(client):
+    while True:
+        for attempt in range(2):
+            try:
+                await asyncio.wait_for(run_selftest(client), 45)
+                if selftest["ok"] is False:
+                    log("selftest.recovered")
+                selftest.update(ok=True, error="", passed=time.time())
+                break
+            except asyncio.CancelledError:
+                raise
+            except Exception as error:
+                message = f"{type(error).__name__}: {error}"[:300]
+                log("selftest.failed", attempt=attempt, error=message)
+                selftest.update(ok=False, error=message)
+                # Alive but not answering never heals by itself: replace it.
+                async with worker_locks["preview"]:
+                    await stop_worker("preview")
+        await asyncio.sleep(SELFTEST_SECONDS)
 
 
 async def release_gpu(_request):
@@ -567,6 +639,7 @@ async def finalize(state, client):
     """
     state["status"] = "finalizing"
     state["error"] = ""
+    state.setdefault("finalizing_since", time.time())
     began = time.monotonic()
     log("recording.finalizing", state, bytes=state["bytes"])
     save(state)
@@ -617,6 +690,7 @@ async def finalize(state, client):
             except Exception as error:
                 log("recording.retry", state, attempt=attempt, error_type=type(error).__name__,
                     error=str(error), resources=state.get("resources"))
+                state["last_error"] = f"{type(error).__name__}: {error}"[:300]
                 # A worker that answered with an error may be wedged; a fresh
                 # one is cheap next to a transcript that never arrives.
                 if attempt % 2:
@@ -625,6 +699,7 @@ async def finalize(state, client):
                 await asyncio.sleep(min(60, 2 * 2 ** min(attempt, 5)))
             attempt += 1
         state["status"] = "complete"
+        state.pop("finalizing_since", None)
         log("recording.complete", state, seconds=round(time.monotonic() - began, 3),
             characters=len(state["final"]), attempts=attempt + 1)
     finally:
@@ -732,6 +807,8 @@ async def lifecycle(app):
     async with ClientSession(timeout=ClientTimeout(total=30)) as client:
         app["client"] = client
         watcher = asyncio.create_task(monitor())
+        if PROBE_PCM:
+            spawn(selftest_loop(client))
         async def warm_all():
             for name in ("preview", "final"):
                 await warm(name, client)
@@ -764,5 +841,6 @@ if __name__ == "__main__":
     app.cleanup_ctx.append(lifecycle)
     app.router.add_post("/dictation", action)
     app.router.add_get("/health", health)
+    app.router.add_get("/health/deep", deep_health)
     app.router.add_post("/release-gpu", release_gpu)
     web.run_app(app, host="127.0.0.1", port=int(os.environ.get("STT_PORT", "8781")), access_log=None)
