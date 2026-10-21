@@ -21,9 +21,41 @@ description: Erik's machines, how they connect, and how much load each can take.
 
 The pc is the machine Erik is sitting at. When it runs out of memory it does
 not crash, it swaps. The desktop freezes and T3 Code stops answering. That
-includes on his phone, and it includes the session you are running in. Agent
-tools started from T3 Code run inside the `t3code.service` cgroup together
-with the server, so your jobs and T3 Code compete for the same memory.
+includes on his phone, and it includes the session you are running in.
+
+### The agent slice (2026-10-21)
+
+Every T3 Code agent session (claude, codex, opencode, grok, cursor) and all
+it spawns runs under `app-t3code.slice` (`modules/nixos/agent-priority.nix`):
+
+- **CPU idle class:** you get only the CPU Erik's apps leave unused. A
+  parallel build is not slow because the pc is weak; it waits behind him.
+- **Memory:** all agents together are throttled above 12 GB and killed above
+  15 GB of RAM, with at most 6 GB in swap. systemd-oomd kills the agent scope
+  that thrashes hardest (30 s above 50 % memory pressure). T3 then reports the
+  session as killed for memory: run less at once, do not just retry.
+- **`systemd-run --user` stays inside.** From an agent, `systemd-run` is a
+  wrapper that adds `--slice-inherit --nice=10` and makes the job the first OOM
+  victim. Do not pass `--slice=` to escape it, and do not move heavy work into
+  Docker, sudo or system units to get around the limits.
+
+### Heavy work rules
+
+- **Nix builds:** anything not in a cache is built on the homelab builder
+  (`nix.buildMachines`, slower but off the desktop). Check
+  `nix build --dry-run` first; a real compile in the list is a cache miss to
+  fix, not to wait out (`~/.dotfiles/AGENTS.md`). Do not run several NixOS
+  evaluations or rebuilds at once: each evaluation takes several GB.
+- **Native/Gradle builds:** cap parallelism (`--max-workers=4`,
+  `CMAKE_BUILD_PARALLEL_LEVEL=4`, `make -j4`, `NINJAFLAGS=-j4`). An Android
+  release APK comes from CI (`.github/workflows/erik-android.yml`) whenever
+  that is enough; build locally only to test something CI cannot.
+- **Android emulators:** at most one on the pc, across all agents. Check
+  `pgrep -fa qemu-system` before starting one and reuse a running one instead
+  of starting a second. Kill it (`adb emu kill`) as soon as you are done, and
+  never leave one idle between tasks.
+- **Typecheckers, test suites, browsers:** one at a time per session. A
+  `tsgo`/`tsc` run of the T3 Code monorepo takes about 3.5 GB.
 
 This has happened: on 2026-10-16 an agent started about 28 `codex exec` image
 jobs at once (20 backgrounded with `&`, 8 more through `xargs -P 8`). They

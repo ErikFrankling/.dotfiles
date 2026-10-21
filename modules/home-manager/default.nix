@@ -142,8 +142,9 @@
 
   nix.package = lib.mkForce pkgs.nix;
   nix.settings = {
-    cores = 0;
-    max-jobs = "auto";
+    # No cores/max-jobs here: the client sends them to the daemon, which
+    # applies them even for untrusted users, and that overrode the system's
+    # limits (modules/nixos/agent-priority.nix) with 16 jobs x all cores.
     experimental-features = [
       "nix-command"
       "flakes"

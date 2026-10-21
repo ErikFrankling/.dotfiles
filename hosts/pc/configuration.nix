@@ -14,6 +14,13 @@
   # Daily: pull main and switch to the system the homelab built.
   autoUpdate.enable = true;
 
+  # Agents and Nix builds stay behind the desktop; uncached builds go to the
+  # homelab builder with Erik's key (the one authorized there).
+  agentPriority = {
+    enable = true;
+    remoteBuilder.sshKey = "/home/${username}/.ssh/id_ed25519";
+  };
+
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
@@ -38,6 +45,7 @@
     ../../modules/nixos/secure-boot.nix
     ../../modules/nixos/neptune.nix
     ../../modules/nixos/llama-swap.nix
+    ../../modules/nixos/agent-priority.nix
     # ../../modules/nixos/kokoro-tts.nix # read-aloud small voice on the PC CPU; now on the homelab GTX 1060 (saves PC RAM)
     # ../../modules/nixos/executor.nix # local container; Executor runs on the homelab k3s instead
     # inputs.private.nixosModules.default # extra llama-swap models, no longer used (see flake.nix)
