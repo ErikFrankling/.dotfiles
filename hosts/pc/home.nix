@@ -67,6 +67,7 @@ in
     ../../modules/home-manager/company-brain.nix
     ../../modules/home-manager/canvas-archive.nix
     ../../modules/home-manager/machines
+    ../../modules/home-manager/heavy # `heavy`: heavy agent work on the homelab worker
     ../../modules/home-manager/bro
     inputs.time.homeManagerModules.default
     # ../../modules/home-manager/noctalia.nix
