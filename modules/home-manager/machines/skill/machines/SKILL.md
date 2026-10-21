@@ -39,6 +39,21 @@ Never start an emulator, a Gradle/NDK build, llama-server or another model
 server, a long test run or a NixOS evaluation on the pc. Never run them on
 the pc "because the homelab is slow"; Erik explicitly prefers slow.
 
+`heavy` in short (`heavy --help` for all of it):
+
+```
+heavy [--big|--small] [--shell .#android] [-e VAR] -- CMD   run in a synced copy on the worker
+heavy pull PATH...                       copy results back (nothing else comes back)
+heavy bg NAME -- CMD | heavy logs|stop NAME   background jobs
+heavy emulator start|stop|status         the one shared emulator; heavy adb ARGS from the pc
+heavy status | heavy queue               what runs and what waits
+```
+
+One big job (Gradle/APK/emulator tests, up to 10 GB) and one small job (up
+to 3 GB) run at once on the worker; the rest queue. A job that runs out of
+memory is killed alone. Use `--no-daemon` for Gradle. Sync is one way and
+exactly git's file list (never `.git/info/exclude`d files or `.git`).
+
 **Idle windows:** while Erik has had no keyboard or mouse input for 10
 minutes, heavy jobs may run on the pc (one emulator at most, up to 12
 threads and 20 GB for all agents). `pc-idle` tells you (exit 0 = idle);

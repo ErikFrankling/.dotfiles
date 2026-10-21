@@ -121,9 +121,10 @@ check_cpu() {
         comm=$(cat "/proc/$pid/comm" 2>/dev/null) || continue
         [[ $comm =~ $providers ]] && continue
         t=$(ticks_of "$pid")
-        [ -n "$t" ] && [ -n "${ticks_then[$pid]:-}" ] || continue
-        # More than half a core over the window.
-        if [ $(((t - ticks_then[$pid]) * 2)) -gt $((span * hz)) ]; then
+        [ -n "$t" ] || continue
+        # More than half a core over the window. A process started during the
+        # window counts from zero.
+        if [ $(((t - ${ticks_then[$pid]:-0}) * 2)) -gt $((span * hz)) ]; then
           stop "$pid" "agents averaged $cores cores for a minute"
         fi
       done
