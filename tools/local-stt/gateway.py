@@ -416,6 +416,11 @@ async def preview(state, client):
             raise
         except Exception as error:
             log("preview.interrupted", state, error_type=type(error).__name__, error=str(error))
+            # A worker that is alive but no longer answers never heals, and
+            # start_worker only replaces one that exited: restart it.
+            async with worker_locks["preview"]:
+                await stop_worker("preview")
+            log("worker.restarted", state, worker="preview")
         finally:
             if ws is not None:
                 await ws.close()
