@@ -103,7 +103,14 @@ already logged in, as Erik, with no sign-in and no phone prompt. Verified
   has the same site under another account, the next change in Firefox
   overwrites it. Use Firefox's account, or ask Erik.
 
-### 2. KTH Canvas: use the API token first
+### 2. KTH Canvas: use the API token first (read-only)
+
+**Canvas is read-only for agents (Erik, 2026-10-21).** Never push anything to
+Canvas, through the API or in the browser where you are logged in as Erik: no
+assignment submissions, discussion posts or replies, comments, file uploads,
+inbox messages, peer reviews, quiz answers, calendar events, profile or
+setting changes. Only GET requests with the token. If a task needs something
+submitted, prepare it and hand it to Erik.
 
 KTH's ADFS (`login.ug.kth.se`) single sign-on lasts only ~8 hours and every new
 KTH login asks for Microsoft Authenticator. For anything the Canvas API can do
@@ -115,7 +122,8 @@ curl -sH "Authorization: Bearer $(agent-canvas-token)" https://canvas.kth.se/api
 ```
 
 The token is the sops secret `canvas-token` (PC). KTH caps tokens at 90 days;
-`agent-canvas-token-renew.timer` extends it weekly. If it ever returns 401
+`agent-canvas-token-renew.timer` checks daily and extends it by 89 days when
+under 30 are left (about every 60 days). That renewal is the only write. If it ever returns 401
 (`Invalid access token`), create a new one in a logged-in Canvas tab
 (`POST /api/v1/users/self/tokens`, `expires_at` at most 89 days ahead), put it
 into `hosts/pc/secrets/secrets.yaml` with `sops set --value-stdin`, update

@@ -8,6 +8,23 @@
 
 let
   sig = "Mvh Erik Frankling";
+  # Bring the hidden Thunderbird window to Erik's current workspace.
+  openMail = pkgs.writeShellScriptBin "open-mail" ''
+    set -u
+    export PATH=${
+      lib.makeBinPath [
+        pkgs.jq
+        pkgs.systemd
+      ]
+    }:$PATH
+    systemctl --user start thunderbird.service
+    for _ in $(seq 1 60); do
+      hyprctl clients -j | jq -e 'any(.[]; .class == "agent-thunderbird")' >/dev/null && break
+      sleep 0.5
+    done
+    ws=$(hyprctl activeworkspace -j | jq -r .id)
+    hyprctl dispatch movetoworkspace "$ws,class:^(agent-thunderbird)$"
+  '';
 in
 {
   options.thunderbird.autostart = lib.mkOption {
@@ -18,7 +35,7 @@ in
 
   config = {
     # Install package directly — bypassing programs.thunderbird module to get full user.js control
-    home.packages = [ pkgs.thunderbird ];
+    home.packages = [ pkgs.thunderbird ] ++ lib.optional config.thunderbird.autostart openMail;
 
     home.file.".thunderbird/profiles.ini".force = true;
     home.file.".thunderbird/profiles.ini".text = ''
@@ -164,27 +181,53 @@ in
       user_pref("mail.smtpserver.smtp_outlook.authMethod", 10);
     '';
 
-    # Agents read login codes and confirmation links from Thunderbird (its
-    # window and the mbox files under ImapMail/, see the browser-use skill). It
-    # used to be started by hand from the launcher, so after a reboot nothing
-    # ran it and the mail on disk went three weeks stale (2026-10-01 to 10-21).
-    # This unit keeps it up and brings it back if it crashes or is closed.
+    # Agents read login codes and confirmation links from Thunderbird (the
+    # mbox files under ImapMail/, see the browser-use skill). It used to be
+    # started by hand from the launcher, so after a reboot nothing ran it and
+    # the mail on disk went three weeks stale (2026-10-01 to 10-21).
+    #
+    # It runs out of sight: its window has its own class (agent-thunderbird)
+    # and always opens silently on the hidden `agent-park` workspace on AGENT-1,
+    # never on Erik's monitors. The first version (71c8f14c) opened it on his
+    # screen and reopened it 10 s after every close. Restarts are harmless now.
+    # Erik's launcher entry (`open-mail`, also "Thunderbird" in the app
+    # launcher) brings the window to his current workspace; closing it there
+    # just sends a fresh hidden one back to agent-park.
     #
     # Not a headless IMAP sync (mbsync etc.): four of the five accounts are
     # OAuth2, and Thunderbird already holds working tokens for them.
     systemd.user.services.thunderbird = lib.mkIf config.thunderbird.autostart {
       Unit = {
-        Description = "Thunderbird, kept running for mail and agents' email codes";
+        Description = "Thunderbird on the hidden agent-park workspace (mail sync for agents)";
         After = [ "hyprland-session.target" ];
         PartOf = [ "hyprland-session.target" ];
         StartLimitIntervalSec = 0;
       };
       Service = {
-        ExecStart = "${pkgs.thunderbird}/bin/thunderbird";
+        ExecStart = "${pkgs.thunderbird}/bin/thunderbird --name agent-thunderbird";
         Restart = "always";
         RestartSec = 10;
       };
       Install.WantedBy = [ "hyprland-session.target" ];
+    };
+
+    wayland.windowManager.hyprland.settings.windowrule = lib.mkIf config.thunderbird.autostart [
+      "workspace name:agent-park silent, match:class ^(agent-thunderbird)$"
+      "no_initial_focus on, match:class ^(agent-thunderbird)$"
+      "focus_on_activate off, match:class ^(agent-thunderbird)$"
+    ];
+
+    # Replaces the package's own launcher entry: starting `thunderbird` while
+    # the hidden one runs would only open another hidden window.
+    xdg.desktopEntries.thunderbird = lib.mkIf config.thunderbird.autostart {
+      name = "Thunderbird";
+      genericName = "Mail";
+      exec = "${openMail}/bin/open-mail";
+      icon = "thunderbird";
+      categories = [
+        "Network"
+        "Email"
+      ];
     };
   };
 }
