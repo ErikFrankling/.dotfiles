@@ -22,6 +22,7 @@
     ./krb5.nix
     ./nh.nix
     ./windows-vm
+    ./notify # notify-erik: push notifications to Erik's phone
   ];
 
   boot.kernel.sysctl = {

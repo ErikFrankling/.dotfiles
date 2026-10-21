@@ -63,6 +63,7 @@ in
     ../../modules/home-manager/ibus-native-seat.nix
     ../../modules/home-manager/auto-update
     ../../modules/home-manager/dev-preview
+    ../../modules/home-manager/notify # phone notifications skill
     ../../modules/home-manager/company-brain.nix
     ../../modules/home-manager/machines
     ../../modules/home-manager/bro
