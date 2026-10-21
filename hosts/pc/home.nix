@@ -18,11 +18,15 @@ let
     fi
   '';
   # Grok Build (the `grok` CLI from llm-agents, see modules/home-manager/ai.nix)
-  # is a built-in T3 provider, but it starts switched off. settings.json is the
-  # server's own mutable state, so only flip that one flag and keep the rest;
-  # the server watches the file and applies the change without a restart.
-  t3EnableGrok = pkgs.writeShellApplication {
-    name = "t3code-enable-grok";
+  # and Cursor (@cursor/sdk, bundled with T3) are built-in T3 providers, but
+  # they start switched off. Both run on Erik's SuperGrok plan (grok.com and
+  # cursor.com share one xAI account). settings.json is the server's own
+  # mutable state, so only flip these flags and keep the rest; the server
+  # watches the file and applies the change without a restart. The logins are
+  # not declarative: grok keeps its OAuth token in ~/.grok/auth.json (`grok
+  # login --oauth`), Cursor's browser sign-in lives in T3's credential store.
+  t3EnableProviders = pkgs.writeShellApplication {
+    name = "t3code-enable-providers";
     runtimeInputs = [
       pkgs.coreutils
       pkgs.jq
@@ -36,13 +40,15 @@ let
           exit 0
         fi
       fi
-      if jq -e '.providers.grok.enabled == true' <<<"$current" >/dev/null; then
+      filter='.providers.grok.enabled == true and .providers.cursor.enabled == true'
+      if jq -e "$filter" <<<"$current" >/dev/null; then
         exit 0
       fi
       mkdir -p "$(dirname "$file")"
-      jq '.providers.grok.enabled = true' <<<"$current" >"$file.tmp"
+      jq '.providers.grok.enabled = true | .providers.cursor.enabled = true' \
+        <<<"$current" >"$file.tmp"
       mv "$file.tmp" "$file"
-      echo "t3code: enabled the Grok provider in $file"
+      echo "t3code: enabled the Grok and Cursor providers in $file"
     '';
   };
 in
@@ -181,8 +187,8 @@ in
     Install.WantedBy = [ "default.target" ];
   };
 
-  home.activation.t3codeEnableGrok = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    run ${lib.getExe t3EnableGrok}
+  home.activation.t3codeEnableProviders = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run ${lib.getExe t3EnableProviders}
   '';
 
   home.sessionVariables = {
