@@ -65,6 +65,7 @@ in
     ../../modules/home-manager/dev-preview
     ../../modules/home-manager/notify # phone notifications skill
     ../../modules/home-manager/company-brain.nix
+    ../../modules/home-manager/canvas-archive.nix
     ../../modules/home-manager/machines
     ../../modules/home-manager/bro
     inputs.time.homeManagerModules.default
