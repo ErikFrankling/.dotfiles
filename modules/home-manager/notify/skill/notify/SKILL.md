@@ -5,6 +5,8 @@ description: Send Erik a push notification on his phone (it arrives through the 
 
 # Notify Erik on his phone
 
+**Never contact other people.** Never send, post, reply, react, comment, invite, share or connect with anyone else on Erik's behalf (Discord, LinkedIn, X, email, Teams, SMS, GitHub comments, connect invites, shared docs), unless Erik approved that exact message in this conversation. Drafts for Erik to send himself are fine. Notifications to Erik himself are fine.
+
 A notification is a message from "Agents" in #notifications of Erik's private
 Discord server "Agents". The Discord app on his phone pushes it like any
 message, with every app closed and off the tailnet; Erik set nothing up.

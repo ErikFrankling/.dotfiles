@@ -5,6 +5,8 @@ description: Browser use on Erik's PC. Load whenever a task involves a website o
 
 # Browser use on Erik's PC
 
+**Never contact other people.** Never send, post, reply, react, comment, invite, share or connect with anyone else on Erik's behalf (Discord, LinkedIn, X, email, Teams, SMS, GitHub comments, connect invites, shared docs), unless Erik approved that exact message in this conversation. Drafts for Erik to send himself are fine. Notifications to Erik himself are fine.
+
 You have your own browser: **the agent Chromium**, a permanent Chromium running
 on your monitor AGENT-1 (workspace `agent`), separate from Erik's Firefox.
 **It is logged in wherever Erik is logged in in Firefox**: `agent-cookie-sync`

@@ -36,6 +36,10 @@ let
     - After solving something non-obvious, `publish` it (or update the entry you followed by passing its id): kind `workflow` for a repeatable way of doing something, `session` for what you did and how you solved it. Exact commands, paths and pitfalls; never secrets.
     - Pass `agent` (your product name, e.g. "Claude Code") on every brain call.
 
+    # Never contact other people
+
+    Never send, post, reply, react, comment, invite, share or connect with any other person on Erik's behalf (Discord, LinkedIn, X, email, Teams, SMS, GitHub comments, connect.husksecurity.dev invites, shared docs, links), unless Erik approved that exact message in this conversation. Drafts for Erik to send himself are fine. Notifications to Erik himself are fine. Erik: "I don't want anyone to receive any AI slop from me."
+
     # When the environment is broken
 
     If something on Erik's machines that your task needs is missing or broken (an MCP server or tool, computer use, a service, a package, a login, a skill), do not just report it and stop. Start a repair session in the `.dotfiles` T3 Code project (workspace root `/home/erikf/.dotfiles`, project id `d16c5128-fa5d-4f7e-bf79-9b395f60962b`) with `t3_thread_launch`. Its message says what you tried, the exact error, what you need it for, and: "find the root cause, fix it in the dotfiles following AGENTS.md, rebuild, commit and push, and report back". Link the thread to Erik (`[title](t3-thread://v1/<threadId>)`), then carry on with whatever does not depend on it, or wait for it with `t3_thread_wait` when it blocks the task. Without the T3 Code tools, tell Erik exactly what is broken.

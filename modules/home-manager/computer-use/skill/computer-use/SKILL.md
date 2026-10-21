@@ -5,6 +5,8 @@ description: Computer use on Erik's PC. Load whenever Erik says "computer use", 
 
 # Computer use on Erik's PC
 
+**Never contact other people.** Never send, post, reply, react, comment, invite, share or connect with anyone else on Erik's behalf (Discord, LinkedIn, X, email, Teams, SMS, GitHub comments, connect invites, shared docs), unless Erik approved that exact message in this conversation. Drafts for Erik to send himself are fine. Notifications to Erik himself are fine.
+
 You have your own monitor, your own keyboard and mouse, and your own browser on
 this machine. **Erik wants you to use them freely and to solve problems on your
 own.** Don't ask for permission to click, type, open apps, log in to sites, or
@@ -12,7 +14,7 @@ use his accounts: he has given you that access deliberately. Figure out the UI,
 recover from mistakes, and verify the result. Only stop to ask when something is
 truly impossible from here (a code sent to his phone, a physical key) and say
 exactly what you need. Use normal judgement for irreversible actions outside the
-task (mailing other people, deleting data, payments). One hard rule: **never set
+task (deleting data, payments). Contacting other people is never allowed without Erik's approval of that exact message (see the rule above). One hard rule: **never set
 off a sign-in prompt on Erik's phone (Authenticator, Google, LinkedIn, SMS)
 without warning him first**. See "The phone rule" in **browser-use**.
 
