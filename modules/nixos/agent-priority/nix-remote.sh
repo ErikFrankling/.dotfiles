@@ -21,6 +21,17 @@ if [ $# -eq 0 ]; then
   exit 2
 fi
 
+# One remote evaluation at a time from this machine: each takes ~5 GB on the
+# builder, and four at once pushed it into its memory limit (2026-10-21).
+# Taken before the flake is copied: a copy made before a long wait is not
+# rooted on the builder, and its garbage collector deleted it (2026-10-21).
+lock=${XDG_RUNTIME_DIR:-/tmp}/nix-remote.lock
+exec 9>"$lock"
+if ! flock -n 9; then
+  echo "nix-remote: waiting for another nix-remote on this machine to finish (one at a time)" >&2
+  flock 9
+fi
+
 declare -A archived=()
 args=()
 sub="" sub2="" positional=0
@@ -81,15 +92,6 @@ if [ "$sub" = build ] && [ "$dry" = 0 ]; then
 fi
 
 remote="export PATH=/nix/var/builder/bin:\$PATH; exec nix --extra-experimental-features 'nix-command flakes' $(printf '%q ' "${args[@]}")"
-# One remote evaluation at a time from this machine: each takes ~5 GB on the
-# builder, and four at once pushed it into its memory limit (2026-10-21).
-lock=${XDG_RUNTIME_DIR:-/tmp}/nix-remote.lock
-exec 9>"$lock"
-if ! flock -n 9; then
-  echo "nix-remote: waiting for another nix-remote on this machine to finish (one at a time)" >&2
-  flock 9
-fi
-
 tty=()
 [ -t 0 ] && [ -t 1 ] && [ "$fetch" = 0 ] && tty=(-tt)
 
