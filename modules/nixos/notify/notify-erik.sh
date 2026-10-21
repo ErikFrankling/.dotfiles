@@ -176,17 +176,21 @@ if [ "$push_status" = 200 ] &&
   printf "%s" "$push_reply" | sed "\$d" | jq -e ".delivered > 0" >/dev/null 2>&1; then
   native=true
 fi
-status=000
+status=000 discord_id=""
 if [ -r "$discord_file" ]; then
-  status=$(curl -sS --max-time 20 -o /dev/null -w '%{http_code}' -H "Content-Type: application/json" \
-    -d "$(discord_json "$native")" "$(cat "$discord_file")?wait=true") || status=000
+  discord_reply=$(curl -sS --max-time 20 -w "\n%{http_code}" -H "Content-Type: application/json" \
+    -d "$(discord_json "$native")" "$(cat "$discord_file")?wait=true" 2>/dev/null) || true
+  status=$(printf "%s" "$discord_reply" | tail -n 1)
+  # The id lets anyone read the post back without a Discord login:
+  # curl "$(cat /run/secrets/discord-webhook-url)/messages/<id>"
+  discord_id=$(printf "%s" "$discord_reply" | sed "\$d" | jq -r ".id // empty" 2>/dev/null) || true
 fi
 if ! $native && [ "$status" != 200 ]; then
   echo "notify-erik: not delivered (T3 push answered $push_status, Discord $status)" >&2; exit 1
 fi
 echo "$now $class $digest" >>"$state/sent"
 awk -v t=$((now - 172800)) '$1 >= t' "$state/sent" >"$state/sent.new" && mv "$state/sent.new" "$state/sent"
-echo "$(date -Iseconds) sent ($class, app=$native, discord=$status): $title" >>"$state/log"
+echo "$(date -Iseconds) sent ($class, app=$native, discord=$status ${discord_id:-}): $title" >>"$state/log"
 
 # Best effort: a failure here does not affect delivery.
 if [ -r "$token_file" ]; then
@@ -194,3 +198,4 @@ if [ -r "$token_file" ]; then
     -H "Content-Type: application/json" -d "$body" "$server/" 2>/dev/null || true
 fi
 if $native; then echo "sent (T3 app)"; else echo "sent (Discord only; T3 push answered $push_status)"; fi
+[ -z "$discord_id" ] || echo "discord message: $discord_id"

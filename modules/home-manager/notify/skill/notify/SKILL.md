@@ -94,6 +94,12 @@ the message in your final report instead.
 - CLI: `~/.dotfiles/modules/nixos/notify/` (Discord webhook, Erik's Discord
   user id and the ntfy token in `secrets/notify.yaml`, sops).
 - Discord: server "Agents" (id 1562316035896512532), channel #notifications,
-  webhook "Agents". The agent browser is logged in to Discord.
+  webhook "Agents" (Alertmanager posts to the same webhook). The agent
+  browser is **not** logged in to Discord, and no agent needs to be: to check
+  a post, read it back through the webhook with the id `notify-erik` prints
+  (Executor: `messageId`):
+  `curl "$(cat /run/secrets/discord-webhook-url)/messages/<id>"`. Never copy
+  Erik's Discord token from another browser: Discord revoked the copied
+  session on 2026-10-21.
 - ntfy server: homelab repo `kubernetes/homelab/apps/ntfy.yaml`, Gatus check
   `phone/ntfy`.
