@@ -64,7 +64,7 @@ stop() { # pid reason
   rss=$(rss_of "$pid")
   rss=$(awk -v k="${rss:-0}" 'BEGIN { printf "%.1fG", k / 1048576 }')
   echo "stopping $pid $comm ($rss): $reason"
-  pending+=("$comm ($rss, $reason)")
+  pending+=("$comm ($reason)")
   [ "$DRY_RUN" = 1 ] && return 0
   # Tell the agent through the process's own stderr; never block on it.
   # shellcheck disable=SC2016
@@ -116,18 +116,27 @@ check_cpu() {
     cores=$(awk -v u=$((usage - usage_then)) -v s="$span" 'BEGIN { printf "%.1f", u / s / 1000000 }')
     if awk -v c="$cores" -v l="$CPU_CORES" 'BEGIN { exit !(c >= l) }'; then
       echo "agents used $cores cores over ${span}s"
+      # Kill the biggest consumers until what is left is under CPU_CORES - 1
+      # cores. Many small workers (make -j16, stress) count together.
+      local list=() total=0 left keep
       for pid in $(agent_pids); do
         [ -n "${paused[$pid]:-}" ] && continue
         comm=$(cat "/proc/$pid/comm" 2>/dev/null) || continue
         [[ $comm =~ $providers ]] && continue
         t=$(ticks_of "$pid")
         [ -n "$t" ] || continue
-        # More than half a core over the window. A process started during the
-        # window counts from zero.
-        if [ $(((t - ${ticks_then[$pid]:-0}) * 2)) -gt $((span * hz)) ]; then
-          stop "$pid" "agents averaged $cores cores for a minute"
-        fi
+        t=$((t - ${ticks_then[$pid]:-0}))
+        [ "$t" -gt 0 ] || continue
+        list+=("$t $pid")
+        total=$((total + t))
       done
+      left=$total
+      keep=$(((CPU_CORES - 1) * span * hz))
+      while read -r t pid; do
+        [ "$left" -gt "$keep" ] || break
+        stop "$pid" "agents averaged $cores cores for a minute"
+        left=$((left - t))
+      done < <(printf "%s\n" "${list[@]}" | sort -rn)
     fi
     usage_then=""
   fi
@@ -192,7 +201,7 @@ flush_notify() {
   [ ${#pending[@]} -gt 0 ] || return 0
   [ $((SECONDS - last_notify)) -ge "$NOTIFY_EVERY" ] || return 0
   local list
-  list=$(printf '%s; ' "${pending[@]}" | head -c 600)
+  list=$(printf '%s\n' "${pending[@]}" | sort | uniq -c | awk '{ n = $1; $1 = ""; sub(/^ /, ""); printf "%s%s; ", $0, (n > 1 ? " x" n : "") }' | head -c 600)
   pending=()
   last_notify=$SECONDS
   if [ "$DRY_RUN" = 1 ]; then
