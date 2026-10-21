@@ -81,7 +81,7 @@ let
 
       in_sync() {
         git fetch --quiet origin main \
-          && [ -z "$(git status --porcelain)" ] \
+          && [ -z "$(git status --porcelain --untracked-files=no)" ] \
           && [ "$(git branch --show-current)" = main ] \
           && [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]
       }
@@ -91,7 +91,7 @@ let
         exit 1
       fi
       pushed_local_work=false
-      if [ -z "$(git status --porcelain)" ] && [ "$(git branch --show-current)" = main ] \
+      if [ -z "$(git status --porcelain --untracked-files=no)" ] && [ "$(git branch --show-current)" = main ] \
         && git merge-base --is-ancestor HEAD origin/main; then
         git merge --quiet --ff-only origin/main
       else

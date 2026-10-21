@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Guard (2026-10-21): a push that moves the T3 Code fork pin (flake.lock) or its
+# overlay must still build the pnpm dependencies, else the homelab build and the
+# 06:00 auto-update fail with a "hash mismatch" after a fork rebase. The build runs
+# on the homelab builder and is cached when the hash is right.
+set -uo pipefail
+zero=0000000000000000000000000000000000000000
+changed=false
+while read -r _ local_sha _ remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue
+  base=$remote_sha
+  [ "$base" = "$zero" ] && base=$(git rev-parse "$local_sha~1")
+  git diff --quiet "$base" "$local_sha" -- flake.lock overlays/t3code.nix || changed=true
+done
+$changed || exit 0
+echo "pre-push: T3 Code pin or overlay changed; building its pnpm deps..." >&2
+drv=$(nix eval --raw .#nixosConfigurations.pc.pkgs.t3code.drvPath 2>/dev/null \
+  | xargs nix-store -qR | grep "t3code-unwrapped-pnpm-deps.drv$" | head -1)
+if [ -z "$drv" ] || ! nix build --no-link "$drv^*" >&2; then
+  echo "pre-push: T3 Code pnpm deps do not build (refresh the hash in overlays/t3code.nix). Push blocked." >&2
+  exit 1
+fi

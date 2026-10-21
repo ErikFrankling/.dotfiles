@@ -10,7 +10,7 @@ and often applies them with `rebuild` without committing. The daily update
 starts you when `~/.dotfiles` has uncommitted changes or commits that are not on
 `origin/main`. Your job ends when all three of these hold:
 
-- `git status --porcelain` is empty
+- `git status --porcelain --untracked-files=no` is empty (untracked scratch is ignored)
 - the branch is `main`
 - `HEAD` equals `origin/main` after a fresh `git fetch`
 
