@@ -208,7 +208,8 @@ let
             --working-directory=${clone} --property=StandardOutput="append:$log" \
             --setenv=PATH=/run/wrappers/bin:${home}/.nix-profile/bin:/etc/profiles/per-user/${config.home.username}/bin:/run/current-system/sw/bin \
             --property=StandardError="append:$log" \
-            "$(command -v timeout)" 2h "$(command -v claude)" --print --dangerously-skip-permissions "$prompt" \
+            "$(command -v timeout)" 2h "$(command -v claude)" --print --dangerously-skip-permissions \
+            --model ${lib.escapeShellArg cfg.modelSelection.model} "$prompt" \
             || fail "$1, and the headless session did not start either."
           echo "$1; started a headless session (log: $log)"
           exit 0
@@ -611,17 +612,20 @@ in
     };
     modelSelection = lib.mkOption {
       type = lib.types.attrs;
+      # Routine automated runs go on Sonnet, not Opus (model-tiers skill in
+      # ../company-brain.nix). A run that hits a hard repair delegates that
+      # part to Opus instead of the whole session paying for it.
       default = {
         instanceId = "claudeAgent";
-        model = "claude-opus-5-5";
+        model = "claude-sonnet-5-5";
         options = [
           {
-            id = "fastMode";
-            value = false;
+            id = "effort";
+            value = "medium";
           }
         ];
       };
-      description = "T3 Code model selection for the nightly session.";
+      description = "T3 Code model selection for the automated sessions (nightly update, morning check, health incident); its model is also used by their headless fallback.";
     };
     prompt = lib.mkOption {
       type = lib.types.str;

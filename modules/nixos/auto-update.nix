@@ -97,7 +97,8 @@ let
       else
         # Uncommitted work, or commits main does not have.
         echo "local dotfiles work found; starting a Claude session to commit, merge and push it"
-        timeout 30m claude --print --dangerously-skip-permissions \
+        # Routine run: Sonnet, not Opus (model-tiers skill).
+        timeout 30m claude --print --dangerously-skip-permissions --model claude-sonnet-5-5 \
           "Load the dotfiles-sync skill and follow it. This is the daily automatic run on host ${hostName}; nobody is watching, so do not ask questions." \
           > "$log/sync.log" 2>&1 || true
         if ! in_sync; then

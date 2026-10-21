@@ -39,7 +39,15 @@ let
     # When the environment is broken
 
     If something on Erik's machines that your task needs is missing or broken (an MCP server or tool, computer use, a service, a package, a login, a skill), do not just report it and stop. Start a repair session in the `.dotfiles` T3 Code project (workspace root `/home/erikf/.dotfiles`, project id `d16c5128-fa5d-4f7e-bf79-9b395f60962b`) with `t3_thread_launch`. Its message says what you tried, the exact error, what you need it for, and: "find the root cause, fix it in the dotfiles following AGENTS.md, rebuild, commit and push, and report back". Link the thread to Erik (`[title](t3-thread://v1/<threadId>)`), then carry on with whatever does not depend on it, or wait for it with `t3_thread_wait` when it blocks the task. Without the T3 Code tools, tell Erik exactly what is broken.
+
+    # Model tiers
+
+    Erik's Claude weekly limits are tight, so do not spend Opus on routine work. When you launch a thread, delegate a sub-agent, schedule a task or write an automated job, pick the cheapest model that fits: Opus 5.5 (`claude-opus-5-5`) for real engineering, writing and anything hard or ambiguous; Sonnet 5.5 (`claude-sonnet-5-5`, medium effort) for every automated or unattended run and for simple work of a few tool calls; Haiku 5.5 (`claude-haiku-5-5`, low effort) for extremely basic, mechanical things. Escalate a hard sub-task to Opus with `delegate_task` instead of running a whole routine session on Opus. Trivial and bulk sub-agent work (sweeps, monitoring, labelling, checks) goes to Erik's other subscriptions first, as T3 sub-agents via `delegate_task`: Codex (`codex`, `gpt-6-luna` at low effort; preferred, and best at computer use), OpenCode (`opencode`, DeepSeek V4.1 Flash; cheap bulk) and Grok (`grok`; anything on X). You stay responsible for their output: verify it before acting on it. A model Erik picks himself always wins. Details and exact targets: the `model-tiers` skill.
   '';
+  # Skills that ship with this module, installed for every harness.
+  skills = {
+    model-tiers = ./model-tiers;
+  };
 
   sync = pkgs.writeShellApplication {
     name = "brain-skill-sync";
@@ -60,13 +68,25 @@ in
 {
   home.packages = [ sync ];
 
-  home.file.".claude/CLAUDE.md".text = instructions;
-  home.file.".codex/AGENTS.md" = {
-    text = instructions;
-    # Codex left an empty file here.
-    force = true;
-  };
-  home.file.".codex-t3/AGENTS.md".text = instructions;
+  home.file = {
+    ".claude/CLAUDE.md".text = instructions;
+    ".codex/AGENTS.md" = {
+      text = instructions;
+      # Codex left an empty file here.
+      force = true;
+    };
+    ".codex-t3/AGENTS.md".text = instructions;
+  }
+  // lib.mergeAttrsList (
+    lib.mapCartesianProduct ({ dir, skill }: { "${dir}/${skill}".source = skills.${skill}; }) {
+      dir = [
+        ".agents/skills"
+        ".claude/skills"
+        ".codex/skills"
+      ];
+      skill = builtins.attrNames skills;
+    }
+  );
 
   systemd.user.services.brain-skill-sync = {
     Unit.Description = "Import local agent skills into the company brain";
