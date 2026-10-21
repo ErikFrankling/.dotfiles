@@ -83,8 +83,10 @@ let
             echo "== building $host on the homelab (log: $log)"
             # The exit status alone is not trusted: a build that failed on the
             # remote store has been seen to return 0 with no output path.
-            out=$(nix build --no-link --print-out-paths --eval-store auto \
-              --store ${builder} "$(attr "$host")" 2> "$log") || out=""
+            # nix-remote evaluates on the builder too: the agent lag-guard kills
+            # a local NixOS evaluation, and agent sessions run inside that slice.
+            out=$(NIX_REMOTE_FETCH=0 /run/current-system/sw/bin/nix-remote build \
+              --no-link --print-out-paths "$(attr "$host")" 2> "$log") || out=""
             if [[ ! $out =~ ^/nix/store/[a-z0-9]{32}-nixos-system-$host- ]]; then
               echo "== $host FAILED. Last lines:" >&2
               tail -n 60 "$log" >&2
