@@ -251,6 +251,19 @@ in
     '';
   };
 
+  # Keep the OpenCode Go key in ~/.local/share/opencode/auth.json in step with sops
+  # (PC only). OpenCode also writes that file itself (OAuth logins), so merge.
+  home.activation.opencodeGoKey = lib.mkIf (osConfig.sops.secrets ? opencode-go-key) (
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      auth="$HOME/.local/share/opencode/auth.json"
+      mkdir -p "$(dirname "$auth")"
+      [ -f "$auth" ] || echo '{}' > "$auth"
+      tmp="$(mktemp)"
+      ${pkgs.jq}/bin/jq --rawfile k ${osConfig.sops.secrets.opencode-go-key.path} '.["opencode-go"] = {type: "api", key: ($k | rtrimstr("\n"))}' "$auth" > "$tmp" && install -m 600 "$tmp" "$auth"
+      rm -f "$tmp"
+    ''
+  );
+
   # The second Claude account (~/.claude_2, T3 Code instance claudeAgent_claude_2)
   # shares the first account's transcript store, so a thread switched between
   # accounts (by hand or by T3's usage-limit failover) resumes the same session.

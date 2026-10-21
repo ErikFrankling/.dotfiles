@@ -110,6 +110,8 @@
   };
   # Canvas API token for agents (agent-canvas-token, computer-use/logins.nix).
   sops.secrets.canvas-token.owner = username;
+  # OpenCode Go API key (modules/home-manager/ai.nix merges it into opencode auth.json).
+  sops.secrets.opencode-go-key.owner = username;
 
   networking.hostName = "${hostName}"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
