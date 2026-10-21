@@ -358,7 +358,7 @@ let
 
           for host in ${lib.concatStringsSep " " hosts}; do
             section "$host"
-            expected=$(timeout 300 nix eval --raw \
+            expected=$(timeout 300 nix-remote eval --raw \
               "git+file://$dot?rev=$main#nixosConfigurations.$host.config.system.build.toplevel.outPath" \
               2> ${checkDir}/eval-$host.log) \
               || expected="EVAL FAILED: $(grep -m 1 -A 3 '^error' ${checkDir}/eval-$host.log | xargs)"
