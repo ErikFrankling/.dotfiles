@@ -103,6 +103,12 @@ The machines update themselves; nothing compiles on them.
   ignored until the window ends (alerts for 10 more minutes), and Gatus
   failures from inside it never count, so no repair session starts.
   `health-watch maintenance` lists the open windows.
+  **This includes every deploy that changes a live route or service**
+  (a Flux/homelab push, a cutover, a client/server version swap): open a
+  window of at least 15 minutes *before* pushing, e.g.
+  `health-watch maintenance 15 "time v2 cutover" time`. The 2026-10-21 time-v2
+  cutover skipped it and started a repair session. As a second net, an alert
+  must have been firing 10 minutes before health-watch starts a session.
 - **The cache** is `https://nix-cache.erikfrankling.duckdns.org`, the build
   server's own store (homelab repo, `docs/nix-builder.md`). `ssh nix-builder`
   reaches it from the PC.

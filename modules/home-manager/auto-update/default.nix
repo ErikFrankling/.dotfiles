@@ -601,12 +601,15 @@ let
         failing=$(monitor_down gatus "the health monitor at ${gatusApi}")
       fi
 
-      # Alerts meant for a session. The rule's `for:` already debounced them;
-      # session="false" ones (Erik's work projects, notify-only) are not ours.
+      # Alerts meant for a session. They must have been firing for 10 minutes
+      # first, so a rollout or restart that recovers by itself starts nothing
+      # (Erik, 2026-10-21). session="false" ones (Erik's work projects,
+      # notify-only) are not ours.
       if alerts=$(curl -fsS --max-time 20 '${alertmanagerApi}'); then
         failing_alerts=$(jq -r --argjson windows "$maintenance" --argjson now "$now" '
           .[]
           | select(.labels.session == "true")
+          | select((.startsAt[0:19] + "Z" | fromdateiso8601) < $now - 600)
           | ([.labels | to_entries[]
               | select(.key | IN("alertname", "severity", "project", "session") | not)]
              | sort_by(.key) | map(.value) | join("/")) as $id
