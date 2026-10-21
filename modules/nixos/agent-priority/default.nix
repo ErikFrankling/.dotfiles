@@ -229,6 +229,10 @@ in
         # zram only (zramSwap in ../default.nix, half the RAM). The 64 GB disk
         # partition let runaways thrash for minutes instead of being killed.
         swapDevices = lib.mkForce [ ];
+        # The partition has the Linux-swap GPT type, so systemd-gpt-auto-generator
+        # swaps on it by itself, whatever swapDevices says (it did right after
+        # the first swapoff). NixOS mounts everything from fstab.
+        boot.kernelParams = [ "systemd.gpt_auto=0" ];
 
         systemd.oomd.enable = true;
 
