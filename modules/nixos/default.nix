@@ -23,6 +23,7 @@
     ./nh.nix
     ./windows-vm
     ./notify # notify-erik: push notifications to Erik's phone
+    ./observability # logs and metrics to the homelab (Alloy); enabled per host
   ];
 
   boot.kernel.sysctl = {

@@ -11,6 +11,15 @@
 {
   services.local-stt.enable = true;
 
+  # Logs and metrics to the homelab (modules/nixos/observability).
+  observability = {
+    enable = true;
+    probes = {
+      time-agent = "http://127.0.0.1:5600/health";
+      t3code = "http://127.0.0.1:3773/";
+    };
+  };
+
   # Daily: pull main and switch to the system the homelab built.
   autoUpdate.enable = true;
 

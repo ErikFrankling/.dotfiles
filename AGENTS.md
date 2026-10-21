@@ -78,20 +78,30 @@ The machines update themselves; nothing compiles on them.
   certificate) are in working order, repairs what is not, and sends Erik one
   notification (`systems-check report`). A 10:00 watchdog notifies if no
   report arrived.
-- **Always, PC:** `health-watch.timer` reads the Gatus health checks on the
-  homelab every 2 minutes (homelab repo,
-  `kubernetes/homelab/config/gatus/config.yaml`; page at
-  `http://192.168.50.100:18080`). A check that keeps failing, or is flaky,
-  starts a repair session (systems-check skill, "Incident procedure"; T3 Code,
-  or headless `claude` when T3 Code is down). At most one an hour and six a
-  day; log in `~/.local/state/health-watch/incidents.log`. No alerts to Erik:
-  the goal is that things work when he uses them.
+- **Always, PC:** `health-watch.timer` reads the Gatus health checks
+  (homelab repo, `kubernetes/homelab/config/gatus/config.yaml`; page at
+  `http://192.168.50.100:18080`) and the firing alerts in the homelab's
+  Alertmanager (homelab repo, `docs/observability.md`) every 2 minutes. A
+  check that keeps failing or is flaky, or an alert labelled
+  `session="true"`, starts a repair session on Sonnet (systems-check skill,
+  "Incident procedure"; T3 Code, or headless `claude` when T3 Code is down).
+  At most one an hour and six a day; log in
+  `~/.local/state/health-watch/incidents.log`. Erik is notified only when a
+  session gives up or the day's sessions are used up while something still
+  fails. `health-watch --dry-run` shows what it sees and would do.
+- **Logs and metrics:** every pc and framework journald entry, host metrics
+  and localhost-only health probes go to the homelab through Grafana Alloy
+  (`modules/nixos/observability`); Grafana at
+  `https://grafana.erikfrankling.duckdns.org`. Programs that speak OTLP send
+  to `http://127.0.0.1:4318` on either machine.
 - **Planned outages:** before taking something down on purpose (restarting
   T3 Code, a homelab pod, a reboot), run
-  `health-watch maintenance MINUTES "reason" [check-regex]`, e.g.
+  `health-watch maintenance MINUTES "reason" [key-regex]`, e.g.
   `health-watch maintenance 5 "restart t3code for v0.1.1" t3code`. Matching
-  Gatus checks (`group/name`, default all) are ignored until the window ends,
-  and failures from inside it never count, so no repair session starts.
+  Gatus checks (`group/name`), alerts (`alert/<alertname>/<label values>`)
+  and monitors (`monitor/gatus`, `monitor/alertmanager`), default all, are
+  ignored until the window ends (alerts for 10 more minutes), and Gatus
+  failures from inside it never count, so no repair session starts.
   `health-watch maintenance` lists the open windows.
 - **The cache** is `https://nix-cache.erikfrankling.duckdns.org`, the build
   server's own store (homelab repo, `docs/nix-builder.md`). `ssh nix-builder`

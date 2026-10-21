@@ -197,6 +197,12 @@
   # networking.firewall.enable = false;
 
   networking.hostName = "framework"; # Define your hostname.
+
+  # Logs and metrics to the homelab (modules/nixos/observability).
+  observability = {
+    enable = true;
+    probes.time-agent = "http://127.0.0.1:5600/health";
+  };
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Enable fw-fanctrl

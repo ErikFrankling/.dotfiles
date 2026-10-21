@@ -4,6 +4,12 @@ keys:
   - &primary age1jygscgy2z5d33m3k5h7yu39e25t9r4m46pj4fehz4cshsnaxtvts30cyzf
   - &wsl age1yhgc7njna8cgdp7z50zw0wkpdvnd2cmluyg2f8k68nz0686zngms2cu6tv
 creation_rules:
+  # Shared by every host: the OTLP ingest token (modules/nixos/observability).
+  - path_regex: secrets/observability\.yaml$
+    key_groups:
+    - age:
+      - *primary
+      - *wsl
   # Shared by every host: the phone-notification credentials (modules/nixos/notify).
   - path_regex: secrets/notify\.yaml$
     key_groups:
