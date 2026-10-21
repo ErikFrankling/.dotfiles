@@ -40,17 +40,22 @@ let
 
     If something on Erik's machines that your task needs is missing or broken (an MCP server or tool, computer use, a service, a package, a login, a skill), do not just report it and stop. Start a repair session in the `.dotfiles` T3 Code project (workspace root `/home/erikf/.dotfiles`, project id `d16c5128-fa5d-4f7e-bf79-9b395f60962b`) with `t3_thread_launch`. Its message says what you tried, the exact error, what you need it for, and: "find the root cause, fix it in the dotfiles following AGENTS.md, rebuild, commit and push, and report back". Link the thread to Erik (`[title](t3-thread://v1/<threadId>)`), then carry on with whatever does not depend on it, or wait for it with `t3_thread_wait` when it blocks the task. Without the T3 Code tools, tell Erik exactly what is broken.
 
-    # Heavy work on the PC
+    # Heavy work runs on the homelab
 
-    Erik works at the PC while agents run, and it must stay responsive. Agent sessions run in a low-priority, memory-capped slice (`app-t3code.slice`); `systemd-run --user` from an agent stays in it, so never escape it with `--slice=`, Docker, sudo or system units. Long compiles come from a binary cache or the homelab builder, never a local compile you wait out. At most one Android emulator on the PC across all agents (reuse a running one; kill it when done). Cap build parallelism (`-j4`, Gradle `--max-workers=4`) and run one typecheck, test suite or NixOS evaluation at a time. Load the `machines` skill before anything heavy or parallel.
+    The PC is Erik's and must never lag (Erik: "use the home lab for long running cpu heavy stuff, i need my pc not to lag, idc if it takes long"). On the PC do only light work: editing, chat, git, small commands and short checks. Run anything long or CPU, disk or memory heavy on the homelab, even though it is slower: `heavy -- <cmd>` runs a command in a synced copy of the repo on the homelab worker (Gradle/APK builds, test suites, big typechecks, embeddings and ML batch jobs, data processing); `heavy emulator start` gives an Android emulator on the homelab with adb forwarded to the PC; `rebuild` and `nix-remote build|eval` evaluate and build Nix on the homelab builder. Never start an emulator, Gradle build, model server or NixOS evaluation on the PC. Agent sessions run in a capped slice (`app-t3code.slice`, idle CPU, disk and memory caps); never escape it with `--slice=`, Docker, sudo or system units. A watchdog kills agent heavy jobs when the PC stalls. Load the `machines` skill before anything heavy or parallel.
 
     # Model tiers
 
     Erik's Claude weekly limits are tight, so do not spend Opus on routine work. When you launch a thread, delegate a sub-agent, schedule a task or write an automated job, pick the cheapest model that fits: Opus 5.5 (`claude-opus-5-5`) for real engineering, writing and anything hard or ambiguous; Sonnet 5.5 (`claude-sonnet-5-5`, medium effort) for every automated or unattended run and for simple work of a few tool calls; Haiku 5.5 (`claude-haiku-5-5`, low effort) for extremely basic, mechanical things. Escalate a hard sub-task to Opus with `delegate_task` instead of running a whole routine session on Opus. Trivial and bulk sub-agent work (sweeps, monitoring, labelling, checks) goes to Erik's other subscriptions first, as T3 sub-agents via `delegate_task`: Codex (`codex`, `gpt-6-luna` at low effort; preferred, and best at computer use), OpenCode (`opencode`, DeepSeek V4.1 Flash; cheap bulk), Cursor (`cursor`, `composer-2.5`; small coding chores) and Grok (`grok`; anything on X). Cursor and Grok share one SuperGrok weekly pool. You stay responsible for their output: verify it before acting on it. A model Erik picks himself always wins. Details and exact targets: the `model-tiers` skill.
+
+    # Writing as Erik
+
+    Whenever you write or edit text Erik will hand in or send as his own (homework, reports, essays, emails, applications, posts), load the `erik-writing-style` skill first and follow it: plain student voice, only the references needed, no subjective big claims, exact terms from sources, never mention process.
   '';
   # Skills that ship with this module, installed for every harness.
   skills = {
     model-tiers = ./model-tiers;
+    erik-writing-style = ./erik-writing-style;
   };
 
   sync = pkgs.writeShellApplication {

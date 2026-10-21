@@ -28,8 +28,17 @@ let
       set argv "switch"
     end
 
-    # sudo nixos-rebuild $argv --fast --flake /home/${username}/.dotfiles#${hostName}
-    nh os $argv /home/${username}/.dotfiles --hostname ${hostName}
+    # On the pc the evaluation and build run on the homelab builder and only
+    # the activation runs here (modules/nixos/agent-priority). `rebuild --local`
+    # is the old local nh path, for when the homelab is down.
+    if command -q nixos-remote-switch; and not contains -- --local $argv
+      nixos-remote-switch $argv[1] /home/${username}/.dotfiles; or exit 1
+    else
+      set argv (string match -v -- --local $argv)
+      test -n "$argv"; or set argv switch
+      # sudo nixos-rebuild $argv --fast --flake /home/${username}/.dotfiles#${hostName}
+      nh os $argv /home/${username}/.dotfiles --hostname ${hostName}
+    end
     echo $(hyprctl reload)
   '';
 in
