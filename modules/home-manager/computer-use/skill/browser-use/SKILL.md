@@ -223,7 +223,7 @@ one-off code (SMS/authenticator), you can instead ask him for the code in chat.
 **Executor mail tools first.** Erik's personal Gmail (`ef.pro454@gmail.com`) is an
 Executor app: `tools.gmail.searchThreads`, `getThread`, `getMessage`,
 `listLabels`, `modifyLabels`, `archive`, `unsubscribeInfo` (read, label, archive
-only; it cannot send or delete). KTH mail is the `kth-mail` app (searchMessages, getMessage, markRead, archive; needs its own sign-in first).
+only; the app has no send or delete tools, never add them without Erik's OK). KTH mail is the `kth-mail` app (searchMessages, getMessage, markRead, archive; needs its own sign-in first).
 Search with `search({query: "gmail"})` through the executor MCP. If the app
 has no linked account yet, or the call fails, fall back to the methods below
 and check the brain entry "Gmail and KTH mail through Executor". Neptune
