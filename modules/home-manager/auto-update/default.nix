@@ -36,6 +36,11 @@ let
     "framework"
   ];
   keepPerHost = 5;
+  # Held (flock) by `nix-nightly build` for as long as it runs. The kernel
+  # drops it when the process dies, so unlike a pgrep on the command line it
+  # can neither go stale nor match an unrelated process that merely mentions
+  # "nix-nightly build" (what blocked the 2026-10-22 03:00 start).
+  buildLock = "${stateDir}/build.lock";
 
   nixNightly = pkgs.writeShellApplication {
     name = "nix-nightly";
@@ -47,6 +52,7 @@ let
       pkgs.coreutils
       pkgs.gnugrep
       pkgs.gnused
+      pkgs.util-linux
     ];
     text = ''
       attr() { echo ".#nixosConfigurations.$1.config.system.build.toplevel"; }
@@ -67,6 +73,11 @@ let
           ;;
 
         build)
+          exec 8>${buildLock}
+          if ! flock -n 8; then
+            echo "another nix-nightly build is already running" >&2
+            exit 3
+          fi
           if [ -n "$(git status --porcelain)" ]; then
             echo "working tree is dirty; commit first, the build has to match a commit" >&2
             exit 2
@@ -81,7 +92,7 @@ let
             # nix-remote evaluates on the builder too: the agent lag-guard kills
             # a local NixOS evaluation, and agent sessions run inside that slice.
             out=$(NIX_REMOTE_FETCH=0 /run/current-system/sw/bin/nix-remote build \
-              --no-link --print-out-paths "$(attr "$host")" 2> "$log") || out=""
+              --no-link --print-out-paths "$(attr "$host")" 2> "$log" 8>&-) || out=""
             if [[ ! $out =~ ^/nix/store/[a-z0-9]{32}-nixos-system-$host- ]]; then
               echo "== $host FAILED. Last lines:" >&2
               tail -n 60 "$log" >&2
@@ -268,7 +279,8 @@ let
     # A previous session that is still building owns the clone; resetting it
     # underneath would wreck that run.
     preflight = ''
-      if pgrep -u "$(id -u)" -f 'nix-nightly build' > /dev/null; then
+      mkdir -p ${stateDir}
+      if ! flock -n ${buildLock} true 2> /dev/null; then
         fail "Last night's update is still building on the homelab, so tonight's was not started."
       fi
     '';
@@ -325,6 +337,7 @@ let
       pkgs.jq
       pkgs.procps
       pkgs.systemd
+      pkgs.util-linux
     ];
     text = ''
       export GIT_SSH_COMMAND="ssh -o BatchMode=yes"
@@ -351,8 +364,8 @@ let
             echo "last nightly build: none recorded"
           fi
           [ -f ${stateDir}/last-notify ] && echo "last nightly alert: $(cat ${stateDir}/last-notify)"
-          pgrep -u "$(id -u)" -f 'nix-nightly build' > /dev/null \
-            && echo "a nightly build is STILL RUNNING"
+          flock -n ${buildLock} true 2> /dev/null \
+            || echo "a nightly build is STILL RUNNING"
           echo "nightly clone: $(git -C ${clone} log -1 --format='%h %s' 2>/dev/null), $(git -C ${clone} status --porcelain 2>/dev/null | wc -l) uncommitted files"
 
           for host in ${lib.concatStringsSep " " hosts}; do
