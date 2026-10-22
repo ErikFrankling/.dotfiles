@@ -234,6 +234,14 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-22 02:16 (health-watch) — `SystemdUnitFailed/framework/voxtype`:
+  the user unit crash-looped (restart counter 56) since 00:05 with "Parakeet
+  model 'parakeet-tdt-0.6b-v3' not found". `voxtype.nix` switched the model to
+  tdt-v3, which is a manual download into `~/.local/share/voxtype/models/`
+  (not Nix-managed); the framework only had `parakeet-unified-en-0.6b`. Fix:
+  `rsync -a` the model dir from the pc to the framework, `systemctl --user
+  reset-failed voxtype; restart voxtype`. Any new host or model change needs
+  the same manual download (`voxtype setup --download --model ...`).
 - 2026-10-22 00:13 (health-watch) — `alert/SystemdUnitFailed/pc/fcm-first-test`.
   A leftover transient `systemd-run --path` one-shot (`PathExists=push-devices.json`,
   script in `~/.local/state/notify-erik/`) re-ran every 20 s because the file
