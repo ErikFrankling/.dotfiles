@@ -234,6 +234,15 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-22 06:14 (health-watch) — `alert/SystemdUnitFailed/framework/auto-update`:
+  the 06:00 run failed with "part of it is missing from the cache" because
+  `main` had moved after the nightly build (later pushes unbuilt). Fix:
+  `nix-nightly build` from the clone, then on the framework rerun. A plain
+  `systemctl --user start auto-update` says "nothing new on main" (HEAD was
+  already pulled), so fetch with `nix copy --from https://nix-cache.erikfrankling.duckdns.org
+  <toplevel>` and start `auto-update-switch <toplevel> <rev>` via `sudo systemd-run`
+  as `auto-update` does.
+
 - 2026-10-22 02:16 (health-watch) — `SystemdUnitFailed/framework/voxtype`:
   the user unit crash-looped (restart counter 56) since 00:05 with "Parakeet
   model 'parakeet-tdt-0.6b-v3' not found". `voxtype.nix` switched the model to
