@@ -54,9 +54,13 @@ notify-erik status
 `notify-erik --help` lists every option (`--link URL`, `--tags`, `--markdown`,
 `--test`, `--dry-run`). It fills in this machine's T3 environment itself.
 
-**From a pod in the homelab:** send through Executor's `notify` app.
-(ntfy, `docs/notifications.md` in the homelab repo, does not reach the phone
-on its own.)
+**From a service in the homelab cluster (no Executor, no CLI):** plain HTTP to
+`notify-gateway`: `POST http://notify-gateway.homelab.svc/v1/notify` with the
+service's own bearer token (Time: secret `time-notify`), body
+`{title, message, priority: "normal"|"low", url | thread, tag}`. A repeated
+`tag` replaces the earlier notification; limits are per source. Spec in the
+homelab repo, `docs/notifications.md`. Publishing to ntfy alone does not reach
+the phone.
 
 ## When to send (and when not)
 
