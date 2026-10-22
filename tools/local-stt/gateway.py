@@ -459,10 +459,14 @@ async def preview(state, client):
     path = ROOT / state["id"] / "audio.pcm"
     sent = failures = 0
     base = ""  # everything is replayed from the file, including after a restart
-    while state["status"] == "recording" or (state["status"] == "finalizing" and sent < state["bytes"]):
+    # A recording whose client went away stops retrying: it would otherwise keep
+    # restarting the shared worker under every live recording, forever.
+    while active(state) and (state["status"] == "recording" or sent < state["bytes"]):
         ws = reader = None
+        process_seen = None
         try:
             await start_worker("preview", client)
+            process_seen = workers.get("preview")
             ws = await client.ws_connect(
                 NEMO + "/v1/audio/transcriptions/realtime", timeout=ClientWSTimeout(ws_close=10)
             )
@@ -490,8 +494,10 @@ async def preview(state, client):
             log("preview.interrupted", state, error_type=type(error).__name__, error=str(error))
             # A worker that is alive but no longer answers never heals, and
             # start_worker only replaces one that exited: restart it.
+            # Another recording may have replaced it already: do not kill the new one.
             async with worker_locks["preview"]:
-                await stop_worker("preview")
+                if workers.get("preview") is process_seen:
+                    await stop_worker("preview")
             log("worker.restarted", state, worker="preview")
         finally:
             if ws is not None:
