@@ -70,6 +70,7 @@ in
     ../../modules/home-manager/machines
     ../../modules/home-manager/heavy # `heavy`: heavy agent work on the homelab worker
     ../../modules/home-manager/bro
+    ../../modules/home-manager/todo-nudge # wake the personal agent while its to-do list has actionable items
     inputs.time.homeManagerModules.agent-v2
     # ../../modules/home-manager/noctalia.nix
   ];
