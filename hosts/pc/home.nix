@@ -161,6 +161,10 @@ in
       ExecStartPre = t3CodexPrepare;
       ExecStart = "${pkgs.t3code}/bin/t3 serve --host 0.0.0.0 --port 3773";
       Environment = [
+        # `t3 doctor` and `t3 service` only treat a unit as theirs when it
+        # names the data directory in T3CODE_HOME (the default, ~/.t3). Without
+        # it doctor cannot pause the server for database maintenance.
+        "T3CODE_HOME=${config.home.homeDirectory}/.t3"
         "CODEX_HOME=${t3CodexHome}"
         # LAN/VPN-only deployment: serve without pairing, cookies, or tokens.
         "T3CODE_UNSAFE_NO_AUTH=1"
