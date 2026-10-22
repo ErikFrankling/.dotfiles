@@ -1445,11 +1445,11 @@
     "t3code-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1792598992,
-        "narHash": "sha256-FIy79+kLpShlcevvITFC4RvDbTwe6Ohj5uJoCcx+a5g=",
+        "lastModified": 1792629185,
+        "narHash": "sha256-PwAiTKRBqNUMT68zikouNiwpDN4oIPh7hz8sA4KcNMs=",
         "owner": "ErikFrankling",
         "repo": "t3code",
-        "rev": "1789efbad321117ccf80e069da7ed1a5f58f0579",
+        "rev": "51f648b042d7e63d3c02df8bf0092ca2ab6fdf0d",
         "type": "github"
       },
       "original": {
