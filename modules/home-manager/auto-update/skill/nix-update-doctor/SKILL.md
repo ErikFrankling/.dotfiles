@@ -243,6 +243,13 @@ finds it.
 Append one entry per night that needed a repair, newest first: date, symptom,
 cause, what fixed it, link. Commit it with the fix. This is how the next run
 learns the patterns; keep entries to a few lines.
+- 2026-10-22 — (1) `nixpkgs` update to `02c087f` again failed in
+  `linux-6.18.57-modules`: v4l2loopback `modules.dep` collision. Held `nixpkgs`
+  at `55bfb4d` again (still unfixed; issue #575192 / PR #575861). (2) `nixpkgs_master`
+  `96ff2df` needed uncached `electron-unwrapped-44.9.3` for t3code; held at
+  `44996b0`. (3) `VMware-Workstation-Full-25H2u1` download from archive.org
+  returned 500 on the builder (works from the PC): downloaded with curl on the
+  PC, `nix store add --mode flat --name <bundle name>`, `nix copy` to the builder.
 
 - 2026-10-20 — pc failed in `linux-6.18.57-modules` (the module aggregator).
   Cause: nixpkgs `09063bd` makes `aggregateModules` merge per-module
