@@ -234,6 +234,14 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-23 01:32 (health-watch) — `alert/SystemdUnitFailed/pc/t3code`
+  fired at 01:04 during a planned restart (v0.1.2 deploy, maintenance window
+  open): the old process exits 130 on stop, so systemd logs "Failed with
+  result 'exit-code'" and the journal-based alert fires although the new
+  unit is active. No repair needed. Possible fix for later:
+  `SuccessExitStatus = 130` on `systemd.user.services.t3code` (hosts/pc/home.nix),
+  deployed when a t3code restart is acceptable.
+
 - 2026-10-22 07:54 (health-watch) — `alert/DictationErrors/pc/local-stt`:
   `preview.interrupted` and `selftest.failed` every ~40 s from 07:42. T3 Code
   voice tests (project `.t3/scratch`) left ~10 recordings in `recording`
