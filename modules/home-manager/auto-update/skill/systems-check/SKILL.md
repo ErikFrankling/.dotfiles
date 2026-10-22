@@ -234,6 +234,15 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-22 07:54 (health-watch) — `alert/DictationErrors/pc/local-stt`:
+  `preview.interrupted` and `selftest.failed` every ~40 s from 07:42. T3 Code
+  voice tests (project `.t3/scratch`) left ~10 recordings in `recording`
+  state; each kept retrying and restarting the shared preview worker, killing
+  the others in a cascade. Fix (88f3e86d, `tools/local-stt/gateway.py`):
+  `preview()` stops once the recording is no longer `active()`, and restarts
+  the worker only if it is still the one that failed. `rebuild`, local-stt
+  restarted. Stale recordings sit in `/var/lib/local-stt/<id>/state.json`.
+
 - 2026-10-22 06:14 (health-watch) — `alert/SystemdUnitFailed/framework/auto-update`:
   the 06:00 run failed with "part of it is missing from the cache" because
   `main` had moved after the nightly build (later pushes unbuilt). Fix:
