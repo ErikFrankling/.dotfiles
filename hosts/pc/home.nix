@@ -187,6 +187,10 @@ in
       ];
       Restart = "on-failure";
       RestartSec = 5;
+      # t3 exits 130 (128 + SIGINT, the Effect runtime's interrupt exit) when
+      # systemd stops it. Without this every stop is recorded as "Failed with
+      # result 'exit-code'" and the homelab SystemdUnitFailed alert fires.
+      SuccessExitStatus = "130";
       WorkingDirectory = config.home.homeDirectory;
     };
 
