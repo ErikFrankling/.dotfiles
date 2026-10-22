@@ -18,7 +18,7 @@ in
         # Upstream moved to electron_44 itself, so no electron override is needed.
         t3codeBase.passthru.unwrapped.overrideAttrs (
           finalAttrs: oldAttrs: {
-            version = "0.1.1";
+            version = "0.1.2";
             src = inputs.t3code-src;
             # Thread config must extend, not replace, the harness's MCP overrides.
             # The fork carries this fix itself now (dotted "mcp_servers.t3-code" key),
