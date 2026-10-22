@@ -156,6 +156,9 @@ in
     # In particular, rebuilding the MCP adapter patch does not repair live
     # Codex sessions. See research/t3code-executor-activation.md.
     Unit.X-SwitchMethod = "keep-old";
+    # Tells `t3 service status` / `t3 doctor` that Nix owns this unit, so t3
+    # reports it healthy instead of trying to re-render it (fork: bootService.ts).
+    Unit.X-T3-Externally-Managed = "true";
 
     Service = {
       ExecStartPre = t3CodexPrepare;
