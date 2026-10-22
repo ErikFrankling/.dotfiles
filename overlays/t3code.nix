@@ -15,42 +15,49 @@ in
   t3code =
     (t3codeBase.override {
       t3code-unwrapped =
-        # Upstream moved to electron_44 itself, so no electron override is needed.
-        t3codeBase.passthru.unwrapped.overrideAttrs (
-          finalAttrs: oldAttrs: {
-            version = "0.1.2";
-            src = inputs.t3code-src;
-            # Thread config must extend, not replace, the harness's MCP overrides.
-            # The fork carries this fix itself now (dotted "mcp_servers.t3-code" key),
-            # so the patch no longer applies; kept for reference.
-            # patches = (oldAttrs.patches or [ ]) ++ [ ./t3code-preserve-mcp.patch ];
-            patches = oldAttrs.patches or [ ];
-            # Upstream postPatch now copies the SPDX license data itself.
-            # Upstream nightlies move past the nixpkgs release, so the lock differs.
-            pnpmDeps = otherPkgs.pkgsMaster.fetchPnpmDeps {
-              inherit (finalAttrs)
-                pname
-                version
-                src
-                pnpmWorkspaces
-                ;
-              pnpm = otherPkgs.pkgsMaster.pnpm_11;
-              fetcherVersion = 4;
-              hash = "sha256-kkujgQifrOBSYg9Dh721QNdoeH8i7wV47YooaAzxqp8=";
-            };
+        # Upstream moved to electron_44 itself, so no electron override is needed;
+        # nixpkgs_master must carry the Electron that T3 pins (44.9.3 since v0.1.2,
+        # which blocks the compromised eMudhra CA keys).
+        # T3 v0.1.2 pins Node 26 (security fixes); nixpkgs' package still uses the
+        # default Node 24, which would also be the ABI node-pty is built against.
+        (t3codeBase.passthru.unwrapped.override {
+          nodejs = otherPkgs.pkgsMaster.nodejs_26;
+        }).overrideAttrs
+          (
+            finalAttrs: oldAttrs: {
+              version = "0.1.2";
+              src = inputs.t3code-src;
+              # Thread config must extend, not replace, the harness's MCP overrides.
+              # The fork carries this fix itself now (dotted "mcp_servers.t3-code" key),
+              # so the patch no longer applies; kept for reference.
+              # patches = (oldAttrs.patches or [ ]) ++ [ ./t3code-preserve-mcp.patch ];
+              patches = oldAttrs.patches or [ ];
+              # Upstream postPatch now copies the SPDX license data itself.
+              # Upstream nightlies move past the nixpkgs release, so the lock differs.
+              pnpmDeps = otherPkgs.pkgsMaster.fetchPnpmDeps {
+                inherit (finalAttrs)
+                  pname
+                  version
+                  src
+                  pnpmWorkspaces
+                  ;
+                pnpm = otherPkgs.pkgsMaster.pnpm_11;
+                fetcherVersion = 4;
+                hash = "sha256-xRmOrOZbBljaF1IJr0JFUFzdhkld6+ehLIlpVOg/J3E=";
+              };
 
-            # node-pty ships a prebuilt pty.node that needs libstdc++ but has no
-            # rpath for it. Node already has libstdc++ loaded, so `t3 serve`
-            # works; Electron links libc++ statically, so the desktop app's
-            # backend died on startup and no window ever opened.
-            postFixup = (oldAttrs.postFixup or "") + ''
-              find "$out"/libexec/t3code \
-                -path '*/node-pty/prebuilds/linux-${prev.stdenv.hostPlatform.node.arch}/pty.node' \
-                -exec ${otherPkgs.pkgsMaster.patchelf}/bin/patchelf \
-                  --add-rpath ${prev.lib.getLib otherPkgs.pkgsMaster.stdenv.cc.cc}/lib {} +
-            '';
-          }
-        );
+              # node-pty ships a prebuilt pty.node that needs libstdc++ but has no
+              # rpath for it. Node already has libstdc++ loaded, so `t3 serve`
+              # works; Electron links libc++ statically, so the desktop app's
+              # backend died on startup and no window ever opened.
+              postFixup = (oldAttrs.postFixup or "") + ''
+                find "$out"/libexec/t3code \
+                  -path '*/node-pty/prebuilds/linux-${prev.stdenv.hostPlatform.node.arch}/pty.node' \
+                  -exec ${otherPkgs.pkgsMaster.patchelf}/bin/patchelf \
+                    --add-rpath ${prev.lib.getLib otherPkgs.pkgsMaster.stdenv.cc.cc}/lib {} +
+              '';
+            }
+          );
       t3code-resource-monitor = t3codeBase.passthru.resourceMonitor;
 
       # Agent CLIs come from llm-agents everywhere else in this config; hand T3
