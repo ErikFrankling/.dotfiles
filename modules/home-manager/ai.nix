@@ -208,6 +208,25 @@ in
     })
   ];
 
+  # The desktop app serves its UI from its own package, so a deploy only reaches
+  # an open window once it starts again (Erik kept getting the old full-screen
+  # dictation after the 2026-10-23 deploy). Relaunch a running window that is on
+  # an older package; drafts and paused dictations are stored and survive it.
+  home.activation.relaunchT3Desktop = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    new=$(${pkgs.nix}/bin/nix-store -qR ${pkgs.t3code} | ${pkgs.gnugrep}/bin/grep -m1 -- -t3code-unwrapped- || true)
+    for pid in $(${pkgs.procps}/bin/pgrep -u "$USER" -f -- "electron --password-store=basic /nix/store/.*-t3code-unwrapped-" || true); do
+      if [ -n "$new" ] && ! ${pkgs.gnugrep}/bin/grep -qa -- "$new" "/proc/$pid/cmdline"; then
+        signature=$(ls /run/user/$(id -u)/hypr/ 2>/dev/null | head -1)
+        if [ -n "$signature" ]; then
+          echo "Relaunching the T3 Code desktop app (pid $pid) on the new package"
+          run kill -TERM "$pid"
+          for _ in $(seq 1 20); do kill -0 "$pid" 2>/dev/null || break; sleep 0.5; done
+          run env HYPRLAND_INSTANCE_SIGNATURE="$signature" /run/current-system/sw/bin/hyprctl dispatch exec t3code-desktop >/dev/null || true
+        fi
+      fi
+    done
+  '';
+
   home.packages = with pkgs; [
     # claude-code
     claudeCli
