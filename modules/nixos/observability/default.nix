@@ -103,8 +103,12 @@ in
       # Logs go to the same journal it reads; keep it from echoing itself.
       serviceConfig.LogLevelMax = "notice";
       # The process exporter reads every process' smaps_rollup (PSS, the fair
-      # share of browser memory) and io counters; both need ptrace-read.
-      serviceConfig.AmbientCapabilities = [ "CAP_SYS_PTRACE" ];
+      # share of browser memory; ptrace-read) and io counters (/proc/<pid>/io
+      # is 0400, so also DAC read).
+      serviceConfig.AmbientCapabilities = [
+        "CAP_SYS_PTRACE"
+        "CAP_DAC_READ_SEARCH"
+      ];
     };
 
     environment.etc."alloy/config.alloy".text = ''

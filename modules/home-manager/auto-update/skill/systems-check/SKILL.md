@@ -52,6 +52,10 @@ report beats a half-finished fix.
 
 ## Incident procedure (started by health-watch)
 
+For lag, a freeze, memory or swap pressure, or a hard reboot: load the
+`system-history` skill and rank what ran in the minutes before (per
+program, unit and T3 thread), instead of looking at the machine now.
+
 Two monitors watch Erik's setup, and `health-watch` on the pc reads both
 every two minutes:
 
