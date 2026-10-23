@@ -134,17 +134,6 @@ in
   programs.agent-desktop.enable = true;
   speak.speakers = true;
 
-  # Time as an MCP server for the personal agent only (project-level
-  # .mcp.json, built in personal-agent-mcp.nix). The bearer token comes from
-  # $TIME_MCP_TOKEN, which the claude launcher
-  # (modules/home-manager/executor-harness.nix) sets for sessions started in
-  # that folder. Server: homelab time-v2, github.com/ErikFrankling/time.
-  personalAgent.mcpServers.time = {
-    type = "http";
-    url = "https://time.erikfrankling.duckdns.org/mcp";
-    headers.Authorization = "Bearer \${TIME_MCP_TOKEN}";
-  };
-
   # Agents read email codes from Thunderbird on this machine.
   thunderbird.autostart = true;
 
