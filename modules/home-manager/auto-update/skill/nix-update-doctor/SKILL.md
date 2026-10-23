@@ -243,6 +243,13 @@ finds it.
 Append one entry per night that needed a repair, newest first: date, symptom,
 cause, what fixed it, link. Commit it with the fix. This is how the next run
 learns the patterns; keep entries to a few lines.
+- 2026-10-23 — Same two holds as 10-22: `nixpkgs` update to `02c087f`+ still
+  fails in `linux-6.18.57-modules` (vmware-modules, nixpkgs#575192 open; the
+  v4l2loopback PR #575861 merged 10-21), and `nixpkgs_master` `a86be0c`+ needs
+  uncached `electron-unwrapped-44.9.3`. Held `nixpkgs` at `55bfb4d`, `nixpkgs_master`
+  at `39df354`. Unhold when the issue closes and master's electron is cached.
+  Evaluation warnings left: xorg.* / stdenv.isLinux renames, all from nixpkgs
+  packages, none in this repo.
 - 2026-10-22 — (1) `nixpkgs` update to `02c087f` again failed in
   `linux-6.18.57-modules`: v4l2loopback `modules.dep` collision. Held `nixpkgs`
   at `55bfb4d` again (still unfixed; issue #575192 / PR #575861). (2) `nixpkgs_master`
