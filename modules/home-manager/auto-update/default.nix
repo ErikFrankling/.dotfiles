@@ -38,6 +38,8 @@ let
   keepPerHost = 5;
   # `nix-nightly build` gives up on both hosts together after this long.
   buildTimeoutMinutes = 75;
+  # `nix-nightly plan` gives up on one host after this long.
+  planTimeoutMinutes = 20;
   # Held (flock) by `nix-nightly build` for as long as it runs. The kernel
   # drops it when the process dies, so unlike a pgrep on the command line it
   # can neither go stale nor match an unrelated process that merely mentions
@@ -79,10 +81,18 @@ let
           # builder too (nix-remote): a local one is killed by the lag-guard.
           for host in ${lib.concatStringsSep " " hosts}; do
             echo "== $host"
-            /run/current-system/sw/bin/nix-remote build --dry-run "$(attr "$host")" 2>&1 \
+            # Bounded: on a starved builder an evaluation took over 20 minutes
+            # (2026-10-23); the plan is advice, the build is what counts.
+            status=0
+            plan=$(timeout -k 30 ${toString planTimeoutMinutes}m \
+              /run/current-system/sw/bin/nix-remote build --dry-run "$(attr "$host")" 2>&1) || status=$?
+            printf '%s\n' "$plan" \
               | sed -n '/will be built:/,/will be fetched/p' \
               | sed 's|^  /nix/store/[a-z0-9]*-|  |' \
               | grep -v 'will be fetched' || true
+            if [ "$status" = 124 ]; then
+              echo "  (plan timed out after ${toString planTimeoutMinutes} minutes; go on to the build)"
+            fi
           done
           ;;
 
