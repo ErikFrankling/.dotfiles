@@ -39,7 +39,12 @@ in
       # The hourly review's "Time, last hour" line: the Time server's one-line
       # summary (minutes per category, productive vs unproductive, what he is
       # doing now). Lan-only, no token. github.com/ErikFrankling/time README.
-      Environment = [ "TODO_NUDGE_TIME_URL=https://time.erikfrankling.duckdns.org/api/summary/line" ];
+      Environment = [
+        "TODO_NUDGE_TIME_URL=https://time.erikfrankling.duckdns.org/api/summary/line"
+        # The hourly review also shows Erik's next 24 hours (modules/home-manager/calendar).
+        "TODO_NUDGE_CALENDAR_CMD=calendar-next --hours 24"
+        "PATH=%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin"
+      ];
     };
   };
 

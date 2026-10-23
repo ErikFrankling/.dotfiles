@@ -129,6 +129,7 @@ in
     ../../modules/home-manager/bro
     ../../modules/home-manager/todo-nudge # wake the personal agent while its to-do list has actionable items
     ../../modules/home-manager/speak # the personal agent may talk out loud on the PC speakers
+    ../../modules/home-manager/calendar # calendar-next + meeting reminders spoken on the PC speakers
     inputs.time.homeManagerModules.agent-v2
     # ../../modules/home-manager/noctalia.nix
   ];

@@ -18,6 +18,7 @@ import datetime as dt
 import hashlib
 import json
 import os
+import shlex
 import subprocess
 import sys
 import urllib.request
@@ -263,7 +264,8 @@ def item_line(slug, fm, triggered, owner_info, now):
 ORDER = {"actionable": 0, "in_flight": 1, "standing": 2, "blocked": 3}
 
 
-def message(items, actionable, owner_info, now, unreadable=(), hourly=False, time_line=None):
+def message(items, actionable, owner_info, now, unreadable=(), hourly=False, time_line=None,
+            calendar=None):
     """The entire list (everything but done), one line per item.
 
     Items that triggered the nudge are marked *. Blocked items are listed too:
@@ -284,6 +286,8 @@ def message(items, actionable, owner_info, now, unreadable=(), hourly=False, tim
     body = [head + ":", *lines, ""]
     if time_line:
         body += [f"Time, last hour: {time_line}", ""]
+    if calendar:
+        body += [calendar, ""]
     body.append(
         "Review every item, blocked ones too: re-check whether each blocker has "
         "cleared, do what can be done now (start or chase sessions), and move "
@@ -337,6 +341,25 @@ def time_summary():
         pass
     line = " ".join(str(raw).split())
     return line[:300] or None
+
+
+def calendar_block():
+    """Erik's next 24 hours, from the `calendar-next` command.
+
+    Hook: TODO_NUDGE_CALENDAR_CMD is a command (shell words) that prints a
+    compact calendar block on stdout; unset or failing = no block.
+    """
+    cmd = os.environ.get("TODO_NUDGE_CALENDAR_CMD")
+    if not cmd:
+        return None
+    try:
+        out = subprocess.run(
+            shlex.split(cmd), capture_output=True, text=True, timeout=30, check=True,
+        ).stdout
+    except (subprocess.SubprocessError, OSError, ValueError):
+        return None
+    lines = [line.rstrip() for line in out.strip().splitlines()]
+    return "\n".join(lines)[:2000] or None
 
 
 def log(line, dry):
@@ -420,6 +443,7 @@ def main(argv=None):
     text = message(
         items, actionable, owner_info, now, unreadable,
         hourly=hourly, time_line=time_summary() if hourly else None,
+        calendar=calendar_block(),
     )
     if dry:
         log(f"would-nudge ({why}): {','.join(actionable)}", dry)

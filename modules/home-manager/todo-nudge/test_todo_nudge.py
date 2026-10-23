@@ -197,6 +197,12 @@ class Message(unittest.TestCase):
         self.assertEqual(len(found), 1, f"{slug} listed once")
         return found[0]
 
+    def test_message_shows_calendar(self):
+        block = "Calendar, next 24h:\n  13:00-14:00 Husk"
+        text = tn.message(self.items, self.actionable, OWNERS.get, NOW, hourly=True, calendar=block)
+        self.assertIn(block, text)
+        self.assertNotIn("Calendar, next", self.text)
+
     def test_marked_automated(self):
         self.assertTrue(self.text.startswith(tn.PREFIX))
 
@@ -245,6 +251,26 @@ class Message(unittest.TestCase):
         items = [("x", {"status": "actionable", "title": "multi\nline   title"})]
         text = tn.message(items, ["x"], OWNERS.get, NOW)
         self.assertIn("* x [actionable] multi line title", text.splitlines())
+
+
+class CalendarBlock(unittest.TestCase):
+    def tearDown(self):
+        import os
+        os.environ.pop("TODO_NUDGE_CALENDAR_CMD", None)
+
+    def test_unset_means_no_block(self):
+        self.assertIsNone(tn.calendar_block())
+
+    def test_failing_command_means_no_block(self):
+        import os
+        os.environ["TODO_NUDGE_CALENDAR_CMD"] = "false"
+        self.assertIsNone(tn.calendar_block())
+
+    def test_command_output_is_the_block(self):
+        import os
+        os.environ["TODO_NUDGE_CALENDAR_CMD"] = "echo 'Calendar next 24h:' ; echo x"
+        # shell words, not a shell: the whole string is echo's arguments
+        self.assertIn("Calendar next 24h:", tn.calendar_block())
 
 
 class TimeSummary(unittest.TestCase):
