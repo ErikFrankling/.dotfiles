@@ -15,6 +15,11 @@ description: Erik's machines, how they connect, and how much load each can take.
 
 - Erik's phone and the laptop away from home reach the LAN over Tailscale.
 - The homelab is configured in the homelab repo (`~/projects/personal/homelab`) and applied by Flux. The NixOS machines are configured in `~/.dotfiles`.
+- naiaclaw is often CPU-saturated. No pod requests CPU (a Kyverno policy
+  zeroes requests, so CPU never blocks scheduling). The homelab
+  `cpu-priority` DaemonSet gives the nix-builder `cpu.weight` 10000 and runs
+  Onyx indexing, sandboxes and `heavy` jobs at `cpu.idle`, so the nightly
+  build goes first.
 - Do not start VM 100 on proxmox (its address collides with the k3s VIP). Never reboot or power off any machine.
 
 ## Do not overload the pc
@@ -47,8 +52,34 @@ heavy status | heavy queue               what runs and what waits
 
 One big job (up to 10 GB) and one small job (up to 3 GB) run at once on the
 worker; the rest queue, and a job that runs out of memory is killed alone.
-A foreground `heavy` job dies with its client: for unattended chains use
-`systemd-run --user --collect --unit=NAME heavy -- ...` or `heavy bg --big`.
+### Long jobs survive your session and T3 restarts (`agent-job`)
+
+When T3 Code's server restarts, it stops every agent's scope and slice. So does
+a session that ends, and a tool call that times out kills what it started. On
+2026-10-23 that silently killed the nightly's homelab build. So from a
+session, these run as their own user unit, `agent-job-NAME.service` in
+`app-t3code-jobs.slice` (same caps as the agents, but outside what T3 stops):
+
+| Command | Job name |
+|---|---|
+| `nix-nightly build` | `nix-nightly-build` (nightly clone) or `nix-nightly-build-adhoc-<hash>` |
+| `rebuild` (`nixos-remote-switch`) | `rebuild-<host>-<hash of checkout>` |
+| `heavy -- CMD` | `heavy-<hash of directory + arguments>` |
+| any `systemd-run --user` service (not `--scope`) | the `--unit` you give |
+
+- **Wait by running the same command again**: if its job is still running,
+  you attach to it instead of starting a second one. You get its output from
+  the start of the log, and its exit code at the end. After a restart or a
+  timed-out tool call, just re-run it.
+- Interrupting or killing the command only detaches. The job keeps running.
+- `agent-job status` lists jobs. Also `agent-job status|attach|logs|stop NAME`.
+  Logs are in `~/.local/state/agent-job/NAME.log`.
+- Your own long command: `agent-job run NAME -- CMD...`, then
+  `agent-job attach NAME` from any later turn or session. Run it in the
+  foreground; don't add `&` or nohup.
+- Never `pgrep` for a build to see whether it still runs (the pattern matches
+  your own shell). Use `agent-job status NAME`.
+- `AGENT_JOB=off CMD` runs it in your session the old way.
 
 ### The safety net on the pc (`modules/nixos/agent-priority`)
 

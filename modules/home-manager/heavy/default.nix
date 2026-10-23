@@ -50,13 +50,15 @@ let
             lists (tracked + untracked, minus .gitignore, .git/info/exclude and
             core.excludesFile; no .git), or the current directory outside git.
             Then run CMD in the same subdirectory there. Output streams
-            back and the exit code is CMD's. Ctrl-C or killing heavy kills the
+            back and the exit code is CMD's. Outside agent sessions Ctrl-C or killing heavy kills the
             remote job. Nothing comes back unless you `heavy pull` it.
-            The job, and its place in the queue, live only as long as this
-            heavy command: if your tool call times out or your session ends,
-            the job dies. For long or unattended chains, run the client under
-            `systemd-run --user --collect --unit=NAME heavy -- ...` (output:
-            journalctl --user -u NAME) or use `heavy bg --big NAME -- ...`.
+            The job, and its place in the queue, live as long as this heavy
+            client. From an agent session the client runs as an agent-job
+            (agent-job status), so it survives a timed-out tool call, the end
+            of the session and a T3 Code restart: run the same command in the
+            same directory again to attach to it and get its exit code.
+            Interrupting heavy only detaches; `agent-job stop heavy-...` kills
+            the job.
             Jobs are scheduled on the worker: one big job at a time (Gradle,
             Expo, APK builds, emulator tests; up to 10 GB) and one small job
             (up to 3 GB); the rest wait in order ("waiting for the ... slot").
@@ -294,6 +296,12 @@ let
           ;;
       esac
 
+      # From a session the client runs as an agent-job, so the job outlives
+      # the tool call, the session and a T3 Code restart; the same command
+      # from the same directory attaches to it again.
+      if [ -z "''${AGENT_JOB:-}" ] && command -v agent-job > /dev/null; then
+        exec agent-job wrap "heavy-$(printf '%s\0' "$PWD" "$@" | sha256sum | cut -c1-12)" -- "$0" "$@"
+      fi
       parse_run "$@"
       [ "$sync" = 0 ] || sync_up
       send_envs

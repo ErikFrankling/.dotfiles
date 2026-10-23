@@ -61,9 +61,24 @@ let
       if [ "$scope" = 1 ]; then
         exec ${realSystemdRun} --slice-inherit --nice=10 "$@"
       fi
-      exec ${realSystemdRun} --slice-inherit --nice=10 --property=OOMScoreAdjust=1000 "$@"
+      # Services go to app-t3code-jobs.slice, not the agent's own slice: T3
+      # Code stops that one when its server restarts, which killed the
+      # nightly's build on 2026-10-23. Same caps (app-t3code.slice).
+      exec ${realSystemdRun} --slice=app-t3code-jobs.slice --nice=10 --property=OOMScoreAdjust=1000 "$@"
     ''
   );
+
+  agentJob = pkgs.writeShellApplication {
+    name = "agent-job";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gnused
+      config.systemd.package
+    ];
+    text = builtins.replaceStrings [ "@systemdRun@" ] [ realSystemdRun ] (
+      builtins.readFile ./agent-job.sh
+    );
+  };
 
   realNix = "${config.nix.package}/bin/nix";
 
@@ -165,6 +180,7 @@ in
           (agentRebuild "nixos-rebuild" "${config.system.build.nixos-rebuild}/bin/nixos-rebuild")
           nixRemote
           nixosRemoteSwitch
+          agentJob
         ];
 
         # The user manager gets the io controller too, so the agent slice's
@@ -198,6 +214,11 @@ in
           }
           // ioCaps "150M" "60M";
         };
+
+        # Long builds, `heavy` runs and agents' `systemd-run --user` services
+        # (agent-job.sh): under app-t3code.slice's caps, but not in the agent
+        # slices T3 Code stops when its server restarts.
+        systemd.user.slices.app-t3code-jobs.description = "Agent jobs that outlive their session";
 
         # Builds wait for idle CPU and disk, and stay small. `cores` is per job.
         nix.daemonCPUSchedPolicy = "idle";

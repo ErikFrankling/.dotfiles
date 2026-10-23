@@ -63,6 +63,13 @@ refuse() {
   exit 1
 }
 
+# From an agent session the rest runs as an agent-job (agent-job.sh): the
+# evaluation and build outlive the session and a T3 Code restart, and
+# running the same rebuild again attaches to the one in progress.
+if [ -z "${AGENT_JOB:-}" ] && is_agent && command -v agent-job >/dev/null; then
+  exec agent-job wrap "rebuild-$HOST-$(printf %s "$PWD" | sha256sum | cut -c1-12)" -- "$0" "$action" "$PWD"
+fi
+
 guard() {
   if ! git rev-parse --git-dir >/dev/null 2>&1; then
     refuse "$dir is not a git checkout, so nothing shows whether it reverts other deploys."

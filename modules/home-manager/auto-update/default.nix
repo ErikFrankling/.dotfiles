@@ -111,6 +111,12 @@ let
             lock=${stateDir}/build-adhoc-$id.lock
             prefix=build-adhoc-$id
           fi
+          # From a session the build runs as an agent-job: a T3 Code restart
+          # stops the session's slice, which killed the 2026-10-23 nightly
+          # build halfway. Running `nix-nightly build` again attaches to it.
+          if [ -z "''${AGENT_JOB:-}" ] && command -v agent-job > /dev/null; then
+            exec agent-job wrap "nix-nightly-$prefix" -- "$0" build
+          fi
           exec 8>"$lock"
           if ! flock -n 8; then
             echo "another nix-nightly build of this checkout is already running" >&2
