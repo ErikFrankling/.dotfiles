@@ -211,12 +211,61 @@ def decide(actionable, fp, state, now):
     return False, f"unchanged, last nudge {int(since // 60)} min ago"
 
 
-def message(actionable):
-    return (
-        f"{PREFIX} {len(actionable)} actionable items: {', '.join(actionable)}. "
-        "Work the to-do list: do what can be done now (start or chase sessions), "
-        "and mark everything that can't move as blocked with the reason "
-        "(see todo/README.md). Only stop when all items are blocked, standing or in flight."
+def owner_state(info):
+    if info is None:
+        return "gone"
+    if info.get("pendingRequestCount", 0) > 0:
+        return "asking"
+    return info.get("status", "?")
+
+
+def item_line(slug, fm, triggered, owner_info):
+    status = fm.get("status")
+    detail = str(status)
+    if status == "in_flight":
+        owner = fm.get("owner")
+        if owner:
+            state = owner_state(owner_info(str(owner)))
+            run = "running" if owner_running(owner_info(str(owner))) else f"stopped: {state}"
+            detail += f", owner {owner} {run}"
+        else:
+            detail += ", no owner"
+    elif status == "blocked":
+        detail += f" until {fm.get('blocked_until')} (passed)"
+    title = " ".join(str(fm.get("title") or "(no title)").split())
+    return f"{'*' if triggered else '-'} {slug} [{detail}] {title}"
+
+
+def message(items, actionable, owner_info, unreadable=()):
+    """The whole open list: every item that is not blocked or done.
+
+    Items that triggered the nudge are marked *; blocked ones are only counted
+    (a blocked item whose blocked_until passed is open again and listed).
+    """
+    trigger = set(actionable)
+    lines, blocked = [], 0
+    for slug, fm in items:
+        status = fm.get("status")
+        if status == "done":
+            continue
+        if status == "blocked" and slug not in trigger:
+            blocked += 1
+            continue
+        lines.append(item_line(slug, fm, slug in trigger, owner_info))
+    head = (
+        f"{PREFIX} To-do list: {len(lines)} open ({len(trigger)} need you now, marked *), "
+        f"{blocked} blocked (not listed)"
+    )
+    if unreadable:
+        head += f", {len(unreadable)} unreadable ({', '.join(unreadable)})"
+    return "\n".join(
+        [head + ":", *lines, ""]
+        + [
+            "Work the to-do list: do what can be done now (start or chase sessions), "
+            "mark everything that can't move as blocked with the reason, and move "
+            "finished items to done/ (see todo/README.md). Only stop when all items "
+            "are blocked, standing or in flight with a running owner."
+        ]
     )
 
 
@@ -306,6 +355,8 @@ def main(argv=None):
         log(f"skip-file {slug}: {err}", dry)
     if not idle:
         log(f"no-nudge: {why_idle}" + (f"; actionable={','.join(actionable)}" if dry else ""), dry)
+        if dry and actionable:
+            print(message(items, actionable, owner_info, [s for s, _ in errors]))
         return 0
     if not actionable:
         log(f"no-nudge: nothing actionable ({len(items)} items, agent {why_idle})", dry)
@@ -318,9 +369,11 @@ def main(argv=None):
         return 0
     if dry:
         log(f"would-nudge ({why}): {','.join(actionable)}", dry)
+        print(message(items, actionable, owner_info, [s for s, _ in errors]))
         return 0
     try:
-        sent = t3_send(AGENT_THREAD, message(actionable))
+        text = message(items, actionable, owner_info, [s for s, _ in errors])
+        sent = t3_send(AGENT_THREAD, text)
     except (subprocess.SubprocessError, OSError, ValueError) as e:
         log(f"send-failed: {e}", dry)
         return 1

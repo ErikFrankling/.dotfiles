@@ -162,10 +162,55 @@ class Decide(unittest.TestCase):
         s = self.state(nudges=[iso(-100), iso(-90), iso(-80), iso(5)])
         self.assertTrue(tn.decide(["a"], "fp2", s, NOW)[0])
 
-    def test_message_is_marked_automated(self):
-        m = tn.message(["a", "b"])
-        self.assertTrue(m.startswith(tn.PREFIX))
-        self.assertIn("2 actionable items: a, b", m)
+
+class Message(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        d = Path(self.tmp.name)
+        for name, text in FIXTURES.items():
+            (d / name).write_text(text)
+        self.items, errors = tn.read_items(d)
+        self.unreadable = [s for s, _ in errors]
+        self.actionable, _ = tn.actionable_items(self.items, NOW, OWNERS.get)
+        self.text = tn.message(self.items, self.actionable, OWNERS.get, self.unreadable)
+        self.lines = self.text.splitlines()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def line(self, slug):
+        found = [l for l in self.lines if l[2:].startswith(slug + " ")]
+        self.assertEqual(len(found), 1, f"{slug} listed once")
+        return found[0]
+
+    def test_marked_automated(self):
+        self.assertTrue(self.text.startswith(tn.PREFIX))
+
+    def test_lists_every_open_item_not_just_triggers(self):
+        # Triggering items are marked *, the rest of the open list is there too.
+        self.assertEqual(self.line("a-actionable"), "* a-actionable [actionable] A")
+        self.assertTrue(self.line("e-flight-running").startswith(
+            "- e-flight-running [in_flight, owner mcp:run running]"))
+        self.assertIn("owner mcp:done stopped: completed", self.line("f-flight-done"))
+        self.assertIn("owner mcp:ask stopped: asking", self.line("g-flight-asking"))
+        self.assertIn("owner mcp:gone stopped: gone", self.line("h-flight-gone"))
+        self.assertTrue(self.line("i-standing").startswith("- i-standing [standing]"))
+        self.assertTrue(self.line("c-blocked-past").startswith("* c-blocked-past [blocked until"))
+        self.assertIn("Boxers: pick and buy", self.line("o-colon-title"))
+        self.assertTrue(self.line("m-unknown-status").startswith("- m-unknown-status [maybe]"))
+
+    def test_blocked_and_done_left_out_but_counted(self):
+        for slug in ("b-blocked", "d-blocked-future", "n-bad-until", "j-done"):
+            self.assertFalse(any(l[2:].startswith(slug + " ") for l in self.lines), slug)
+        # b, d and n (unparseable blocked_until) are blocked and not listed.
+        self.assertIn("3 blocked (not listed)", self.lines[0])
+        self.assertIn(f"{len(self.actionable)} need you now", self.lines[0])
+        self.assertIn("2 unreadable (k-no-front-matter, l-bad-yaml)", self.lines[0])
+
+    def test_one_line_per_item(self):
+        items = [("x", {"status": "actionable", "title": "multi\nline   title"})]
+        text = tn.message(items, ["x"], OWNERS.get)
+        self.assertIn("* x [actionable] multi line title", text.splitlines())
 
 
 if __name__ == "__main__":
