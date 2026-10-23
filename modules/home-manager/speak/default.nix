@@ -55,18 +55,44 @@ let
   # with `recording` / `stopped` while any dictation records, the reply window
   # included: plain Enter anywhere sends it (Erik: "I'm never going to be
   # writing while recording"). Enter is plain Enter again the moment it stops.
+  #
+  # It also pauses whatever plays (MPRIS: Firefox/YouTube, Spotify) while a
+  # dictation records and resumes exactly those players after: the Blue
+  # Snowball hears the FiiO speakers, and on 2026-10-23 a YouTube ad became
+  # the transcript of Erik's dictation.
   dictationHook = pkgs.writeShellApplication {
     name = "t3-dictation-hook";
+    runtimeInputs = [ pkgs.playerctl ];
     text = ''
       hyprctl=/run/current-system/sw/bin/hyprctl
+      state=$HOME/.local/state/speak
+      paused=$state/dictation-paused-players
       # Proof without watchers: when it fired and whether T3 had focus
       # (window class only; never titles).
       class=$("$hyprctl" activewindow -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.class // "none"' || echo unknown)
-      mkdir -p "$HOME/.local/state/speak"
-      echo "$(date +%FT%T) ''${1-} focus=$class" >> "$HOME/.local/state/speak/dictation-hook.log"
+      mkdir -p "$state"
+      echo "$(date +%FT%T) ''${1-} focus=$class" >> "$state/dictation-hook.log"
       case "''${1-}" in
-        recording) "$hyprctl" keyword bind ", Return, exec, ${pkgs.t3code}/bin/t3 app dictation --send" >/dev/null ;;
-        *) "$hyprctl" keyword unbind ", Return" >/dev/null ;;
+        recording)
+          "$hyprctl" keyword bind ", Return, exec, ${pkgs.t3code}/bin/t3 app dictation --send" >/dev/null
+          for player in $(playerctl -l 2>/dev/null || true); do
+            if [ "$(playerctl -p "$player" status 2>/dev/null || true)" = Playing ]; then
+              playerctl -p "$player" pause 2>/dev/null || true
+              echo "$player" >> "$paused"
+              echo "$(date +%FT%T) paused $player" >> "$state/dictation-hook.log"
+            fi
+          done
+          ;;
+        *)
+          "$hyprctl" keyword unbind ", Return" >/dev/null
+          if [ -f "$paused" ]; then
+            sort -u "$paused" | while read -r player; do
+              playerctl -p "$player" play 2>/dev/null || true
+              echo "$(date +%FT%T) resumed $player" >> "$state/dictation-hook.log"
+            done
+            rm -f "$paused"
+          fi
+          ;;
       esac
     '';
   };
