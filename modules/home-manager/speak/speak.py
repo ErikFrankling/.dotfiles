@@ -57,7 +57,7 @@ DEFAULT_EXPIRY_MINUTES = {"low": 15, "normal": 60, "urgent": 120}
 AFTER_DICTATION_SECONDS = 2.0
 POLL_SECONDS = 0.5
 MAX_INTERRUPTIONS = 3
-ANSWER_WAIT_SECONDS = 600
+ANSWER_WAIT_SECONDS = 120
 
 # Same prompt as T3's read-aloud summary (apps/server/src/readAloud.ts).
 SUMMARY_PROMPT = """You turn one message from an AI coding assistant into a short spoken briefing. Text-to-speech will read your output aloud to the person who got the message. They are listening, not reading, so they hear every word once, in order, and cannot skim or scroll back.
@@ -119,8 +119,9 @@ def gate(item, now, dictating, dictation_ended, reading_aloud, away, answering=F
         return "wait", "Erik is dictating"
     if now - dictation_ended < AFTER_DICTATION_SECONDS:
         return "wait", "dictation just ended"
-    # One question at a time: the next waits for his answer (or gives up waiting).
-    if answering and item["priority"] != "urgent" and now - item["created"] < ANSWER_WAIT_SECONDS:
+    # One question at a time: a new question (reply window) waits for his
+    # answer to the last one, briefly. Anything else is said straight away.
+    if answering and item.get("reply", True) and item["priority"] != "urgent":
         return "wait", "Erik has not answered the last message yet"
     if reading_aloud:
         return "wait", "a read-aloud is playing"
@@ -359,6 +360,7 @@ def play(item):
 def open_reply_window(item):
     if not REPLY_COMMAND:
         return "off"
+    reply_opened["at"] = time.time()
     try:
         done = subprocess.run([REPLY_COMMAND, "--thread", item.get("thread") or REPLY_THREAD,
                                "--text", item.get("spoken_text") or item["text"], "--queued-at", str(int(item["created"] * 1000))], capture_output=True, text=True, timeout=20)
@@ -427,9 +429,13 @@ def notice(item, status=""):
     Notice.show(item, status)
 
 
+reply_opened = {"at": 0.0}
+
+
 def answering():
-    """The reply window is still open: Erik has not sent or dismissed his answer."""
-    if not REPLY_COMMAND:
+    """The reply window is still open: Erik has not sent or dismissed his answer.
+    Only for ANSWER_WAIT_SECONDS after it opened; closing it counts as an answer."""
+    if not REPLY_COMMAND or time.time() - reply_opened["at"] > ANSWER_WAIT_SECONDS:
         return False
     try:
         done = subprocess.run([REPLY_COMMAND, "--status"], capture_output=True, text=True, timeout=10)

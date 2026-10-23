@@ -31,7 +31,7 @@ class Gate(unittest.TestCase):
 
     def test_next_question_waits_for_his_answer(self):
         self.assertEqual(speak.gate(item(), 10, False, 0, False, False, True)[0], "wait")
-        self.assertEqual(speak.gate(item(), 700, False, 0, False, False, True)[0], "play")
+        self.assertEqual(speak.gate(item(reply=False), 10, False, 0, False, False, True)[0], "play")
         self.assertEqual(speak.gate(item(priority="urgent"), 10, False, 0, False, False, True)[0], "play")
 
     def test_expired(self):
