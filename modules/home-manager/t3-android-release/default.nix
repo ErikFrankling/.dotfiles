@@ -42,7 +42,14 @@ let
           --test-abi) test_abi="$2"; shift ;;
           --commit) commit="$2"; shift ;;
           --prebuilt) prebuilt="$2"; force_apk=true; shift ;;
-          --local) local_run=true ;;
+          --local)
+            # The PC resolves another runtime than the worker for the same commit:
+            # react-native-enriched-markdown downloads native sources in its
+            # postinstall, and the fingerprint hashes them (fork docs/erik-updates.md).
+            # Until .fingerprintignore leaves them out, only the worker publishes.
+            echo "--local is disabled: the PC resolves a different runtime than the worker; run without --local" >&2
+            exit 2
+            ;;
           -h | --help) echo "usage: t3-android-release [--apk] [--test-abi ABI] [--commit SHA] [--prebuilt WORKER-APK] [--local] [--accept-dropped-commits]"; exit 0 ;;
           *) echo "unknown argument $1" >&2; exit 2 ;;
         esac
