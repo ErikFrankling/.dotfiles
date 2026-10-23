@@ -238,6 +238,13 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-23 03:40 (health-watch) — `alert/SystemdUnitFailed/pc/t3code-claude`
+  (firing since 03:05 local): `t3code-claude` is not a real unit, only the
+  name the journal alert derives from the transient `t3code-claude-<pid>.scope`
+  of an agent process. The scope was killed by the planned t3code restart at
+  03:05 (same cause as the t3code entry below); nothing was failed
+  (`systemctl --user --failed` empty). No repair needed.
+
 - 2026-10-23 01:32 (health-watch) — `alert/SystemdUnitFailed/pc/t3code`
   fired at 01:04 during a planned restart (v0.1.2 deploy, maintenance window
   open): the old process exits 130 on stop, so systemd logs "Failed with
