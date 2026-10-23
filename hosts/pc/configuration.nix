@@ -122,6 +122,10 @@
   sops.secrets.syncthing-key = { };
   # Bearer token for the company brain (homelab), read by brain-skill-sync.
   sops.secrets.brain-token.owner = username;
+  # Bearer token for the Time MCP server (homelab time-v2 /mcp), handed to
+  # Claude sessions started in the personal agent's folder
+  # (modules/home-manager/executor-harness.nix, hosts/pc/home.nix).
+  sops.secrets.time-mcp-token.owner = username;
   sops.secrets.kth-password = {
     owner = username;
   };

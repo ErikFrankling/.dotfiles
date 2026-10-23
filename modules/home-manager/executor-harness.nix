@@ -15,6 +15,11 @@
   keyFile,
   codexPackage,
   claudePackage,
+  # The Time MCP bearer token (sops) and the one folder whose Claude sessions
+  # get it: the personal agent. Its .mcp.json (hosts/pc/home.nix) reads
+  # ${TIME_MCP_TOKEN}; no other session even has the variable.
+  timeMcpTokenFile ? null,
+  personalDir ? "/home/erikf/.t3/personal",
   # Host-local stdio MCP servers ({ name = { command, args, env }; }), added
   # to every session whether or not Executor is reachable. Used for computer
   # use on the PC, where screenshots should not round-trip through Executor.
@@ -27,6 +32,16 @@ let
       EXECUTOR_API_KEY="$(< ${keyFile})"
       export EXECUTOR_API_KEY
     fi
+  '';
+  loadTimeToken = lib.optionalString (timeMcpTokenFile != null) ''
+    case "$PWD" in
+      ${personalDir}|${personalDir}/*)
+        if [ -r ${timeMcpTokenFile} ]; then
+          TIME_MCP_TOKEN="$(< ${timeMcpTokenFile})"
+          export TIME_MCP_TOKEN
+        fi
+        ;;
+    esac
   '';
   mcpConfig = pkgs.writeText "executor-mcp.json" (
     builtins.toJSON {
@@ -72,6 +87,7 @@ let
         ;;
     esac
     ${loadKey}
+    ${loadTimeToken}
     configs=(${localClaudeArgs})
     if [ -n "''${EXECUTOR_API_KEY-}" ]; then
       configs+=("--mcp-config=${mcpConfig}")

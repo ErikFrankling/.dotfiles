@@ -156,6 +156,18 @@ in
   # Keep T3's mutable Codex database separate while sharing the authenticated
   # account, configuration, sessions, and user extensions.
   home.file = {
+    # Time as an MCP server for the personal agent only (a project-level
+    # .mcp.json, so no other session sees it). The bearer token comes from
+    # $TIME_MCP_TOKEN, which the claude launcher
+    # (modules/home-manager/executor-harness.nix) sets for sessions started
+    # in this folder. Server: homelab time-v2, github.com/ErikFrankling/time.
+    ".t3/personal/.mcp.json".text = builtins.toJSON {
+      mcpServers.time = {
+        type = "http";
+        url = "https://time.erikfrankling.duckdns.org/mcp";
+        headers.Authorization = "Bearer \${TIME_MCP_TOKEN}";
+      };
+    };
     ".codex-t3/auth.json".source = config.lib.file.mkOutOfStoreSymlink "${codexHome}/auth.json";
     ".codex-t3/config.toml".source = config.lib.file.mkOutOfStoreSymlink "${codexHome}/config.toml";
     ".codex-t3/sessions".source = config.lib.file.mkOutOfStoreSymlink "${codexHome}/sessions";
