@@ -36,10 +36,10 @@ in
     Service = {
       Type = "oneshot";
       ExecStart = lib.getExe todoNudge;
-      # Hook for the hourly review: a one-line summary of what Erik did in the
-      # last hour (text or JSON {"summary": ...}) from the Time server, once it
-      # has such an endpoint. Unset = no Time line.
-      # Environment = [ "TODO_NUDGE_TIME_URL=http://127.0.0.1:<port>/<summary>" ];
+      # The hourly review's "Time, last hour" line: the Time server's one-line
+      # summary (minutes per category, productive vs unproductive, what he is
+      # doing now). Lan-only, no token. github.com/ErikFrankling/time README.
+      Environment = [ "TODO_NUDGE_TIME_URL=https://time.erikfrankling.duckdns.org/api/summary/line" ];
     };
   };
 
