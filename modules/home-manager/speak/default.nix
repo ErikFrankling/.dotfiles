@@ -90,6 +90,7 @@ in
           RestartSec = 5;
           Environment = [
             "SPEAK_CHIME=${chime}"
+            "SPEAK_NOTIFY_SEND=${pkgs.libnotify}/bin/notify-send"
             "SPEAK_VOXTYPE=${config.home.profileDirectory}/bin/voxtype"
             # Turned on once the fork ships `t3 app speak-reply` (the "Recording now" window).
             # "SPEAK_REPLY_COMMAND=${replyWindow}"

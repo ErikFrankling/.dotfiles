@@ -42,6 +42,8 @@ SMALL = dict(name="small", model="kokoro",
              speed=float(os.environ.get("SPEAK_SMALL_SPEED", "1.2")))
 SUMMARY_MODEL = os.environ.get("SPEAK_SUMMARY_MODEL", "read-aloud-summary")
 CHIME = os.environ.get("SPEAK_CHIME", "")
+NOTIFY_SEND = os.environ.get("SPEAK_NOTIFY_SEND", "")
+HYPRCTL = os.environ.get("SPEAK_HYPRCTL", "/run/current-system/sw/bin/hyprctl")
 VOXTYPE = os.environ.get("SPEAK_VOXTYPE", "")
 # The reply window: `t3 app speak-reply` in the running T3 desktop app.
 REPLY_COMMAND = os.environ.get("SPEAK_REPLY_COMMAND", "")
@@ -328,12 +330,15 @@ def generate(item):
         with lock:
             item.update(status="ready", voice=voice["name"], audio=str(path),
                         seconds=round(len(audio) / rate, 1))
+        if item["status"] == "ready" and item["summarize"]:
+            notice(item, "about to speak")  # now with the spoken words
         log("generated", item, voice=voice["name"], seconds=item["seconds"],
             spoken_text=item["spoken_text"])
     except Exception as error:  # noqa: BLE001 - every failure is reported to the caller
         with lock:
             item.update(status="failed", reason=f"could not make the audio: {error}")
         log("failed", item, error=str(error))
+        notice(item, "could not make the audio")
     wake.set()
 
 
@@ -360,6 +365,54 @@ def open_reply_window(item):
         return "opened" if done.returncode == 0 else f"failed: {(done.stderr or done.stdout).strip()[:200]}"
     except (OSError, subprocess.TimeoutExpired) as error:
         return f"failed: {error}"
+
+
+class Notice:
+    """The words on screen too (Erik: "if you want me to hear it, I should also see
+    it"): one desktop notification per message, no timeout, updated in place as it
+    waits and plays. Clicking it brings up T3 Code."""
+
+    def __init__(self, item):
+        self.item, self.id, self.waiter = item, None, None
+
+    def show(self, status=""):
+        if not NOTIFY_SEND:
+            return
+        title = "Personal agent" + (f" · {status}" if status else "")
+        body = (self.item.get("spoken_text") or self.item["text"])
+        body = body.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        command = [NOTIFY_SEND, "--print-id", "--wait", "--expire-time", "0", "--app-name", "Personal agent",
+                   "--icon", "audio-speakers", "--action", "default=Open T3 Code", title, body]
+        if self.id:
+            command[1:1] = ["--replace-id", self.id]
+        if self.waiter and self.waiter.poll() is None:
+            self.waiter.terminate()  # its action would belong to the old text
+        try:
+            self.waiter = subprocess.Popen(command, stdout=subprocess.PIPE, text=True)
+        except OSError as error:
+            log("notice.failed", self.item, error=str(error))
+            return
+        self.id = (self.waiter.stdout.readline().strip() or self.id)
+        threading.Thread(target=self.clicked, args=(self.waiter,), daemon=True).start()
+
+    @staticmethod
+    def clicked(waiter):
+        for line in waiter.stdout:
+            if line.strip() == "default":
+                subprocess.run([HYPRCTL, "dispatch", "focuswindow", "class:^(com.t3tools.T3Code)$"],
+                               capture_output=True, timeout=5)
+
+
+def to_erik(reason):
+    """The log speaks about Erik; the notification speaks to him."""
+    return (reason.replace("Erik is", "you're").replace("Erik has not", "you haven't")
+            .replace("Erik started", "you started").replace("Erik could", "you could"))
+
+
+def notice(item, status=""):
+    if "notice" not in item:
+        item["notice"] = Notice(item)
+    item["notice"].show(status)
 
 
 def answering():
@@ -413,12 +466,14 @@ def worker():
             with lock:
                 item.update(status="dropped", reason=reason)
             log("dropped", item, reason=reason)
+            notice(item, f"not said: {to_erik(reason)}")
             continue
         if decision == "wait":
             if item.get("reason") != reason or item["status"] != "waiting":
                 with lock:
                     item.update(status="waiting", reason=reason)
                 log("waiting", item, reason=reason)
+                notice(item, f"waiting: {to_erik(reason)}")
             if reason == "Erik is away from the PC":
                 notify_away(item)
             continue
@@ -426,6 +481,7 @@ def worker():
         with lock:
             item.update(status="speaking", reason="", sink=sink)
         log("speaking", item, sink=sink, text=item["spoken_text"])
+        notice(item, "speaking")
         if not play(item):
             item["interruptions"] = item.get("interruptions", 0) + 1
             with lock:
@@ -436,10 +492,12 @@ def worker():
                 with lock:
                     item.update(status="dropped", reason="interrupted by dictation too often")
                 log("dropped", item, reason=item["reason"])
+                notice(item, f"not said: {to_erik(item['reason'])}")
             continue
         with lock:
             item.update(status="spoken", spoken_at=time.strftime("%H:%M:%S"))
         log("spoken", item, sink=sink)
+        notice(item, f"said at {time.strftime('%H:%M')}")
         if item.get("reply", True):
             item["reply_window"] = open_reply_window(item)
             log("reply_window", item, result=item["reply_window"])
@@ -462,6 +520,7 @@ def submit(body):
         items[item["id"]] = item
     log("queued", item, text=text, summarize=item["summarize"], expires_in_minutes=minutes,
         source=item["source"])
+    notice(item, "about to speak")
     threading.Thread(target=generate, args=(item,), daemon=True).start()
     return item
 
