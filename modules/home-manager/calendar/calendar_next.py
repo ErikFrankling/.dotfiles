@@ -274,7 +274,7 @@ def render(timed, due, notes, now, hours):
     head = f"Calendar, next {int(hours) if hours == int(hours) else hours}h (now {day_label(local)} {local:%H:%M}):"
     lines = [head]
     if not shown:
-        lines.append("  nothing scheduled")
+        lines.append("  nothing found (a source failed, see below)" if any("unavailable" in n for n in notes) else "  nothing scheduled")
     day = None
     for ev in shown:
         start, end = ev["start"].astimezone(), ev["end"].astimezone()
