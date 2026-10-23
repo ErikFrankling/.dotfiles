@@ -79,8 +79,7 @@ below dump cgroup -b "01:25" -e "01:25:05" -s full_path -F '.*t3code-.*' \
 ```
 
 Interactive scroll-back for Erik (or a screenshot): `below replay -t "01:20"`
-(`t`/`T` step forward/back in time, `c`/`p` cgroup/process view, `s`/`S` sort,
-`/` filter, `q` quit). Live view: `below live`. The laptop: `ssh framework
+(press `?` for the keys; the top bar shows the replayed time). Live view: `below live`. The laptop: `ssh framework
 below dump ...`.
 
 ## 4. Which T3 thread was that scope?
