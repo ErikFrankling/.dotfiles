@@ -14,6 +14,7 @@
     ../../modules/home-manager/machines
     ../../modules/home-manager/notify # phone notifications skill
     ../../modules/home-manager/bro
+    ../../modules/home-manager/speak # `speak` tool: refuses here (PC speakers only)
     inputs.time.homeManagerModules.agent-v2
   ];
 

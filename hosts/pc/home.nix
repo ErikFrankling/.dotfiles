@@ -9,6 +9,18 @@
 let
   codexHome = "${config.home.homeDirectory}/.codex";
   t3CodexHome = "${config.home.homeDirectory}/.codex-t3";
+  # T3 orders runs by time. This PC keeps its RTC in local time
+  # (time.hardwareClockInLocalTime), so after a hard reboot the clock can run
+  # two hours ahead until NTP corrects it; runs that end in that window look
+  # newer than everything after them, and T3 stopped continuing those threads
+  # after later restarts (2026-10-23). Wait for NTP, but never block a start.
+  t3WaitForClock = pkgs.writeShellScript "t3-code-wait-for-clock" ''
+    for _ in $(${pkgs.coreutils}/bin/seq 60); do
+      [ "$(${pkgs.systemd}/bin/timedatectl show -p NTPSynchronized --value)" = yes ] && exit 0
+      ${pkgs.coreutils}/bin/sleep 1
+    done
+    echo "t3code: clock not NTP-synchronized after 60 s; starting anyway" >&2
+  '';
   t3CodexPrepare = pkgs.writeShellScript "t3-code-codex-prepare" ''
     mkdir -p ${lib.escapeShellArg t3CodexHome}
     if [[ ! -e ${lib.escapeShellArg "${t3CodexHome}/state_5.sqlite"} ]]; then
@@ -114,11 +126,13 @@ in
     ../../modules/home-manager/heavy # `heavy`: heavy agent work on the homelab worker
     ../../modules/home-manager/bro
     ../../modules/home-manager/todo-nudge # wake the personal agent while its to-do list has actionable items
+    ../../modules/home-manager/speak # the personal agent may talk out loud on the PC speakers
     inputs.time.homeManagerModules.agent-v2
     # ../../modules/home-manager/noctalia.nix
   ];
 
   programs.agent-desktop.enable = true;
+  speak.speakers = true;
 
   # Agents read email codes from Thunderbird on this machine.
   thunderbird.autostart = true;
@@ -205,7 +219,10 @@ in
     Unit.X-T3-Externally-Managed = "true";
 
     Service = {
-      ExecStartPre = t3CodexPrepare;
+      ExecStartPre = [
+        "${t3WaitForClock}"
+        "${t3CodexPrepare}"
+      ];
       ExecStart = "${pkgs.t3code}/bin/t3 serve --host 0.0.0.0 --port 3773";
       # Marks every deliberate stop as expected for health-watch/Alertmanager.
       ExecStop = "-${lib.getExe t3codeExpectStop}";
