@@ -369,31 +369,42 @@ def open_reply_window(item):
 
 class Notice:
     """The words on screen too (Erik: "if you want me to hear it, I should also see
-    it"): one desktop notification per message, no timeout, updated in place as it
-    waits and plays. Clicking it brings up T3 Code."""
+    it"). One desktop notification, top-left (erikshell's x-erikshell-corner hint,
+    clear of T3's Send button), no timeout. The newest message takes it over and
+    it follows that message as it waits and plays; every message is also in the
+    chat, so older ones need not stay up. Clicking it brings up T3 Code."""
 
-    def __init__(self, item):
-        self.item, self.id, self.waiter = item, None, None
+    id = None
+    waiter = None
+    owner = None  # the item it shows
 
-    def show(self, status=""):
+    @classmethod
+    def show(cls, item, status=""):
         if not NOTIFY_SEND:
             return
-        title = "Personal agent" + (f" · {status}" if status else "")
-        body = (self.item.get("spoken_text") or self.item["text"])
-        body = body.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-        command = [NOTIFY_SEND, "--print-id", "--wait", "--expire-time", "0", "--app-name", "Personal agent",
-                   "--icon", "audio-speakers", "--action", "default=Open T3 Code", title, body]
-        if self.id:
-            command[1:1] = ["--replace-id", self.id]
-        if self.waiter and self.waiter.poll() is None:
-            self.waiter.terminate()  # its action would belong to the old text
-        try:
-            self.waiter = subprocess.Popen(command, stdout=subprocess.PIPE, text=True)
-        except OSError as error:
-            log("notice.failed", self.item, error=str(error))
-            return
-        self.id = (self.waiter.stdout.readline().strip() or self.id)
-        threading.Thread(target=self.clicked, args=(self.waiter,), daemon=True).start()
+        with notice_lock:
+            if cls.owner is not None and cls.owner is not item:
+                if item["created"] < cls.owner["created"]:
+                    return  # a newer message has the card
+            cls.owner = item
+            title = "Personal agent" + (f" · {status}" if status else "")
+            body = (item.get("spoken_text") or item["text"])
+            body = body.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            command = [NOTIFY_SEND, "--print-id", "--wait", "--expire-time", "0",
+                       "--app-name", "Personal agent", "--icon", "audio-speakers",
+                       "--hint", "string:x-erikshell-corner:top-left",
+                       "--action", "default=Open T3 Code", title, body]
+            if cls.id:
+                command[1:1] = ["--replace-id", cls.id]
+            if cls.waiter and cls.waiter.poll() is None:
+                cls.waiter.terminate()  # its action would belong to the old text
+            try:
+                cls.waiter = subprocess.Popen(command, stdout=subprocess.PIPE, text=True)
+            except OSError as error:
+                log("notice.failed", item, error=str(error))
+                return
+            cls.id = cls.waiter.stdout.readline().strip() or cls.id
+            threading.Thread(target=cls.clicked, args=(cls.waiter,), daemon=True).start()
 
     @staticmethod
     def clicked(waiter):
@@ -403,6 +414,9 @@ class Notice:
                                capture_output=True, timeout=5)
 
 
+notice_lock = threading.Lock()
+
+
 def to_erik(reason):
     """The log speaks about Erik; the notification speaks to him."""
     return (reason.replace("Erik is", "you're").replace("Erik has not", "you haven't")
@@ -410,9 +424,7 @@ def to_erik(reason):
 
 
 def notice(item, status=""):
-    if "notice" not in item:
-        item["notice"] = Notice(item)
-    item["notice"].show(status)
+    Notice.show(item, status)
 
 
 def answering():

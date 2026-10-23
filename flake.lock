@@ -336,11 +336,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792720120,
-        "narHash": "sha256-glzOh81SPE2RIF7gqieMxOUw+F3clUW4UGVWo0RJjv0=",
+        "lastModified": 1792724081,
+        "narHash": "sha256-hjRTZV51ukrxLAZRS1FDyJR4vBGM330yuTt8uQqz4fk=",
         "owner": "ErikFrankling",
         "repo": "quickshell",
-        "rev": "dba300c78ccbd247ad86fd17b07c63bf1115c7a3",
+        "rev": "b0daea96f1f2cbdd939d2bf90182efa5f4a92cc3",
         "type": "github"
       },
       "original": {
@@ -1445,11 +1445,11 @@
     "t3code-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1792722852,
-        "narHash": "sha256-l/xAhT1BXQpCMViEvPbo6W2fNlZWLr5I5ezy2zL1PP0=",
+        "lastModified": 1792723991,
+        "narHash": "sha256-5jwier9L7EMMJjMlNCappr68rLBJ+sEXrh5xgA16qZ0=",
         "owner": "ErikFrankling",
         "repo": "t3code",
-        "rev": "d5ad09b931364f09f79765238b8d7374ee7cb186",
+        "rev": "6ea2192b7295076f346c3bd362221464e06b37b0",
         "type": "github"
       },
       "original": {
