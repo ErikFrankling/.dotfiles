@@ -94,6 +94,7 @@ in
           RestartSec = 5;
           Environment = [
             "SPEAK_CHIME=${chime}"
+            "SPEAK_VOXTYPE=${config.home.profileDirectory}/bin/voxtype"
             "SPEAK_REPLY_COMMAND=${replyWindow}"
             "SPEAK_AWAY_NOTIFY=${config.home.profileDirectory}/bin/notify-erik"
             # Same small voice as T3's read-aloud (hosts/pc/home.nix).

@@ -42,6 +42,7 @@ SMALL = dict(name="small", model="kokoro",
              speed=float(os.environ.get("SPEAK_SMALL_SPEED", "1.2")))
 SUMMARY_MODEL = os.environ.get("SPEAK_SUMMARY_MODEL", "read-aloud-summary")
 CHIME = os.environ.get("SPEAK_CHIME", "")
+VOXTYPE = os.environ.get("SPEAK_VOXTYPE", "")
 # The reply window: `t3 app speak-reply` in the running T3 desktop app.
 REPLY_COMMAND = os.environ.get("SPEAK_REPLY_COMMAND", "")
 REPLY_THREAD = os.environ.get("SPEAK_REPLY_THREAD", "personal-agent")
@@ -54,6 +55,7 @@ DEFAULT_EXPIRY_MINUTES = {"low": 15, "normal": 60, "urgent": 120}
 AFTER_DICTATION_SECONDS = 2.0
 POLL_SECONDS = 0.5
 MAX_INTERRUPTIONS = 3
+ANSWER_WAIT_SECONDS = 600
 
 # Same prompt as T3's read-aloud summary (apps/server/src/readAloud.ts).
 SUMMARY_PROMPT = """You turn one message from an AI coding assistant into a short spoken briefing. Text-to-speech will read your output aloud to the person who got the message. They are listening, not reading, so they hear every word once, in order, and cannot skim or scroll back.
@@ -107,7 +109,7 @@ def sentences(text, limit=260):
     return out
 
 
-def gate(item, now, dictating, dictation_ended, reading_aloud, away):
+def gate(item, now, dictating, dictation_ended, reading_aloud, away, answering=False):
     """What a ready message does now: ("play"|"wait"|"drop", reason)."""
     if now >= item["expires"]:
         return "drop", "expired before Erik could hear it"
@@ -115,6 +117,9 @@ def gate(item, now, dictating, dictation_ended, reading_aloud, away):
         return "wait", "Erik is dictating"
     if now - dictation_ended < AFTER_DICTATION_SECONDS:
         return "wait", "dictation just ended"
+    # One question at a time: the next waits for his answer (or gives up waiting).
+    if answering and item["priority"] != "urgent" and now - item["created"] < ANSWER_WAIT_SECONDS:
+        return "wait", "Erik has not answered the last message yet"
     if reading_aloud:
         return "wait", "a read-aloud is playing"
     if away and item["priority"] != "urgent":
@@ -188,11 +193,20 @@ def http_json(url, body=None, timeout=5):
 
 
 def dictating():
-    """local-stt sees every dictation (PC, laptop and phone all go through it)."""
+    """local-stt sees every T3 dictation (PC, laptop and phone all go through it);
+    voxtype is the desktop's push-to-talk typing."""
     try:
-        return bool(http_json(STT_HEALTH, timeout=2)["dictation"]["busy"])
+        if http_json(STT_HEALTH, timeout=2)["dictation"]["busy"]:
+            return True
     except (OSError, ValueError, KeyError):
-        return False  # no gateway, no dictation
+        pass  # no gateway, no T3 dictation
+    if VOXTYPE:
+        try:
+            state = subprocess.run([VOXTYPE, "status"], capture_output=True, text=True, timeout=2).stdout
+            return state.strip() not in ("", "idle", "stopped")
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+    return False
 
 
 def big_voice_ready():
@@ -342,10 +356,21 @@ def open_reply_window(item):
         return "not configured"
     try:
         done = subprocess.run([REPLY_COMMAND, "--thread", item.get("thread") or REPLY_THREAD,
-                               "--text", item["text"]], capture_output=True, text=True, timeout=20)
+                               "--text", item["text"], "--queued-at", str(int(item["created"] * 1000))], capture_output=True, text=True, timeout=20)
         return "opened" if done.returncode == 0 else f"failed: {(done.stderr or done.stdout).strip()[:200]}"
     except (OSError, subprocess.TimeoutExpired) as error:
         return f"failed: {error}"
+
+
+def answering():
+    """The reply window is still open: Erik has not sent or dismissed his answer."""
+    if not REPLY_COMMAND:
+        return False
+    try:
+        done = subprocess.run([REPLY_COMMAND, "--status"], capture_output=True, text=True, timeout=10)
+        return done.returncode == 0 and bool(json.loads(done.stdout).get("open"))
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return False
 
 
 def notify_away(item):
@@ -378,10 +403,12 @@ def worker():
             dictation_ended = now
         was_dictating = busy
         item = next_item(pending)
-        # Only listen to T3's stream when everything else already allows playing.
         decision, reason = gate(item, now, busy, dictation_ended, False, away())
+        # The slower checks only when everything else already allows playing.
         if decision == "play" and reading_aloud():
             decision, reason = "wait", "a read-aloud is playing"
+        if decision == "play" and answering():
+            decision, reason = gate(item, now, busy, dictation_ended, False, away(), True)
         if decision == "drop":
             with lock:
                 item.update(status="dropped", reason=reason)
@@ -491,8 +518,12 @@ def daemon():
 TOOL = {
     "name": "speak",
     "description": (
-        "Say something out loud to Erik on his PC's speakers, unprompted: something finished, "
-        "an update he should do, a meeting soon, 'here's the work you asked for, try it'. "
+        "Say something out loud to Erik on his PC's speakers, unprompted, to start a spoken "
+        "back-and-forth: 'can you approve this', 'can you answer this question', 'take a look at "
+        "these screenshots', something finished, a meeting soon, 'here's the work, try it'. "
+        "Post the details (lists, screenshots, comparisons, thread links) as your chat message "
+        "first, then call speak with only the short spoken call to action; his reply window shows "
+        "it and opens that message. Ask one question per call: the next one waits for his answer. "
         "Write `text` for listening (short, plain spoken sentences, no paths/URLs/code) or set "
         "`summarize` to turn a long written message into a spoken briefing. The audio is made at "
         "once and plays as soon as Erik is free: never while he is dictating or a read-aloud "
