@@ -23,11 +23,13 @@ in
     Service = {
       Type = "oneshot";
       ExecStart = "${archive}/run-daily.sh";
-      # Own the interpreter and pdftotext; notify-erik comes from the system profile.
+      # Own the interpreter (with pymupdf for the scrub/pdf_honour_scan.py
+      # redaction step in run-daily.sh) and pdftotext; notify-erik comes from
+      # the system profile.
       Environment = [
         "PATH=${
           lib.makeBinPath [
-            (pkgs.python3.withPackages (_: [ ]))
+            (pkgs.python3.withPackages (ps: [ ps.pymupdf ]))
             pkgs.poppler-utils
             pkgs.coreutils
             pkgs.bash
