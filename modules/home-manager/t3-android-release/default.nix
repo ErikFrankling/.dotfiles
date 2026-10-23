@@ -43,8 +43,18 @@ let
       stage="$HOME/.cache/t3-android-release/$(date +%Y%m%d-%H%M%S)"
       mkdir -p "$stage"
       chmod 700 "$stage"
-      # The secrets only exist in this file until the worker loads them.
-      trap 'rm -f "$stage/secrets.env"' EXIT
+      # The secrets only exist in this file until the worker loads them. If
+      # the job never starts (a failed submit, or killed while queued), sync
+      # the empty stage again so the uploaded copy is deleted on the worker.
+      started=0
+      cleanup() {
+        rm -f "$stage/secrets.env"
+        if [ "$started" = 0 ] && [ -e "$stage/run.sh" ]; then
+          (cd "$stage" && heavy sync > /dev/null 2>&1) || true
+        fi
+      }
+      trap cleanup EXIT
+      trap 'exit 130' INT TERM
       (
         umask 077
         {
@@ -87,7 +97,8 @@ let
       # A background job keeps running on the worker if this PC-side command
       # dies (an agent session restart); `heavy logs -f <name>` reattaches.
       name="t3-android-release-$(date +%H%M%S)"
-      heavy bg --big "$name" --no-develop -- bash run.sh
+      heavy --big bg "$name" --no-develop -- bash run.sh
+      started=1
       heavy logs -f "$name"
       if [ -n "$test_abi" ]; then heavy pull out; fi
     '';
