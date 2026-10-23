@@ -112,6 +112,19 @@ class AgentIdle(unittest.TestCase):
         self.assertFalse(tn.agent_idle(self.thread(usageLimit={**limit, "resetAt": None}), NOW)[0])
         self.assertTrue(tn.agent_idle(self.thread(usageLimit={**limit, "resetAt": iso(10)}), NOW)[0])
 
+    def test_updated_in_future_uses_observed_idle(self):
+        # A wrong clock at boot stamped updatedAt two hours ahead.
+        t = self.thread(updatedAt=iso(-110))
+        self.assertFalse(tn.agent_idle(t, NOW)[0])
+        self.assertFalse(tn.agent_idle(t, NOW, idle_since=iso(1))[0])
+        self.assertTrue(tn.agent_idle(t, NOW, idle_since=iso(3))[0])
+
+    def test_settled_key(self):
+        self.assertIsNone(tn.settled_key(self.thread(status="running", activeRunId="r")))
+        self.assertIsNone(tn.settled_key(None))
+        a = tn.settled_key(self.thread(latestRunId="r1"))
+        self.assertNotEqual(a, tn.settled_key(self.thread(latestRunId="r2")))
+
     def test_unreadable(self):
         self.assertFalse(tn.agent_idle(None, NOW)[0])
 
@@ -143,6 +156,10 @@ class Decide(unittest.TestCase):
         s = self.state(nudges=[iso(50), iso(40), iso(20), iso(5)])
         self.assertFalse(tn.decide(["a"], "fp2", s, NOW)[0])
         s = self.state(nudges=[iso(70), iso(40), iso(20), iso(5)])
+        self.assertTrue(tn.decide(["a"], "fp2", s, NOW)[0])
+
+    def test_future_nudges_do_not_count_toward_cap(self):
+        s = self.state(nudges=[iso(-100), iso(-90), iso(-80), iso(5)])
         self.assertTrue(tn.decide(["a"], "fp2", s, NOW)[0])
 
     def test_message_is_marked_automated(self):

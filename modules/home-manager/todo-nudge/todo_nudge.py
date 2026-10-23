@@ -158,8 +158,13 @@ def actionable_items(items, now, owner_info):
     return actionable, errors
 
 
-def agent_idle(thread, now):
-    """(idle?, reason). Idle = no run, nothing queued or asked, quiet for a while."""
+def agent_idle(thread, now, idle_since=None):
+    """(idle?, reason). Idle = no run, nothing queued or asked, quiet for a while.
+
+    idle_since: when this script first saw the thread settled in this state.
+    It covers an updatedAt in the future, which a wrong clock leaves behind
+    (the RTC runs in local time, so a hard reboot can start two hours off).
+    """
     if thread is None:
         return False, "personal-agent unreadable"
     limit = thread.get("usageLimit")
@@ -174,14 +179,23 @@ def agent_idle(thread, now):
     if thread.get("pendingRequestCount", 0) > 0:
         return False, "waiting for an answer"
     quiet = (now - parse_time(thread["updatedAt"])).total_seconds()
+    if idle_since is not None:
+        quiet = max(quiet, (now - parse_time(idle_since)).total_seconds())
     if quiet < IDLE_SECONDS:
         return False, f"idle only {int(quiet)}s"
     return True, f"idle {int(quiet)}s"
 
 
+def settled_key(thread):
+    """Identifies one quiet stretch of the thread; None while it is busy."""
+    if thread is None or thread.get("activeRunId") or thread.get("status") not in SETTLED:
+        return None
+    return f"{thread.get('latestRunId')}|{thread.get('updatedAt')}"
+
+
 def decide(actionable, fp, state, now):
     """(nudge?, reason) from the loop protection rules."""
-    recent = [t for t in state.get("nudges", []) if (now - parse_time(t)).total_seconds() < 3600]
+    recent = [t for t in state.get("nudges", []) if 0 <= (now - parse_time(t)).total_seconds() < 3600]
     if len(recent) >= MAX_PER_HOUR:
         return False, f"cap: {len(recent)} nudges in the last hour"
     last = state.get("last_nudge_at")
@@ -276,8 +290,17 @@ def main(argv=None):
         log(f"no-nudge: nothing actionable ({len(items)} items)", dry)
         return 0
 
+    state = load_state()
     agent = t3_show(AGENT_THREAD)
-    idle, why_idle = agent_idle(agent, now)
+    idle_key = settled_key(agent)
+    seen = state.get("idle_seen") or {}
+    if idle_key is None:
+        state.pop("idle_seen", None)
+    elif seen.get("key") != idle_key:
+        seen = state["idle_seen"] = {"key": idle_key, "since": now.isoformat()}
+    if not dry:
+        save_state(state)
+    idle, why_idle = agent_idle(agent, now, seen.get("since") if idle_key else None)
     actionable, item_errors = actionable_items(items, now, owner_info) if idle or dry else ([], [])
     for slug, err in errors + item_errors:
         log(f"skip-file {slug}: {err}", dry)
@@ -288,7 +311,6 @@ def main(argv=None):
         log(f"no-nudge: nothing actionable ({len(items)} items, agent {why_idle})", dry)
         return 0
 
-    state = load_state()
     fp = fingerprint(TODO_DIR)
     go, why = decide(actionable, fp, state, now)
     if not go:
@@ -304,7 +326,7 @@ def main(argv=None):
         return 1
     stamp = now.isoformat()
     state["nudges"] = [
-        t for t in state.get("nudges", []) if (now - parse_time(t)).total_seconds() < 3600
+        t for t in state.get("nudges", []) if 0 <= (now - parse_time(t)).total_seconds() < 3600
     ] + [stamp]
     state.update(last_nudge_at=stamp, last_fingerprint=fp, last_set=sorted(actionable))
     save_state(state)
