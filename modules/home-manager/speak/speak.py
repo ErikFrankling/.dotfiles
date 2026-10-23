@@ -371,8 +371,8 @@ def open_reply_window(item):
 
 class Notice:
     """The words on screen too (Erik: "if you want me to hear it, I should also see
-    it"). One desktop notification, top-left (erikshell's x-erikshell-corner hint,
-    clear of T3's Send button), no timeout. The newest message takes it over and
+    it"). One desktop notification (top right, where all of them are; the reply
+    window is top-left), no timeout. The newest message takes it over and
     it follows that message as it waits and plays; every message is also in the
     chat, so older ones need not stay up. Clicking it brings up T3 Code."""
 
@@ -394,7 +394,6 @@ class Notice:
             body = body.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             command = [NOTIFY_SEND, "--print-id", "--wait", "--expire-time", "0",
                        "--app-name", "Personal agent", "--icon", "audio-speakers",
-                       "--hint", "string:x-erikshell-corner:top-left",
                        "--action", "default=Open T3 Code", title, body]
             if cls.id:
                 command[1:1] = ["--replace-id", cls.id]

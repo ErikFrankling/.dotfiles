@@ -104,7 +104,8 @@ in
       };
 
       # The "Recording now" reply window (`t3 app speak-reply`, T3 fork): a
-      # small card in the top-right corner of the monitor it opens on, above
+      # small card in the top-left corner of the monitor it opens on (beside
+      # erikshell's 58 px rail; notifications keep the top right), above
       # everything, never taking focus. Its app-id is the main window's, so
       # it is matched by title. Send/cancel without clicking into it.
       wayland.windowManager.hyprland.extraConfig =
@@ -117,7 +118,7 @@ in
             "pin 1"
             "no_initial_focus 1"
             "size 420 240"
-            "move (monitor_w-window_w-16) 16"
+            "move 70 12"
           ];
       wayland.windowManager.hyprland.settings.bindd = [
         "$mod ALT, Return, Send the spoken reply, exec, ${replyWindow} --send"
