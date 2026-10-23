@@ -406,7 +406,8 @@ in
       collect.ioStats = true;
       retention = {
         time = 7 * 24 * 3600;
-        size = 4 * 1024 * 1024 * 1024;
+        # ~1.6 GB a day on the pc (measured 2026-10-23, compressed).
+        size = 12 * 1024 * 1024 * 1024;
       };
     };
   };
