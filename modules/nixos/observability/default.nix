@@ -369,10 +369,10 @@ in
           regex         = "virtual|proportionalSwapped"
           action        = "drop"
         }
-        // groupname = "comm|[1:net_cls:/ 0::/user.slice/.../x.scope]"
+        // groupname = "comm|[<cgroup v1 path> <cgroup v2 path>]"; keep the last.
         rule {
           source_labels = ["groupname"]
-          regex         = ".*0::([^ \\]]*).*"
+          regex         = ".*[ \\[]([^ \\[\\]]*)\\]"
           target_label  = "cgroup"
         }
         rule {
