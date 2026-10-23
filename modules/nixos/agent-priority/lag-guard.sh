@@ -11,8 +11,9 @@
 #   - Pressure: when Erik's own cgroups stall on disk IO or memory (avg10 over
 #     IO_FULL / MEM_FULL for SUSTAIN samples), local Nix builds and the
 #     biggest agent job are stopped.
-#   - Agent thrash: when the agent slice itself stalls on memory (full avg10
-#     over AGENT_MEM_FULL for AGENT_SUSTAIN samples), its biggest job.
+#   - Agent thrash: when the agent slice stalls on memory (full avg10 over
+#     AGENT_MEM_FULL) while the disk stalls (over AGENT_IO_FULL) for
+#     AGENT_SUSTAIN samples, its biggest job.
 #
 # A killed process gets the reason on its stderr (the agent's tool output),
 # telling the agent to re-run it on the homelab with `heavy`. Erik gets one
@@ -32,6 +33,7 @@ IO_FULL=${IO_FULL:-20}
 MEM_FULL=${MEM_FULL:-10}
 AGENT_MEM_FULL=${AGENT_MEM_FULL:-20}
 AGENT_SUSTAIN=${AGENT_SUSTAIN:-15}
+AGENT_IO_FULL=${AGENT_IO_FULL:-10}
 SUSTAIN=${SUSTAIN:-5}
 NOTIFY_EVERY=${NOTIFY_EVERY:-900}
 ERIK_UID=${ERIK_UID:-1000}
@@ -171,14 +173,16 @@ check_pressure() {
   return 0
 }
 
-# The agents themselves thrashing: their slice stalls on memory (it pages
-# program code and file cache in and out of the disk Erik shares). Kill the
-# biggest job in it.
+# The agents themselves thrashing: their slice stalls on memory AND the disk
+# stalls (they page program code and file cache through the disk Erik shares).
+# A slice stalled only on its memory cap while swapping into zram is harmless
+# (measured: 20-28 % memory stall, 0 % IO), so that alone is left alone.
 agent_streak=0
 check_agent_thrash() {
-  local mem pid rss best=0 best_pid=""
+  local mem io pid rss best=0 best_pid=""
   mem=$(awk '/^full/ { for (i = 1; i <= NF; i++) if ($i ~ /^avg10=/) { sub("avg10=", "", $i); printf "%d", $i } }' "$agents/memory.pressure" 2>/dev/null)
-  if [ "${mem:-0}" -gt "$AGENT_MEM_FULL" ]; then
+  io=$(awk '/^full/ { for (i = 1; i <= NF; i++) if ($i ~ /^avg10=/) { sub("avg10=", "", $i); printf "%d", $i } }' /proc/pressure/io)
+  if [ "${mem:-0}" -gt "$AGENT_MEM_FULL" ] && [ "${io:-0}" -gt "$AGENT_IO_FULL" ]; then
     agent_streak=$((agent_streak + 1))
   else
     agent_streak=0
@@ -194,7 +198,7 @@ check_agent_thrash() {
       best_pid=$pid
     fi
   done
-  [ -n "$best_pid" ] && [ "$best" -gt 500000 ] && stop "$best_pid" "the agents were thrashing (their memory ${mem}% full-stalled); too big for the agent memory budget"
+  [ -n "$best_pid" ] && [ "$best" -gt 500000 ] && stop "$best_pid" "the agents were thrashing the disk (memory ${mem}% / disk IO ${io}% full-stalled); too big for the agent memory budget"
   return 0
 }
 
