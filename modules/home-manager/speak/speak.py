@@ -1,6 +1,8 @@
 """speak: lets Erik's personal agent talk to him on the PC's speakers.
 
-`speak daemon` (user service, PC only) owns a queue. Every message is turned
+`speak daemon` (user service, PC only) owns a queue. While Erik's phone is in
+voice mode on the thread (T3 `/api/voice-presence`), a message goes to the
+phone instead of the speakers. Every message is turned
 into audio at once (the read-aloud voices), then waits until it may play:
 never while Erik is dictating on any device (local-stt's /health says
 `busy`), never over a T3 read-aloud that is playing, and not to an empty room
@@ -50,6 +52,10 @@ REPLY_COMMAND = os.environ.get("SPEAK_REPLY_COMMAND", "")
 REPLY_THREAD = os.environ.get("SPEAK_REPLY_THREAD", "personal-agent")
 # Erik away and not back: a notification he can answer from the phone.
 AWAY_NOTIFY = os.environ.get("SPEAK_AWAY_NOTIFY", "")
+# The T3 server: while Erik's phone is in voice mode for the thread, it plays
+# the message instead of the PC (`/api/voice-presence`, T3 fork).
+T3_URL = os.environ.get("SPEAK_T3_URL", "http://127.0.0.1:3773")
+PHONE_WAIT_SECONDS = 15 * 60
 
 PRIORITIES = ("low", "normal", "urgent")
 DEFAULT_EXPIRY_MINUTES = {"low": 15, "normal": 60, "urgent": 120}
@@ -130,6 +136,11 @@ def gate(item, now, dictating, dictation_ended, reading_aloud, away, answering=F
             return "drop", "Erik is away from the PC (low priority messages are dropped)"
         return "wait", "Erik is away from the PC"
     return "play", ""
+
+
+def phone_has(presence, thread):
+    """Erik's phone is in voice mode on this thread ("you may speak to me now")."""
+    return bool(presence.get("present")) and presence.get("threadId") == thread
 
 
 def next_item(items):
@@ -495,6 +506,53 @@ def notify_away(item):
         log("phone.notify_failed", item, error=str(error))
 
 
+def phone_presence():
+    """Which thread the phone is in voice mode on; {} when none or T3 is down."""
+    try:
+        return http_json(f"{T3_URL}/api/voice-presence", timeout=2)
+    except (OSError, ValueError):
+        return {}
+
+
+def send_to_phone(item):
+    """Hands the message to the phone in voice mode. False: the phone just left."""
+    try:
+        http_json(f"{T3_URL}/api/voice-presence/say", {
+            "id": item["id"], "threadId": item.get("thread") or REPLY_THREAD,
+            "text": item.get("spoken_text") or item["text"], "source": item["text"]}, timeout=5)
+    except (OSError, ValueError) as error:  # 409: no phone in voice mode any more
+        log("phone.refused", item, error=str(error))
+        return False
+    with lock:
+        item.update(status="speaking", reason="", sink="phone")
+    log("phone.sent", item, text=item.get("spoken_text"))
+    notice(item, "on your phone")
+    threading.Thread(target=follow_phone, args=(item,), daemon=True).start()
+    return True
+
+
+def follow_phone(item):
+    """Until the phone says it played (or skipped) the message."""
+    deadline = time.time() + PHONE_WAIT_SECONDS
+    status = "delivered"
+    while time.time() < deadline:
+        time.sleep(1)
+        try:
+            status = http_json(f"{T3_URL}/api/voice-presence/say?id={item['id']}", timeout=5)["status"]
+        except (OSError, ValueError, KeyError):
+            continue
+        if status in ("played", "skipped", "expired"):
+            break
+    with lock:
+        if status == "played":
+            item.update(status="spoken", spoken_at=time.strftime("%H:%M:%S"))
+        else:
+            item.update(status="dropped", reason=f"the phone did not play it ({status})")
+    log("phone." + status, item)
+    notice(item, f"said on your phone at {time.strftime('%H:%M')}" if status == "played"
+           else "not said on your phone")
+
+
 def worker():
     dictation_ended = 0.0
     was_dictating = False
@@ -511,6 +569,13 @@ def worker():
             dictation_ended = now
         was_dictating = busy
         item = next_item(pending)
+        # Phone in voice mode on this thread: it plays there, not on the PC. It
+        # still waits while Erik dictates anywhere; the phone handles the rest
+        # (it holds a message while he answers the last one).
+        if phone_has(phone_presence(), item.get("thread") or REPLY_THREAD):
+            decision, reason = gate(item, now, busy, dictation_ended, False, False)
+            if decision == "play" and send_to_phone(item):
+                continue
         decision, reason = gate(item, now, busy, dictation_ended, False, away())
         # The slower checks only when everything else already allows playing.
         if decision == "play" and reading_aloud():
@@ -608,7 +673,7 @@ class Handler(BaseHTTPRequestHandler):
                 body = public(item) if item else None
             return self.reply(200, body) if body else self.reply(404, {"error": "unknown id"})
         if self.path == "/health":
-            return self.reply(200, {"ok": True, "dictating": dictating(), "away": away(),
+            return self.reply(200, {"ok": True, "dictating": dictating(), "away": away(), "phone": phone_presence(),
                                     "queue": [public(i) for i in items.values()
                                               if i["status"] in ("generating", "ready", "waiting", "speaking")]})
         self.reply(404, {"error": "unknown path"})
@@ -647,7 +712,10 @@ TOOL = {
         "back or it expires, and his phone gets a silent notification; urgent: plays anyway). "
         "A soft chime comes first. After it speaks, a small 'Recording now' window opens on his "
         "PC so he can answer by voice; his answer arrives in this thread as his message. "
-        "PC only: refused on the laptop, never on the phone. Returns the status "
+        "While Erik has voice mode on in his phone's T3 app for this thread, it plays on the "
+        "phone instead (his opt-in 'you may speak to me now'; he is listening, not reading, so "
+        "say what matters there), then the phone records his answer. Otherwise PC speakers "
+        "only: refused on the laptop, and the phone never speaks outside voice mode. Returns the status "
         "(speaking/spoken/waiting with the reason/dropped/failed) and an id for speak_status."),
     "inputSchema": {
         "type": "object",

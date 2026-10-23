@@ -72,5 +72,14 @@ class Audio(unittest.TestCase):
         self.assertEqual(list(speak.read_wav(bytes(wav))[1]), [1, 2, 3])
 
 
+class Phone(unittest.TestCase):
+    def test_only_the_thread_in_voice_mode(self):
+        here = {"present": True, "threadId": "personal-agent"}
+        self.assertTrue(speak.phone_has(here, "personal-agent"))
+        self.assertFalse(speak.phone_has(here, "other"))
+        self.assertFalse(speak.phone_has({"present": False, "threadId": "personal-agent"}, "personal-agent"))
+        self.assertFalse(speak.phone_has({}, "personal-agent"))
+
+
 if __name__ == "__main__":
     unittest.main()
