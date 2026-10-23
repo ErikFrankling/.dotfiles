@@ -238,6 +238,13 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-23 05:05 (health-watch) — `phone/executor` and `phone/openclaw`
+  403 again, same cause as 2026-10-21 05:36 (stale tailscaled CONNECT tunnels
+  from 192.168.50.100 in the Gatus sidecar, Traefik sees the node's own
+  address). Fix: `ssh naiaclaw 'sudo ss -K state established dst 192.168.50.100
+  dport = :443'`; both back to 200 within 90 s. Recurs after a Gatus pod
+  start; a durable fix would be making the sidecar wait for its subnet route.
+
 - 2026-10-23 03:40 (health-watch) — `alert/SystemdUnitFailed/pc/t3code-claude`
   (firing since 03:05 local): `t3code-claude` is not a real unit, only the
   name the journal alert derives from the transient `t3code-claude-<pid>.scope`
