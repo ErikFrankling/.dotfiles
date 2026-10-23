@@ -102,9 +102,21 @@ Then the title: `t3_thread_read` with that thread id, or read-only from the
 DB: `sqlite3 "file:$HOME/.t3/userdata/statev2.sqlite?mode=ro" "select title from
 orchestration_v2_projection_threads where thread_id='mcp:cb249734-...'"`
 (sqlite3 is not on PATH: `ls -d /nix/store/*-sqlite-*-bin/bin/sqlite3`).
-Scopes older than the log line (before 2026-10-23 ~03:00): match the claude
-`--session-id`/`--resume` uuid from below's `cmdline` against
-`orchestration_v2_projection_provider_threads.payload_json`. Codex runs one
+Scopes older than the log line (before 2026-10-23 ~04:00), or to double
+check: the claude `--session-id`/`--resume` uuid in the scope's command line
+(below keeps it) maps to the thread:
+
+```bash
+U=t3code-claude-4f687ef0 T="2026-10-23 02:45"
+SID=$(below dump process -b "$T" -e "$T:05" -f cgroup cmdline -O csv | grep "$U" \
+  | grep -oE -- '--(session-id|resume)[= ][0-9a-f-]{36}' | grep -oE '[0-9a-f-]{36}' | head -1)
+[ -n "$SID" ] && sqlite3 "file:$HOME/.t3/userdata/statev2.sqlite?mode=ro" \
+  "select p.thread_id, t.title from orchestration_v2_projection_provider_threads p
+   left join orchestration_v2_projection_threads t using(thread_id)
+   where p.payload_json like '%$SID%' limit 1"
+```
+
+Never run the lookup with an empty `$SID` (`like '%%'` matches any thread). Codex runs one
 shared app-server scope for several threads; the line names the thread that
 started it.
 
