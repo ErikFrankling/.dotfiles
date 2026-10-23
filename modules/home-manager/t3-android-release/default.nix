@@ -14,6 +14,9 @@
 #                                      ~/.cache/t3-android-release/<run>/out
 #   t3-android-release --accept-dropped-commits
 #                                      see the guard in docs/erik-updates.md
+#   t3-android-release --commit SHA --prebuilt /work/<run>/out/<apk>
+#                                      publish an APK an earlier run built on the
+#                                      worker but could not publish (no rebuild)
 { pkgs, ... }:
 let
   t3-android-release = pkgs.writeShellApplication {
@@ -27,12 +30,16 @@ let
       force_apk=false
       accept=false
       test_abi=""
+      commit=""
+      prebuilt=""
       while [ $# -gt 0 ]; do
         case "$1" in
           --apk) force_apk=true ;;
           --accept-dropped-commits) accept=true ;;
           --test-abi) test_abi="$2"; shift ;;
-          -h | --help) echo "usage: t3-android-release [--apk] [--test-abi ABI] [--accept-dropped-commits]"; exit 0 ;;
+          --commit) commit="$2"; shift ;;
+          --prebuilt) prebuilt="$2"; force_apk=true; shift ;;
+          -h | --help) echo "usage: t3-android-release [--apk] [--test-abi ABI] [--commit SHA] [--prebuilt WORKER-APK] [--accept-dropped-commits]"; exit 0 ;;
           *) echo "unknown argument $1" >&2; exit 2 ;;
         esac
         shift
@@ -67,6 +74,7 @@ let
           printf 'ANDROID_KEYSTORE_PASSWORD=%q\n' "$(secret hosts/pc/secrets/secrets.yaml t3code-android-keystore-password)"
           printf 'ANDROID_KEY_ALIAS=%q\n' t3code-erik
           printf 'FORCE_APK=%q\nACCEPT_DROPPED_COMMITS=%q\nEXTRA_TEST_ABI=%q\n' "$force_apk" "$accept" "$test_abi"
+          printf 'COMMIT=%q\nPREBUILT_APK=%q\n' "$commit" "$prebuilt"
           # No Actions run will publish a newer commit, so this one may go out
           # while erik/main moves on (scripts/erik-updates-guard.sh).
           printf 'ALLOW_BEHIND_TIP=true\n'
@@ -83,8 +91,15 @@ let
       PATH="$(nix build --no-link --print-out-paths nixpkgs#git)/bin:$PATH"
       git clone --quiet "https://github.com/$GH_REPO.git" repo
       cd repo
-      git checkout --quiet --detach origin/erik/main
+      if [ -n "$COMMIT" ]; then
+        # Also a commit a rebase removed from erik/main (GitHub still has it).
+        git fetch --quiet origin "$COMMIT"
+        git checkout --quiet --detach "$COMMIT"
+      else
+        git checkout --quiet --detach origin/erik/main
+      fi
       echo "release of erik/main at $(git rev-parse --short HEAD)"
+      [ -n "$PREBUILT_APK" ] || unset PREBUILT_APK
       tools="$(nix build --no-link --print-out-paths nixpkgs#gh)/bin:$(nix build --no-link --print-out-paths nixpkgs#unzip)/bin"
       # Gradle inside the worker's 10 GB job cap: two workers, no Kotlin daemon.
       export OUT="$PWD/../out" GRADLE_ARGS="--max-workers=2 -Pkotlin.compiler.execution.strategy=in-process -Dorg.gradle.jvmargs=-Xmx3g"
