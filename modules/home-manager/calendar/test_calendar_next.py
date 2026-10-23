@@ -110,5 +110,19 @@ class Reminders(unittest.TestCase):
             self.assertEqual((Path(d) / "reminders.log").read_text().count("REMIND "), 1)
 
 
+class Queue(unittest.TestCase):
+    def test_add_queue_needs_asked_and_dedupes(self):
+        with tempfile.TemporaryDirectory() as d:
+            cn.STATE_DIR = Path(d)
+            self.assertEqual(cn.main(["add", "--title", "T", "--start", "2026-11-05T15:30", "--end", "2026-11-05T17:00"]), 2)
+            argv = ["add", "--queue", "--title", "T", "--start", "2026-11-05T15:30", "--end", "2026-11-05T17:00",
+                    "--location", "L", "--asked", "put it in my calendar"]
+            cn.main(argv)
+            cn.main(argv)
+            queued = json.loads((Path(d) / "pending-add.json").read_text())
+            self.assertEqual(len(queued), 1)
+            self.assertEqual(queued[0]["erikAsked"], "put it in my calendar")
+            self.assertNotIn("attendees", queued[0])
+
 if __name__ == "__main__":
     unittest.main()

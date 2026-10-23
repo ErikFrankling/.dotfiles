@@ -1,5 +1,7 @@
 import {
   array,
+  mutation,
+  type MutationContext,
   boolean,
   decodeJson,
   defineApp,
@@ -15,15 +17,20 @@ import {
   type QueryContext,
 } from "apps";
 
-// Erik's Google Calendar, read-only (scope calendar.readonly: Google gives
-// this scope no way to create, change, accept or decline anything).
+// Erik's Google Calendar. Scopes: calendar.readonly (read everything) and
+// calendar.events (so addEvent can create an event on Erik's own primary
+// calendar when he explicitly asks). The app has no tool that accepts,
+// declines, invites, changes or deletes anything.
 const provider = defineProvider({
   name: "Google Calendar",
   hosts: ["www.googleapis.com"],
   auth: {
     oauth: oauth2({
       discover: "https://accounts.google.com",
-      scopes: ["https://www.googleapis.com/auth/calendar.readonly"],
+      scopes: [
+        "https://www.googleapis.com/auth/calendar.readonly",
+        "https://www.googleapis.com/auth/calendar.events",
+      ],
       authorizationParams: { access_type: "offline", prompt: "consent" },
     }),
   },
@@ -42,6 +49,7 @@ const provider = defineProvider({
 
 const requirements = { user: { accounts: { calendar: provider } } };
 type QCtx = QueryContext<typeof requirements>;
+type MCtx = MutationContext<typeof requirements>;
 
 const API = "https://www.googleapis.com/calendar/v3";
 const TZ = "Europe/Stockholm";
@@ -52,6 +60,7 @@ async function gcal(
   ctx: any,
   path: string,
   params: [string, string][] = [],
+  body?: unknown,
 ): Promise<any> {
   const qs = params.length
     ? "?" +
@@ -60,10 +69,13 @@ async function gcal(
         .join("&")
     : "";
   const response = await ctx.fetch(API + path + qs, {
+    method: body === undefined ? "GET" : "POST",
     headers: {
       Authorization: "Bearer " + ctx.user.accounts.calendar.fields.access_token,
       "user-agent": "executor-calendar",
+      "content-type": "application/json",
     },
+    body: body === undefined ? undefined : JSON.stringify(body),
     signal: ctx.signal,
   });
   return await decodeJson(response, record(json()));
@@ -287,18 +299,93 @@ const calendars = query(
   },
 );
 
+const AddOut = object({
+  created: boolean(),
+  title: string(),
+  start: string(),
+  end: string(),
+  link: json(),
+  note: string(),
+});
+
+const LOCAL = new RegExp("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(:[0-9]{2})?$");
+
+// Writes exactly one event on Erik's own primary calendar. There is no
+// attendees field and sendUpdates is "none", so nobody else is ever invited or
+// emailed. Existing events are never touched: a same title at the same start
+// returns the event already there.
+const addEvent = mutation(
+  {
+    description:
+      "Add ONE event to Erik's primary Google Calendar. Only when Erik explicitly asked for this event (put his words in erikAsked). start and end are local Europe/Stockholm times like 2026-11-05T15:30. No guests, no invitations, no emails; cannot change, accept, decline or delete anything. Returns created:false when the same title already starts at that time.",
+    input: object({
+      title: string(),
+      start: string(),
+      end: string(),
+      location: string().optional(),
+      description: string().optional(),
+      erikAsked: string(),
+    }),
+    output: AddOut,
+  },
+  async (ctx: MCtx, input) => {
+    if (input.erikAsked.trim().length < 5)
+      throw new Error("erikAsked must quote what Erik asked for.");
+    if (!LOCAL.test(input.start) || !LOCAL.test(input.end))
+      throw new Error("start and end must be local times like 2026-11-05T15:30.");
+    if (input.end <= input.start) throw new Error("end must be after start.");
+    const full = (s: string) => (s.length === 16 ? s + ":00" : s);
+    const startMs = localMidnightUtc(input.start.substring(0, 10)) +
+      (Number(input.start.substring(11, 13)) * 60 + Number(input.start.substring(14, 16))) * 60000;
+    const existing = await gcal(ctx, "/calendars/primary/events", [
+      ["timeMin", new Date(startMs - 60000).toISOString()],
+      ["timeMax", new Date(startMs + 60000).toISOString()],
+      ["singleEvents", "true"],
+      ["timeZone", TZ],
+    ]);
+    const same = ((existing.items as any[]) ?? []).find(
+      (e) => e.status !== "cancelled" && e.summary === input.title,
+    );
+    if (same)
+      return {
+        created: false,
+        title: input.title,
+        start: input.start,
+        end: input.end,
+        link: same.htmlLink ?? null,
+        note: "An event with this title already starts then; nothing was added.",
+      };
+    const body: Record<string, unknown> = {
+      summary: input.title,
+      start: { dateTime: full(input.start), timeZone: TZ },
+      end: { dateTime: full(input.end), timeZone: TZ },
+    };
+    if (input.location) body.location = input.location;
+    if (input.description) body.description = input.description;
+    const made = await gcal(ctx, "/calendars/primary/events", [["sendUpdates", "none"]], body);
+    return {
+      created: true,
+      title: String(made.summary ?? input.title),
+      start: input.start,
+      end: input.end,
+      link: made.htmlLink ?? null,
+      note: "Added to Erik's primary calendar, no guests.",
+    };
+  },
+);
+
 const instructions = [
-  "Erik's Google Calendar (ef.pro454@gmail.com), read-only: the app has the calendar.readonly scope and no tools that create, change, accept, decline or delete events. Never contact attendees.",
+  "Erik's Google Calendar (ef.pro454@gmail.com). Reading is free. addEvent adds one event to his own calendar and ONLY when Erik explicitly asked for that event: quote him in erikAsked, never add guests, never invite or contact anyone. There is no tool to change, accept, decline or delete events.",
   "upcoming({days}) = from now; day({date}) = one local day. Times are Europe/Stockholm. `text` is the compact block to show; `events` carries attendees, the Meet link (meetLink) and the calendar link (link).",
   "On the PC, `calendar-next` prints the same plus the KTH/Canvas schedule.",
 ].join(NL);
 
 export default defineApp(requirements, {
   tools: router(
-    { upcoming, day, calendars },
+    { upcoming, day, calendars, addEvent },
     {
       title: "Google Calendar",
-      description: "Read Erik's Google Calendar: upcoming events and a single day.",
+      description: "Read Erik's Google Calendar (upcoming, one day) and add an event he explicitly asked for.",
       instructions,
     },
   ),

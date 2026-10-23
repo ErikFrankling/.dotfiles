@@ -353,6 +353,8 @@ def run_remind(args, now):
         log_line(f"source-note: {note or 'all sources ok'}")
         if not args.dry_run:
             note_path.write_text(note)
+    if not args.fixture:
+        run_pending()
     sent = 0
     for ev in reminders_due(timed, now, reminded):
         text = spoken_text(ev, now)
@@ -385,6 +387,66 @@ def run_connect():
     return 0
 
 
+def add_event(ev):
+    """Create one event through the Executor tool (Erik asked for it; no guests)."""
+    result = mcp_execute("return await tools.calendar.addEvent(" + json.dumps(ev) + ");")
+    execution = result.get("execution", {})
+    if not execution.get("ok"):
+        err = execution.get("error") or result.get("error") or result
+        raise RuntimeError(str(err.get("message") if isinstance(err, dict) else err)[:200])
+    return execution["value"]
+
+
+def run_pending():
+    """Add events Erik asked for that waited for the Google sign-in."""
+    path = STATE_DIR / "pending-add.json"
+    try:
+        pending = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return
+    left = []
+    for ev in pending:
+        try:
+            r = add_event(ev)
+            log_line(f"ADDED {ev['title']!r} {ev['start']}: {r['note']} {r.get('link') or ''}")
+        except Exception as e:  # not signed in yet: try again next minute
+            left.append(ev)
+            last = STATE_DIR / "pending-note.txt"
+            note = str(e)[:100]
+            if not last.exists() or last.read_text() != note:
+                log_line(f"pending-add waiting: {note}")
+                last.write_text(note)
+    if left:
+        path.write_text(json.dumps(left))
+    else:
+        path.unlink()
+
+
+def run_add(args):
+    """Only for events Erik explicitly asked for; never invites anyone."""
+    if not (args.title and args.start and args.end and args.asked):
+        print("add needs --title --start --end --asked", file=sys.stderr)
+        return 2
+    ev = {"title": args.title, "start": args.start, "end": args.end, "erikAsked": args.asked}
+    if args.location:
+        ev["location"] = args.location
+    if args.queue:
+        path = STATE_DIR / "pending-add.json"
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
+        try:
+            queued = json.loads(path.read_text())
+        except (OSError, ValueError):
+            queued = []
+        if ev not in queued:
+            queued.append(ev)
+        path.write_text(json.dumps(queued))
+        print(f"queued: {args.title!r} {args.start}; added by calendar-remind once Google is connected")
+        return 0
+    r = add_event(ev)
+    print(json.dumps(r, indent=2))
+    return 0
+
+
 def fixture_events(path):
     out = []
     for e in json.loads(Path(path).read_text()):
@@ -400,13 +462,19 @@ def fixture_events(path):
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog="calendar-next")
-    p.add_argument("command", nargs="?", choices=["remind", "connect"],
+    p.add_argument("command", nargs="?", choices=["remind", "connect", "add"],
                help="remind: speak upcoming meetings; connect: print a fresh link to (re)connect Google Calendar")
     p.add_argument("--hours", type=float, default=24)
     p.add_argument("--json", action="store_true")
     p.add_argument("--now", help="pretend it is this ISO time (tests)")
     p.add_argument("--fixture", help="JSON list of events instead of the real sources (tests)")
     p.add_argument("--speak-cmd", default="speak say", help="remind: command that gets TEXT and 'normal'")
+    p.add_argument("--title", help="add: event title")
+    p.add_argument("--start", help="add: local Stockholm start, e.g. 2026-11-05T15:30")
+    p.add_argument("--end", help="add: local Stockholm end")
+    p.add_argument("--location", help="add: where")
+    p.add_argument("--asked", help="add: what Erik asked for, in his words")
+    p.add_argument("--queue", action="store_true", help="add: wait for the Google sign-in, then add (retried every minute)")
     p.add_argument("--dry-run", action="store_true", help="remind: do not record what was said")
     args = p.parse_args(argv)
     now = parse_when(args.now)[0] if args.now else now_utc()
@@ -414,6 +482,8 @@ def main(argv=None):
         return run_remind(args, now)
     if args.command == "connect":
         return run_connect()
+    if args.command == "add":
+        return run_add(args)
     if args.fixture:
         timed, due, notes = fixture_events(args.fixture), [], []
     else:
