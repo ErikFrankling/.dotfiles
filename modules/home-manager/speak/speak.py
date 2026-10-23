@@ -371,41 +371,35 @@ def open_reply_window(item):
 
 class Notice:
     """The words on screen too (Erik: "if you want me to hear it, I should also see
-    it"). One desktop notification (top right, where all of them are; the reply
-    window is top-left), no timeout. The newest message takes it over and
-    it follows that message as it waits and plays; every message is also in the
-    chat, so older ones need not stay up. Clicking it brings up T3 Code."""
+    it"). Each message gets its own desktop notification, no timeout; they stack
+    top right until Erik dismisses them (he wants them all kept). A message's
+    notification is updated in place as it waits and plays. Clicking it brings
+    up T3 Code."""
 
-    id = None
-    waiter = None
-    owner = None  # the item it shows
-
-    @classmethod
-    def show(cls, item, status=""):
+    @staticmethod
+    def show(item, status=""):
         if not NOTIFY_SEND:
             return
         with notice_lock:
-            if cls.owner is not None and cls.owner is not item:
-                if item["created"] < cls.owner["created"]:
-                    return  # a newer message has the card
-            cls.owner = item
             title = "Personal agent" + (f" · {status}" if status else "")
             body = (item.get("spoken_text") or item["text"])
             body = body.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             command = [NOTIFY_SEND, "--print-id", "--wait", "--expire-time", "0",
                        "--app-name", "Personal agent", "--icon", "audio-speakers",
                        "--action", "default=Open T3 Code", title, body]
-            if cls.id:
-                command[1:1] = ["--replace-id", cls.id]
-            if cls.waiter and cls.waiter.poll() is None:
-                cls.waiter.terminate()  # its action would belong to the old text
+            if item.get("notice_id"):
+                command[1:1] = ["--replace-id", item["notice_id"]]
+            waiter = item.get("notice_waiter")
+            if waiter and waiter.poll() is None:
+                waiter.terminate()  # its action would belong to the old text
             try:
-                cls.waiter = subprocess.Popen(command, stdout=subprocess.PIPE, text=True)
+                waiter = subprocess.Popen(command, stdout=subprocess.PIPE, text=True)
             except OSError as error:
                 log("notice.failed", item, error=str(error))
                 return
-            cls.id = cls.waiter.stdout.readline().strip() or cls.id
-            threading.Thread(target=cls.clicked, args=(cls.waiter,), daemon=True).start()
+            item["notice_waiter"] = waiter
+            item["notice_id"] = waiter.stdout.readline().strip() or item.get("notice_id")
+            threading.Thread(target=Notice.clicked, args=(waiter,), daemon=True).start()
 
     @staticmethod
     def clicked(waiter):
