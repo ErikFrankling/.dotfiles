@@ -5,7 +5,7 @@
 #   `service.name` = the unit the entry is about, so a failing timer or an
 #   error from local-stt or T3 Code becomes an alert there;
 # - host metrics (node exporter, including systemd unit states);
-# - per-process history: RAM, CPU and disk per (command, cgroup) every 15 s,
+# - per-process history: RAM, CPU and disk per (command, cgroup) every 30 s,
 #   so a past spike can be traced to a program and its unit or T3 thread;
 # - probes of services that only listen on localhost (`probe` label);
 # - an OTLP receiver on 127.0.0.1:4317/4318 for programs that speak it
@@ -360,7 +360,8 @@ in
 
       prometheus.scrape "procs" {
         targets         = prometheus.exporter.process.procs.targets
-        scrape_interval = "15s"
+        // One scrape reads every smaps_rollup: ~0.65 s CPU; 30 s keeps it ~2% of a core.
+        scrape_interval = "30s"
         forward_to      = [prometheus.relabel.procs.receiver]
       }
 

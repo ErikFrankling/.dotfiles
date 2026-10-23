@@ -11,7 +11,7 @@ record.
 
 | | below (local) | Process metrics (homelab Prometheus) |
 |---|---|---|
-| Resolution | 5 s, every process and every cgroup | 15 s, per (program, unit) |
+| Resolution | 5 s, every process and every cgroup | 30 s, per (program, unit) |
 | Kept | ~1 week (12 GiB cap), `/var/log/below` | 400 days (Prometheus 25 GB cap) |
 | Has | pid, cmdline, RSS, swap, CPU, IO, cgroup memory and PSI | PSS, RSS, swap, CPU, disk IO, process count |
 | Use for | exact commands and pids, a cgroup tree, the minutes before a freeze | long ranges, trends, the Grafana dashboard, the laptop from the pc |
@@ -38,7 +38,7 @@ q() { curl -s "$P" --data-urlencode "query=$1" --data-urlencode "time=${2:-$(dat
 END=$(date -d '2026-10-23 01:35' +%s)   # end of the window, local time
 
 # Peak RAM (PSS, GB) per program+unit in the 10 minutes before END
-q 'topk(15, max_over_time(sum by (groupname, unit) (namedprocess_namegroup_memory_bytes{host_name="pc",memtype="proportionalResident"})[10m:15s]) / 1e9)' $END
+q 'topk(15, max_over_time(sum by (groupname, unit) (namedprocess_namegroup_memory_bytes{host_name="pc",memtype="proportionalResident"})[10m:30s]) / 1e9)' $END
 # Average CPU (cores) over those 10 minutes
 q 'topk(15, sum by (groupname, unit) (increase(namedprocess_namegroup_cpu_seconds_total{host_name="pc"}[10m])) / 600)' $END
 # Disk read+write (GB) over those 10 minutes
@@ -46,7 +46,7 @@ q 'topk(10, sum by (groupname, unit) (increase(namedprocess_namegroup_read_bytes
 # Swap (GB) per program at END
 q 'topk(10, sum by (groupname, unit) (namedprocess_namegroup_memory_bytes{host_name="pc",memtype="swapped"}) / 1e9)' $END
 # Peak RAM per T3 agent thread scope (sum of its processes)
-q 'topk(10, max_over_time(sum by (unit) (namedprocess_namegroup_memory_bytes{host_name="pc",memtype="proportionalResident",cgroup=~".*/app-t3code\\.slice/.*"})[10m:15s]) / 1e9)' $END
+q 'topk(10, max_over_time(sum by (unit) (namedprocess_namegroup_memory_bytes{host_name="pc",memtype="proportionalResident",cgroup=~".*/app-t3code\\.slice/.*"})[10m:30s]) / 1e9)' $END
 ```
 
 - Labels: `host_name` (pc, framework), `groupname` (the process' comm, 15
