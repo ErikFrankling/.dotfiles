@@ -1,5 +1,9 @@
 """todo-nudge: wake the personal agent while its to-do list has work it can do.
 
+The message carries the entire list (blocked items too, triggers marked *) so
+the agent re-checks every blocker; with nothing able to move it still sends a
+full review once an hour.
+
 Reads the front matter of every item in the to-do folder (contract:
 ~/.t3/personal/todo/README.md), works out which items can move now, and when
 the personal-agent thread is idle sends it one automated "work the to-do list"
@@ -16,6 +20,7 @@ import json
 import os
 import subprocess
 import sys
+import urllib.request
 from pathlib import Path
 
 import yaml
@@ -27,6 +32,7 @@ STATE_DIR = Path.home() / ".local/state/todo-nudge"
 IDLE_SECONDS = 120  # the agent must have been quiet this long
 REPEAT_SECONDS = 30 * 60  # same set, nothing changed: nudge again after this
 MAX_PER_HOUR = 4
+REVIEW_SECONDS = 60 * 60  # full review of every item, blocked ones too
 LOG_MAX_BYTES = 1_000_000
 
 PREFIX = "[automated: todo-nudge, not Erik]"
@@ -194,21 +200,29 @@ def settled_key(thread):
 
 
 def decide(actionable, fp, state, now):
-    """(nudge?, reason) from the loop protection rules."""
+    """(nudge?, reason, hourly?) from the trigger and loop protection rules.
+
+    Something not blocked can move: nudge (rate limited). Nothing can: still a
+    full review once an hour, since blockers clear without the files changing.
+    """
     recent = [t for t in state.get("nudges", []) if 0 <= (now - parse_time(t)).total_seconds() < 3600]
     if len(recent) >= MAX_PER_HOUR:
-        return False, f"cap: {len(recent)} nudges in the last hour"
+        return False, f"cap: {len(recent)} nudges in the last hour", False
     last = state.get("last_nudge_at")
     if last is None:
-        return True, "first nudge"
-    if fp != state.get("last_fingerprint"):
-        return True, "todo/ changed since last nudge"
-    if sorted(actionable) != sorted(state.get("last_set", [])):
-        return True, "actionable set changed"
+        return True, "first nudge", not actionable
     since = (now - parse_time(last)).total_seconds()
-    if since >= REPEAT_SECONDS:
-        return True, f"unchanged for {int(since // 60)} min"
-    return False, f"unchanged, last nudge {int(since // 60)} min ago"
+    if actionable:
+        if fp != state.get("last_fingerprint"):
+            return True, "todo/ changed since last nudge", False
+        if sorted(actionable) != sorted(state.get("last_set", [])):
+            return True, "actionable set changed", False
+        if since >= REPEAT_SECONDS:
+            return True, f"unchanged for {int(since // 60)} min", False
+        return False, f"unchanged, last nudge {int(since // 60)} min ago", False
+    if since >= REVIEW_SECONDS:
+        return True, "hourly review", True
+    return False, f"all blocked, standing or running; review in {int((REVIEW_SECONDS - since) // 60)} min", False
 
 
 def owner_state(info):
@@ -219,54 +233,65 @@ def owner_state(info):
     return info.get("status", "?")
 
 
-def item_line(slug, fm, triggered, owner_info):
+def item_line(slug, fm, triggered, owner_info, now):
     status = fm.get("status")
     detail = str(status)
     if status == "in_flight":
         owner = fm.get("owner")
         if owner:
-            state = owner_state(owner_info(str(owner)))
-            run = "running" if owner_running(owner_info(str(owner))) else f"stopped: {state}"
+            info = owner_info(str(owner))
+            run = "running" if owner_running(info) else f"stopped: {owner_state(info)}"
             detail += f", owner {owner} {run}"
         else:
             detail += ", no owner"
     elif status == "blocked":
-        detail += f" until {fm.get('blocked_until')} (passed)"
+        if fm.get("blocked_on"):
+            detail += f" on {fm.get('blocked_on')}"
+        until = fm.get("blocked_until")
+        if until is not None:
+            try:
+                passed = parse_time(until) <= now
+            except (ValueError, TypeError):
+                passed = False
+            shown = until.isoformat(timespec="minutes") if isinstance(until, dt.datetime) else until
+            detail += f" until {shown}" + (" (passed)" if passed else "")
     title = " ".join(str(fm.get("title") or "(no title)").split())
     return f"{'*' if triggered else '-'} {slug} [{detail}] {title}"
 
 
-def message(items, actionable, owner_info, unreadable=()):
-    """The whole open list: every item that is not blocked or done.
+# Triggering items first, then what moves, then the rest.
+ORDER = {"actionable": 0, "in_flight": 1, "standing": 2, "blocked": 3}
 
-    Items that triggered the nudge are marked *; blocked ones are only counted
-    (a blocked item whose blocked_until passed is open again and listed).
+
+def message(items, actionable, owner_info, now, unreadable=(), hourly=False, time_line=None):
+    """The entire list (everything but done), one line per item.
+
+    Items that triggered the nudge are marked *. Blocked items are listed too:
+    the agent re-checks whether each blocker has cleared.
     """
     trigger = set(actionable)
-    lines, blocked = [], 0
-    for slug, fm in items:
-        status = fm.get("status")
-        if status == "done":
-            continue
-        if status == "blocked" and slug not in trigger:
-            blocked += 1
-            continue
-        lines.append(item_line(slug, fm, slug in trigger, owner_info))
-    head = (
-        f"{PREFIX} To-do list: {len(lines)} open ({len(trigger)} need you now, marked *), "
-        f"{blocked} blocked (not listed)"
-    )
+    open_items = [(slug, fm) for slug, fm in items if fm.get("status") != "done"]
+    open_items.sort(key=lambda i: (i[0] not in trigger, ORDER.get(i[1].get("status"), 4)))
+    lines = [item_line(slug, fm, slug in trigger, owner_info, now) for slug, fm in open_items]
+    counts = {}
+    for _, fm in open_items:
+        counts[fm.get("status")] = counts.get(fm.get("status"), 0) + 1
+    summary = ", ".join(f"{n} {st}" for st, n in sorted(counts.items(), key=lambda c: str(c[0])))
+    kind = "hourly review" if hourly else f"{len(trigger)} can move now, marked *"
+    head = f"{PREFIX} To-do list ({kind}): {len(lines)} items ({summary})"
     if unreadable:
         head += f", {len(unreadable)} unreadable ({', '.join(unreadable)})"
-    return "\n".join(
-        [head + ":", *lines, ""]
-        + [
-            "Work the to-do list: do what can be done now (start or chase sessions), "
-            "mark everything that can't move as blocked with the reason, and move "
-            "finished items to done/ (see todo/README.md). Only stop when all items "
-            "are blocked, standing or in flight with a running owner."
-        ]
+    body = [head + ":", *lines, ""]
+    if time_line:
+        body += [f"Time, last hour: {time_line}", ""]
+    body.append(
+        "Review every item, blocked ones too: re-check whether each blocker has "
+        "cleared, do what can be done now (start or chase sessions), and move "
+        "finished items to done/ (see todo/README.md). End with every item done, "
+        "blocked with the reason, standing, or in flight with a running owner. "
+        "If all are still blocked, just finish."
     )
+    return "\n".join(body)
 
 
 # --- I/O -------------------------------------------------------------------
@@ -289,6 +314,29 @@ def t3_send(thread_id, text):
         capture_output=True, text=True, timeout=60, check=True,
     ).stdout
     return json.loads(out)
+
+
+def time_summary():
+    """One line on what Erik did in the last hour, from the Time server.
+
+    Hook for the hourly review: set TODO_NUDGE_TIME_URL to an HTTP endpoint
+    returning text or JSON {"summary": "..."}; unset or failing = no line.
+    """
+    url = os.environ.get("TODO_NUDGE_TIME_URL")
+    if not url:
+        return None
+    try:
+        with urllib.request.urlopen(url, timeout=5) as r:
+            raw = r.read(4096).decode("utf-8", "replace")
+    except (OSError, ValueError):
+        return None
+    try:
+        data = json.loads(raw)
+        raw = data.get("summary", "") if isinstance(data, dict) else str(data)
+    except ValueError:
+        pass
+    line = " ".join(str(raw).split())
+    return line[:300] or None
 
 
 def log(line, dry):
@@ -332,14 +380,19 @@ def main(argv=None):
             owners[tid] = t3_show(tid)
         return owners[tid]
 
+    state = load_state()
+    last = state.get("last_nudge_at")
+    review_due = last is None or (now - parse_time(last)).total_seconds() >= REVIEW_SECONDS
+    unreadable = [s for s, _ in errors]
+
     # Cheap pass first: skip every thread lookup when nothing could count.
-    if not any(fm.get("status") in ("actionable", "blocked", "in_flight") for _, fm in items):
+    could_trigger = any(fm.get("status") in ("actionable", "blocked", "in_flight") for _, fm in items)
+    if not items or not (could_trigger or review_due):
         for slug, err in errors:
             log(f"skip-file {slug}: {err}", dry)
         log(f"no-nudge: nothing actionable ({len(items)} items)", dry)
         return 0
 
-    state = load_state()
     agent = t3_show(AGENT_THREAD)
     idle_key = settled_key(agent)
     seen = state.get("idle_seen") or {}
@@ -355,24 +408,24 @@ def main(argv=None):
         log(f"skip-file {slug}: {err}", dry)
     if not idle:
         log(f"no-nudge: {why_idle}" + (f"; actionable={','.join(actionable)}" if dry else ""), dry)
-        if dry and actionable:
-            print(message(items, actionable, owner_info, [s for s, _ in errors]))
-        return 0
-    if not actionable:
-        log(f"no-nudge: nothing actionable ({len(items)} items, agent {why_idle})", dry)
+        if dry:
+            print(message(items, actionable, owner_info, now, unreadable))
         return 0
 
     fp = fingerprint(TODO_DIR)
-    go, why = decide(actionable, fp, state, now)
+    go, why, hourly = decide(actionable, fp, state, now)
     if not go:
         log(f"no-nudge: {why}; actionable={','.join(actionable)}", dry)
         return 0
+    text = message(
+        items, actionable, owner_info, now, unreadable,
+        hourly=hourly, time_line=time_summary() if hourly else None,
+    )
     if dry:
         log(f"would-nudge ({why}): {','.join(actionable)}", dry)
-        print(message(items, actionable, owner_info, [s for s, _ in errors]))
+        print(text)
         return 0
     try:
-        text = message(items, actionable, owner_info, [s for s, _ in errors])
         sent = t3_send(AGENT_THREAD, text)
     except (subprocess.SubprocessError, OSError, ValueError) as e:
         log(f"send-failed: {e}", dry)
@@ -385,7 +438,7 @@ def main(argv=None):
     save_state(state)
     log(
         f"NUDGE ({why}, agent {why_idle}) run={sent.get('runId')} "
-        f"delivery={sent.get('delivery')}: {','.join(actionable)}",
+        f"delivery={sent.get('delivery')} items={len(items)}: {','.join(actionable) or '-'}",
         dry,
     )
     return 0

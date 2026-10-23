@@ -2,7 +2,8 @@
 # blocked, standing or in flight (Erik, 2026-10-23). Every minute this reads
 # the front matter of ~/.t3/personal/todo/*.md (contract: todo/README.md) and,
 # when the personal-agent thread is idle while something is actionable, sends
-# it one automated "work the to-do list" message through `t3 thread send`.
+# it the entire list (blocked items too) through `t3 thread send`; with
+# nothing able to move it still sends a full review once an hour.
 # Decisions log to ~/.local/state/todo-nudge/decisions.log.
 { pkgs, lib, ... }:
 
@@ -35,6 +36,10 @@ in
     Service = {
       Type = "oneshot";
       ExecStart = lib.getExe todoNudge;
+      # Hook for the hourly review: a one-line summary of what Erik did in the
+      # last hour (text or JSON {"summary": ...}) from the Time server, once it
+      # has such an endpoint. Unset = no Time line.
+      # Environment = [ "TODO_NUDGE_TIME_URL=http://127.0.0.1:<port>/<summary>" ];
     };
   };
 

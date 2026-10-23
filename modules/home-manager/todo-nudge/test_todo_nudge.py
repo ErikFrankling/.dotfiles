@@ -162,6 +162,20 @@ class Decide(unittest.TestCase):
         s = self.state(nudges=[iso(-100), iso(-90), iso(-80), iso(5)])
         self.assertTrue(tn.decide(["a"], "fp2", s, NOW)[0])
 
+    def test_all_blocked_waits_for_hourly_review(self):
+        go, why, hourly = tn.decide([], "fp", self.state(last_nudge_at=iso(59)), NOW)
+        self.assertFalse(go)
+        go, why, hourly = tn.decide([], "fp", self.state(last_nudge_at=iso(60), nudges=[]), NOW)
+        self.assertEqual((go, why, hourly), (True, "hourly review", True))
+
+    def test_hourly_review_even_when_files_changed(self):
+        # Edits alone (agent marking things blocked) do not re-nudge when nothing can move.
+        self.assertFalse(tn.decide([], "fp2", self.state(), NOW)[0])
+
+    def test_first_with_nothing_to_move_is_a_review(self):
+        self.assertEqual(tn.decide([], "fp", {}, NOW), (True, "first nudge", True))
+        self.assertEqual(tn.decide(["a"], "fp", {}, NOW), (True, "first nudge", False))
+
 
 class Message(unittest.TestCase):
     def setUp(self):
@@ -172,7 +186,7 @@ class Message(unittest.TestCase):
         self.items, errors = tn.read_items(d)
         self.unreadable = [s for s, _ in errors]
         self.actionable, _ = tn.actionable_items(self.items, NOW, OWNERS.get)
-        self.text = tn.message(self.items, self.actionable, OWNERS.get, self.unreadable)
+        self.text = tn.message(self.items, self.actionable, OWNERS.get, NOW, self.unreadable)
         self.lines = self.text.splitlines()
 
     def tearDown(self):
@@ -186,31 +200,66 @@ class Message(unittest.TestCase):
     def test_marked_automated(self):
         self.assertTrue(self.text.startswith(tn.PREFIX))
 
-    def test_lists_every_open_item_not_just_triggers(self):
-        # Triggering items are marked *, the rest of the open list is there too.
+    def test_lists_the_entire_list(self):
+        # Every readable item except done, blocked ones included; triggers marked *.
+        listed = {l[2:].split(" ")[0] for l in self.lines if l[:2] in ("* ", "- ")}
+        expected = {s for s, fm in self.items if fm.get("status") != "done"}
+        self.assertEqual(listed, expected)
+        self.assertNotIn("j-done", listed)
+        for slug in self.actionable:
+            self.assertTrue(self.line(slug).startswith("* "), slug)
+
+    def test_line_details(self):
         self.assertEqual(self.line("a-actionable"), "* a-actionable [actionable] A")
-        self.assertTrue(self.line("e-flight-running").startswith(
-            "- e-flight-running [in_flight, owner mcp:run running]"))
+        self.assertEqual(self.line("b-blocked"), "- b-blocked [blocked on erik] B")
+        self.assertIn("[blocked on time until 2026-10-24T06:00+02:00]", self.line("d-blocked-future"))
+        self.assertTrue(self.line("c-blocked-past").startswith("* c-blocked-past [blocked on time until"))
+        self.assertIn("(passed)", self.line("c-blocked-past"))
+        self.assertIn("until soon]", self.line("n-bad-until"))
+        self.assertIn("[in_flight, owner mcp:run running]", self.line("e-flight-running"))
         self.assertIn("owner mcp:done stopped: completed", self.line("f-flight-done"))
         self.assertIn("owner mcp:ask stopped: asking", self.line("g-flight-asking"))
         self.assertIn("owner mcp:gone stopped: gone", self.line("h-flight-gone"))
         self.assertTrue(self.line("i-standing").startswith("- i-standing [standing]"))
-        self.assertTrue(self.line("c-blocked-past").startswith("* c-blocked-past [blocked until"))
         self.assertIn("Boxers: pick and buy", self.line("o-colon-title"))
-        self.assertTrue(self.line("m-unknown-status").startswith("- m-unknown-status [maybe]"))
 
-    def test_blocked_and_done_left_out_but_counted(self):
-        for slug in ("b-blocked", "d-blocked-future", "n-bad-until", "j-done"):
-            self.assertFalse(any(l[2:].startswith(slug + " ") for l in self.lines), slug)
-        # b, d and n (unparseable blocked_until) are blocked and not listed.
-        self.assertIn("3 blocked (not listed)", self.lines[0])
-        self.assertIn(f"{len(self.actionable)} need you now", self.lines[0])
-        self.assertIn("2 unreadable (k-no-front-matter, l-bad-yaml)", self.lines[0])
+    def test_triggers_first(self):
+        items = [l for l in self.lines if l[:2] in ("* ", "- ")]
+        marks = [l[0] for l in items]
+        self.assertEqual(marks, sorted(marks))  # all * before all -
+
+    def test_header(self):
+        head = self.lines[0]
+        self.assertIn(f"{len(self.actionable)} can move now, marked *", head)
+        self.assertIn("2 unreadable (k-no-front-matter, l-bad-yaml)", head)
+        self.assertIn("4 blocked", head)
+        self.assertIn("review every item, blocked ones too", self.text.lower())
+
+    def test_hourly_review_and_time_line(self):
+        text = tn.message(self.items, [], OWNERS.get, NOW, hourly=True, time_line="coding 40m, email 20m")
+        self.assertIn("(hourly review)", text.splitlines()[0])
+        self.assertIn("Time, last hour: coding 40m, email 20m", text)
+        self.assertNotIn("Time, last hour", self.text)
 
     def test_one_line_per_item(self):
         items = [("x", {"status": "actionable", "title": "multi\nline   title"})]
-        text = tn.message(items, ["x"], OWNERS.get)
+        text = tn.message(items, ["x"], OWNERS.get, NOW)
         self.assertIn("* x [actionable] multi line title", text.splitlines())
+
+
+class TimeSummary(unittest.TestCase):
+    def test_unset_means_no_line(self):
+        import os
+        os.environ.pop("TODO_NUDGE_TIME_URL", None)
+        self.assertIsNone(tn.time_summary())
+
+    def test_unreachable_means_no_line(self):
+        import os
+        os.environ["TODO_NUDGE_TIME_URL"] = "http://127.0.0.1:9/none"
+        try:
+            self.assertIsNone(tn.time_summary())
+        finally:
+            del os.environ["TODO_NUDGE_TIME_URL"]
 
 
 if __name__ == "__main__":
