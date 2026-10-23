@@ -14,6 +14,8 @@
 #                                      ~/.cache/t3-android-release/<run>/out
 #   t3-android-release --accept-dropped-commits
 #                                      see the guard in docs/erik-updates.md
+#   t3-android-release --local         a JS update on this PC (a couple of minutes);
+#                                      stops if the release needs an APK
 #   t3-android-release --commit SHA --prebuilt /work/<run>/out/<apk>
 #                                      publish an APK an earlier run built on the
 #                                      worker but could not publish (no rebuild)
@@ -32,6 +34,7 @@ let
       test_abi=""
       commit=""
       prebuilt=""
+      local_run=false
       while [ $# -gt 0 ]; do
         case "$1" in
           --apk) force_apk=true ;;
@@ -39,7 +42,8 @@ let
           --test-abi) test_abi="$2"; shift ;;
           --commit) commit="$2"; shift ;;
           --prebuilt) prebuilt="$2"; force_apk=true; shift ;;
-          -h | --help) echo "usage: t3-android-release [--apk] [--test-abi ABI] [--commit SHA] [--prebuilt WORKER-APK] [--accept-dropped-commits]"; exit 0 ;;
+          --local) local_run=true ;;
+          -h | --help) echo "usage: t3-android-release [--apk] [--test-abi ABI] [--commit SHA] [--prebuilt WORKER-APK] [--local] [--accept-dropped-commits]"; exit 0 ;;
           *) echo "unknown argument $1" >&2; exit 2 ;;
         esac
         shift
@@ -75,6 +79,7 @@ let
           printf 'ANDROID_KEY_ALIAS=%q\n' t3code-erik
           printf 'FORCE_APK=%q\nACCEPT_DROPPED_COMMITS=%q\nEXTRA_TEST_ABI=%q\n' "$force_apk" "$accept" "$test_abi"
           printf 'COMMIT=%q\nPREBUILT_APK=%q\n' "$commit" "$prebuilt"
+          printf 'JS_ONLY=%q\n' "$local_run"
           # No Actions run will publish a newer commit, so this one may go out
           # while erik/main moves on (scripts/erik-updates-guard.sh).
           printf 'ALLOW_BEHIND_TIP=true\n'
@@ -117,6 +122,13 @@ let
       # A background job keeps running on the worker if this PC-side command
       # dies (an agent session restart); `heavy logs -f <name>` reattaches.
       name="t3-android-release-$(date +%H%M%S)"
+      if [ "$local_run" = true ]; then
+        # A JS update takes a couple of minutes: fine on this PC. The script
+        # stops instead of building when the release needs an APK (JS_ONLY).
+        started=1
+        bash run.sh
+        exit
+      fi
       # Publishing a prebuilt APK builds nothing: the small slot is enough.
       class=--big
       if [ -n "$prebuilt" ]; then class=--small; fi
