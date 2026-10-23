@@ -156,7 +156,7 @@ check_pressure() {
   for pid in $(agent_pids); do
     [[ $(cat "/proc/$pid/comm" 2>/dev/null) =~ $providers ]] && continue
     # MCP servers are the agents' tools; killing one breaks a session.
-    tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -Eq 'mcp|channel' && continue
+    { tr '\0' ' ' <"/proc/$pid/cmdline"; } 2>/dev/null | grep -Eq 'mcp|channel' && continue
     rss=$(rss_of "$pid")
     if [ "${rss:-0}" -gt "$best" ]; then
       best=$rss

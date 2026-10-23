@@ -229,16 +229,22 @@ in
           '')
         ];
 
-        # zram only (zramSwap in ../default.nix, half the RAM). The 64 GB disk
-        # partition let runaways thrash for minutes instead of being killed.
-        swapDevices = lib.mkForce [ ];
-        # The partition has the Linux-swap GPT type, so systemd-gpt-auto-generator
-        # swaps on it by itself, whatever swapDevices says (it did right after
-        # the first swapoff). NixOS mounts everything from fstab.
+        # Swap tiers: zram first (priority 5, ../default.nix), then the 64 GB disk
+        # partition as overflow (priority 1). Zram alone (2026-10-21 to 10-23)
+        # froze the desktop when it filled: no OOM kill, just thrashing
+        # (2026-10-23 01:35). Slow disk swap beats a frozen desktop; earlyoom
+        # (../default.nix) and the agent caps keep it from getting that far.
+        # Agents cannot use it: their slice allows 2 GB of swap.
+        swapDevices = lib.mkForce [
+          {
+            device = "/dev/disk/by-uuid/ee5834a1-13be-4ef6-997d-9fb38216e4c9";
+            priority = 1;
+          }
+        ];
+        # The partition has the Linux-swap GPT type; with systemd-gpt-auto-
+        # generator it was also activated a second time under another name.
+        # NixOS mounts everything from fstab, so the generator stays off.
         boot.kernelParams = [ "systemd.gpt_auto=0" ];
-        # And masked for the running boot, where the generator already ran (a
-        # switch would start it again).
-        systemd.units."dev-disk-by\\x2ddiskseq-1\\x2dpart3.swap".enable = false;
 
         systemd.oomd.enable = true;
 

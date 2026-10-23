@@ -30,17 +30,44 @@
   boot.kernel.sysctl = {
     "fs.inotify.max_user_watches" = 524288;
     "fs.inotify.max_user_instances" = 1024;
-    # Avoid swapping to the (slow) disk swap until RAM is genuinely tight.
-    # With zram below, the kernel prefers fast compressed-RAM swap first.
-    "vm.swappiness" = 10;
+    # zram-first tuning (ArchWiki "zram", Pop!_OS defaults). A high swappiness
+    # makes the kernel compress idle anonymous memory into zram instead of
+    # evicting file pages; with swappiness 10 it evicted program code and
+    # re-read it from disk until the desktop froze with RAM and zram full and
+    # no OOM kill (pc, 2026-10-23 01:35). page-cluster 0: zram has no seek
+    # cost, so no readahead. A larger watermark gap wakes kswapd earlier.
+    "vm.swappiness" = 150;
+    "vm.page-cluster" = 0;
+    "vm.watermark_boost_factor" = 0;
+    "vm.watermark_scale_factor" = 125;
   };
 
-  # Compressed swap in RAM. Much faster than the disk swap partition, so heavy
-  # memory pressure (big builds, local LLMs) degrades gracefully instead of
-  # thrashing /dev/sdb3. Sits at higher priority than disk swap automatically.
+  # Compressed swap in RAM, used first: much faster than disk swap.
   zramSwap = {
     enable = true;
-    memoryPercent = 50;
+    # zstd compresses this machine's memory about 2.7x, so a full 75 % device
+    # costs about 28 % of RAM. Disk swap (priority below 5) only takes over
+    # when it is full.
+    memoryPercent = 75;
+    priority = 5;
+  };
+
+  # When memory really runs out, kill the right process instead of letting the
+  # desktop thrash: below 5 % available RAM with under 60 % of swap free. The
+  # victim is the highest oom_score, which already favours agents (adj 800)
+  # and browser content processes (133-300) over the desktop (0); --prefer
+  # and --avoid sharpen that. Notifications go to the desktop.
+  services.earlyoom = {
+    enable = true;
+    freeMemThreshold = 5;
+    freeSwapThreshold = 60;
+    enableNotifications = true;
+    extraArgs = [
+      "--prefer"
+      "^(Isolated Web Co|Web Content|WebExtensions|\\.?claude.*|\\.?codex.*|\\.?opencode.*|node-MainThread|MainThread|tsc|tsgo|java|nix|qemu-system.*|bun|cc1plus|rustc|ffmpeg|stress-ng.*)$"
+      "--avoid"
+      "^(\\.?Hyprland.*|Xwayland|\\.?kitty.*|pipewire.*|wireplumber|systemd.*|dbus-.*|sshd|greetd|login|swayidle|hypridle|\\.?firefox-wrapp.*|t3code.*|\\.?t3-.*|nix-daemon|determinate-nix.*|lag-guard|warp-svc)$"
+    ];
   };
 
   programs.nix-ld.enable = true;
