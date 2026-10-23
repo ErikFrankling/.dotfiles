@@ -30,6 +30,7 @@ from pathlib import Path
 
 EXECUTOR_URL = os.environ.get("CALENDAR_EXECUTOR_URL", "https://executor.erikfrankling.duckdns.org/mcp")
 EXECUTOR_KEY_FILE = os.environ.get("CALENDAR_EXECUTOR_KEY_FILE", "/run/secrets/executor-api-key")
+CALENDAR_APP = "app_5f3b9389-6c1b-4aab-867f-9c06fc59eb8a"  # Executor app "Calendar"
 CANVAS_API = "https://canvas.kth.se/api/v1/users/self/profile"
 STATE_DIR = Path(os.environ.get("CALENDAR_STATE_DIR", Path.home() / ".local/state/calendar"))
 CACHE_FRESH_SECONDS = 4 * 60
@@ -173,8 +174,8 @@ def fetch_google(hours):
     result = mcp_execute(f"return await tools.calendar.upcoming({{ days: {days:.3f} }});")
     execution = result.get("execution", {})
     if not execution.get("ok"):
-        err = str(execution.get("error") or result.get("error") or result)[:200]
-        raise RuntimeError(err)
+        err = execution.get("error") or result.get("error") or result
+        raise RuntimeError(str(err.get("message") if isinstance(err, dict) else err)[:200])
     return google_events(execution["value"])
 
 
@@ -245,7 +246,8 @@ def gather(now, hours, max_cache_age=0, use=("google", "canvas")):
         keep = [e for e in cache["timed"] if e["source"] not in ok]
         timed += keep
         due += [e for e in cache["due"] if e["source"] not in ok]
-        notes.append(f"showing cached data from {age} min ago for the failed source")
+        if keep:
+            notes.append(f"{keep[0]['source']}: showing cached data from {age} min ago")
     if ok:
         save_cache(now, timed, due, notes)
     return timed, due, notes
@@ -347,7 +349,7 @@ def run_remind(args, now):
         last_note = note_path.read_text()
     except OSError:
         last_note = ""
-    if note != last_note:  # log a source problem once, not every minute
+    if re.sub(r"\d+ min", "N min", note) != re.sub(r"\d+ min", "N min", last_note):  # log a source problem once, not every minute
         log_line(f"source-note: {note or 'all sources ok'}")
         if not args.dry_run:
             note_path.write_text(note)
@@ -370,6 +372,19 @@ def run_remind(args, now):
     return 0
 
 
+def run_connect():
+    """A fresh (30 min) Executor link: Erik signs in to Google and allows read-only calendar access."""
+    result = mcp_execute(
+        "return await tools.executor.appAccounts.userConnect({ path: { app: '" + CALENDAR_APP + "', "
+        "requirement: 'calendar' }, body: {} });")
+    execution = result.get("execution", {})
+    if not execution.get("ok"):
+        print(f"connect failed: {execution.get('error') or result}", file=sys.stderr)
+        return 1
+    print(execution["value"]["url"])
+    return 0
+
+
 def fixture_events(path):
     out = []
     for e in json.loads(Path(path).read_text()):
@@ -385,7 +400,8 @@ def fixture_events(path):
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog="calendar-next")
-    p.add_argument("command", nargs="?", choices=["remind"], help="remind: speak upcoming meetings")
+    p.add_argument("command", nargs="?", choices=["remind", "connect"],
+               help="remind: speak upcoming meetings; connect: print a fresh link to (re)connect Google Calendar")
     p.add_argument("--hours", type=float, default=24)
     p.add_argument("--json", action="store_true")
     p.add_argument("--now", help="pretend it is this ISO time (tests)")
@@ -396,6 +412,8 @@ def main(argv=None):
     now = parse_when(args.now)[0] if args.now else now_utc()
     if args.command == "remind":
         return run_remind(args, now)
+    if args.command == "connect":
+        return run_connect()
     if args.fixture:
         timed, due, notes = fixture_events(args.fixture), [], []
     else:
