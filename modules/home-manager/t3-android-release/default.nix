@@ -57,6 +57,9 @@ let
           printf 'ANDROID_KEYSTORE_PASSWORD=%q\n' "$(secret hosts/pc/secrets/secrets.yaml t3code-android-keystore-password)"
           printf 'ANDROID_KEY_ALIAS=%q\n' t3code-erik
           printf 'FORCE_APK=%q\nACCEPT_DROPPED_COMMITS=%q\nEXTRA_TEST_ABI=%q\n' "$force_apk" "$accept" "$test_abi"
+          # No Actions run will publish a newer commit, so this one may go out
+          # while erik/main moves on (scripts/erik-updates-guard.sh).
+          printf 'ALLOW_BEHIND_TIP=true\n'
         } > "$stage/secrets.env"
       )
       cat > "$stage/run.sh" <<'EOF'
