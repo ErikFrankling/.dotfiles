@@ -1,10 +1,16 @@
 import datetime as dt
 import json
+import os
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
-import calendar_next as cn
+# Local time = Stockholm, as on Erik's machines (the build sandbox has no tzdata).
+os.environ["TZ"] = "CET-1CEST,M3.5.0,M10.5.0/3"
+time.tzset()
+
+import calendar_next as cn  # noqa: E402
 
 CEST = dt.timezone(dt.timedelta(hours=2))
 NOW = dt.datetime(2026, 10, 23, 12, 52, tzinfo=CEST)
