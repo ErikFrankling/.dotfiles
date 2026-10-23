@@ -59,6 +59,11 @@ let
     name = "t3-dictation-hook";
     text = ''
       hyprctl=/run/current-system/sw/bin/hyprctl
+      # Proof without watchers: when it fired and whether T3 had focus
+      # (window class only; never titles).
+      class=$("$hyprctl" activewindow -j 2>/dev/null | ${pkgs.jq}/bin/jq -r '.class // "none"' || echo unknown)
+      mkdir -p "$HOME/.local/state/speak"
+      echo "$(date +%FT%T) ''${1-} focus=$class" >> "$HOME/.local/state/speak/dictation-hook.log"
       case "''${1-}" in
         recording) "$hyprctl" keyword bind ", Return, exec, ${pkgs.t3code}/bin/t3 app dictation --send" >/dev/null ;;
         *) "$hyprctl" keyword unbind ", Return" >/dev/null ;;
