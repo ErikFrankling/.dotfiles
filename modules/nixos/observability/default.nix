@@ -102,6 +102,9 @@ in
       restartTriggers = [ config.sops.templates."alloy.env".path ];
       # Logs go to the same journal it reads; keep it from echoing itself.
       serviceConfig.LogLevelMax = "notice";
+      # The process exporter reads every process' smaps_rollup (PSS, the fair
+      # share of browser memory) and io counters; both need ptrace-read.
+      serviceConfig.AmbientCapabilities = [ "CAP_SYS_PTRACE" ];
     };
 
     environment.etc."alloy/config.alloy".text = ''
