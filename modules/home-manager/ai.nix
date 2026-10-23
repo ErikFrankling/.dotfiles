@@ -12,6 +12,57 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   agentDesktopEnabled = config.programs.agent-desktop.enable or false;
+
+  # Relaunches the T3 desktop window on the package given as $1, at a calm
+  # moment (see relaunchT3Desktop below). Gives up after 3 hours; the next
+  # rebuild or Erik's own restart picks the new package up anyway.
+  t3codeDesktopRelaunch = pkgs.writeShellApplication {
+    name = "t3code-desktop-relaunch";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gnugrep
+      pkgs.jq
+      pkgs.procps
+      pkgs.systemd
+      pkgs.dconf
+    ];
+    text = ''
+      new=$1
+      hyprctl=/run/current-system/sw/bin/hyprctl
+      t3=${pkgs.t3code}/bin/t3
+      for _ in $(seq 1 360); do
+        pid=$(pgrep -u "$USER" -f -- "electron --password-store=basic /nix/store/.*-t3code-unwrapped-" | head -1 || true)
+        # Closed, or already on the new package: nothing to do.
+        if [ -z "$pid" ] || grep -qa -- "$new" "/proc/$pid/cmdline"; then exit 0; fi
+        signature=""
+        for socket in "/run/user/$(id -u)"/hypr/*; do
+          [ -e "$socket" ] && signature=$(basename "$socket") && break
+        done
+        [ -n "$signature" ] || exit 0
+        export HYPRLAND_INSTANCE_SIGNATURE=$signature
+        focused=$("$hyprctl" activewindow -j 2>/dev/null | jq -r '.class // ""' || true)
+        recording=$("$t3" app dictation --status 2>/dev/null | jq -r '.recording // false' || echo false)
+        if [ "$focused" != com.t3tools.T3Code ] && [ "$recording" != true ]; then
+          # Electron takes light or dark from the portal once, at start.
+          if [ "$(dconf read /org/gnome/desktop/interface/color-scheme)" = "'prefer-dark'" ] \
+            && ! busctl --user call org.freedesktop.portal.Desktop /org/freedesktop/portal/desktop \
+              org.freedesktop.portal.Settings ReadOne ss org.freedesktop.appearance color-scheme \
+              | grep -q 'v u 1'; then
+            echo "The portal does not report dark; restarting it"
+            systemctl --user restart xdg-desktop-portal-gtk.service xdg-desktop-portal.service || true
+            sleep 3
+          fi
+          echo "Relaunching the T3 Code desktop app (pid $pid) on $new"
+          kill -TERM "$pid" || true
+          for _ in $(seq 1 30); do kill -0 "$pid" 2>/dev/null || break; sleep 0.5; done
+          "$hyprctl" dispatch exec t3code-desktop >/dev/null
+          exit 0
+        fi
+        sleep 30
+      done
+      echo "No calm moment in 3 hours; leaving the window as it is"
+    '';
+  };
   codexCliUpstream = inputs.llm-agents.packages.${system}.codex;
   claudeCliUpstream = inputs.llm-agents.packages.${system}.claude-code;
   # Before Executor: each harness launched the computer-use MCP over stdio
@@ -210,21 +261,22 @@ in
 
   # The desktop app serves its UI from its own package, so a deploy only reaches
   # an open window once it starts again (Erik kept getting the old full-screen
-  # dictation after the 2026-10-23 deploy). Relaunch a running window that is on
-  # an older package; drafts and paused dictations are stored and survive it.
+  # dictation after the 2026-10-23 deploy). After a rebuild that changed the
+  # package, a deferred job relaunches the window, but only at a calm moment:
+  # T3 not focused (he is not typing in it) and nothing dictating. It launches
+  # through Hyprland and first makes sure the desktop portal reports the dark
+  # scheme dconf asks for: on 2026-10-23 the portal was stuck on "no preference"
+  # and a relaunch came up light. Drafts and paused dictations survive it.
   home.activation.relaunchT3Desktop = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     new=$(${pkgs.nix}/bin/nix-store -qR ${pkgs.t3code} | ${pkgs.gnugrep}/bin/grep -m1 -- -t3code-unwrapped- || true)
-    for pid in $(${pkgs.procps}/bin/pgrep -u "$USER" -f -- "electron --password-store=basic /nix/store/.*-t3code-unwrapped-" || true); do
-      if [ -n "$new" ] && ! ${pkgs.gnugrep}/bin/grep -qa -- "$new" "/proc/$pid/cmdline"; then
-        signature=$(ls /run/user/$(id -u)/hypr/ 2>/dev/null | head -1)
-        if [ -n "$signature" ]; then
-          echo "Relaunching the T3 Code desktop app (pid $pid) on the new package"
-          run kill -TERM "$pid"
-          for _ in $(seq 1 20); do kill -0 "$pid" 2>/dev/null || break; sleep 0.5; done
-          run env HYPRLAND_INSTANCE_SIGNATURE="$signature" /run/current-system/sw/bin/hyprctl dispatch exec t3code-desktop >/dev/null || true
-        fi
-      fi
-    done
+    pid=$(${pkgs.procps}/bin/pgrep -u "$USER" -f -- "electron --password-store=basic /nix/store/.*-t3code-unwrapped-" | head -1 || true)
+    if [ -n "$new" ] && [ -n "$pid" ] && ! ${pkgs.gnugrep}/bin/grep -qa -- "$new" "/proc/$pid/cmdline"; then
+      echo "T3 Code desktop (pid $pid) runs an older package; relaunching it at the next calm moment"
+      export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+      run ${pkgs.systemd}/bin/systemctl --user stop t3code-desktop-relaunch.service 2>/dev/null || true
+      run ${pkgs.systemd}/bin/systemd-run --user --collect --quiet --unit=t3code-desktop-relaunch \
+        ${t3codeDesktopRelaunch}/bin/t3code-desktop-relaunch "$new" || true
+    fi
   '';
 
   home.packages = with pkgs; [
