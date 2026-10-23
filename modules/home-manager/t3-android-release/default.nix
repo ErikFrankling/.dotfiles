@@ -84,7 +84,11 @@ let
       EOF
       cd "$stage"
       echo "staging in $stage"
-      heavy --big --no-develop -- bash run.sh
+      # A background job keeps running on the worker if this PC-side command
+      # dies (an agent session restart); `heavy logs -f <name>` reattaches.
+      name="t3-android-release-$(date +%H%M%S)"
+      heavy bg --big "$name" --no-develop -- bash run.sh
+      heavy logs -f "$name"
       if [ -n "$test_abi" ]; then heavy pull out; fi
     '';
   };
