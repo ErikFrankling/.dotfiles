@@ -97,7 +97,8 @@ in
             "SPEAK_NOTIFY_SEND=${pkgs.libnotify}/bin/notify-send"
             "SPEAK_VOXTYPE=${config.home.profileDirectory}/bin/voxtype"
             "SPEAK_REPLY_COMMAND=${replyWindow}"
-            "SPEAK_AWAY_NOTIFY=${config.home.profileDirectory}/bin/notify-erik"
+            # notify-erik is a system package (modules/nixos/notify).
+            "SPEAK_AWAY_NOTIFY=/run/current-system/sw/bin/notify-erik"
             # Same small voice as T3's read-aloud (hosts/pc/home.nix).
             "SPEAK_SMALL_TTS_URL=http://192.168.50.100:8880/v1/audio/speech"
             "SPEAK_SMALL_VOICE=af_heart"
