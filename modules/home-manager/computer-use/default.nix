@@ -196,17 +196,15 @@ in
         "focus_on_activate off, match:class ^(agent-firefox)$"
 
         # A dev build of T3 Code (what agents launch to test T3 changes; Erik's
-        # own T3 is class com.t3tools.T3Code) and its DevTools windows. The
-        # watcher below moves them to AGENT-1 only after they have mapped, so
-        # on Erik's workspace each one tiled his T3 to half for a frame (the
-        # 03:40-03:49 flicker on 2026-10-23: 12 such windows in 9 minutes).
-        # A launch rule maps them on AGENT-1 from the start.
+        # own T3 is class com.t3tools.T3Code). The watcher below moves agent
+        # windows to AGENT-1 only after they have mapped, so on Erik's workspace
+        # each one tiled his T3 to half for a frame (the 03:40-03:49 flicker on
+        # 2026-10-23: a dev T3 and its DevTools, 12 windows in 9 minutes). This
+        # launch rule maps the dev T3 on AGENT-1 from the start. DevTools windows
+        # get their title after mapping, so no rule can catch them.
         "workspace name:agent silent, match:class ^(com\\.t3tools\\.T3Code\\.Development)$"
         "no_initial_focus on, match:class ^(com\\.t3tools\\.T3Code\\.Development)$"
         "focus_on_activate off, match:class ^(com\\.t3tools\\.T3Code\\.Development)$"
-        "workspace name:agent silent, match:title ^(Developer Tools - (t3code-dev://|chrome-error://))"
-        "no_initial_focus on, match:title ^(Developer Tools - (t3code-dev://|chrome-error://))"
-        "focus_on_activate off, match:title ^(Developer Tools - (t3code-dev://|chrome-error://))"
       ];
     };
 
