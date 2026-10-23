@@ -358,10 +358,10 @@ def play(item):
 
 def open_reply_window(item):
     if not REPLY_COMMAND:
-        return "not configured"
+        return "off"
     try:
         done = subprocess.run([REPLY_COMMAND, "--thread", item.get("thread") or REPLY_THREAD,
-                               "--text", item["text"], "--queued-at", str(int(item["created"] * 1000))], capture_output=True, text=True, timeout=20)
+                               "--text", item.get("spoken_text") or item["text"], "--queued-at", str(int(item["created"] * 1000))], capture_output=True, text=True, timeout=20)
         return "opened" if done.returncode == 0 else f"failed: {(done.stderr or done.stdout).strip()[:200]}"
     except (OSError, subprocess.TimeoutExpired) as error:
         return f"failed: {error}"
@@ -433,7 +433,7 @@ def notify_away(item):
     item["notified"] = True
     try:
         subprocess.run([AWAY_NOTIFY, "-p", "low", "-t", "Your agent wants to talk",
-                        "--thread", item.get("thread") or REPLY_THREAD, item["spoken_text"][:300]],
+                        "--thread", item.get("thread") or REPLY_THREAD, "--dictate", item["spoken_text"][:300]],
                        capture_output=True, timeout=30)
         log("phone.notified", item)
     except (OSError, subprocess.TimeoutExpired) as error:

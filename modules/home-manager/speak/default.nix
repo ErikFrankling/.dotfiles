@@ -92,8 +92,7 @@ in
             "SPEAK_CHIME=${chime}"
             "SPEAK_NOTIFY_SEND=${pkgs.libnotify}/bin/notify-send"
             "SPEAK_VOXTYPE=${config.home.profileDirectory}/bin/voxtype"
-            # Turned on once the fork ships `t3 app speak-reply` (the "Recording now" window).
-            # "SPEAK_REPLY_COMMAND=${replyWindow}"
+            "SPEAK_REPLY_COMMAND=${replyWindow}"
             "SPEAK_AWAY_NOTIFY=${config.home.profileDirectory}/bin/notify-erik"
             # Same small voice as T3's read-aloud (hosts/pc/home.nix).
             "SPEAK_SMALL_TTS_URL=http://192.168.50.100:8880/v1/audio/speech"
@@ -103,6 +102,27 @@ in
         };
         Install.WantedBy = [ "default.target" ];
       };
+
+      # The "Recording now" reply window (`t3 app speak-reply`, T3 fork): a
+      # small card in the top-right corner of the monitor it opens on, above
+      # everything, never taking focus. Its app-id is the main window's, so
+      # it is matched by title. Send/cancel without clicking into it.
+      wayland.windowManager.hyprland.extraConfig =
+        lib.concatMapStrings
+          (rule: ''
+            windowrule = ${rule}, match:title ^(T3 Code — Speak reply)$
+          '')
+          [
+            "float 1"
+            "pin 1"
+            "no_initial_focus 1"
+            "size 420 240"
+            "move (monitor_w-window_w-16) 16"
+          ];
+      wayland.windowManager.hyprland.settings.bindd = [
+        "$mod ALT, Return, Send the spoken reply, exec, ${replyWindow} --send"
+        "$mod ALT, Escape, Close the spoken-reply window, exec, ${replyWindow} --cancel"
+      ];
 
       # ext-idle-notify: no input for 5 minutes = Erik is away from the PC.
       systemd.user.services.speak-presence = {

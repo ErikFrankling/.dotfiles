@@ -28,6 +28,7 @@ usage: notify-erik [options] MESSAGE
       --code CODE       one-time code: pops up, "Copy" button, own budget
       --thread ID       tap opens this T3 thread (from t3_thread_list currentThreadId)
       --env ID          T3 environment of --thread (default: this machine's)
+      --dictate         with --thread: the tap opens it already dictating (an answer)
       --link URL        tap opens URL instead
       --tags a,b        ntfy tags/emoji shortcodes (e.g. warning,robot)
       --markdown        render MESSAGE as Markdown
@@ -40,7 +41,7 @@ an identical notification within 15 min is dropped. Exit 3 = not sent because of
 EOF
 }
 
-title="" priority="normal" code="" thread="" env="" link="" tags="" markdown=false test=false dry=false
+title="" priority="normal" code="" thread="" dictate=false env="" link="" tags="" markdown=false test=false dry=false
 if [ "${1:-}" = status ]; then
   mkdir -p "$state"; touch "$state/sent"
   now=$(date +%s)
@@ -55,6 +56,7 @@ while [ $# -gt 0 ]; do
     --code) code="$2"; shift 2 ;;
     --thread) thread="$2"; shift 2 ;;
     --env) env="$2"; shift 2 ;;
+    --dictate) dictate=true; shift ;;
     --link) link="$2"; shift 2 ;;
     --tags) tags="$2"; shift 2 ;;
     --markdown) markdown=true; shift ;;
@@ -93,6 +95,8 @@ if [ -n "$thread" ]; then
   web_link="https://t3code.erikfrankling.duckdns.org/$env_uri/$thread_uri"
   app_link="t3code-preview://threads/$env_uri/$thread_uri"
   app_path="/threads/$env_uri/$thread_uri"
+  # The fork's app starts dictation in the thread's composer on a /dictate path.
+  if $dictate; then app_path="$app_path/dictate"; fi
 elif [ -n "$link" ]; then
   web_link="$link" app_link="$link"
 fi
