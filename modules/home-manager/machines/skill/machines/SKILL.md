@@ -53,7 +53,7 @@ A foreground `heavy` job dies with its client: for unattended chains use
 ### The safety net on the pc (`modules/nixos/agent-priority`)
 
 - Agent sessions run in `app-t3code.slice`: idle CPU priority, at most 4 of
-  the 16 threads, 9/11 GB RAM, 2 GB swap, 150/60 MB/s disk. Short builds fit
+  the 16 threads, 9/11 GB RAM, 8 GB swap (zram first), 150/60 MB/s disk. Short builds fit
   fine; never escape the slice with `--slice=`, Docker, sudo or system units.
 - `nix` and `rebuild` evaluate here. Whole-system evaluations (3-4 GB, ~2
   minutes) wait for each other under one lock; uncached builds go to the

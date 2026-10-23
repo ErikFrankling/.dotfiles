@@ -181,9 +181,13 @@ in
             CPUQuota = "400%";
             MemoryHigh = cfg.memoryHigh;
             MemoryMax = cfg.memoryMax;
-            # Hardly any swap: past their RAM, agents get killed instead of
-            # thrashing the disk the desktop needs.
-            MemorySwapMax = "2G";
+            # Room to swap idle memory into zram (the first swap tier, in RAM).
+            # With 2 GB the slice sat at MemoryHigh with its swap full and the
+            # kernel evicted the agents' program code instead, which they
+            # re-read from disk (2026-10-23: tsc, rustc, nix major-faulting,
+            # system IO 35-75 % for 20 minutes). lag-guard kills the biggest job
+            # when the slice still stalls on memory.
+            MemorySwapMax = "8G";
             # Sustained thrashing inside the agents (30 s above the limit)
             # kills the agent scope that reclaims the most.
             ManagedOOMMemoryPressure = "kill";
@@ -234,7 +238,7 @@ in
         # froze the desktop when it filled: no OOM kill, just thrashing
         # (2026-10-23 01:35). Slow disk swap beats a frozen desktop; earlyoom
         # (../default.nix) and the agent caps keep it from getting that far.
-        # Agents cannot use it: their slice allows 2 GB of swap.
+        # Agents can use at most 8 GB of swap, which zram takes first.
         swapDevices = lib.mkForce [
           {
             device = "/dev/disk/by-uuid/ee5834a1-13be-4ef6-997d-9fb38216e4c9";

@@ -11,6 +11,8 @@
 #   - Pressure: when Erik's own cgroups stall on disk IO or memory (avg10 over
 #     IO_FULL / MEM_FULL for SUSTAIN samples), local Nix builds and the
 #     biggest agent job are stopped.
+#   - Agent thrash: when the agent slice itself stalls on memory (full avg10
+#     over AGENT_MEM_FULL for AGENT_SUSTAIN samples), its biggest job.
 #
 # A killed process gets the reason on its stderr (the agent's tool output),
 # telling the agent to re-run it on the homelab with `heavy`. Erik gets one
@@ -28,6 +30,8 @@ CPU_WINDOW=${CPU_WINDOW:-300}
 EMU_MAX=${EMU_MAX:-900}
 IO_FULL=${IO_FULL:-20}
 MEM_FULL=${MEM_FULL:-10}
+AGENT_MEM_FULL=${AGENT_MEM_FULL:-20}
+AGENT_SUSTAIN=${AGENT_SUSTAIN:-15}
 SUSTAIN=${SUSTAIN:-5}
 NOTIFY_EVERY=${NOTIFY_EVERY:-900}
 ERIK_UID=${ERIK_UID:-1000}
@@ -167,6 +171,33 @@ check_pressure() {
   return 0
 }
 
+# The agents themselves thrashing: their slice stalls on memory (it pages
+# program code and file cache in and out of the disk Erik shares). Kill the
+# biggest job in it.
+agent_streak=0
+check_agent_thrash() {
+  local mem pid rss best=0 best_pid=""
+  mem=$(awk '/^full/ { for (i = 1; i <= NF; i++) if ($i ~ /^avg10=/) { sub("avg10=", "", $i); printf "%d", $i } }' "$agents/memory.pressure" 2>/dev/null)
+  if [ "${mem:-0}" -gt "$AGENT_MEM_FULL" ]; then
+    agent_streak=$((agent_streak + 1))
+  else
+    agent_streak=0
+  fi
+  [ "$agent_streak" -ge "$AGENT_SUSTAIN" ] || return 0
+  agent_streak=0
+  for pid in $(agent_pids); do
+    [[ $(cat "/proc/$pid/comm" 2>/dev/null) =~ $providers ]] && continue
+    { tr '\0' ' ' <"/proc/$pid/cmdline"; } 2>/dev/null | grep -Eq 'mcp|channel' && continue
+    rss=$(rss_of "$pid")
+    if [ "${rss:-0}" -gt "$best" ]; then
+      best=$rss
+      best_pid=$pid
+    fi
+  done
+  [ -n "$best_pid" ] && [ "$best" -gt 500000 ] && stop "$best_pid" "the agents were thrashing (their memory ${mem}% full-stalled); too big for the agent memory budget"
+  return 0
+}
+
 last_notify=-100000
 flush_notify() {
   [ ${#pending[@]} -gt 0 ] || return 0
@@ -188,6 +219,7 @@ while true; do
   check_emulators
   check_cpu
   check_pressure
+  check_agent_thrash
   flush_notify
   sleep "$INTERVAL"
 done
