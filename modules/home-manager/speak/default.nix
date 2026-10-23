@@ -57,6 +57,8 @@ let
   '';
 in
 {
+  imports = [ ../personal-agent-mcp.nix ];
+
   options.speak.speakers = lib.mkOption {
     type = lib.types.bool;
     default = false;
@@ -67,17 +69,11 @@ in
     {
       home.packages = [ speak ];
 
-      # Only the personal agent gets the tool. Project MCP servers need
-      # approval; the project's settings.json gives it for this one server.
-      home.file.".t3/personal/.mcp.json".text = builtins.toJSON {
-        mcpServers.speak = {
-          type = "stdio";
-          command = lib.getExe speak;
-          args = [ "mcp" ];
-        };
-      };
-      home.file.".t3/personal/.claude/settings.json".text = builtins.toJSON {
-        enabledMcpjsonServers = [ "speak" ];
+      # Only the personal agent gets the tool.
+      personalAgent.mcpServers.speak = {
+        type = "stdio";
+        command = lib.getExe speak;
+        args = [ "mcp" ];
       };
     }
 
