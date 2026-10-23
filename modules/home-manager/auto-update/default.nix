@@ -281,7 +281,14 @@ let
     preflight = ''
       mkdir -p ${stateDir}
       if ! flock -n ${buildLock} true 2> /dev/null; then
-        fail "Last night's update is still building on the homelab, so tonight's was not started."
+        # A skip, not a failure: exiting 1 here made nix-nightly.service
+        # "failed" and fired SystemdUnitFailed, which started a repair session
+        # for a harmless skip (2026-10-22 03:16). Erik is still told.
+        echo "Last night's update is still building on the homelab, so tonight's was not started."
+        notify-send --app-name "Nightly update" --urgency critical \
+          "Nightly update did not start" \
+          "Last night's update is still building on the homelab, so tonight's was not started." || true
+        exit 0
       fi
     '';
   };
@@ -504,6 +511,7 @@ let
       pkgs.coreutils
       pkgs.gnugrep
       pkgs.gawk
+      pkgs.systemd
     ];
     text = ''
       dir=${incidentDir}
@@ -528,7 +536,12 @@ let
       # someone did on purpose never starts a repair session. Keys are
       # `group/name` for Gatus checks, `alert/<alertname>/<label values>` for
       # alerts and `monitor/gatus`, `monitor/alertmanager` for the monitors
-      # themselves. One line per window: end-epoch, regex, reason (tabs).
+      # themselves. One line per window: end-epoch, regex, reason, start-epoch
+      # (tabs). An alert belongs to a window when it STARTED between the
+      # window's start and 10 minutes after its end; log-based alerts stay
+      # active for 30 minutes after the event, so judging them by "is a window
+      # open now" let a session start for a restart that was long over
+      # (2026-10-23 01:32). Alerts that began before the window are real.
       windows="$dir/maintenance"
       case "''${1:-}" in
         maintenance)
@@ -544,7 +557,7 @@ let
             exit 2
           fi
           end=$(($(date +%s) + $2 * 60))
-          printf '%s\t%s\t%s\n' "$end" "''${4:-.}" "$3" >> "$windows"
+          printf '%s\t%s\t%s\t%s\n' "$end" "''${4:-.}" "$3" "$(date +%s)" >> "$windows"
           log "maintenance until $(date -d "@$end" +%H:%M) for checks matching ''${4:-.}: $3"
           exit 0
           ;;
@@ -561,7 +574,8 @@ let
         awk -F'\t' -v cutoff=$(($(date +%s) - 86400)) '$1 > cutoff' "$windows" > "$windows.tmp"
         mv "$windows.tmp" "$windows"
       fi
-      maintenance=$(jq -Rn '[inputs | split("\t") | {end: (.[0] | tonumber), pattern: .[1]}]' < <(cat "$windows" 2> /dev/null))
+      maintenance=$(jq -Rn '[inputs | split("\t") | {end: (.[0] | tonumber), pattern: .[1],
+        start: (if .[3] then (.[3] | tonumber) else (.[0] | tonumber) - 1800 end)}]' < <(cat "$windows" 2> /dev/null))
       now=$(date +%s)
 
       # The pc itself off the home LAN (2026-10-17: the router came back on
@@ -627,13 +641,33 @@ let
               | select(.key | IN("alertname", "severity", "project", "session") | not)]
              | sort_by(.key) | map(.value) | join("/")) as $id
           | ("alert/" + .labels.alertname + (if $id == "" then "" else "/" + $id end)) as $key
-          | select([$windows[] | select(.end + 600 > $now) | select(. as $w | $key | test($w.pattern))] | length == 0)
+          | (.startsAt[0:19] + "Z" | fromdateiso8601) as $began
+          | select([$windows[] | select($began >= .start - 60 and $began <= .end + 600)
+                    | select(. as $w | $key | test($w.pattern))] | length == 0)
           | "\($key): \(.annotations.summary // "")"
             + (if .annotations.description then " " + (.annotations.description | .[0:300]) else "" end)
             + " (firing since \(.startsAt[0:16])Z, severity \(.labels.severity // "?"))"
         ' <<< "$alerts")
       else
         failing_alerts=$(monitor_down alertmanager "the alert manager at ${alertmanagerApi}")
+      fi
+      # A pc unit that failed and is back up: SystemdUnitFailed looks at log
+      # lines of the last 30 minutes, so it keeps firing after a crash that
+      # Restart= already repaired. A unit that has been active for 5 minutes
+      # again is not an incident; one that keeps crashing never gets there.
+      back_up=$(
+        while IFS= read -r line; do
+          unit=$(sed -n 's|^alert/SystemdUnitFailed/pc/\([^:/ ]*\):.*|\1|p' <<< "$line")
+          if [ -n "$unit" ] \
+            && [ "$(systemctl --user show "$unit.service" -p ActiveState --value 2> /dev/null)" = active ]; then
+            since=$(date -d "$(systemctl --user show "$unit.service" -p ActiveEnterTimestamp --value)" +%s 2> /dev/null || echo "$now")
+            [ $((now - since)) -ge 300 ] && echo "$line"
+          fi
+        done <<< "$failing_alerts"
+      )
+      if [ -n "$back_up" ]; then
+        [ "$dry" = 1 ] && echo "back up for 5+ minutes, ignored: $(echo "$back_up" | cut -c1-120)"
+        failing_alerts=$(grep -vxFf <(echo "$back_up") <<< "$failing_alerts" || true)
       fi
       failing=$(printf '%s\n%s\n' "$failing" "$failing_alerts" | sed '/^$/d')
 

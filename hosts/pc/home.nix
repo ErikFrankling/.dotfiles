@@ -51,6 +51,49 @@ let
       echo "t3code: enabled the Grok and Cursor providers in $file"
     '';
   };
+  # Runs as ExecStop of t3code.service, i.e. only when systemd is stopping the
+  # unit (systemctl stop/restart, t3 doctor, a reboot). Tells health-watch and
+  # Alertmanager that the outage is expected so no repair session starts for
+  # it (Erik, 2026-10-23: "when you do a restart, mark in the alert system
+  # that this is expected"). A crash does not go through a stop job, so it
+  # still alerts. Everything is best effort: it must never block a stop.
+  t3codeExpectStop = pkgs.writeShellApplication {
+    name = "t3code-expect-stop";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.curl
+      pkgs.gnugrep
+      pkgs.jq
+      pkgs.systemd
+    ];
+    text = ''
+      # Only for a deliberate stop: a stop or restart job is queued for the unit.
+      if ! systemctl --user list-jobs --no-legend 2>/dev/null \
+        | grep -Eq 't3code\.service +(stop|restart)'; then
+        exit 0
+      fi
+      # t3code itself, and the transient build units (voice-apk-build8, ...)
+      # that the restart kills along with the agent sessions that started them.
+      unit_regex='t3code|.*-build[0-9]*'
+      ${config.home.homeDirectory}/.nix-profile/bin/health-watch maintenance 20 \
+        "t3code.service is being stopped (restart, deploy or t3 doctor)" \
+        't3code|-build[0-9]*$' || true
+      # Log-based alerts stay active for 30 minutes after the event, so the
+      # silence has to outlive that.
+      now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+      end=$(date -u -d '+45 minutes' +%Y-%m-%dT%H:%M:%SZ)
+      jq -n --arg start "$now" --arg end "$end" --arg re "$unit_regex" '{
+        matchers: [
+          {name: "alertname", value: "SystemdUnitFailed", isRegex: false, isEqual: true},
+          {name: "host_name", value: "pc", isRegex: false, isEqual: true},
+          {name: "service_name", value: $re, isRegex: true, isEqual: true}],
+        startsAt: $start, endsAt: $end, createdBy: "t3code-expect-stop",
+        comment: "t3code.service is being stopped on purpose"}' \
+        | curl -fsS --max-time 10 -X POST -H 'Content-Type: application/json' \
+          -d @- https://alertmanager.erikfrankling.duckdns.org/api/v2/silences \
+          >/dev/null || true
+    '';
+  };
 in
 {
   imports = [
@@ -164,6 +207,8 @@ in
     Service = {
       ExecStartPre = t3CodexPrepare;
       ExecStart = "${pkgs.t3code}/bin/t3 serve --host 0.0.0.0 --port 3773";
+      # Marks every deliberate stop as expected for health-watch/Alertmanager.
+      ExecStop = "-${lib.getExe t3codeExpectStop}";
       Environment = [
         # `t3 doctor` and `t3 service` only treat a unit as theirs when it
         # names the data directory in T3CODE_HOME (the default, ~/.t3). Without
