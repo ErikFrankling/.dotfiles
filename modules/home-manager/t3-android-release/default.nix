@@ -97,7 +97,7 @@ let
       # A background job keeps running on the worker if this PC-side command
       # dies (an agent session restart); `heavy logs -f <name>` reattaches.
       name="t3-android-release-$(date +%H%M%S)"
-      heavy --big bg "$name" --no-develop -- bash run.sh
+      heavy bg "$name" --big --no-develop -- bash run.sh
       started=1
       heavy logs -f "$name"
       if [ -n "$test_abi" ]; then heavy pull out; fi
