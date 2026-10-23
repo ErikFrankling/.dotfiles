@@ -95,6 +95,11 @@ let
         # Also a commit a rebase removed from erik/main (GitHub still has it).
         git fetch --quiet origin "$COMMIT"
         git checkout --quiet --detach "$COMMIT"
+        # The release tooling always comes from erik/main, whatever commit
+        # is released (an older commit carries older guards).
+        git checkout --quiet origin/erik/main -- scripts/erik-android-release.sh \
+          scripts/erik-updates-guard.sh scripts/erik-updates-release.sh \
+          scripts/erik-updates.mjs scripts/erik-updates-ping.mjs
       else
         git checkout --quiet --detach origin/erik/main
       fi
