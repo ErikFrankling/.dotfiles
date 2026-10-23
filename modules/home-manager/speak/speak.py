@@ -425,16 +425,60 @@ def notice(item, status=""):
 reply_opened = {"at": 0.0}
 
 
+def reply_status():
+    """`t3 app speak-reply --status`: {"open", "recording", "phase", ...}; {} if unknown."""
+    try:
+        done = subprocess.run([REPLY_COMMAND, "--status"], capture_output=True, text=True, timeout=10)
+        return json.loads(done.stdout) if done.returncode == 0 else {}
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return {}
+
+
 def answering():
     """The reply window is still open: Erik has not sent or dismissed his answer.
     Only for ANSWER_WAIT_SECONDS after it opened; closing it counts as an answer."""
     if not REPLY_COMMAND or time.time() - reply_opened["at"] > ANSWER_WAIT_SECONDS:
         return False
+    return bool(reply_status().get("open"))
+
+
+ENTER_BIND = ", Return"
+
+
+def enter_bind(on):
+    """Plain Enter anywhere on the desktop sends the reply (Erik: "I'm never going
+    to be writing while recording"). A runtime bind, so a config reload drops it;
+    the service also removes it whenever it starts or stops."""
+    if on:
+        args = ["keyword", "bind", f"{ENTER_BIND}, exec, {REPLY_COMMAND} --send"]
+    else:
+        args = ["keyword", "unbind", ENTER_BIND]
     try:
-        done = subprocess.run([REPLY_COMMAND, "--status"], capture_output=True, text=True, timeout=10)
-        return done.returncode == 0 and bool(json.loads(done.stdout).get("open"))
-    except (OSError, ValueError, subprocess.TimeoutExpired):
-        return False
+        subprocess.run([HYPRCTL, *args], capture_output=True, timeout=5)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+
+def enter_sends(item):
+    """Enter sends only while the reply window is recording; normal again the
+    moment it stops, is sent, closed or goes quiet."""
+    bound = False
+    deadline = time.time() + 1800
+    try:
+        while time.time() < deadline:
+            state = reply_status()
+            if not state.get("open"):
+                break
+            want = bool(state.get("recording"))
+            if want != bound:
+                enter_bind(want)
+                bound = want
+                log("enter_sends", item, on=want, phase=state.get("phase"))
+            time.sleep(1)
+    finally:
+        if bound:
+            enter_bind(False)
+            log("enter_sends", item, on=False, phase="closed")
 
 
 def notify_away(item):
@@ -512,6 +556,8 @@ def worker():
         if item.get("reply", True):
             item["reply_window"] = open_reply_window(item)
             log("reply_window", item, result=item["reply_window"])
+            if item["reply_window"] == "opened":
+                threading.Thread(target=enter_sends, args=(item,), daemon=True).start()
 
 
 def submit(body):

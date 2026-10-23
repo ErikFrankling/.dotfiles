@@ -85,7 +85,11 @@ in
         };
         Service = {
           StateDirectory = "speak";
+          # While the reply window records, the daemon binds plain Enter to
+          # "send". However it ended, Enter is plain Enter again afterwards.
+          ExecStartPre = "-/run/current-system/sw/bin/hyprctl keyword unbind \", Return\"";
           ExecStart = "${lib.getExe speak} daemon";
+          ExecStopPost = "-/run/current-system/sw/bin/hyprctl keyword unbind \", Return\"";
           Restart = "on-failure";
           RestartSec = 5;
           Environment = [
