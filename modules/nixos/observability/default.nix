@@ -5,6 +5,8 @@
 #   `service.name` = the unit the entry is about, so a failing timer or an
 #   error from local-stt or T3 Code becomes an alert there;
 # - host metrics (node exporter, including systemd unit states);
+# - per-process history: RAM, CPU and disk per (command, cgroup) every 15 s,
+#   so a past spike can be traced to a program and its unit or T3 thread;
 # - probes of services that only listen on localhost (`probe` label);
 # - an OTLP receiver on 127.0.0.1:4317/4318 for programs that speak it
 #   (T3 Code, local-stt, Time).
@@ -331,6 +333,78 @@ in
           metrics = [otelcol.processor.transform.host.input]
         }
       }
+
+      // ---- per-process history: a task manager you can scroll back --------
+      // process-exporter, built into Alloy: one group per (command, cgroup),
+      // so `namedprocess_namegroup_*{groupname="cc1plus", unit="t3code-claude-
+      // fc888130.scope"}` says which program in which unit (T3 thread scope,
+      // app, service) used the RAM, CPU and disk at any past time. Kernel
+      // threads (root cgroup) are dropped; host totals cover them.
+      // Queries: the system-history skill (modules/home-manager/auto-update).
+      prometheus.exporter.process "procs" {
+        track_threads       = false
+        recheck_on_scrape   = true
+        remove_empty_groups = true
+        matcher {
+          name    = "{{.Comm}}|{{.Cgroups}}"
+          cmdline = [".*"]
+        }
+      }
+
+      prometheus.scrape "procs" {
+        targets         = prometheus.exporter.process.procs.targets
+        scrape_interval = "15s"
+        forward_to      = [prometheus.relabel.procs.receiver]
+      }
+
+      prometheus.relabel "procs" {
+        forward_to = [otelcol.receiver.prometheus.local.receiver]
+        rule {
+          source_labels = ["__name__"]
+          regex         = "namedprocess_namegroup_(cpu_seconds_total|memory_bytes|read_bytes_total|write_bytes_total|major_page_faults_total|num_procs|num_threads|oldest_start_time_seconds)"
+          action        = "keep"
+        }
+        rule {
+          source_labels = ["memtype"]
+          regex         = "virtual|proportionalSwapped"
+          action        = "drop"
+        }
+        // groupname = "comm|[1:net_cls:/ 0::/user.slice/.../x.scope]"
+        rule {
+          source_labels = ["groupname"]
+          regex         = ".*0::([^ \\]]*).*"
+          target_label  = "cgroup"
+        }
+        rule {
+          source_labels = ["cgroup"]
+          regex         = "/?"
+          action        = "drop"
+        }
+        rule {
+          source_labels = ["cgroup"]
+          regex         = ".*/([^/]+)"
+          target_label  = "unit"
+        }
+        rule {
+          source_labels = ["groupname"]
+          regex         = "([^|]*)\\|.*"
+          target_label  = "groupname"
+        }
+      }
     '';
+
+    # The same history at 5 s resolution, kept on this machine for a week:
+    # `below replay -t "10 min ago"` is top/htop scrolled back in time, with
+    # the cgroup tree (T3 thread scopes, apps) and every process. Also records
+    # processes that lived between two samples (eBPF exit stats).
+    services.below = {
+      enable = true;
+      compression.enable = true;
+      collect.ioStats = true;
+      retention = {
+        time = 7 * 24 * 3600;
+        size = 4 * 1024 * 1024 * 1024;
+      };
+    };
   };
 }
