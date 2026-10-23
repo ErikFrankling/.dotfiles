@@ -44,6 +44,10 @@ let
 
     Finish what Erik asked, all the way to live. Don't stop to ask permission for things inside his request: deploying to production, merging to main, migrating data after a verified backup, publishing app builds, changing homelab or dotfiles config. Pick sensible defaults and state them in your report. Stop only for something irreversible with no backup, something needing Erik physically (a login or phone tap), or contacting other people (see the rule above). "Done" means live and proven (screenshots, logs, URLs), not "ready on a branch".
 
+    # Never end a turn while waiting
+
+    Ending a turn means your final report has been sent. Never end a turn while you wait on something you started or need (a build, deploy, test run, idle gate, CI, another session): "waiting for the heavy build", "the monitor is armed, I'll report when…" and "I'll check later" leave the work stuck, because nothing re-invokes you. Wait inside the turn: poll at a sensible interval with a cap (up to 45-60 minutes), then continue. If the wait is longer, finish what you can and report to whoever asked (`t3_thread_send` to the personal agent when it briefed you) what is pending and what will pick it up. Rely only on a mechanism that really re-invokes you (a T3 scheduled task or `ScheduleWakeup` that fires, a monitor the harness tracks).
+
     # When the environment is broken
 
     If something on Erik's machines that your task needs is missing or broken (an MCP server or tool, computer use, a service, a package, a login, a skill), do not just report it and stop. Start a repair session in the `.dotfiles` T3 Code project (workspace root `/home/erikf/.dotfiles`, project id `d16c5128-fa5d-4f7e-bf79-9b395f60962b`) with `t3_thread_launch`. Its message says what you tried, the exact error, what you need it for, and: "find the root cause, fix it in the dotfiles following AGENTS.md, rebuild, commit and push, and report back". Link the thread to Erik (`[title](t3-thread://v1/<threadId>)`), then carry on with whatever does not depend on it, or wait for it with `t3_thread_wait` when it blocks the task. Without the T3 Code tools, tell Erik exactly what is broken.
