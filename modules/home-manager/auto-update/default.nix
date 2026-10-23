@@ -42,6 +42,18 @@ let
   # "nix-nightly build" (what blocked the 2026-10-22 03:00 start).
   buildLock = "${stateDir}/build.lock";
 
+  # The pc keeps its RTC in local time (time.hardwareClockInLocalTime), so
+  # after a hard reboot the clock runs hours ahead until NTP corrects it. The
+  # session starters wait for NTP before they act on a timer that fired in
+  # that window, but never block longer than two minutes.
+  waitForClock = pkgs.writeShellScript "wait-for-clock" ''
+    for _ in $(${pkgs.coreutils}/bin/seq 120); do
+      [ "$(${pkgs.systemd}/bin/timedatectl show -p NTPSynchronized --value)" = yes ] && exit 0
+      ${pkgs.coreutils}/bin/sleep 1
+    done
+    echo "clock not NTP-synchronized after 120 s; starting anyway" >&2
+  '';
+
   nixNightly = pkgs.writeShellApplication {
     name = "nix-nightly";
     runtimeInputs = [
@@ -73,9 +85,23 @@ let
           ;;
 
         build)
-          exec 8>${buildLock}
+          # Only a build from the nightly clone holds the nightly's lock and
+          # log names, which the scheduled start checks. Deploy builds that
+          # sessions run from their own checkouts get a lock per checkout, so
+          # they can neither block the 03:00 start (2026-10-23) nor clobber
+          # its logs and last-build record.
+          top=$(realpath "$(git rev-parse --show-toplevel)")
+          if [ "$top" = "$(realpath -m ${clone})" ]; then
+            lock=${buildLock}
+            prefix=build
+          else
+            id=$(printf %s "$top" | sha256sum | cut -c1-12)
+            lock=${stateDir}/build-adhoc-$id.lock
+            prefix=build-adhoc-$id
+          fi
+          exec 8>"$lock"
           if ! flock -n 8; then
-            echo "another nix-nightly build is already running" >&2
+            echo "another nix-nightly build of this checkout is already running" >&2
             exit 3
           fi
           if [ -n "$(git status --porcelain)" ]; then
@@ -85,7 +111,7 @@ let
           rev=$(git rev-parse HEAD)
           stamp=$(date +%Y%m%d-%H%M%S)
           for host in ${lib.concatStringsSep " " hosts}; do
-            log=${stateDir}/build-$host.log
+            log=${stateDir}/$prefix-$host.log
             echo "== building $host on the homelab (log: $log)"
             # The exit status alone is not trusted: a build that failed on the
             # remote store has been seen to return 0 with no output path.
@@ -127,7 +153,11 @@ let
             free=$(df --output=avail -BG /nix | tail -n 1 | tr -dc 0-9)
             if [ "$free" -lt 80 ]; then nix-collect-garbage > /dev/null 2>&1; fi
           ' || true
-          echo "$rev $(date -Iseconds)" > ${stateDir}/last-build
+          # last-build says whether main was built; a deploy build of some
+          # other checkout must not overwrite it.
+          if [ "$lock" = ${buildLock} ]; then
+            echo "$rev $(date -Iseconds)" > ${stateDir}/last-build
+          fi
           echo "OK: both hosts built at $rev"
           ;;
 
@@ -811,6 +841,7 @@ in
         Unit.Description = "Start the nightly NixOS update session in T3 Code";
         Service = {
           Type = "oneshot";
+          ExecStartPre = "${waitForClock}";
           ExecStart = lib.getExe startNightly;
         };
       };
@@ -819,8 +850,11 @@ in
         Unit.Description = "Nightly NixOS update";
         Timer = {
           OnCalendar = cfg.time;
-          # Not Persistent: a run that was missed overnight should not start
-          # in the middle of the day and push while the machines are in use.
+          # Persistent: a run missed because the pc was off or its clock was
+          # wrong at 03:00 (hard reboot with the RTC in local time, 2026-10-23)
+          # starts at the next boot or clock correction instead of waiting a
+          # whole day. The start skips itself while a nightly build is running.
+          Persistent = true;
         };
         Install.WantedBy = [ "timers.target" ];
       };
@@ -831,6 +865,7 @@ in
         Unit.Description = "Start the morning systems check session in T3 Code";
         Service = {
           Type = "oneshot";
+          ExecStartPre = "${waitForClock}";
           ExecStart = lib.getExe startCheck;
         };
       };
@@ -851,6 +886,7 @@ in
         Unit.Description = "Notify when the morning systems check did not report";
         Service = {
           Type = "oneshot";
+          ExecStartPre = "${waitForClock}";
           ExecStart = "${lib.getExe systemsCheck} watchdog";
         };
       };
