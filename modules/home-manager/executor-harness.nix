@@ -19,6 +19,8 @@
   # get it: the personal agent. Its .mcp.json (hosts/pc/home.nix) reads
   # ${TIME_MCP_TOKEN}; no other session even has the variable.
   timeMcpTokenFile ? null,
+  # Same for the Onyx search MCP ($SEARCH_MCP_TOKEN, read:search only).
+  searchMcpTokenFile ? null,
   personalDir ? "/home/erikf/.t3/personal",
   # Host-local stdio MCP servers ({ name = { command, args, env }; }), added
   # to every session whether or not Executor is reachable. Used for computer
@@ -33,6 +35,12 @@ let
       export EXECUTOR_API_KEY
     fi
   '';
+  loadSearchToken = lib.optionalString (searchMcpTokenFile != null) ''
+    if [ -r ${searchMcpTokenFile} ]; then
+      SEARCH_MCP_TOKEN="$(< ${searchMcpTokenFile})"
+      export SEARCH_MCP_TOKEN
+    fi
+  '';
   loadTimeToken = lib.optionalString (timeMcpTokenFile != null) ''
     case "$PWD" in
       ${personalDir}|${personalDir}/*)
@@ -40,6 +48,7 @@ let
           TIME_MCP_TOKEN="$(< ${timeMcpTokenFile})"
           export TIME_MCP_TOKEN
         fi
+        ${loadSearchToken}
         ;;
     esac
   '';

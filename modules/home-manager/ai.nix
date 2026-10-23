@@ -29,6 +29,7 @@ let
     inherit pkgs lib;
     keyFile = executorKeyFile;
     timeMcpTokenFile = osConfig.sops.secrets.time-mcp-token.path or null;
+    searchMcpTokenFile = osConfig.sops.secrets.search-mcp-token.path or null;
     codexPackage = codexCliUpstream;
     claudePackage = claudeCliUpstream;
     # Computer use on this host: agent browser (Playwright), Cua Driver and

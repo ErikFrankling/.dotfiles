@@ -126,6 +126,13 @@
   # Claude sessions started in the personal agent's folder
   # (modules/home-manager/executor-harness.nix, hosts/pc/home.nix).
   sops.secrets.time-mcp-token.owner = username;
+  # Onyx, the search over everything (homelab apps/onyx.yaml): the search-sync
+  # timer's token (modules/home-manager/search-sync.nix) and the read:search
+  # token for the personal agent's MCP (executor-harness.nix). The admin
+  # password for https://search.erikfrankling.duckdns.org is onyx-admin-password
+  # (user erik.frankling@frankling.se); nothing reads it.
+  sops.secrets.search-sync-token.owner = username;
+  sops.secrets.search-mcp-token.owner = username;
   sops.secrets.kth-password = {
     owner = username;
   };

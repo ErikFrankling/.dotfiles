@@ -122,6 +122,7 @@ in
     ../../modules/home-manager/company-brain.nix
     ../../modules/home-manager/canvas-archive.nix
     ../../modules/home-manager/x-graph.nix
+    ../../modules/home-manager/search-sync.nix
     ../../modules/home-manager/machines
     ../../modules/home-manager/heavy # `heavy`: heavy agent work on the homelab worker
     ../../modules/home-manager/t3-android-release # Android release of the T3 fork without GitHub Actions
@@ -165,6 +166,15 @@ in
     type = "http";
     url = "https://time.erikfrankling.duckdns.org/mcp";
     headers.Authorization = "Bearer \${TIME_MCP_TOKEN}";
+  };
+  # One search over everything (mail, every agent session, Obsidian, Canvas,
+  # X/Discord, the brain): Onyx on the homelab, tool search_indexed_documents.
+  # Token: $SEARCH_MCP_TOKEN (read:search), set like TIME_MCP_TOKEN above.
+  # Every other agent reaches the same tool through Executor (app "search").
+  personalAgent.mcpServers.search = {
+    type = "http";
+    url = "https://search.erikfrankling.duckdns.org/mcp/";
+    headers.Authorization = "Bearer \${SEARCH_MCP_TOKEN}";
   };
 
   home.file = {
