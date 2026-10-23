@@ -73,8 +73,12 @@ in
         # on purpose, so without this flag the fork forces gnome-libsecret, finds
         # no Secret Service and refuses to save the connection at all.
         # symlinkJoin bakes postBuild into buildCommand, so append there.
+        # T3CODE_DICTATION_HOOK: the app runs it with recording|stopped while a
+        # dictation records; on the PC it binds plain Enter to "send" (speak
+        # module). Elsewhere the command does not exist and the app only warns.
         buildCommand = oldAttrs.buildCommand + ''
-          wrapProgram "$out/bin/t3code-desktop" --add-flags "--password-store=basic"
+          wrapProgram "$out/bin/t3code-desktop" --add-flags "--password-store=basic" \
+            --set-default T3CODE_DICTATION_HOOK t3-dictation-hook
         '';
       });
 }

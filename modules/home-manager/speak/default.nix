@@ -51,6 +51,21 @@ let
     text = ''exec ${python}/bin/python3 ${src}/speak.py "$@"'';
   };
 
+  # The T3 desktop app runs this (T3CODE_DICTATION_HOOK, overlays/t3code.nix)
+  # with `recording` / `stopped` while any dictation records, the reply window
+  # included: plain Enter anywhere sends it (Erik: "I'm never going to be
+  # writing while recording"). Enter is plain Enter again the moment it stops.
+  dictationHook = pkgs.writeShellApplication {
+    name = "t3-dictation-hook";
+    text = ''
+      hyprctl=/run/current-system/sw/bin/hyprctl
+      case "''${1-}" in
+        recording) "$hyprctl" keyword bind ", Return, exec, ${pkgs.t3code}/bin/t3 app dictation --send" >/dev/null ;;
+        *) "$hyprctl" keyword unbind ", Return" >/dev/null ;;
+      esac
+    '';
+  };
+
   # Opens the "Recording now" window in the running T3 desktop app.
   replyWindow = pkgs.writeShellScript "speak-reply-window" ''
     exec ${pkgs.t3code}/bin/t3 app speak-reply "$@"
@@ -78,6 +93,8 @@ in
     }
 
     (lib.mkIf cfg.speakers {
+      home.packages = [ dictationHook ];
+
       systemd.user.services.speak = {
         Unit = {
           Description = "Speak the personal agent's messages on the PC's speakers";
@@ -85,8 +102,9 @@ in
         };
         Service = {
           StateDirectory = "speak";
-          # While the reply window records, the daemon binds plain Enter to
-          # "send". However it ended, Enter is plain Enter again afterwards.
+          # While a dictation records, t3-dictation-hook binds plain Enter to
+          # "send". A safety net: Enter is plain Enter again whenever speak
+          # starts or stops, however a recording ended.
           ExecStartPre = "-/run/current-system/sw/bin/hyprctl keyword unbind \", Return\"";
           ExecStart = "${lib.getExe speak} daemon";
           ExecStopPost = "-/run/current-system/sw/bin/hyprctl keyword unbind \", Return\"";
