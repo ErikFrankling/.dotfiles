@@ -36,6 +36,8 @@ let
     "framework"
   ];
   keepPerHost = 5;
+  # `nix-nightly build` gives up on both hosts together after this long.
+  buildTimeoutMinutes = 75;
   # Held (flock) by `nix-nightly build` for as long as it runs. The kernel
   # drops it when the process dies, so unlike a pgrep on the command line it
   # can neither go stale nor match an unrelated process that merely mentions
@@ -110,6 +112,9 @@ let
           fi
           rev=$(git rev-parse HEAD)
           stamp=$(date +%Y%m%d-%H%M%S)
+          # One bound for both hosts together: an update is about an hour,
+          # never "still building" the next night (2026-10-23).
+          deadline=$(( $(date +%s) + ${toString buildTimeoutMinutes} * 60 ))
           for host in ${lib.concatStringsSep " " hosts}; do
             log=${stateDir}/$prefix-$host.log
             echo "== building $host on the homelab (log: $log)"
@@ -117,8 +122,27 @@ let
             # remote store has been seen to return 0 with no output path.
             # nix-remote evaluates on the builder too: the agent lag-guard kills
             # a local NixOS evaluation, and agent sessions run inside that slice.
-            out=$(NIX_REMOTE_FETCH=0 /run/current-system/sw/bin/nix-remote build \
-              --no-link --print-out-paths "$(attr "$host")" 2> "$log" 8>&-) || out=""
+            left=$(( deadline - $(date +%s) ))
+            status=0
+            if [ "$left" -le 0 ]; then
+              status=124
+              out=""
+            else
+              # timeout signals the whole process group (nix-remote, its ssh
+              # to the builder), so nothing keeps building after the deadline.
+              out=$(NIX_REMOTE_FETCH=0 timeout -k 30 "$left" \
+                /run/current-system/sw/bin/nix-remote build \
+                --no-link --print-out-paths "$(attr "$host")" 2> "$log" 8>&-) || status=$?
+            fi
+            if [ "$status" = 124 ] || [ "$status" = 137 ]; then
+              msg="The nightly build timed out: $host was not built within ${toString buildTimeoutMinutes} minutes. Nothing was pushed; tomorrow's run starts fresh."
+              echo "== $msg" >&2
+              tail -n 20 "$log" >&2 || true
+              echo "$(date -Iseconds) $msg" > ${stateDir}/last-notify
+              notify-send --app-name "Nightly update" --urgency critical \
+                "Nightly update timed out" "$msg" || true
+              exit 4
+            fi
             if [[ ! $out =~ ^/nix/store/[a-z0-9]{32}-nixos-system-$host- ]]; then
               echo "== $host FAILED. Last lines:" >&2
               tail -n 60 "$log" >&2
@@ -131,7 +155,7 @@ let
             # newest few per host.
             # Deliberately expanded here: the remote shell gets literal values.
             # shellcheck disable=SC2029
-            if ! ssh nix-builder "
+            if ! ssh nix-builder 8>&- "
               set -e
               export PATH=/nix/var/builder/bin:\$PATH
               test -e $out
@@ -148,7 +172,7 @@ let
 
           # Collect if the node's disk is getting low; nix.conf on the builder
           # does the same mid-build.
-          ssh nix-builder '
+          ssh nix-builder 8>&- '
             export PATH=/nix/var/builder/bin:$PATH
             free=$(df --output=avail -BG /nix | tail -n 1 | tr -dc 0-9)
             if [ "$free" -lt 80 ]; then nix-collect-garbage > /dev/null 2>&1; fi
