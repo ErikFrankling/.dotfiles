@@ -238,6 +238,14 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-24 04:31 (health-watch) — `alert/SystemdUnitFailed/pc/time-backup`:
+  the 04:15 run failed its integrity check, "database is at schema 4, this build
+  only knows 3". The homelab time-v2 server migrated the DB to schema 4 while the
+  pc still ran a home-manager generation with the older `time-server` (the `time`
+  input was bumped to 5225965 in 10b73f00 but not yet activated). 5225965's
+  `time-server` verifies the new backup fine; the 06:04 auto-update activates it.
+  No repair needed; a server schema bump needs the pc's `time` input deployed first.
+
 - 2026-10-23 05:05 (health-watch) — `phone/executor` and `phone/openclaw`
   403 again, same cause as 2026-10-21 05:36 (stale tailscaled CONNECT tunnels
   from 192.168.50.100 in the Gatus sidecar, Traefik sees the node's own
