@@ -4,8 +4,8 @@
 # Both hosts get the two skills. The PC additionally runs the nightly job: a
 # timer starts a T3 Code session that updates flake.lock, builds both hosts'
 # closures on the homelab and pushes to main once they are built. The session
-# follows the nix-update-doctor skill and repairs what the update broke, within
-# 50 minutes; a 01:00 prebuild without an agent has built the same inputs
+# follows the nix-update-doctor skill and repairs what the update broke; past 50 minutes it
+# finds out why it takes that long. A 01:00 prebuild without an agent has built the same inputs
 # ahead, and the T3 Code fork rebase is a session of its own at 04:00. At
 # 07:00 a second session (systems-check skill) checks that the pc, the
 # framework and the homelab all ended up in working order, repairs what did
@@ -38,13 +38,16 @@ let
     "framework"
   ];
   keepPerHost = 5;
-  # `nix-nightly build` gives up on both hosts together after this long, or
-  # at the session's deadline when that comes first.
-  buildTimeoutMinutes = 75;
-  # Erik (2026-10-23): "an update should not be more than an hour". Each
-  # session gets this long; `nix-nightly build` refuses to start past it and a
-  # watchdog interrupts the session 5 minutes later.
-  sessionBudgetMinutes = 50;
+  # `nix-nightly build` gives up on both hosts together after this long. Only
+  # a guard against a hung build (never "still building" the next night,
+  # 2026-10-23); a big update may legitimately take long, and whether it should
+  # is the 50-minute checkpoint's question, not this timer's.
+  buildTimeoutMinutes = 180;
+  # Erik (2026-10-25): no hard cap, but a session still running after this
+  # long must find out why it takes long (justified big build, or waste) and
+  # act on it. A transient watchdog sends the session that instruction at the
+  # checkpoint; it never interrupts it.
+  checkpointMinutes = 50;
   # The 01:00 prebuild: same inputs the 03:00 session will take, built ahead
   # without an agent, so the session finds them cached. A nixpkgs bump
   # recompiles Hyprland (the Aquamarine overlay), 68 minutes on 2026-10-25.
@@ -106,10 +109,28 @@ let
           echo "build-adhoc-$(printf %s "$top" | sha256sum | cut -c1-12)"
         fi
       }
-      # A session's deadline (epoch seconds), written by its starter into the
-      # clone's .git; empty for a checkout no scheduled session owns.
-      deadline_of() {
-        cat "$(git -C "$1" rev-parse --absolute-git-dir 2> /dev/null)/nix-nightly-deadline" 2> /dev/null || true
+      # When a scheduled session started (epoch seconds), written by its
+      # starter into the clone's .git; empty for a checkout no session owns.
+      started_of() {
+        cat "$(git -C "$1" rev-parse --absolute-git-dir 2> /dev/null)/nix-nightly-started" 2> /dev/null || true
+      }
+      # What the build of checkout $1 is doing: whether its job runs, and the
+      # derivations its logs last started building, newest last.
+      building_now() {
+        local job logs
+        job=nix-nightly-$(prefix_for "$1")
+        if systemctl --user is-active --quiet "agent-job-$job.service"; then
+          echo "build job $job: running since $(systemctl --user show -p ActiveEnterTimestamp --value "agent-job-$job.service")"
+        else
+          echo "build job $job: not running"
+        fi
+        logs=${stateDir}/$(prefix_for "$1")
+        for log in "$logs"-*.log; do
+          [ -f "$log" ] || continue
+          echo "$(basename "$log") (last written $(date -r "$log" +%H:%M)):"
+          grep -o "building '/nix/store/[^']*'" "$log" | sed "s|building '/nix/store/[a-z0-9]*-|  building |; s|'$||" \
+            | awk '!seen[$0]++' | tail -n 6 || true
+        done
       }
       say() {
         echo "$(date -Iseconds) $*" > ${stateDir}/last-notify
@@ -125,13 +146,19 @@ let
       }
 
       case "''${1:-}" in
-        time-left)
-          d=$(deadline_of .)
-          if [ -z "$d" ]; then
-            echo "no deadline for this checkout"
+        elapsed)
+          # Minutes since this checkout's session started, and what is building.
+          s=$(started_of .)
+          if [ -z "$s" ]; then
+            echo "no scheduled session owns this checkout"
           else
-            echo "$(( (d - $(date +%s)) / 60 )) minutes left (deadline $(date -d "@$d" +%H:%M))"
+            m=$(( ($(date +%s) - s) / 60 ))
+            echo "$m minutes since the session started at $(date -d "@$s" +%H:%M)"
+            if [ "$m" -ge ${toString checkpointMinutes} ]; then
+              echo "PAST the ${toString checkpointMinutes}-minute checkpoint: find out why it takes this long (nix-update-doctor skill, The 50-minute checkpoint)"
+            fi
           fi
+          building_now .
           ;;
 
         update)
@@ -205,14 +232,16 @@ let
           cat ${prebuildDir}/result
           ;;
 
-        watchdog)
-          # watchdog <clone> <label>: the session working in <clone> is past its
-          # deadline. Interrupt it, stop its build, and tell Erik.
+        checkpoint)
+          # checkpoint <clone> <label>: the session working in <clone> has run
+          # for the checkpoint's minutes. Never stop it: tell it to find out
+          # why it takes this long, with what is building right now. Erik hears
+          # about it from the session, with the cause (Erik, 2026-10-25).
           dir=$2
           label=$3
-          d=$(deadline_of "$dir")
-          # A later run moved the deadline: not ours to stop.
-          if [ -z "$d" ] || [ "$(date +%s)" -lt "$d" ]; then exit 0; fi
+          s=$(started_of "$dir")
+          # A later run restarted the clock: not ours.
+          if [ -z "$s" ] || [ $(( $(date +%s) - s )) -lt $(( ${toString checkpointMinutes} * 60 )) ]; then exit 0; fi
           thread=$(cat "$dir/.git/nix-nightly-thread" 2> /dev/null || true)
           run=""
           if [ -n "$thread" ]; then
@@ -220,26 +249,29 @@ let
               http://127.0.0.1:3773/api/orchestration/shell \
               | jq -r --arg t "$thread" 'first(.threads[] | select(.id == $t) | .activeRunId) // empty') || true
           fi
-          if [ -n "$run" ]; then
-            request=$(jq -cn --arg cmd "$(uuidgen)" --arg t "$thread" --arg r "$run" \
-              '{_tag: "Request", id: "1", tag: "orchestration.dispatchCommand", headers: [],
-                payload: {type: "run.interrupt", commandId: $cmd, threadId: $t, runId: $r,
-                  reason: "over the ${toString sessionBudgetMinutes}-minute budget (nix-nightly watchdog)"}}')
-            { printf '%s\n' "$request"; sleep 20; } \
-              | timeout 20 websocat --text "ws://127.0.0.1:3773/ws?orchestrationProtocol=2" > /dev/null || true
+          if [ -z "$run" ]; then
+            echo "$label: no active run in thread ''${thread:-none}; nothing to do"
+            exit 0
           fi
-          job=nix-nightly-$(prefix_for "$dir")
-          stopped=""
-          if systemctl --user is-active --quiet "agent-job-$job.service"; then
-            systemctl --user stop "agent-job-$job.service" || true
-            stopped=" and its homelab build"
-          fi
-          if [ -n "$run" ] || [ -n "$stopped" ]; then
-            say "$label ran out of time" "$label was still running after ${toString sessionBudgetMinutes} minutes, so it was stopped$stopped. main only ever gets built commits, so the machines keep yesterday's system for what it did not finish; its T3 Code thread says how far it got."
-            echo "stopped $label (thread ''${thread:-none}, run ''${run:-none})$stopped"
+          text="Checkpoint: this session has run for ${toString checkpointMinutes} minutes (it started at $(date -d "@$s" +%H:%M)). Do not stop and do not hurry. Before anything else, follow \"The 50-minute checkpoint\" in the nix-update-doctor skill: find out what is taking the time and whether it is justified, act on the answer, and notify Erik with the cause. What the build is doing right now:
+
+          $(building_now "$dir")"
+          request=$(jq -cn --arg cmd "$(uuidgen)" --arg msg "$(uuidgen)" --arg t "$thread" \
+            --arg r "$run" --arg text "$text" \
+            '{_tag: "Request", id: "1", tag: "orchestration.dispatchCommand", headers: [],
+              payload: {type: "message.dispatch", commandId: $cmd, threadId: $t, messageId: $msg,
+                createdBy: "system", creationSource: "server", text: $text, attachments: [],
+                dispatchMode: {type: "steer_active", targetRunId: $r}}}')
+          answer=$( { printf '%s\n' "$request"; sleep 20; } \
+            | timeout 20 websocat --text "ws://127.0.0.1:3773/ws?orchestrationProtocol=2" \
+            | jq -c --unbuffered 'select(._tag == "Exit" and .requestId == "1")' | head -n 1) || true
+          if [ "$(jq -r '.exit._tag // empty' <<< "$answer")" = Success ]; then
+            echo "$label: sent the checkpoint message to thread $thread (run $run)"
+          else
+            echo "$label: could not send the checkpoint message: ''${answer:-no answer}" >&2
+            exit 1
           fi
           ;;
-
 
         plan)
           # What the homelab would have to build, per host. Substitutions are
@@ -300,20 +332,9 @@ let
           stamp=$(date +%Y%m%d-%H%M%S)
           quiet=''${NIX_NIGHTLY_QUIET:-}
           minutes=''${NIX_NIGHTLY_BUILD_MINUTES:-${toString buildTimeoutMinutes}}
-          # One bound for both hosts together: an update is about an hour,
-          # never "still building" the next night (2026-10-23). A scheduled
-          # session's own deadline comes first: nothing starts past it.
+          # One bound for both hosts together, against a hung build: never
+          # "still building" the next night (2026-10-23).
           deadline=$(( $(date +%s) + minutes * 60 ))
-          session=$(deadline_of "$top")
-          if [ -n "$session" ]; then
-            if [ "$(date +%s)" -ge "$session" ]; then
-              msg="Out of time: this session's ${toString sessionBudgetMinutes} minutes ended at $(date -d "@$session" +%H:%M), so no build was started and nothing may be pushed. Report what is left and stop."
-              echo "== $msg" >&2
-              exit 4
-            fi
-            [ "$session" -lt "$deadline" ] && deadline=$session
-          fi
-          minutes=$(( (deadline - $(date +%s) + 59) / 60 ))
           for host in ${lib.concatStringsSep " " hosts}; do
             log=${stateDir}/$prefix-$host.log
             echo "== building $host on the homelab (log: $log)"
@@ -390,7 +411,7 @@ let
           ;;
 
         *)
-          echo "usage: nix-nightly update | plan | build | time-left | notify <message> | prebuild | watchdog <clone> <label>" >&2
+          echo "usage: nix-nightly update | plan | build | elapsed | notify <message> | prebuild | checkpoint <clone> <label>" >&2
           exit 2
           ;;
       esac
@@ -417,10 +438,10 @@ let
       extraClones ? { },
       # Shell run before anything else; call `fail "<why>"` to not start.
       preflight ? "",
-      # Minutes the session may take. `nix-nightly build` refuses to start
-      # after that, and `nix-nightly watchdog` interrupts the session 5 minutes
-      # later (the deadline sits in the clone's .git, so a fresh run resets it).
-      budgetMinutes ? null,
+      # At checkpointMinutes, `nix-nightly checkpoint` tells the session to find
+      # out why it takes this long (the start time sits in the clone's .git, so
+      # a fresh run restarts the clock). It never stops the session.
+      checkpoint ? false,
     }:
     pkgs.writeShellApplication {
       inherit name;
@@ -468,14 +489,14 @@ let
           lib.mapAttrsToList (dir: url: "fresh ${lib.escapeShellArg url} ${dir}") extraClones
         )}
         cd ${clone}
-        ${lib.optionalString (budgetMinutes != null) ''
+        ${lib.optionalString checkpoint ''
           gitdir=$(git rev-parse --absolute-git-dir)
-          rm -f "$gitdir/nix-nightly-thread"
-          echo $(( $(date +%s) + ${toString budgetMinutes} * 60 )) > "$gitdir/nix-nightly-deadline"
-          systemd-run --user --collect --quiet --unit="${name}-watchdog-$(date +%s)" \
-            --on-active=${toString (budgetMinutes + 5)}m \
-            ${lib.getExe nixNightly} watchdog ${clone} ${lib.escapeShellArg label} \
-            || echo "could not schedule the watchdog" >&2
+          rm -f "$gitdir/nix-nightly-thread" "$gitdir/nix-nightly-deadline"
+          date +%s > "$gitdir/nix-nightly-started"
+          systemd-run --user --collect --quiet --unit="${name}-checkpoint-$(date +%s)" \
+            --on-active=${toString checkpointMinutes}m \
+            ${lib.getExe nixNightly} checkpoint ${clone} ${lib.escapeShellArg label} \
+            || echo "could not schedule the checkpoint" >&2
         ''}
 
         headless() {
@@ -484,9 +505,7 @@ let
             --working-directory=${clone} --property=StandardOutput="append:$log" \
             --setenv=PATH=/run/wrappers/bin:${home}/.nix-profile/bin:/etc/profiles/per-user/${config.home.username}/bin:/run/current-system/sw/bin \
             --property=StandardError="append:$log" \
-            "$(command -v timeout)" ${
-              if budgetMinutes == null then "2h" else "${toString (budgetMinutes + 5)}m"
-            } "$(command -v claude)" --print --dangerously-skip-permissions \
+            "$(command -v timeout)" 2h "$(command -v claude)" --print --dangerously-skip-permissions \
             --model ${lib.escapeShellArg cfg.modelSelection.model} "$prompt" \
             || fail "$1, and the headless session did not start either."
           echo "$1; started a headless session (log: $log)"
@@ -544,7 +563,7 @@ let
     label = "Nightly update";
     inherit clone;
     inherit (cfg) prompt;
-    budgetMinutes = sessionBudgetMinutes;
+    checkpoint = true;
     # A previous session that is still building owns the clone; resetting it
     # underneath would wreck that run.
     preflight = ''
@@ -571,7 +590,7 @@ let
     label = "T3 fork rebase";
     clone = "${forkDir}/dotfiles";
     prompt = cfg.fork.prompt;
-    budgetMinutes = sessionBudgetMinutes;
+    checkpoint = true;
     preflight = ''
       if ! flock -n ${buildLock} true 2> /dev/null; then
         echo "The nightly update is still building; the fork rebase waits for tomorrow."
@@ -957,8 +976,8 @@ let
         failing_alerts=$(grep -vxFf <(echo "$back_up") <<< "$failing_alerts" || true)
       fi
       # A failed nightly build job belongs to the session that ran it: it
-      # repairs and builds again, and the nightly watchdog reports a session
-      # that ran out of time. The 2026-10-25 04:49 repair session was started
+      # repairs and builds again, and explains to Erik a run that takes
+      # long. The 2026-10-25 04:49 repair session was started
       # for the nightly's own build retries.
       if grep -q '^alert/SystemdUnitFailed/pc/agent-job-nix-nightly-' <<< "$failing_alerts"; then
         [ "$dry" = 1 ] && echo "nightly build jobs, ignored: $(grep '^alert/SystemdUnitFailed/pc/agent-job-nix-nightly-' <<< "$failing_alerts" | cut -c1-120)"

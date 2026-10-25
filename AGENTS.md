@@ -77,10 +77,11 @@ The machines update themselves; nothing compiles on them.
   (`nix-nightly update`), builds the `pc` and `framework` closures on the
   homelab build server (`nix-nightly build`), repairs breakage following the
   `nix-update-doctor` skill, and pushes to `main` only when both closures are
-  built. **It has 50 minutes** (Erik, 2026-10-23: an update is never more than
-  an hour): `nix-nightly build` refuses to start after the deadline, and a
-  watchdog interrupts the session 5 minutes later and notifies Erik.
-- **04:00, PC:** `t3code-fork.timer` starts a second session (same budget) that
+  built. **No hard time limit, but a 50-minute checkpoint** (Erik, 2026-10-25):
+  at 50 minutes a message tells the session to find out why it takes long
+  (a big update that ships, or waste), act on it, and notify Erik with the
+  cause. It is never interrupted.
+- **04:00, PC:** `t3code-fork.timer` starts a second session (same checkpoint) that
   rebases the T3 Code fork onto the newest upstream nightly, refreshes
   `t3code-src` and its pnpm hash, builds and pushes.
 - **06:00, each machine:** `auto-update.timer` (user unit) pulls `main` and

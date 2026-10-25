@@ -22,22 +22,59 @@ You are unattended. Do not ask questions. Decide, record why, move on.
 | Time  | What                       | Who                                    |
 | ----- | -------------------------- | -------------------------------------- |
 | 01:00 | prebuild: update + build   | `nix-nightly prebuild`, no agent       |
-| 03:00 | the run below, 50 minutes  | this session                           |
-| 04:00 | T3 Code fork job, 50 min   | its own session ("T3 Code fork job")   |
+| 03:00 | the run below              | this session                           |
+| 04:00 | T3 Code fork job           | its own session ("T3 Code fork job")   |
 | 06:00 | machines apply `main`      | `auto-update`                          |
-
-**The run has 50 minutes** (Erik, 2026-10-23: "an update should not be more
-than an hour"). The deadline is real: `nix-nightly build` refuses to start
-after it (exit 4), and 5 minutes later a watchdog interrupts this session and
-stops its build. `nix-nightly time-left` says how much is left; check it before
-every step. Out of time is not a failure to fight: push nothing more, notify,
-summarize.
 
 The 01:00 prebuild updated every input except `t3code-src` in a clone of its
 own and built both hosts on the homelab without an agent, up to 110 minutes.
 So tonight's slow compiles (a nixpkgs bump rebuilds Hyprland through the
 Aquamarine overlay, 68 minutes) are normally done before you start, and when
 the update broke something, its result already names the failing derivation.
+A normal night then takes 10 to 20 minutes.
+
+There is no time limit. A big update may need to take long; a run that takes
+long for no reason is a bug. Telling the two apart is your job, at the
+checkpoint below. `nix-nightly elapsed` shows how long the run has taken and
+what the build is doing.
+
+## The 50-minute checkpoint
+
+Erik (2026-10-25): "If it takes more than 50 minutes, part of the instructions
+to the update: investigate why it's taking long. Sometimes it is a big update
+that needs to take long. Sometimes it doesn't need to take long."
+
+When the run has taken 50 minutes (`nix-nightly elapsed` says "PAST the
+50-minute checkpoint", or a message starting "Checkpoint:" arrives in this
+thread; it is sent at 50 minutes), stop what you are doing and investigate
+before anything else. Do not cancel a running build just because it is
+long, and do not hurry to finish.
+
+1. **Find what takes the time.** `nix-nightly elapsed` lists what the build is
+   building now and since when. Name the derivation(s) and how long they have
+   been building; for a step that is not a build (an evaluation, a test run, a
+   wait), name that step. Look at your own last steps too: how many builds you
+   ran and why.
+2. **Decide whether it is justified.** Justified: a large build that tonight's
+   update really ships. A kernel, a toolchain, Hyprland for a nixpkgs bump
+   that stays in the lock, one of Erik's own projects. The prebuild timed out
+   on it, or main moved after 01:00. Waste: something that will be thrown away
+   (a build for an input you are about to hold back, a build outside
+   `nix-nightly build`, a closure for a lock you already changed), a hung
+   process (no new log lines for 15 minutes, a stuck `ssh` or evaluation), a
+   retry loop (the same commit built again, the same failure twice), or a
+   large compile that is a cache miss with a fix in "What may compile".
+3. **Act on it.** Justified: let it run and carry on with the run. Waste: fix
+   the cause (hold the input back first, drop the override, stop the hung
+   job with `agent-job stop <name>`, stop retrying), or stop that part of the
+   run and ship the rest.
+4. **Tell Erik the cause**, once:
+   `nix-nightly notify "<cause>, <how long>, justified|not justified: <what you did>"`,
+   for example
+   `nix-nightly notify "Hyprland recompiled for nixpkgs 3ec6363 (Aquamarine overlay), 68 min so far, justified: nixpkgs ships tonight, letting it finish"`.
+   Never only the symptom ("the update is slow", "took 2 h").
+
+Then go on with the run; the summary (step 7) repeats the finding.
 
 ## The run
 
@@ -56,34 +93,38 @@ You start in a dedicated clone, clean and at `origin/main`. Never touch
      `~/.local/state/nix-nightly/prebuild/build.log`. Do not build just to see
      the error again.
    - **TIMED OUT, or no prebuild** (it printed "updating now"): run
-     `nix-nightly plan` and read it (see "What may compile"). A large compile
-     that is not already built does not fit in 50 minutes: hold its input back
-     (repair 1) instead of building it.
+     `nix-nightly plan` and read it (see "What may compile"). Decide before
+     building whether each large compile is justified (see the checkpoint).
+     One for an input you will hold back anyway is not: hold it back first.
 3. `nix-nightly build` — builds both hosts on the homelab and keeps the results
-   alive there; about 6 minutes when the prebuild built everything. Start it as
-   a background command and wait for it inside your turn. Write its output
-   **outside the clone** (`nix-nightly build > ../build.out 2>&1`) or not at
-   all; it keeps its own logs in `~/.local/state/nix-nightly/`.
+   alive there; about 3 to 6 minutes when the prebuild built everything. Start
+   it as a background command and wait for it inside your turn. Write its
+   output **outside the clone** (`nix-nightly build > ../build.out 2>&1`) or
+   not at all; it keeps its own logs in `~/.local/state/nix-nightly/`.
 4. If it fails, repair (below), commit each fix on its own, and build again.
-   **At most 3 builds in total.** Each one must test a different fix; never
-   rerun the same commit hoping it passes.
+   Each build must test a different fix; never rerun the same commit hoping it
+   passes.
 5. When it succeeds: `git pull --rebase origin main`. If that brought anything
    in, build again. Then `git push origin HEAD:main`.
-6. Only now, and only with 20 minutes or more left: clear the evaluation
-   warnings (see "Evaluation warnings"), one commit each, build once more and
-   push. With less time left, list them in the summary for tomorrow.
-7. End with a short summary: what was updated, what you had to change and why,
-   what is held back, which warnings you fixed and which you left and why, and
-   how long the run took.
+6. Clear the evaluation warnings (see "Evaluation warnings"), one commit each,
+   build once more and push.
+7. End with a summary that **leads with the cause** of anything that took
+   long or failed: "Hyprland recompiled for nixpkgs 3ec6363, 68 min,
+   justified", or "nss-cacert fails its blocklist check on 3ec6363, held
+   nixpkgs back", never "took 2 h". Then: what was updated, what you had to
+   change and why, what is held back, which warnings you fixed and which you
+   left and why, and how long the run took (`nix-nightly elapsed`). A run past
+   50 minutes includes the checkpoint's finding.
 
 Builds happen only through `nix-nightly build` and `nix-nightly plan` (they
-run on the homelab under the deadline). Never a bare `nix build` of a closure
-or `home.path` in the run: on 2026-10-25 one ran for 84 minutes with no limit,
-and compiled a Hyprland for a nixpkgs that was then held back anyway.
+run on the homelab). Never a bare `nix build` of a closure or `home.path` in
+the run: on 2026-10-25 one ran for 84 minutes and compiled a Hyprland for a
+nixpkgs that was then held back anyway.
 
-Out of builds or out of time: push nothing unbuilt, run
-`nix-nightly notify "<one sentence Erik can act on>"`, and write the full story
-in your final message: what broke, what you tried, what you would do next.
+Stop after 5 failed repair rounds. Then push nothing, run
+`nix-nightly notify "<the cause, in one sentence Erik can act on>"`, and write
+the full story in your final message: what broke, what you tried, what you
+would do next.
 
 A partial update is a success, not a failure. Holding one input back and
 shipping the rest is the normal outcome of a bad night, and the fastest
@@ -152,15 +193,14 @@ Re-run with `gh workflow run erik-android.yml -R ErikFrankling/t3code --ref erik
 
 The rebase is a session of its own at 04:00 (`t3code-fork.timer`), in its own
 dotfiles clone (`~/.local/state/t3code-fork/dotfiles`), never part of the
-03:00 run. It has the same 50-minute budget and watchdog; `nix-nightly
-time-left` works there too. By 04:00 `main` is built, so the only thing that
-compiles is t3code itself (about 11 minutes on the homelab). If it runs out of
-time, the flake keeps the previous fork commit, which is still built, and the
-fork stays where it is.
+03:00 run. By 04:00 `main` is built, so the only thing that compiles is
+t3code itself (about 11 minutes on the homelab); the whole job normally takes
+20 to 30 minutes. "The 50-minute checkpoint" applies here too, with the same
+message at 50 minutes (`nix-nightly elapsed` works in this clone). If the job
+cannot finish, the flake keeps the previous fork commit, which is still built.
 
-Do the steps below yourself, in order, checking `nix-nightly time-left`
-between them. Stop and report without pushing anything once less than 15
-minutes are left before step 6.
+Do the steps below yourself, in order. Report in the summary with the cause
+first, as in step 7 of the run.
 
 1. Work in `~/.local/state/nix-nightly/t3code` (clone
    `git@github.com:ErikFrankling/t3code.git` there if missing, add
@@ -304,8 +344,9 @@ learns the patterns; keep entries to a few lines.
   back because `nss-cacert` 3.131.1 fails its blocklist check there, so the
   Hyprland was never used. `nix-nightly build` also refused twice (exit 2,
   10-24 03:19 and 10-25 04:37) because the session wrote `build.log` into
-  the clone. Fix: the 01:00 prebuild, the 50-minute deadline and watchdog, the
-  fork job at 04:00, and `build` ignores untracked files.
+  the clone. Fix: the 01:00 prebuild, the fork job at
+  04:00, `build` ignores untracked files, and a 50-minute checkpoint where the
+  session finds out why it takes long (no hard limit: Erik, 2026-10-25).
 - 2026-10-23 — Same two holds as 10-22: `nixpkgs` update to `02c087f`+ still
   fails in `linux-6.18.57-modules` (vmware-modules, nixpkgs#575192 open; the
   v4l2loopback PR #575861 merged 10-21), and `nixpkgs_master` `a86be0c`+ needs

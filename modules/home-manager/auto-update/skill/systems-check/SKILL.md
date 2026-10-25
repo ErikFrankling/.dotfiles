@@ -6,7 +6,7 @@ description: Morning systems check of Erik's machines and homelab. Also the inci
 # Morning systems check: verify, repair, report
 
 Erik does not want to be a sysadmin. Every night at 01:00 a prebuild builds
-the updated inputs on the homelab, at 03:00 a session (50 minutes at most)
+the updated inputs on the homelab, at 03:00 a session
 updates the dotfiles and builds both machines there, and at 04:00 a second one
 rebases the T3 Code fork (`nix-update-doctor` skill); at 06:00 each machine
 applies `main`. You run at 07:00 and own the result: make sure the **pc**,
@@ -152,8 +152,8 @@ known causes:
   pulls and switches without building.
 - The nightly did not push at all: read its thread,
   `~/.local/state/nix-nightly/prebuild/result` and
-  `~/.local/state/nix-nightly/`; a "ran out of time" notification means the
-  watchdog stopped it at 50 minutes; the `nix-update-doctor` skill has the
+  `~/.local/state/nix-nightly/`; a run past 50 minutes sent Erik its cause
+  (the checkpoint in `nix-update-doctor`); the `nix-update-doctor` skill has the
   repairs. A night with no update is fine to report, not to panic over.
 - The 06:00 run failed or never ran: read `journalctl --user -u auto-update`
   and `journalctl -u 'auto-update-switch-*'` on that machine, fix the cause,
