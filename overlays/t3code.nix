@@ -18,11 +18,8 @@ in
         # Upstream moved to electron_44 itself, so no electron override is needed;
         # nixpkgs_master must carry the Electron that T3 pins (44.9.3 since v0.1.2,
         # which blocks the compromised eMudhra CA keys).
-        # T3 v0.1.2 pins Node 26 (security fixes); nixpkgs' package still uses the
-        # default Node 24, which would also be the ABI node-pty is built against.
-        (t3codeBase.passthru.unwrapped.override {
-          nodejs = otherPkgs.pkgsMaster.nodejs_26;
-        }).overrideAttrs
+        # nixpkgs_master now builds with Node 26 and pnpm 12 itself, so no nodejs override.
+        t3codeBase.passthru.unwrapped.overrideAttrs
           (
             finalAttrs: oldAttrs: {
               version = "0.1.3";
@@ -41,9 +38,9 @@ in
                   src
                   pnpmWorkspaces
                   ;
-                pnpm = otherPkgs.pkgsMaster.pnpm_11;
+                pnpm = otherPkgs.pkgsMaster.pnpm_12;
                 fetcherVersion = 4;
-                hash = "sha256-xRmOrOZbBljaF1IJr0JFUFzdhkld6+ehLIlpVOg/J3E=";
+                hash = "sha256-ghijoQR/74bSYiR8roQ3JV3sCT4WLHiuU+uY8j+1j5k=";
               };
 
               # node-pty ships a prebuilt pty.node that needs libstdc++ but has no
