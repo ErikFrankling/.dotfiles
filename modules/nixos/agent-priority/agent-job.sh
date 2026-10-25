@@ -108,7 +108,11 @@ case "${1:-}" in
     valid "$name"
     shift
     [ "${1:-}" != -- ] || shift
-    if [ -n "${AGENT_JOB:-}" ] || ! is_agent; then exec "$@"; fi
+    # In the caller, marked so the wrapped command does not wrap itself
+    # again: without AGENT_JOB, `nix-nightly build` and `heavy` outside an
+    # agent exec'd themselves in a loop until PATH outgrew the argument
+    # limit (2026-10-25, "mkdir: Argument list too long").
+    if [ -n "${AGENT_JOB:-}" ] || ! is_agent; then AGENT_JOB=${AGENT_JOB:-off} exec "$@"; fi
     start "$name" "$@"
     ;;
   attach)
