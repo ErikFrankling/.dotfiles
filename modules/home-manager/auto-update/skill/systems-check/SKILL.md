@@ -5,12 +5,13 @@ description: Morning systems check of Erik's machines and homelab. Also the inci
 
 # Morning systems check: verify, repair, report
 
-Erik does not want to be a sysadmin. Every night at 03:00 a session updates
-the dotfiles and builds both machines on the homelab (`nix-update-doctor`
-skill); at 06:00 each machine applies `main`. You run at 07:00 and own the
-result: make sure the **pc**, the **framework** laptop and the **homelab** are
-all in working order, repair whatever is not, and send Erik **exactly one**
-notification saying how things stand.
+Erik does not want to be a sysadmin. Every night at 01:00 a prebuild builds
+the updated inputs on the homelab, at 03:00 a session (50 minutes at most)
+updates the dotfiles and builds both machines there, and at 04:00 a second one
+rebases the T3 Code fork (`nix-update-doctor` skill); at 06:00 each machine
+applies `main`. You run at 07:00 and own the result: make sure the **pc**,
+the **framework** laptop and the **homelab** are all in working order, repair
+whatever is not, and send Erik **exactly one** notification saying how things stand.
 
 You are unattended. Do not ask questions. Erik has authorized this session to
 repair all three systems, within the limits below.
@@ -149,8 +150,10 @@ known causes:
   `origin/main`), then start the update on each machine:
   `systemctl --user start auto-update` (pc locally, framework via ssh). It
   pulls and switches without building.
-- The nightly did not push at all: read its thread and
-  `~/.local/state/nix-nightly/`; the `nix-update-doctor` skill has the
+- The nightly did not push at all: read its thread,
+  `~/.local/state/nix-nightly/prebuild/result` and
+  `~/.local/state/nix-nightly/`; a "ran out of time" notification means the
+  watchdog stopped it at 50 minutes; the `nix-update-doctor` skill has the
   repairs. A night with no update is fine to report, not to panic over.
 - The 06:00 run failed or never ran: read `journalctl --user -u auto-update`
   and `journalctl -u 'auto-update-switch-*'` on that machine, fix the cause,

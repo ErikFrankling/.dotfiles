@@ -67,11 +67,22 @@ is a bug to analyze, not something to wait out.
 
 The machines update themselves; nothing compiles on them.
 
+- **01:00, PC:** `nix-nightly-prebuild.timer` runs `nix-nightly prebuild`, no
+  agent: it updates every input except `t3code-src` in its own clone and
+  builds both closures on the homelab (110 minutes at most), so slow compiles
+  are done and failures are known before the session starts. Result in
+  `~/.local/state/nix-nightly/prebuild/result`.
 - **03:00, PC:** `nix-nightly.timer` starts a T3 Code session in its own clone
-  (`~/.local/state/nix-nightly/dotfiles`). It runs `nix flake update`, builds
-  the `pc` and `framework` closures on the homelab build server
-  (`nix-nightly build`), repairs breakage following the `nix-update-doctor`
-  skill, and pushes to `main` only when both closures are built.
+  (`~/.local/state/nix-nightly/dotfiles`). It takes the prebuild's lock
+  (`nix-nightly update`), builds the `pc` and `framework` closures on the
+  homelab build server (`nix-nightly build`), repairs breakage following the
+  `nix-update-doctor` skill, and pushes to `main` only when both closures are
+  built. **It has 50 minutes** (Erik, 2026-10-23: an update is never more than
+  an hour): `nix-nightly build` refuses to start after the deadline, and a
+  watchdog interrupts the session 5 minutes later and notifies Erik.
+- **04:00, PC:** `t3code-fork.timer` starts a second session (same budget) that
+  rebases the T3 Code fork onto the newest upstream nightly, refreshes
+  `t3code-src` and its pnpm hash, builds and pushes.
 - **06:00, each machine:** `auto-update.timer` (user unit) pulls `main` and
   fetches the system with `--max-jobs 0`, then activates it in a separate
   system unit (`auto-update-switch-*`). Uncommitted or unpushed work in

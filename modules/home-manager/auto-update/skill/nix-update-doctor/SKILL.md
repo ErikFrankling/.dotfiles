@@ -17,36 +17,77 @@ machines fail their update. If you cannot get a build, push nothing.
 
 You are unattended. Do not ask questions. Decide, record why, move on.
 
+## The night
+
+| Time  | What                       | Who                                    |
+| ----- | -------------------------- | -------------------------------------- |
+| 01:00 | prebuild: update + build   | `nix-nightly prebuild`, no agent       |
+| 03:00 | the run below, 50 minutes  | this session                           |
+| 04:00 | T3 Code fork job, 50 min   | its own session ("T3 Code fork job")   |
+| 06:00 | machines apply `main`      | `auto-update`                          |
+
+**The run has 50 minutes** (Erik, 2026-10-23: "an update should not be more
+than an hour"). The deadline is real: `nix-nightly build` refuses to start
+after it (exit 4), and 5 minutes later a watchdog interrupts this session and
+stops its build. `nix-nightly time-left` says how much is left; check it before
+every step. Out of time is not a failure to fight: push nothing more, notify,
+summarize.
+
+The 01:00 prebuild updated every input except `t3code-src` in a clone of its
+own and built both hosts on the homelab without an agent, up to 110 minutes.
+So tonight's slow compiles (a nixpkgs bump rebuilds Hyprland through the
+Aquamarine overlay, 68 minutes) are normally done before you start, and when
+the update broke something, its result already names the failing derivation.
+
 ## The run
 
 You start in a dedicated clone, clean and at `origin/main`. Never touch
 `~/.dotfiles`; that is Erik's working tree.
 
-1. `nix flake update`, then commit `flake.lock` alone ("Update flake inputs").
-   If nothing changed, skip the commit and still do step 2: yesterday's push may
-   have been someone else's and not built yet.
-1b. Rebase Erik's T3 Code fork onto the newest upstream nightly (see "T3 Code
-   fork"). Hand this to a subagent and wait for it; it ends in its own commit.
-2. `nix-nightly plan` — lists what the homelab would have to build for each
-   host. Read it (see "What may compile").
-3. Clear the evaluation warnings (see "Evaluation warnings"). Evaluate both
-   hosts, fix every warning whose fix is clear, one commit each.
-4. `nix-nightly build` — builds both hosts on the homelab and keeps the results
-   alive there. It is slow (an old 4-core machine): run it in the background and
-   wait for it rather than polling. It refuses a dirty tree, so commit first.
-5. If it fails, repair (below), commit each fix on its own, and build again.
-6. When it succeeds: `git pull --rebase origin main`. If that brought anything
+1. `nix-nightly update`. It takes the prebuild's `flake.lock` when the
+   prebuild started from the `flake.lock` main still has, else runs the
+   update itself, commits it ("Update flake inputs") and prints the
+   prebuild's result. `t3code-src` is never updated here; the fork job owns it.
+   If nothing changed, still do step 3: yesterday's push may have been someone
+   else's and not built yet.
+2. Read the prebuild result.
+   - **OK:** everything is cached; go to step 3, skip `plan`.
+   - **FAILED:** repair first (below), using the errors it printed and
+     `~/.local/state/nix-nightly/prebuild/build.log`. Do not build just to see
+     the error again.
+   - **TIMED OUT, or no prebuild** (it printed "updating now"): run
+     `nix-nightly plan` and read it (see "What may compile"). A large compile
+     that is not already built does not fit in 50 minutes: hold its input back
+     (repair 1) instead of building it.
+3. `nix-nightly build` — builds both hosts on the homelab and keeps the results
+   alive there; about 6 minutes when the prebuild built everything. Start it as
+   a background command and wait for it inside your turn. Write its output
+   **outside the clone** (`nix-nightly build > ../build.out 2>&1`) or not at
+   all; it keeps its own logs in `~/.local/state/nix-nightly/`.
+4. If it fails, repair (below), commit each fix on its own, and build again.
+   **At most 3 builds in total.** Each one must test a different fix; never
+   rerun the same commit hoping it passes.
+5. When it succeeds: `git pull --rebase origin main`. If that brought anything
    in, build again. Then `git push origin HEAD:main`.
+6. Only now, and only with 20 minutes or more left: clear the evaluation
+   warnings (see "Evaluation warnings"), one commit each, build once more and
+   push. With less time left, list them in the summary for tomorrow.
 7. End with a short summary: what was updated, what you had to change and why,
-   what is held back, which warnings you fixed and which you left and why.
+   what is held back, which warnings you fixed and which you left and why, and
+   how long the run took.
 
-Stop after 5 failed repair rounds or about 3 hours, whichever comes first. Then
-push nothing, run `nix-nightly notify "<one sentence Erik can act on>"`, and
-write the full story in your final message: what broke, what you tried, what
-you would do next.
+Builds happen only through `nix-nightly build` and `nix-nightly plan` (they
+run on the homelab under the deadline). Never a bare `nix build` of a closure
+or `home.path` in the run: on 2026-10-25 one ran for 84 minutes with no limit,
+and compiled a Hyprland for a nixpkgs that was then held back anyway.
+
+Out of builds or out of time: push nothing unbuilt, run
+`nix-nightly notify "<one sentence Erik can act on>"`, and write the full story
+in your final message: what broke, what you tried, what you would do next.
 
 A partial update is a success, not a failure. Holding one input back and
-shipping the rest is the normal outcome of a bad night.
+shipping the rest is the normal outcome of a bad night, and the fastest
+repair: prefer it whenever the cause is not obvious.
 
 ## Evaluation warnings
 
@@ -80,9 +121,9 @@ release notes. Then:
   converting the Hyprland config to Lua): leave it and list it in the summary
   with the link.
 
-Put each fix in its own commit, after the lock commit and before the build,
-so one build covers everything. A warning fix that breaks the build is
-reverted, not repaired at length; the update matters more.
+Put each fix in its own commit, after the update is pushed (step 6), so one
+more build covers them all. A warning fix that breaks the build is reverted,
+not repaired at length; the update matters more.
 
 ## T3 Code fork
 
@@ -107,7 +148,19 @@ previous build), but repair it if the cause is clear: usually a conflict
 re-applied wrongly in `apps/mobile`, or a new upstream native dependency.
 Re-run with `gh workflow run erik-android.yml -R ErikFrankling/t3code --ref erik/main`.
 
-Give the subagent this brief:
+## T3 Code fork job
+
+The rebase is a session of its own at 04:00 (`t3code-fork.timer`), in its own
+dotfiles clone (`~/.local/state/t3code-fork/dotfiles`), never part of the
+03:00 run. It has the same 50-minute budget and watchdog; `nix-nightly
+time-left` works there too. By 04:00 `main` is built, so the only thing that
+compiles is t3code itself (about 11 minutes on the homelab). If it runs out of
+time, the flake keeps the previous fork commit, which is still built, and the
+fork stays where it is.
+
+Do the steps below yourself, in order, checking `nix-nightly time-left`
+between them. Stop and report without pushing anything once less than 15
+minutes are left before step 6.
 
 1. Work in `~/.local/state/nix-nightly/t3code` (clone
    `git@github.com:ErikFrankling/t3code.git` there if missing, add
@@ -133,13 +186,15 @@ Give the subagent this brief:
    push nothing, report what broke, and leave the fork where it was.
 6. Force-push `erik/main` (`--force-with-lease`).
 7. In the dotfiles clone: `nix flake update t3code-src`, set `version` in
-   `overlays/t3code.nix` to the tag's version, set the `pnpmDeps` hash to
-   `lib.fakeHash`, build once to read the real hash, put it in, and build
-   `.#nixosConfigurations.pc.config.home-manager.users.erikf.home.path` with
-   `--no-link`. Commit "Rebase the T3 Code fork onto <tag>".
-
-If the fork cannot be rebased tonight, the rest of the update still ships: the
-flake keeps the previous fork commit, which is still built.
+   `overlays/t3code.nix` to the tag's version if it is a release number, and
+   set the `pnpmDeps` hash to `lib.fakeHash`. Read the real hash with a
+   bounded homelab build that stops at the first failure, the pnpm fetch:
+   `timeout 15m nix-remote build --no-link .#nixosConfigurations.pc.config.home-manager.users.erikf.home.path 2>&1 | grep -m1 'got:'`.
+   Put it in, commit "Rebase the T3 Code fork onto <tag>".
+8. `nix-nightly build` (output outside the clone), then
+   `git pull --rebase origin main` and `git push origin HEAD:main`. If the
+   build fails on something other than t3code, that is not this job's to
+   repair: push nothing and report it.
 
 ## What may compile
 
@@ -243,6 +298,14 @@ finds it.
 Append one entry per night that needed a repair, newest first: date, symptom,
 cause, what fixed it, link. Commit it with the fix. This is how the next run
 learns the patterns; keep entries to a few lines.
+- 2026-10-25 — The run took 1 h 49 min. The fork subagent's unbounded local
+  `nix build ... home.path` (03:07–04:31) compiled Hyprland 0.56.2 for
+  nixpkgs `3ec6363` (68 min on the homelab), and that nixpkgs was then held
+  back because `nss-cacert` 3.131.1 fails its blocklist check there, so the
+  Hyprland was never used. `nix-nightly build` also refused twice (exit 2,
+  10-24 03:19 and 10-25 04:37) because the session wrote `build.log` into
+  the clone. Fix: the 01:00 prebuild, the 50-minute deadline and watchdog, the
+  fork job at 04:00, and `build` ignores untracked files.
 - 2026-10-23 — Same two holds as 10-22: `nixpkgs` update to `02c087f`+ still
   fails in `linux-6.18.57-modules` (vmware-modules, nixpkgs#575192 open; the
   v4l2loopback PR #575861 merged 10-21), and `nixpkgs_master` `a86be0c`+ needs
