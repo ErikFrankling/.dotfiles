@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, otherPkgs, ... }:
 {
   # Home VPN client. The Proxmox host runs a Tailscale subnet router that
   # advertises 192.168.50.0/24 (see homelab repo docs/tailscale.md), so joining
@@ -8,6 +8,11 @@
   # full-tunnel overlap has no equivalent here.
   services.tailscale = {
     enable = true;
+    # From nixpkgs_unstable, not nixpkgs: tailscaled listens on the internet
+    # (UDP 41641) and must not wait out a nixpkgs hold. The nightly flake
+    # update moves it; Tailscale's own auto-update cannot replace a Nix
+    # store binary.
+    package = otherPkgs.pkgsUnstable.tailscale;
     # An OAuth client secret (tskey-client-...) used as the pre-auth key, so
     # enrollment needs no browser login. Unlike normal auth keys (90-day max),
     # OAuth client secrets NEVER expire, and the tag they enroll with disables

@@ -27,6 +27,12 @@
 
     nixpkgs_master.url = "github:nixos/nixpkgs/master";
 
+    # Same channel as nixpkgs, but its own lock entry: holding nixpkgs back
+    # (git checkout HEAD~1 -- flake.lock for one input) leaves this one
+    # current. Network-facing daemons (Tailscale) come from here so a hold
+    # for an unrelated build failure never holds back their security fixes.
+    nixpkgs_unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+
     nixpkgs_stable.url = "github:nixos/nixpkgs/release-25.05";
 
     flake-utils.url = "github:numtide/flake-utils";
@@ -198,10 +204,15 @@
         inherit system;
         config.allowUnfree = true;
       };
+      pkgsUnstable = import inputs.nixpkgs_unstable {
+        inherit system;
+        config.allowUnfree = true;
+      };
       otherPkgs = {
         inherit
           pkgsMaster
           pkgsStable
+          pkgsUnstable
           # llama-cpp-vulkan
           ;
       };
