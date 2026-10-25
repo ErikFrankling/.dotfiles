@@ -880,6 +880,25 @@ let
         awk -F'\t' -v cutoff=$(($(date +%s) - 86400)) '$1 > cutoff' "$windows" > "$windows.tmp"
         mv "$windows.tmp" "$windows"
       fi
+      # Windows opened by other machines: an Alertmanager silence whose
+      # comment starts with "health-watch maintenance [REGEX]" (the Proxmox
+      # host's 05:15 update reboot, homelab ops/updates). Copied into the
+      # windows file while Alertmanager answers, so they still hold once the
+      # reboot takes Alertmanager down with it.
+      if [ "$dry" = 0 ] && silences=$(curl -fsS --max-time 10 https://alertmanager.erikfrankling.duckdns.org/api/v2/silences); then
+        jq -r '.[] | select(.status.state == "active")
+          | select(.comment | startswith("health-watch maintenance"))
+          | [(.endsAt[0:19] + "Z" | fromdateiso8601),
+             ((.comment | capture("^health-watch maintenance \\[(?<re>[^]]*)\\]").re) // "."),
+             "silence \(.id): \(.comment)",
+             (.startsAt[0:19] + "Z" | fromdateiso8601)] | @tsv' <<< "$silences" \
+          | while IFS=$'\t' read -r end pattern reason start; do
+            id=''${reason%%:*}
+            grep -qF "$id:" "$windows" 2> /dev/null && continue
+            printf '%s\t%s\t%s\t%s\n' "$end" "$pattern" "$reason" "$start" >> "$windows"
+            log "maintenance until $(date -d "@$end" +%H:%M) for checks matching $pattern: $reason"
+          done
+      fi
       maintenance=$(jq -Rn '[inputs | split("\t") | {end: (.[0] | tonumber), pattern: .[1],
         start: (if .[3] then (.[3] | tonumber) else (.[0] | tonumber) - 1800 end)}]' < <(cat "$windows" 2> /dev/null))
       now=$(date +%s)
