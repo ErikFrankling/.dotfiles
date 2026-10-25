@@ -196,8 +196,9 @@ let
               0) echo "prebuild OK in $took min: both hosts built and cached" ;;
               4) echo "prebuild TIMED OUT after $took min; whatever finished is cached" ;;
               *) echo "prebuild FAILED (exit $status) after $took min. First errors:"
-                 grep -h -m 8 -E "^error|Cannot build|failed with exit|hash mismatch|got: " \
-                   ${prebuildDir}/build.log "$logs"-*.log 2> /dev/null | cut -c1-300 | sed 's/^/  /' || true
+                 grep -h -E "^error|Cannot build|Reason:|hash mismatch|got: " \
+                   "$logs"-*.log 2> /dev/null | awk '!seen[$0]++' | head -n 8 \
+                   | cut -c1-300 | sed 's/^/  /' || true
                  echo "  full logs: ${prebuildDir}/build.log, $logs-<host>.log" ;;
             esac
           } > ${prebuildDir}/result
