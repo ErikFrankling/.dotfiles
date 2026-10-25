@@ -443,6 +443,16 @@
             # "suppressevent fullscreen, class:.*" # You'll probably like this.
 
             "rounding 10,match:float 1"
+
+            # Erik's T3 Code desktop app lives on workspace 1, whatever has focus
+            # when it opens (2026-10-25: the 06:05 relaunch ran while focus sat on
+            # the headless AGENT-1 output and the window opened on workspace
+            # `agent`, out of Erik's reach). Workspace 1 is bound to the main
+            # monitor in `workspaces` (hosts/pc/home.nix). Silent, so a relaunch
+            # never pulls the view away. The "Speak reply" card shares the app-id
+            # and has its own floating rules (modules/home-manager/speak); the
+            # dev build is a different class, kept on AGENT-1 by computer-use.
+            "workspace 1 silent, match:class ^(com\\.t3tools\\.T3Code)$, match:title negative:^(T3 Code — Speak reply)$"
           ];
 
           general = {
