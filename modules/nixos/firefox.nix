@@ -171,6 +171,17 @@ in
             installation_mode = "force_installed";
           };
 
+          # Time tracker: aw-watcher-web reports the focused tab to the time agent
+          # on 127.0.0.1:5600 (host only, nothing else leaves the machine). Without
+          # it the tracker cannot see the site of a Firefox tab. A policy applies to
+          # every profile of this Firefox ("Original profile" included), and Zen
+          # gets the same extension in ../home-manager/zen.nix. Takes effect at
+          # the next Firefox start.
+          "{ef87d84c-2127-493f-b952-5b4e744245bc}" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/aw-watcher-web/latest.xpi";
+            installation_mode = "force_installed";
+          };
+
           # 1Password:
           # "{d634138d-c276-4fc8-924b-40a0ea21d284}" = {
           #   install_url = "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager/latest.xpi";
