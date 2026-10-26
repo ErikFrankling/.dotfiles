@@ -124,6 +124,11 @@ in
           endpoint    = "https://otlp.erikfrankling.duckdns.org"
           auth        = otelcol.auth.bearer.ingest.handler
           compression = "gzip"
+          // A fresh connection per request. After the homelab VM rebooted
+          // (2026-10-26) every send on the kept-alive connection got 403 from
+          // the lan-only allowlist (likely opened while ServiceLB was not ready
+          // and source-NATed) until Alloy restarted; new connections were fine.
+          disable_keep_alives = true
         }
         sending_queue {
           enabled    = true
