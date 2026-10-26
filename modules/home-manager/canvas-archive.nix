@@ -8,6 +8,16 @@
 # (high when it affects today or tomorrow).
 #
 # READ-ONLY (Erik, 2026-10-21): canvas_session.py only issues GET requests.
+#
+# Retention (Erik, 2026-10-26: "we don't need infinite copies of the same
+# info"): after each run canvas-archive-retain.py keeps archive.json (latest)
+# and archive-prev.json, one gzipped full snapshot per ISO week in snapshots/,
+# and each day's changes in changes/ (JSON of added/removed/changed Canvas
+# objects plus diff.py's changes.md). Old daily full copies are deleted only
+# once their week's snapshot reads back as a valid archive.
+#
+# On success it starts school-sync (modules/home-manager/school-sync), which
+# pushes the deadlines to https://school.erikfrankling.duckdns.org.
 {
   config,
   lib,
@@ -19,10 +29,14 @@ let
 in
 {
   systemd.user.services.canvas-archive-refresh = {
-    Unit.Description = "Refresh the local Canvas archive and notify about changes";
+    Unit = {
+      Description = "Refresh the local Canvas archive and notify about changes";
+      OnSuccess = [ "school-sync.service" ];
+    };
     Service = {
       Type = "oneshot";
       ExecStart = "${archive}/run-daily.sh";
+      ExecStartPost = "${pkgs.python3}/bin/python3 -I ${./canvas-archive-retain.py} ${archive}";
       # Own the interpreter (with pymupdf for the scrub/pdf_honour_scan.py
       # redaction step in run-daily.sh) and pdftotext; notify-erik comes from
       # the system profile.

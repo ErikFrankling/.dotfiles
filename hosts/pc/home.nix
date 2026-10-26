@@ -121,6 +121,7 @@ in
     ../../modules/home-manager/notify # phone notifications skill
     ../../modules/home-manager/company-brain.nix
     ../../modules/home-manager/canvas-archive.nix
+    ../../modules/home-manager/school-sync
     ../../modules/home-manager/x-graph.nix
     ../../modules/home-manager/search-sync.nix
     ../../modules/home-manager/machines

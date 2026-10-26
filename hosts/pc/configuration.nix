@@ -138,6 +138,9 @@
   };
   # Canvas API token for agents (agent-canvas-token, computer-use/logins.nix).
   sops.secrets.canvas-token.owner = username;
+  # Ingest token of the school calendar (homelab apps/school.yaml), read by
+  # the school-sync unit (modules/home-manager/school-sync).
+  sops.secrets.school-ingest-token.owner = username;
   # OpenCode Go API key (modules/home-manager/ai.nix merges it into opencode auth.json).
   sops.secrets.opencode-go-key.owner = username;
   # FCM service account of the Firebase project "t3code-erik-push": the T3
