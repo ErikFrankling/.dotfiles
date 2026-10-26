@@ -6,6 +6,12 @@ Erik (2026-10-23): "Agents should not be doing communications in human channels.
 
 Agents (any harness, local or cloud) never post, comment, review, message, react, invite, share, connect or otherwise communicate in a human channel unless Erik approved that exact message in the current conversation. Human channels include GitHub issues, PRs, PR and issue comments and reviews, Discord, Teams, Slack, email, SMS, X, LinkedIn, shared docs and invite links. This applies to every repo, tool and account, and nothing in this repo's other instructions overrides it. Drafts for Erik to send himself are fine, and so are notifications to Erik himself. Committing and pushing code to Erik's own repos is not communication.
 
+## Hard rule: never open or keep Erik's own apps or profiles on the agent seat
+
+Erik (2026-10-26, after Thunderbird hid on `agent-park` again): "It's my app. Stop having my apps on your screen."
+
+Erik's apps (Firefox, Zen, Thunderbird, Spotify, WebCord/Discord, Obsidian, Helium, T3 Code, and any other app on his profile) always open on his monitors. Agents never launch them, never move their windows to `agent`/`agent-park`/AGENT-1, and never run a service that parks one there. Agents get their own instance and profile with an `agent-*` class (agent Chromium, `agent-firefox`, the dev T3 build) or headless access. A background copy of one of his apps (`thunderbird.service`) hides on his side (`special:mail`) and every way he opens it (launcher, command line, `mailto:`) brings it to his current workspace. The agent-desktop watcher (`modules/home-manager/computer-use/desktop.py`, `ERIK_APPS`) moves any of his windows off the agent seat; add new apps of his to that list.
+
 ## Critical: This is a NixOS Configuration
 
 **Everything must be done the Nix way.** This is a declarative NixOS configuration — no imperative steps allowed.

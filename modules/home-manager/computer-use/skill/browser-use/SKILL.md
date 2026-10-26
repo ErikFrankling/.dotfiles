@@ -236,13 +236,13 @@ Erik's mail yourself; don't ask him to copy codes. His accounts:
 `erik.frankling@frankling.se` (Office 365), `erik.frankling@gmail.com`,
 `ef.pro454@gmail.com`, KTH (`erikfran`), `erik.frankling@outlook.com`.
 
-Thunderbird syncs all of them as the user unit `thunderbird.service`, **out of
-sight**: its window (class `agent-thunderbird`) always opens on the hidden
-`agent-park` workspace on AGENT-1, never on Erik's monitors (2026-10-21; it
-used to pop up on his screen). If `systemctl --user is-active thunderbird` is
-not `active`, run `systemctl --user restart thunderbird` and wait ~60 s. Never
-start `thunderbird` any other way, and never move its window to Erik's
-monitors. Only he does that, with `open-mail`. In order:
+Erik's own Thunderbird syncs all of them as the user unit
+`thunderbird.service`, kept hidden on his `special:mail` workspace until he
+opens it. **It is his app, not yours: never touch its window** (no moving,
+capturing or focusing it, never to AGENT-1), never run `thunderbird` or open
+`mailto:` links, and never restart the service while its window is on one of
+his workspaces. If `systemctl --user is-active thunderbird` is not `active`,
+run `systemctl --user start thunderbird` and wait ~60 s. In order:
 
 1. **Webmail in your browser** (no GUI needed, freshest). Logged in already:
    `https://mail.google.com` (check which account), `https://outlook.office.com`
@@ -263,19 +263,10 @@ monitors. Only he does that, with `open-mail`. In order:
 
    Check the file timestamp: bodies land when Thunderbird syncs (every few
    minutes) or a message is opened.
-3. **Look at the Thunderbird window** only if 1 and 2 fail. Windows on
-   `agent-park` are not rendered, so a capture is blank. Move it to your
-   visible workspace on AGENT-1, capture with `mcp__cua__get_window_state`
-   (`include_accessibility_tree:false`) and `mcp__cua__zoom`, then park it
-   again:
-
-   ```sh
-   hyprctl dispatch movetoworkspacesilent 'name:agent,class:^(agent-thunderbird)$'
-   # ... capture ...
-   hyprctl dispatch movetoworkspacesilent 'name:agent-park,class:^(agent-thunderbird)$'
-   ```
-
-   Read only: don't send, delete, move or mark mail.
+3. If 1 and 2 fail, search the mail index (Executor app `search`, Onyx) or ask
+   Erik for the code. Never look at the Thunderbird window instead: until
+   2026-10-26 agents moved it to AGENT-1 for that and Erik could not open his
+   mail. Read only throughout: don't send, delete, move or mark mail.
 
 ### Codes that end up on the wrong side
 

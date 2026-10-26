@@ -44,6 +44,14 @@ Erik runs **Hyprland** (a tiling Wayland compositor) with three outputs:
   workspace|focuswindow|movefocus|movetoworkspace` without `silent` and an
   explicit `address:` of *your* window, and never use `ydotool`, `wtype`,
   `xdotool` or anything that injects global input.
+- **Never open or keep Erik's own apps or profiles on the agent seat.** His
+  Firefox, Zen, Thunderbird, Spotify, WebCord/Discord, Obsidian, Helium and T3
+  Code are his: never launch them (`firefox`, `xdg-open URL`, `thunderbird`,
+  `mailto:`), never move their windows to `agent`/`agent-park`. Single-instance
+  apps hand your launch to his running copy, and its window lands where he
+  can't find it (2026-10-26: he could not open Thunderbird). Use your own
+  instances (agent Chromium, `agent-firefox`) or headless access. The
+  agent-desktop watcher moves any of his app windows off AGENT-1 at once.
 - Erik can watch AGENT-1 with `agent-desktop view` (view-only VNC).
 
 ## Your tools (MCP servers)

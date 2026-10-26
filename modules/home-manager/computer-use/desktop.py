@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+import re
 import socket
 import subprocess
 import sys
@@ -111,15 +112,60 @@ def hypr_request(command):
     return b"".join(chunks).decode(errors="replace")
 
 
-def confine_window(address):
+# Erik's own apps, on his own profiles. Their windows belong on his monitors,
+# whoever started the process: an agent that launches one of these reaches his
+# profile (single-instance apps hand the request to his running copy), so the
+# window is his. Agents use their own classes (agent-chromium, agent-firefox,
+# com.t3tools.T3Code.Development). 2026-10-26: Thunderbird on agent-park meant
+# Erik could not open his mail.
+ERIK_APPS = re.compile(r"^(firefox|zen.*|thunderbird|spotify|webcord|discord|vesktop"
+                       r"|md\.obsidian\.Obsidian|obsidian|helium|com\.t3tools\.T3Code"
+                       r"|signal|org\.telegram\.desktop|teams-for-linux|Slack)$", re.IGNORECASE)
+
+
+def erik_app(window):
+    return bool(ERIK_APPS.match(window["class"]))
+
+
+def erik_workspace(monitors=None):
+    """The workspace Erik is looking at: the focused human monitor's, else the
+    first human monitor's (focus can sit on AGENT-1)."""
+    monitors = monitors or json.loads(hypr_request("j/monitors"))
+    human = [m for m in monitors if m["name"] != OUTPUT and not m["disabled"]]
+    human.sort(key=lambda m: not m["focused"])
+    return human[0]["activeWorkspace"]["name"] if human else None
+
+
+def rescue_window(window, clients):
+    # Never keep an app of Erik's on the agent seat, and never let a second
+    # Thunderbird main window vanish onto its hidden special:mail shelf while
+    # Thunderbird is on his screen.
+    workspace = window["workspace"]["name"]
+    stray = workspace in AGENT_WORKSPACES or (
+        window["class"] == "thunderbird" and workspace == "special:mail"
+        and any(w["class"] == "thunderbird" and not w["workspace"]["name"].startswith("special:")
+                and w["workspace"]["name"] not in AGENT_WORKSPACES for w in clients))
+    if not (erik_app(window) and stray):
+        return False
+    target = erik_workspace()
+    if target:
+        hypr_request(f"dispatch movetoworkspacesilent name:{target},address:{window['address']}")
+        print(f"Moved Erik's {window['class']} window ({window['address']}) from workspace "
+              f"{workspace} to {target}", flush=True)
+    return True
+
+
+def confine_window(address, opened=True):
     # Only an app's first window follows the `[workspace name:agent silent]`
     # launch rule. Later ones (dialogs, compose windows, extra toplevels) open
     # on whatever workspace has focus, i.e. on Erik's monitor. Send every
     # window of an agent-seat process, and anything an agent harness spawned
-    # itself, to AGENT-1 the moment it opens.
-    window = next((w for w in json.loads(hypr_request("j/clients"))
-                   if w["address"] == address), None)
-    if (window and window["workspace"]["name"] not in AGENT_WORKSPACES
+    # itself, to AGENT-1 the moment it opens. Erik's own apps go the other way.
+    clients = json.loads(hypr_request("j/clients"))
+    window = next((w for w in clients if w["address"] == address), None)
+    if not window or rescue_window(window, clients) or erik_app(window) or not opened:
+        return
+    if (window["workspace"]["name"] not in AGENT_WORKSPACES
             and (agent_process(window["pid"]) or harness_spawned(window["pid"]))):
         hypr_request(f"dispatch movetoworkspacesilent name:{WORKSPACE},address:{address}")
         print(f"Moved agent window {window['class']} ({address}) from workspace "
@@ -136,9 +182,14 @@ def watch_focus():
         for line in connection.makefile("rb"):
             if line.startswith(b"monitoradded>>"):
                 return_focus()
-            elif line.startswith(b"openwindow>>"):
+            elif line.startswith((b"openwindow>>", b"movewindowv2>>")):
+                # Both start with the window address. A move only rescues
+                # Erik's apps (an agent's `movetoworkspace`); it never confines,
+                # so a window someone moves to Erik on purpose stays there.
+                event, _, payload = line.partition(b">>")
                 try:
-                    confine_window("0x" + line[12:].split(b",", 1)[0].decode())
+                    confine_window("0x" + payload.split(b",", 1)[0].decode(),
+                                   opened=event == b"openwindow")
                 except (OSError, ValueError, KeyError) as error:
                     print(f"confine failed: {error}", flush=True)
 

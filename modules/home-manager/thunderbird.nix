@@ -8,22 +8,63 @@
 
 let
   sig = "Mvh Erik Frankling";
-  # Bring the hidden Thunderbird window to Erik's current workspace.
-  openMail = pkgs.writeShellScriptBin "open-mail" ''
+  # Erik's one way into Thunderbird: the launcher entry, `thunderbird` on the
+  # command line and mailto: links all run this. It starts the background
+  # instance if needed, hands it any arguments (a mailto: opens a compose
+  # window), then moves every Thunderbird window to the workspace Erik is
+  # looking at and focuses it. Nothing else decides where his mail opens
+  # (2026-10-26: a plain `thunderbird` only re-activated the hidden window on
+  # the agent seat, so for him it "just did not work").
+  launcher = pkgs.writeShellScriptBin "thunderbird" ''
     set -u
+    real=${pkgs.thunderbird}/bin/thunderbird
+    # The profile manager, and anything outside Hyprland: plain Thunderbird.
+    case " $* " in *" --ProfileManager "* | *" -P "* | *" --headless "*) exec "$real" "$@" ;; esac
+    if [ -z "''${HYPRLAND_INSTANCE_SIGNATURE:-}" ] || ! hyprctl -j monitors >/dev/null 2>&1; then
+      exec "$real" "$@"
+    fi
     export PATH=${
       lib.makeBinPath [
         pkgs.jq
         pkgs.systemd
+        pkgs.coreutils
       ]
     }:$PATH
+    windows() { hyprctl -j clients | jq -c '[.[] | select(.class == "thunderbird")]'; }
+
     systemctl --user start thunderbird.service
     for _ in $(seq 1 60); do
-      hyprctl clients -j | jq -e 'any(.[]; .class == "agent-thunderbird")' >/dev/null && break
+      windows | jq -e 'length > 0' >/dev/null && break
       sleep 0.5
     done
-    ws=$(hyprctl activeworkspace -j | jq -r .id)
-    hyprctl dispatch movetoworkspace "$ws,class:^(agent-thunderbird)$"
+    before=$(windows | jq -c 'map(.address)')
+    if [ $# -gt 0 ]; then
+      # A remote call into the running instance; it returns at once.
+      "$real" "$@"
+      for _ in $(seq 1 20); do
+        windows | jq -e --argjson b "$before" 'any(.[]; .address as $a | $b | index($a) | not)' >/dev/null && break
+        sleep 0.25
+      done
+    fi
+
+    # Erik's workspace: the focused monitor's, unless focus sits on the
+    # headless AGENT-1 output, then the one under his pointer.
+    target=$({ hyprctl -j monitors; hyprctl -j cursorpos; } | jq -rs '
+      .[1] as $c
+      | [.[0][] | select(.name != "AGENT-1" and (.disabled | not))] as $m
+      | ([$m[] | select(.focused)]
+         + [$m[] | select($c.x >= .x and $c.x < .x + .width and $c.y >= .y and $c.y < .y + .height)]
+         + $m)[0].activeWorkspace.name')
+    all=$(windows)
+    for address in $(echo "$all" | jq -r '.[].address'); do
+      hyprctl dispatch movetoworkspacesilent "name:$target,address:$address" >/dev/null
+    done
+    # Focus the window just opened (a compose window), else the main window.
+    focus=$(echo "$all" | jq -r --argjson b "$before" '
+      ([.[] | select(.address as $a | $b | index($a) | not)]
+       + [.[] | select(.initialTitle == "Mozilla Thunderbird")] + .)[0].address // empty')
+    [ -n "$focus" ] && hyprctl dispatch focuswindow "address:$focus" >/dev/null
+    exit 0
   '';
 in
 {
@@ -35,7 +76,7 @@ in
 
   config = {
     # Install package directly — bypassing programs.thunderbird module to get full user.js control
-    home.packages = [ pkgs.thunderbird ] ++ lib.optional config.thunderbird.autostart openMail;
+    home.packages = [ pkgs.thunderbird ] ++ lib.optional config.thunderbird.autostart (lib.hiPrio launcher);
 
     home.file.".thunderbird/profiles.ini".force = true;
     home.file.".thunderbird/profiles.ini".text = ''
@@ -186,48 +227,63 @@ in
     # started by hand from the launcher, so after a reboot nothing ran it and
     # the mail on disk went three weeks stale (2026-10-01 to 10-21).
     #
-    # It runs out of sight: its window has its own class (agent-thunderbird)
-    # and always opens silently on the hidden `agent-park` workspace on AGENT-1,
-    # never on Erik's monitors. The first version (71c8f14c) opened it on his
-    # screen and reopened it 10 s after every close. Restarts are harmless now.
-    # Erik's launcher entry (`open-mail`, also "Thunderbird" in the app
-    # launcher) brings the window to his current workspace; closing it there
-    # just sends a fresh hidden one back to agent-park.
+    # It is Erik's Thunderbird, on his profile, so it never goes near the agent
+    # seat. Until 2026-10-26 it ran as class `agent-thunderbird` on `agent-park`
+    # (AGENT-1), every window it opened was parked there too, and his own
+    # `thunderbird` only re-activated that hidden window: he could not open
+    # his mail. Now the main window starts on `special:mail`, a hidden scratch
+    # workspace on his side that nothing toggles, and the `thunderbird`
+    # launcher above (launcher entry, command line, mailto:) moves it to the
+    # workspace he is on. Compose and message windows he opens follow his
+    # focus. Closing the main window quits Thunderbird; the service starts a
+    # fresh hidden one 10 s later. The first version (71c8f14c) opened it on
+    # his screen and reopened it after every close.
     #
     # Not a headless IMAP sync (mbsync etc.): four of the five accounts are
-    # OAuth2, and Thunderbird already holds working tokens for them.
+    # OAuth2, Thunderbird holds the only working tokens, and a profile can be
+    # open in one process only. The Executor mail apps cover Gmail and KTH.
     systemd.user.services.thunderbird = lib.mkIf config.thunderbird.autostart {
       Unit = {
-        Description = "Thunderbird on the hidden agent-park workspace (mail sync for agents)";
+        Description = "Erik's Thunderbird kept running hidden for mail sync (`thunderbird` shows it)";
         After = [ "hyprland-session.target" ];
         PartOf = [ "hyprland-session.target" ];
         StartLimitIntervalSec = 0;
       };
       Service = {
-        ExecStart = "${pkgs.thunderbird}/bin/thunderbird --name agent-thunderbird";
+        ExecStart = "${pkgs.thunderbird}/bin/thunderbird --name thunderbird";
         Restart = "always";
         RestartSec = 10;
       };
       Install.WantedBy = [ "hyprland-session.target" ];
     };
 
+    # Main windows only: their initial title is "Mozilla Thunderbird". When
+    # Thunderbird is already on Erik's screen, agent-desktop's watcher
+    # (computer-use/desktop.py) brings any further main window to him.
     wayland.windowManager.hyprland.settings.windowrule = lib.mkIf config.thunderbird.autostart [
-      "workspace name:agent-park silent, match:class ^(agent-thunderbird)$"
-      "no_initial_focus on, match:class ^(agent-thunderbird)$"
-      "focus_on_activate off, match:class ^(agent-thunderbird)$"
+      "workspace special:mail silent, match:class ^(thunderbird)$, match:initial_title ^(Mozilla Thunderbird)$"
+      "no_initial_focus on, match:class ^(thunderbird)$, match:initial_title ^(Mozilla Thunderbird)$"
     ];
 
-    # Replaces the package's own launcher entry: starting `thunderbird` while
-    # the hidden one runs would only open another hidden window.
+    # Replaces the package's own launcher entry under the same name, so
+    # mimeapps.list (mailto:, message/rfc822) resolves to the launcher too.
     xdg.desktopEntries.thunderbird = lib.mkIf config.thunderbird.autostart {
       name = "Thunderbird";
       genericName = "Mail";
-      exec = "${openMail}/bin/open-mail";
+      exec = "${launcher}/bin/thunderbird %U";
       icon = "thunderbird";
       categories = [
         "Network"
         "Email"
       ];
+      mimeType = [
+        "message/rfc822"
+        "x-scheme-handler/mailto"
+        "x-scheme-handler/mid"
+        "text/calendar"
+        "text/x-vcard"
+      ];
+      settings.StartupWMClass = "thunderbird";
     };
   };
 }
