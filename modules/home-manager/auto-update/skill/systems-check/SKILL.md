@@ -241,6 +241,12 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+
+- 2026-10-26 03:10 (health-watch) — `phone/alertmanager`, `phone/grafana`,
+  `phone/time` (also nix-cache, otlp-ingest, t3-updates) 403 right after a
+  Gatus pod restart (03:06), same stale tailscaled CONNECT tunnels as
+  2026-10-23 05:05. Fix: `ssh naiaclaw 'sudo ss -K state established dst
+  192.168.50.100 dport = :443'`; all checks passed again within ~3 minutes.
 - 2026-10-24 04:31 (health-watch) — `alert/SystemdUnitFailed/pc/time-backup`:
   the 04:15 run failed its integrity check, "database is at schema 4, this build
   only knows 3". The homelab time-v2 server migrated the DB to schema 4 while the
