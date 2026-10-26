@@ -28,6 +28,7 @@ class MD(HTMLParser):
     def __init__(self, base):
         super().__init__(convert_charrefs=True)
         self.base, self.out, self.links, self.lists, self.href, self.pre, self.skip = base, [], [], [], [], 0, 0
+        self.titles = {}
 
     def nl(self, n=2):
         cur = "".join(self.out[-3:])
@@ -45,7 +46,7 @@ class MD(HTMLParser):
             self.nl()
             self.out.append("#" * min(6, int(tag[1]) + 2) + " ")
         elif tag == "br":
-            self.out.append("  \n")
+            self.out.append("\u2028")  # becomes a markdown hard break after whitespace cleanup
         elif tag in ("ul", "ol"):
             self.nl(1 if self.lists else 2)
             self.lists.append([tag, 0])
@@ -71,6 +72,7 @@ class MD(HTMLParser):
             if href and not href.startswith(("#", "javascript:", "mailto:")):
                 href = absolute(href, self.base)
                 self.href.append(href)
+                self.titles[href] = a.get("title") or ""
                 self.out.append("[")
             else:
                 self.href.append(None)
@@ -90,10 +92,10 @@ class MD(HTMLParser):
             if self.lists:
                 self.lists.pop()
             self.nl(1 if self.lists else 2)
-        elif tag in ("strong", "b"):
-            self.out.append("**")
-        elif tag in ("em", "i"):
-            self.out.append("*")
+        elif tag in ("strong", "b", "em", "i"):
+            if self.out:
+                self.out[-1] = self.out[-1].rstrip(" ")  # "**x **" is not bold in markdown
+            self.out.append("**" if tag in ("strong", "b") else "*")
         elif tag == "code" and not self.pre:
             self.out.append("`")
         elif tag == "pre":
@@ -107,11 +109,15 @@ class MD(HTMLParser):
                 i = len(self.out) - 1
                 while i >= 0 and self.out[i] != "[":
                     i -= 1
-                text = "".join(self.out[i + 1:]).strip() or href
+                text = "".join(self.out[i + 1:]).strip()
                 del self.out[i:]
+                if not text:  # an icon-only link: keep it as a source, not as a bare URL in the text
+                    self.links.append((self.titles.get(href) or href.rsplit("/", 1)[-1][:60], href))
+                    return
                 text = re.sub(r"\s+", " ", text).replace("[", "(").replace("]", ")")
                 self.out.append(f"[{text}]({href})")
-                self.links.append((text, href))
+                # Canvas file links carry the file name in title; "here" is not a label.
+                self.links.append((self.titles.get(href) if len(text) < 6 or text.lower() in ("here", "this link", "link") else text, href) if self.titles.get(href) else (text, href))
 
     def handle_data(self, data):
         if self.skip:
@@ -121,8 +127,9 @@ class MD(HTMLParser):
     def markdown(self):
         text = "".join(self.out)
         text = re.sub(r"[ \t]+\n", "\n", text)
-        text = re.sub(r"\*\*\s*\*\*", "", text)
+        text = re.sub(r"\*\*[ \t]*\*\*(?=[ \t]*(\n|$))|(?<=\n)[ \t]*\*\*[ \t]*\*\*", "", text)  # empty bold only
         text = re.sub(r"\n{3,}", "\n\n", text)
+        text = re.sub(r"[ \t]*\u2028[ \t]*", "  \n", text)
         return text.strip()
 
 
@@ -223,8 +230,12 @@ def main():
         it.update(kw)
         return it
 
+    def same(u):  # one Canvas file, however it is linked
+        m = re.search(r"canvas\.kth\.se/(?:courses/\d+/)?files/(\d+)", u or "")
+        return ("file", m.group(1)) if m else u
+
     def src(it, label, url):
-        if url and url not in {s["url"] for s in it["sources"]}:
+        if url and same(url) not in {same(s["url"]) for s in it["sources"]}:
             it["sources"].append({"label": label, "url": url})
 
     # Module locations of every assignment/quiz/page.
@@ -418,6 +429,8 @@ def main():
             mm = rx.search(a.get("title", "") + " \n " + txt)
             if mm:
                 pos = max(0, txt.lower().find(mm.group(1).lower()) - 120)
+                if pos:  # start at a word, not mid-word
+                    pos = txt.find(" ", pos) + 1 or pos
                 excerpt = ("…" if pos else "") + txt[pos:pos + 360].strip() + ("…" if len(txt) > pos + 360 else "")
                 hits.append({"title": a.get("title"), "date": a.get("posted_at"), "url": a.get("html_url"), "excerpt": excerpt})
         hits.sort(key=lambda h: h["date"] or "", reverse=True)
@@ -428,6 +441,7 @@ def main():
     # 6. The markdown page and a content hash for "changed since".
     for it in items:
         it["markdown"] = page(it)
+        it["detail"] = detail_of(it)
         it.pop("_norm", None)
         body = {k: it[k] for k in ("title", "due", "start", "lock_at", "markdown", "deferred", "auto_done")}
         it["hash"] = hashlib.sha1(json.dumps(body, sort_keys=True).encode()).hexdigest()[:16]
@@ -452,6 +466,33 @@ def page(it):
     L = []
     if it["deferred"]:
         L += [f"> {it['deferred']['note']}", ""]
+    facts = facts_of(it)
+    L += [f"- **{k}:** {v}" for k, v in facts]
+    if it["notes"]:
+        L += ["", "### Notes", ""] + [f"- {n}" for n in dict.fromkeys(it["notes"])]
+    if it["description"]:
+        L += ["", "### From Canvas", "", body_of(it)]
+    if it["related"]:
+        L += ["", "### Announcements that mention it", ""]
+        for h in it["related"]:
+            L.append(f"- [{h['title']}]({h['url']}) ({fmt(iso(h['date']))}): {h['excerpt']}")
+    L += ["", "### Sources", ""] + [f"- [{s['label']}]({s['url']})" for s in it["sources"]]
+    return "\n".join(L).strip()
+
+
+def body_of(it):
+    d = it["description"]
+    return d[:9000] + ("\n\n*(cut; the rest is on the Canvas page)*" if len(d) > 9000 else "")
+
+
+def detail_of(it):
+    """The same content as page(), structured, so the web page can lay it out."""
+    return {"facts": [[k, v] for k, v in facts_of(it) if k not in ("What", "Due", "When")],
+            "notes": list(dict.fromkeys(it["notes"])), "body": body_of(it) if it["description"] else "",
+            "related": it["related"]}
+
+
+def facts_of(it):
     facts = [("What", f"{KIND_WORD.get(it['kind'], it['kind'].title())} in {it['course']} {it['course_name']}")]
     if it["start"]:
         facts.append(("Opens" if it["kind"] == "registration" else "Starts", fmt(it["start"])))
@@ -474,17 +515,7 @@ def page(it):
             state += f", grade {cv['grade']}"
         facts.append(("Canvas status", state))
     facts += it["facts"]
-    L += [f"- **{k}:** {v}" for k, v in facts]
-    if it["notes"]:
-        L += ["", "### Notes", ""] + [f"- {n}" for n in dict.fromkeys(it["notes"])]
-    if it["description"]:
-        L += ["", "### From Canvas", "", it["description"][:9000] + ("\n\n*(cut; the rest is on the Canvas page)*" if len(it["description"]) > 9000 else "")]
-    if it["related"]:
-        L += ["", "### Announcements that mention it", ""]
-        for h in it["related"]:
-            L.append(f"- [{h['title']}]({h['url']}) ({fmt(iso(h['date']))}): {h['excerpt']}")
-    L += ["", "### Sources", ""] + [f"- [{s['label']}]({s['url']})" for s in it["sources"]]
-    return "\n".join(L).strip()
+    return facts
 
 
 def push(out):
