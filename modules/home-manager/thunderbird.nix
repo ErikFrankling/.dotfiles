@@ -41,7 +41,7 @@ let
     if [ $# -gt 0 ]; then
       # A remote call into the running instance; it returns at once.
       "$real" "$@"
-      for _ in $(seq 1 20); do
+      for _ in $(seq 1 40); do
         windows | jq -e --argjson b "$before" 'any(.[]; .address as $a | $b | index($a) | not)' >/dev/null && break
         sleep 0.25
       done
