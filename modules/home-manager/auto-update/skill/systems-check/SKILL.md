@@ -241,6 +241,16 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-27 09:48 (health-watch) — `lan/adguard-dns` refused, `phone/school`,
+  `phone/time` 403, then many checks status 0 (timeouts). The k3s VM had load
+  100-140 (openclaw tenant bursts, alloy, k3s; same saturation as 2026-10-21),
+  after a Gatus/VM blip at 08:47. AdGuard itself was Running. 403s persisted
+  after `ss -K` on naiaclaw; restarting the gatus pod (maintenance window open)
+  then `ss -K` twice more (phone/executor, openclaw re-403'd after the restart)
+  cleared everything. `brain-skill-sync` failed on a connect timeout to brain
+  (same overload), and `agent-job-heavy-*` was an agent's own script exiting
+  127; both left alone.
+
 
 - 2026-10-26 03:10 (health-watch) — `phone/alertmanager`, `phone/grafana`,
   `phone/time` (also nix-cache, otlp-ingest, t3-updates) 403 right after a
