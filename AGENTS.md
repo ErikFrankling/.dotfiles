@@ -89,7 +89,13 @@ The machines update themselves; nothing compiles on them.
   cause. It is never interrupted.
 - **04:00, PC:** `t3code-fork.timer` starts a second session (same checkpoint) that
   rebases the T3 Code fork onto the newest upstream nightly, refreshes
-  `t3code-src` and its pnpm hash, builds and pushes.
+  `t3code-src` and its pnpm hash, builds, pushes and publishes the phone
+  update. **No human ever attends it** (Erik, 2026-10-27): Erik writes none of
+  the fork's code, so every rebase, conflict resolution, test, emulator check
+  and release is the agent's, however big. It never stops with "not safe
+  unattended" and never asks Erik; a job too big for one session continues in
+  a follow-up session it starts itself (nix-update-doctor skill, "T3 Code fork
+  job"), with the old build kept live meanwhile. Erik hears only the result.
 - **06:00, each machine:** `auto-update.timer` (user unit) pulls `main` and
   fetches the system with `--max-jobs 0`, then activates it in a separate
   system unit (`auto-update-switch-*`). Uncommitted or unpushed work in

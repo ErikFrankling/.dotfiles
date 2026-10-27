@@ -1099,7 +1099,7 @@ in
       };
       prompt = lib.mkOption {
         type = lib.types.str;
-        default = "Load the nix-update-doctor skill and run tonight's T3 Code fork job exactly as its \"T3 Code fork job\" section describes. This is the scheduled run; nobody is watching, so do not ask questions.";
+        default = "Load the nix-update-doctor skill and run tonight's T3 Code fork job exactly as its \"T3 Code fork job\" section describes, to the end: rebased, verified, pushed and released. No human attends this job and none ever has: Erik writes none of the fork's code, and every rebase, conflict resolution, test and release is yours, however big. Never stop with \"not safe unattended\" or \"needs an interactive session\", and never ask Erik anything. If it cannot finish in this session, start the follow-up session the skill describes and hand the job over; notify Erik only with the result.";
         description = "First message of the fork rebase session.";
       };
     };

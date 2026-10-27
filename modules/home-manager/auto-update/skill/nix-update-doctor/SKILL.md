@@ -191,13 +191,57 @@ Re-run with `gh workflow run erik-android.yml -R ErikFrankling/t3code --ref erik
 
 ## T3 Code fork job
 
+**No human ever attends this job.** Erik writes none of the fork's code:
+every fork commit was written by an agent, and every rebase, conflict
+resolution, test run, emulator check and release is this job's, however big.
+Being unattended is the normal state of this job, never a reason to stop.
+Erik (2026-10-27), after a run stopped with "resolving it unattended isn't
+safe" and asked him to rebase by hand: "At no point has there ever been a
+human attending to anything. Just do that yourself. It should never have to
+ask about that."
+
+- Never stop with "not safe unattended", "needs an interactive session",
+  "someone should test …" or "a human should review". Never ask Erik
+  anything. A large upstream change (hundreds of files, a rewrite of a
+  feature the fork extends, dozens of conflicting commits) is ordinary work:
+  port the fork's behaviour onto upstream's new code and verify it yourself,
+  including the phone flows on the emulator (step 6).
+- Notify Erik only with results, once, at the end:
+  `nix-nightly notify "T3 fork rebased onto <tag>: <n> commits kept, <m> dropped; released <APK or OTA id>"`.
+  Never a request for help, a question or a decision for him.
+- Keep the old build live meanwhile. `erik/main`, `t3code-src` and the phone
+  stay where they are until the rebased tree passes steps 5 and 6; the flake
+  keeps the previous fork commit, which is built. Work in a worktree, never on
+  the clone's `erik/main` checkout.
+- If the job cannot finish in this session (the rebase is too big for the
+  night, the context runs low, a fix needs more than this session has),
+  **continue it in a follow-up session; never stop and report.** Commit your
+  progress to the rebase branch first, then start the follow-up with
+  `t3_thread_launch` in the dotfiles T3 project (project id
+  `d16c5128-fa5d-4f7e-bf79-9b395f60962b`), on Opus
+  (`modelSelection: {"instanceId":"claudeAgent","model":"claude-opus-5-5"}`),
+  with a message that carries this authority word for word: "Continue the T3
+  Code fork rebase onto <tag> from <worktree path>, branch <branch>, stopped
+  at <step and commit>. Follow the 'T3 Code fork job' section of the
+  nix-update-doctor skill to the end. No human attends this job and none
+  ever will: never ask a human anything and never stop because the work is
+  unattended or large. You may rewrite and force-push erik/main (the backup
+  tag stays), change and push the dotfiles, build on the homelab, restart T3
+  Code (an expected restart) and publish the phone build or OTA. Notify Erik
+  only with the result." Then end this session; the follow-up owns the job.
+
 The rebase is a session of its own at 04:00 (`t3code-fork.timer`), in its own
 dotfiles clone (`~/.local/state/t3code-fork/dotfiles`), never part of the
 03:00 run. By 04:00 `main` is built, so the only thing that compiles is
-t3code itself (about 11 minutes on the homelab); the whole job normally takes
-20 to 30 minutes. "The 50-minute checkpoint" applies here too, with the same
-message at 50 minutes (`nix-nightly elapsed` works in this clone). If the job
-cannot finish, the flake keeps the previous fork commit, which is still built.
+t3code itself (about 11 minutes on the homelab); a quiet night takes 20 to 30
+minutes, a big upstream change hours. "The 50-minute checkpoint" applies here
+too, with the same message at 50 minutes (`nix-nightly elapsed` works in this
+clone); a big rebase is a justified reason to take long.
+
+This session runs on Sonnet. Conflict work on a big rebase (conflicts in more
+than about five files, or any in the mobile voice, dictation or read-aloud
+code) goes to Opus: `delegate_task` it with the whole brief, or hand the job
+to the Opus follow-up session above.
 
 Do the steps below yourself, in order. Report in the summary with the cause
 first, as in step 7 of the run.
@@ -210,31 +254,51 @@ first, as in step 7 of the run.
    Find the newest nightly tag
    (`git tag --sort=-creatordate | grep -m1 nightly`). If `erik/main` already
    sits on it, report "already current" and stop.
-3. Tag the current state `backup/erik-main-<date>` and push the tag, then
-   `git rebase --onto <tag> <old-base-tag> erik/main` (the old base is
-   `git describe --tags --abbrev=0 --match '*nightly*'`).
-4. Resolve conflicts by keeping upstream's code and re-applying the fork's
-   intent. Read `docs/local-dictation.md` and `docs/personal-agent.md` first.
-   If upstream now does something a fork commit did, drop that commit.
-5. Use `nix shell nixpkgs#nodejs_24 nixpkgs#pnpm_11` for node. Run
-   `CI=true pnpm install --frozen-lockfile`, then typecheck (`tsc-rs --noEmit`)
-   `packages/contracts`, `packages/client-runtime`, `apps/server`, `apps/web` and
-   `apps/mobile`, and run the fork's tests:
-   `vp test run apps/server/src/DictationDeliveryQueue.test.ts apps/server/src/auth/EnvironmentAuth.test.ts packages/client-runtime/src/operations/commands.test.ts apps/web/src/composer-logic.test.ts`.
+3. Tag the current state `backup/erik-main-<date>` and push the tag. Rebase in
+   a worktree with rerere on: `git config rerere.enabled true`,
+   `git worktree add -b rebase/<date> ../t3code-rebase erik/main`, then
+   `git rebase --onto <tag> <old-base-tag> rebase/<date>` (the old base is
+   `git describe --tags --abbrev=0 --match '*nightly*' erik/main`).
+4. Resolve every conflict; there is no size at which you stop. Keep
+   upstream's code and re-apply the fork's intent, read from the fork commit's
+   message (`git show REBASE_HEAD`). Where upstream rewrote something the fork
+   extends, port the fork's behaviour onto upstream's new design instead of
+   forcing the old code back. Read `docs/local-dictation.md` and
+   `docs/personal-agent.md` first. If upstream now does something a fork
+   commit did, drop that commit (`git rebase --skip`). For `pnpm-lock.yaml`
+   take the upstream side at each stop and regenerate it in step 5; for
+   `apps/web/src/routeTree.gen.ts` take upstream's and regenerate it.
+5. Install, typecheck and test on the homelab (`heavy --big --no-develop --
+   nix shell nixpkgs#nodejs_26 nixpkgs#pnpm_12 -c <script>`, output redirected
+   to a file, `< /dev/null`; pull results with `heavy pull`). Run
+   `CI=true pnpm install --no-frozen-lockfile` (commit the lockfile change),
+   regenerate the route tree, typecheck (`node_modules/.bin/tsc --noEmit -p .`)
+   `packages/contracts`, `packages/shared`, `packages/client-runtime`,
+   `packages/provider-core`, `apps/server`, `apps/web`, `apps/mobile` and
+   `apps/desktop`, and run those packages' test suites (their `test` scripts).
    Unset `T3CODE_UNSAFE_NO_AUTH` for the tests; the live server's value breaks
-   the auth tests. If any of this fails and cannot be fixed with confidence,
-   push nothing, report what broke, and leave the fork where it was.
-6. Force-push `erik/main` (`--force-with-lease`).
-7. In the dotfiles clone: `nix flake update t3code-src`, set `version` in
+   the auth tests. A failure is yours to fix (a commit "fix: rebase fallout
+   onto <tag>"); compare with the same suite on the bare upstream tag to tell
+   fork breakage from upstream's own. Never ship a failing tree, and never
+   stop because of one: fix it, or hand over to the follow-up session.
+6. When the rebase touched mobile code, prove dictation and voice mode on the
+   emulator yourself (`heavy emulator start`; the brain's "T3 phone voice mode
+   ... emulator proof" and "T3 Android: emulator proof on the shared homelab
+   emulator" entries have the recipe). Never open a window on Erik's monitors
+   (DP-3, HDMI-A-1).
+7. Force-push `erik/main` (`--force-with-lease`); the backup tag stays.
+8. In the dotfiles clone: `nix flake update t3code-src`, set `version` in
    `overlays/t3code.nix` to the tag's version if it is a release number, and
    set the `pnpmDeps` hash to `lib.fakeHash`. Read the real hash with a
    bounded homelab build that stops at the first failure, the pnpm fetch:
    `timeout 15m nix-remote build --no-link .#nixosConfigurations.pc.config.home-manager.users.erikf.home.path 2>&1 | grep -m1 'got:'`.
    Put it in, commit "Rebase the T3 Code fork onto <tag>".
-8. `nix-nightly build` (output outside the clone), then
+9. `nix-nightly build` (output outside the clone), then
    `git pull --rebase origin main` and `git push origin HEAD:main`. If the
    build fails on something other than t3code, that is not this job's to
-   repair: push nothing and report it.
+   repair: push nothing, keep the fork pushed, and report it.
+10. Publish the phone update with `t3-android-release` (it decides between a
+    JS OTA and an APK from the native fingerprint).
 
 ## What may compile
 
