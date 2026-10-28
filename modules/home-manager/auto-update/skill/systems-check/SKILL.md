@@ -241,6 +241,8 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-28 06:04 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-cd4ec6b8b1dc`: an agent's `heavy --big --shell android -- ./zz-apk.sh` job exited 127 (command not found in its own script) after 43 min; same pattern as the 10-27 and 10-28 03:35 `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
+
 - 2026-10-27 09:48 (health-watch) — `lan/adguard-dns` refused, `phone/school`,
   `phone/time` 403, then many checks status 0 (timeouts). The k3s VM had load
   100-140 (openclaw tenant bursts, alloy, k3s; same saturation as 2026-10-21),
