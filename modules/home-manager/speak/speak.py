@@ -7,8 +7,14 @@ into audio at once (the read-aloud voices), then waits until it may play:
 never while Erik is dictating on any device (local-stt's /health says
 `busy`), never over a T3 read-aloud that is playing, and not to an empty room
 (swayidle marks Erik away). After playing it asks the T3 desktop app for the
-"Recording now" reply window. `speak mcp` is the stdio MCP server that only
-the personal agent's project loads; it hands messages to the daemon.
+"Recording now" reply window, but only in the Conversation mode. `speak mcp`
+is the stdio MCP server that only the personal agent's project loads; it hands
+messages to the daemon.
+
+The voice mode is Erik's, one setting for the PC and the phone (the daemon keeps
+it in ~/.local/state/speak/mode; T3's `/api/speak-mode` and `speak mode` change
+it): Conversation (speak, then open voice input), Voice out only (speak, never
+open it; the default) or Silent (text only). It wins over a caller's `reply`.
 
 Every event lands in ~/.local/state/speak/utterances.jsonl and the journal.
 """
@@ -56,6 +62,16 @@ AWAY_NOTIFY = os.environ.get("SPEAK_AWAY_NOTIFY", "")
 # the message instead of the PC (`/api/voice-presence`, T3 fork).
 T3_URL = os.environ.get("SPEAK_T3_URL", "http://127.0.0.1:3773")
 PHONE_WAIT_SECONDS = 15 * 60
+
+# Erik's voice mode (the label is what he sees; the key is what is stored).
+MODES = {
+    "conversation": "Conversation",
+    "voice-out": "Voice out only",
+    "silent": "Silent",
+}
+DEFAULT_MODE = "voice-out"
+SILENT_REASON = "Silent mode: text only, nothing is said aloud"
+MODE_FILE = STATE / "mode"
 
 PRIORITIES = ("low", "normal", "urgent")
 DEFAULT_EXPIRY_MINUTES = {"low": 15, "normal": 60, "urgent": 120}
@@ -136,6 +152,17 @@ def gate(item, now, dictating, dictation_ended, reading_aloud, away, answering=F
             return "drop", "Erik is away from the PC (low priority messages are dropped)"
         return "wait", "Erik is away from the PC"
     return "play", ""
+
+
+def opens_reply(mode, asked=True):
+    """Does a spoken message open voice input? The mode decides: only Conversation
+    does, and a caller that asked for no reply still gets none."""
+    return mode == "conversation" and asked is not False
+
+
+def next_mode(mode):
+    keys = list(MODES)
+    return keys[(keys.index(mode) + 1) % len(keys)] if mode in keys else DEFAULT_MODE
 
 
 def phone_has(presence, thread):
@@ -263,6 +290,31 @@ def away():
     return AWAY_FILE.exists()
 
 
+def read_mode():
+    """Erik's voice mode; a missing, unreadable or unknown value is the default."""
+    try:
+        mode = MODE_FILE.read_text().strip()
+    except OSError:
+        return DEFAULT_MODE
+    return mode if mode in MODES else DEFAULT_MODE
+
+
+def write_mode(mode):
+    if mode not in MODES:
+        raise ValueError(f"mode must be one of {', '.join(MODES)}")
+    STATE.mkdir(parents=True, exist_ok=True)
+    temporary = MODE_FILE.with_suffix(".tmp")
+    temporary.write_text(mode + "\n")
+    temporary.replace(MODE_FILE)
+    return mode
+
+
+def mode_state(mode=None):
+    mode = mode or read_mode()
+    return {"mode": mode, "label": MODES[mode],
+            "modes": [{"mode": k, "label": v} for k, v in MODES.items()]}
+
+
 def default_sink():
     try:
         out = subprocess.run(["wpctl", "inspect", "@DEFAULT_AUDIO_SINK@"],
@@ -278,6 +330,7 @@ def default_sink():
 items = {}
 lock = threading.Lock()
 wake = threading.Event()
+shutdown = threading.Event()  # only the tests set it, to end a worker
 
 
 def log(event, item=None, **fields):
@@ -294,7 +347,9 @@ def log(event, item=None, **fields):
 def public(item):
     keys = ("id", "status", "reason", "priority", "voice", "text", "spoken_text",
             "created", "spoken_at", "seconds", "sink", "reply_window")
-    return {k: item[k] for k in keys if k in item}
+    # `mode` is Erik's setting right now. It decides whether voice input opens,
+    # whatever `reply` the caller passed.
+    return {**{k: item[k] for k in keys if k in item}, "mode": read_mode()}
 
 
 def summarize(text):
@@ -480,7 +535,8 @@ def send_to_phone(item):
     try:
         http_json(f"{T3_URL}/api/voice-presence/say", {
             "id": item["id"], "threadId": item.get("thread") or REPLY_THREAD,
-            "text": item.get("spoken_text") or item["text"], "source": item["text"]}, timeout=5)
+            "text": item.get("spoken_text") or item["text"], "source": item["text"],
+            "listen": item["reply"]}, timeout=5)
     except (OSError, ValueError) as error:  # 409: no phone in voice mode any more
         log("phone.refused", item, error=str(error))
         return False
@@ -517,7 +573,7 @@ def follow_phone(item):
 def worker():
     dictation_ended = 0.0
     was_dictating = False
-    while True:
+    while not shutdown.is_set():
         wake.wait(POLL_SECONDS)
         wake.clear()
         with lock:
@@ -530,6 +586,14 @@ def worker():
             dictation_ended = now
         was_dictating = busy
         item = next_item(pending)
+        # Erik's mode is read now, so a flip also changes what is already queued.
+        mode = read_mode()
+        item["reply"] = opens_reply(mode, item["asked_reply"])
+        if mode == "silent":
+            with lock:
+                item.update(status="dropped", reason=SILENT_REASON)
+            log("dropped", item, reason=SILENT_REASON, mode=mode)
+            continue
         # Phone in voice mode on this thread: it plays there, not on the PC. It
         # still waits while Erik dictates anywhere; the phone handles the rest
         # (it holds a message while he answers the last one).
@@ -579,9 +643,13 @@ def worker():
             item.update(status="spoken", spoken_at=time.strftime("%H:%M:%S"))
         log("spoken", item, sink=sink)
         notice(item, f"said at {time.strftime('%H:%M')}")
-        if item.get("reply", True):
+        # Read again: he may have flipped the mode while it was spoken.
+        mode = read_mode()
+        if opens_reply(mode, item["asked_reply"]):
             item["reply_window"] = open_reply_window(item)
-            log("reply_window", item, result=item["reply_window"])
+        else:
+            item["reply_window"] = "off"
+        log("reply_window", item, result=item["reply_window"], mode=mode, asked=item["asked_reply"])
 
 
 def submit(body):
@@ -595,12 +663,17 @@ def submit(body):
     now = time.time()
     item = dict(id=uuid.uuid4().hex[:12], text=text, summarize=bool(body.get("summarize")),
                 priority=priority, created=now, expires=now + minutes * 60,
-                status="generating", reason="", reply=body.get("reply", True) is not False,
+                status="generating", reason="", asked_reply=body.get("reply", True) is not False,
+                reply=opens_reply(read_mode(), body.get("reply", True)),
                 thread=str(body.get("thread") or REPLY_THREAD), source=str(body.get("source", "")))
     with lock:
         items[item["id"]] = item
     log("queued", item, text=text, summarize=item["summarize"], expires_in_minutes=minutes,
-        source=item["source"])
+        source=item["source"], mode=read_mode(), asked_reply=item["asked_reply"])
+    if read_mode() == "silent":  # no audio is made for a message nobody will hear
+        item.update(status="dropped", reason=SILENT_REASON)
+        log("dropped", item, reason=SILENT_REASON, mode="silent")
+        return item
     notice(item, "about to speak")
     threading.Thread(target=generate, args=(item,), daemon=True).start()
     return item
@@ -616,6 +689,17 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_POST(self):  # noqa: N802
+        if self.path == "/mode":  # no "mode" in the body: just read it
+            try:
+                body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
+                before = read_mode()
+                mode = write_mode(body["mode"]) if "mode" in body else before
+            except (ValueError, TypeError) as error:
+                return self.reply(400, {"error": str(error)})
+            if mode != before:
+                log("mode", mode=mode, was=before, by=str(body.get("by", "")))
+                wake.set()
+            return self.reply(200, mode_state(mode))
         if self.path != "/speak":
             return self.reply(404, {"error": "unknown path"})
         try:
@@ -631,8 +715,10 @@ class Handler(BaseHTTPRequestHandler):
                 item = items.get(self.path.removeprefix("/status/"))
                 body = public(item) if item else None
             return self.reply(200, body) if body else self.reply(404, {"error": "unknown id"})
+        if self.path == "/mode":
+            return self.reply(200, mode_state())
         if self.path == "/health":
-            return self.reply(200, {"ok": True, "dictating": dictating(), "away": away(), "phone": phone_presence(),
+            return self.reply(200, {"ok": True, "mode": read_mode(), "dictating": dictating(), "away": away(), "phone": phone_presence(),
                                     "queue": [public(i) for i in items.values()
                                               if i["status"] in ("generating", "ready", "waiting", "speaking")]})
         self.reply(404, {"error": "unknown path"})
@@ -669,11 +755,18 @@ TOOL = {
         "once and plays as soon as Erik is free: never while he is dictating or a read-aloud "
         "plays, and not while he is away from the PC (low: dropped, normal: held until he is "
         "back or it expires, and his phone gets a silent notification; urgent: plays anyway). "
-        "A soft chime comes first. After it speaks, a small 'Recording now' window opens on his "
-        "PC so he can answer by voice; his answer arrives in this thread as his message. "
+        "A soft chime comes first. Erik's voice mode (one setting for the PC and the phone, he "
+        "flips it himself, and it WINS over `reply`) decides what happens after it speaks: "
+        "'Conversation' opens a small 'Recording now' window on his PC (or records on the phone) "
+        "so he can answer by voice, and his answer arrives in this thread as his message; "
+        "'Voice out only' (the default) just speaks, he starts a reply himself if he wants one, "
+        "so do not wait for an answer that may not come; 'Silent' says nothing aloud (the call "
+        "returns dropped and your chat message is the only message). Every result and "
+        "speak_status shows the mode right now; the mode when this tool list loaded is "
+        "{mode}. "
         "While Erik has voice mode on in his phone's T3 app for this thread, it plays on the "
         "phone instead (his opt-in 'you may speak to me now'; he is listening, not reading, so "
-        "say what matters there), then the phone records his answer. Otherwise PC speakers "
+        "say what matters there). Otherwise PC speakers "
         "only: refused on the laptop, and the phone never speaks outside voice mode. Returns the status "
         "(speaking/spoken/waiting with the reason/dropped/failed) and an id for speak_status."),
     "inputSchema": {
@@ -686,16 +779,25 @@ TOOL = {
             "expires_in_minutes": {"type": "number",
                                    "description": "Drop it if not heard by then (default low 15, normal 60, urgent 120)."},
             "reply": {"type": "boolean", "default": True,
-                      "description": "Open the 'Recording now' reply window after speaking."},
+                      "description": ("Ask for the 'Recording now' reply window after speaking. Only "
+                                      "honoured in Erik's 'Conversation' mode; in 'Voice out only' and "
+                                      "'Silent' it is ignored (the mode wins).")},
         },
         "required": ["text"],
     },
 }
 STATUS_TOOL = {
     "name": "speak_status",
-    "description": "Status of an earlier speak call (waiting/speaking/spoken/dropped/failed, and why).",
+    "description": ("Status of an earlier speak call (waiting/speaking/spoken/dropped/failed, and why), "
+                    "with Erik's voice mode right now: conversation, voice-out or silent."),
     "inputSchema": {"type": "object", "properties": {"id": {"type": "string"}}, "required": ["id"]},
 }
+
+
+def tool_definition():
+    """The speak tool as listed now: its description names Erik's current mode."""
+    mode = read_mode()
+    return dict(TOOL, description=TOOL["description"].replace("{mode}", f"'{MODES[mode]}' ({mode})"))
 
 
 def call_tool(name, args):
@@ -739,7 +841,7 @@ def mcp():
                       "capabilities": {"tools": {}},
                       "serverInfo": {"name": "speak", "version": "1.0"}}
         elif method == "tools/list":
-            result = {"tools": [TOOL, STATUS_TOOL]}
+            result = {"tools": [tool_definition(), STATUS_TOOL]}
         elif method == "tools/call":
             is_error, body = call_tool(message["params"]["name"], message["params"].get("arguments") or {})
             result = {"content": [{"type": "text", "text": json.dumps(body, ensure_ascii=False)}],
@@ -765,5 +867,15 @@ if __name__ == "__main__":
                                               "source": "cli"})
         print(json.dumps(body, indent=2, ensure_ascii=False))
         sys.exit(1 if is_error else 0)
+    elif command == "mode":  # speak mode [conversation|voice-out|silent|next]: show or set
+        wanted = sys.argv[2] if len(sys.argv) > 2 else ""
+        try:
+            if wanted == "next":
+                wanted = next_mode(http_json(f"{DAEMON}/mode")["mode"])
+            state = http_json(f"{DAEMON}/mode", {"mode": wanted, "by": "cli"} if wanted else None)
+        except (OSError, ValueError) as error:
+            sys.exit(f"could not reach the speak daemon: {error}")
+        print(state["label"] if wanted else json.dumps(state, indent=2))
     else:
-        sys.exit("usage: speak daemon | speak mcp | speak say TEXT [low|normal|urgent]")
+        sys.exit("usage: speak daemon | speak mcp | speak say TEXT [low|normal|urgent] | "
+                 "speak mode [conversation|voice-out|silent|next]")

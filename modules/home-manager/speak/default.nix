@@ -2,8 +2,14 @@
 # the PC's speakers (Erik, 2026-10-23: "In speakers, you're allowed to talk to
 # me [on the desktop] ... on the laptop and on the phone [never]"), and never
 # while he is talking: a message made while he dictates plays right after he
-# sends. Afterwards the T3 desktop app opens a small "Recording now" window so
-# he answers by voice.
+# sends. In the "Conversation" mode the T3 desktop app then opens a small
+# "Recording now" window so he answers by voice.
+#
+# Erik's voice mode (2026-10-28: "you opening up voice input after each time you
+# speak is annoying most of the time"): Conversation, Voice out only (the
+# default) or Silent. One setting, kept by the daemon, flipped from the T3
+# personal-agent home, the phone's voice-mode card or $mod+Alt+M (`speak mode
+# next`). It wins over the `reply` a caller passes.
 #
 # - `speak mcp`: stdio MCP server (tools `speak`, `speak_status`), registered
 #   only in the personal agent's project (~/.t3/personal/.mcp.json). It
@@ -97,6 +103,14 @@ let
     '';
   };
 
+  # $mod+Alt+M: the next voice mode, shown as a notification.
+  cycleMode = pkgs.writeShellScript "speak-mode-next" ''
+    mode=$(${lib.getExe speak} mode next) || exit 1
+    ${pkgs.libnotify}/bin/notify-send --app-name "Personal agent" --icon audio-speakers \
+      --expire-time 2500 --hint string:x-canonical-private-synchronous:speak-mode \
+      "Voice: $mode"
+  '';
+
   # Opens the "Recording now" window in the running T3 desktop app.
   replyWindow = pkgs.writeShellScript "speak-reply-window" ''
     exec ${pkgs.t3code}/bin/t3 app speak-reply "$@"
@@ -177,6 +191,7 @@ in
       wayland.windowManager.hyprland.settings.bindd = [
         "$mod ALT, Return, Send the spoken reply, exec, ${replyWindow} --send"
         "$mod ALT, Escape, Close the spoken-reply window, exec, ${replyWindow} --cancel"
+        "$mod ALT, M, Next voice mode (Conversation / Voice out only / Silent), exec, ${cycleMode}"
       ];
 
       # ext-idle-notify: no input for 5 minutes = Erik is away from the PC.
