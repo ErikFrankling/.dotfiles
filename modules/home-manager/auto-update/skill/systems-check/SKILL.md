@@ -243,6 +243,8 @@ Newest first; one entry per morning that needed a real repair.
 
 - 2026-10-29 04:32 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-296b5b7aaaaa`: an agent's `heavy --big --shell android -- ./zz-apk.sh` job exited 255 after ~9 min (04:21); same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
 
+- 2026-10-29 05:44 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-60fac180261e` and `-3b32153a2941`: two agent `heavy` jobs (a `nix shell ... ./zz-tests.sh` exiting 255, a `zz-apk.sh` exiting 127) failed together at 05:31 after 1h08 of wall time with ~2 s CPU, i.e. hung/never ran their script; same pattern as the other `agent-job-heavy-*` alerts. Units already gone, nothing failed; left alone.
+
 - 2026-10-28 07:07 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-278610b2b8cf`: an agent's `heavy --small -- nix shell ... -c ./checks.tmp.sh` job exited 1 (06:56), then 137 (07:04, killed); same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
 
 - 2026-10-28 06:04 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-cd4ec6b8b1dc`: an agent's `heavy --big --shell android -- ./zz-apk.sh` job exited 127 (command not found in its own script) after 43 min; same pattern as the 10-27 and 10-28 03:35 `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
