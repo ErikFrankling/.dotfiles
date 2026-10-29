@@ -241,6 +241,8 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-29 08:30 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-b1aa4dbb82bd`: an agent's `heavy -- bash -lc 'npm ci ...; npx tsc --noEmit'` job exited 127 (command not found) after 1 s (08:18); same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
+
 - 2026-10-29 04:32 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-296b5b7aaaaa`: an agent's `heavy --big --shell android -- ./zz-apk.sh` job exited 255 after ~9 min (04:21); same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
 
 - 2026-10-29 05:44 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-60fac180261e` and `-3b32153a2941`: two agent `heavy` jobs (a `nix shell ... ./zz-tests.sh` exiting 255, a `zz-apk.sh` exiting 127) failed together at 05:31 after 1h08 of wall time with ~2 s CPU, i.e. hung/never ran their script; same pattern as the other `agent-job-heavy-*` alerts. Units already gone, nothing failed; left alone.
