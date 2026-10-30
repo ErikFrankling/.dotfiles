@@ -402,6 +402,7 @@ finds it.
 Append one entry per night that needed a repair, newest first: date, symptom,
 cause, what fixed it, link. Commit it with the fix. This is how the next run
 learns the patterns; keep entries to a few lines.
+- 2026-10-30 — prebuild failed in `linux-6.18.59-modules` (vmware-modules, no `.ko.cer`; nixpkgs#575192 still open). Held `nixpkgs` at `55bfb4d` (was `31ecbac`), rest updated, both hosts built.
 - 2026-10-28 — prebuild failed in `linux-6.18.58-modules` again (vmware-modules, no `.ko.cer`; nixpkgs#575192 still open). Held `nixpkgs` at `55bfb4d`, rest updated, both hosts built. Warnings left: xorg.* / stdenv.isLinux/isDarwin renames, none in this repo.
 - 2026-10-25 — The run took 1 h 49 min. The fork subagent's unbounded local
   `nix build ... home.path` (03:07–04:31) compiled Hyprland 0.56.2 for
