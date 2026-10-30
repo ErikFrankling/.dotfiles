@@ -241,6 +241,8 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-30 04:57 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-1d2e2586250f` and `-9ee60e7a4527`: two agent `heavy --small` probe jobs (`ls`/`find` of a rebase work dir, exit 97 and 1) failed at 04:45; same pattern as the other `agent-job-heavy-*` alerts. Units already gone, nothing failed; left alone.
+
 - 2026-10-29 08:30 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-b1aa4dbb82bd`: an agent's `heavy -- bash -lc 'npm ci ...; npx tsc --noEmit'` job exited 127 (command not found) after 1 s (08:18); same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
 
 - 2026-10-29 04:32 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-296b5b7aaaaa`: an agent's `heavy --big --shell android -- ./zz-apk.sh` job exited 255 after ~9 min (04:21); same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
