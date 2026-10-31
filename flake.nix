@@ -59,7 +59,9 @@
 
     # Cua Driver: computer-use driver (accessibility trees, window capture,
     # element actions) for agents on the agent monitor. Pinned to a release tag.
-    cua.url = "github:trycua/cua/cua-driver-rs-v0.30.4";
+    # Keep it at v0.35.0 or later: older builds open a private AT-SPI socket to
+    # every accessible app, and each session leaks 3 pidfds into those apps.
+    cua.url = "github:trycua/cua/cua-driver-rs-v0.38.0";
     cua.inputs.nixpkgs.follows = "nixpkgs";
 
     time.url = "github:ErikFrankling/time";

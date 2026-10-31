@@ -258,16 +258,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1790624341,
-        "narHash": "sha256-JDahFI4rCg947IfYLk4MOj0JwuVOvATpqgae3sdLc2E=",
+        "lastModified": 1792534250,
+        "narHash": "sha256-Fpryc6Vg9vtV3zRCaL4S38v8l4JluU95o86dQbzkDPM=",
         "owner": "trycua",
         "repo": "cua",
-        "rev": "bf6c76786d938070f4ecf1e44004752f69f518b8",
+        "rev": "85e2b1318bd77ccf3cfa88ccdf875a4bb7eaed19",
         "type": "github"
       },
       "original": {
         "owner": "trycua",
-        "ref": "cua-driver-rs-v0.30.4",
+        "ref": "cua-driver-rs-v0.38.0",
         "repo": "cua",
         "type": "github"
       }

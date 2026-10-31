@@ -76,7 +76,10 @@ in
 
   config = {
     # Install package directly — bypassing programs.thunderbird module to get full user.js control
-    home.packages = [ pkgs.thunderbird ] ++ lib.optional config.thunderbird.autostart (lib.hiPrio launcher);
+    home.packages = [
+      pkgs.thunderbird
+    ]
+    ++ lib.optional config.thunderbird.autostart (lib.hiPrio launcher);
 
     home.file.".thunderbird/profiles.ini".force = true;
     home.file.".thunderbird/profiles.ini".text = ''
