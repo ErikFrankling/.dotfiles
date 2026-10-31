@@ -269,14 +269,21 @@ def load_window_plugin(target):
     marker = Path(os.environ["XDG_RUNTIME_DIR"]) / "agent-windows-plugin.json"
     wanted = {"session": signature, "path": target}
     previous = json.loads(marker.read_text()) if marker.exists() else {}
-    if "agent-windows" in run("hyprctl", "plugin", "list"):
+    loaded = lambda: "agent-windows" in subprocess.run(["hyprctl", "plugin", "list"], capture_output=True, text=True).stdout
+    load = lambda path: subprocess.run(["hyprctl", "plugin", "load", path], capture_output=True, text=True).stdout
+    old = previous.get("path") if previous.get("session") == signature else None
+    if loaded():
         if previous == wanted:
             return
-        if previous.get("session") == signature and previous.get("path"):
-            run("hyprctl", "plugin", "unload", previous["path"])
-    reply = run("hyprctl", "plugin", "load", target)
-    if "agent-windows" not in run("hyprctl", "plugin", "list"):
-        raise RuntimeError(f"agent-windows plugin did not load: {reply}")
+        if old:
+            run("hyprctl", "plugin", "unload", old)
+    reply = load(target)
+    if not loaded():
+        # A build for a newer Hyprland will not load until the compositor restarts.
+        # Keep the old one guarding the session until then.
+        if old:
+            load(old)
+        raise RuntimeError(f"agent-windows plugin did not load (old one {'restored' if old and loaded() else 'absent'}): {reply}")
     marker.write_text(json.dumps(wanted))
 
 
