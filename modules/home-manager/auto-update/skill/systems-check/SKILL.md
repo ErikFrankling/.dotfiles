@@ -247,6 +247,8 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-31 16:10 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-berlin-day3`: an agent's `flock /tmp/cars-gpu.lock bash scripts/berlin_day.sh` job was terminated (143) after 6 s at 16:00; same pattern as the other `agent-job-*` alerts. Unit already gone, nothing failed; left alone.
+
 - 2026-10-31 05:03 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-96ca8563025d`: an agent's `heavy --small -- nix shell ... bash .v2.sh` job was killed (exit 137) after 38 s (04:52); same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
 
 - 2026-10-31 02:19 (health-watch) — `alert/SystemdUnitFailed/pc/xdg-document-portal`: the on-demand flatpak document portal exited 21 at 02:08 after 8 days; unit inactive, `systemctl --user --failed` empty, D-Bus reactivates it on use. Log-based alert, nothing to repair.
