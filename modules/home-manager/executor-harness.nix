@@ -95,6 +95,10 @@ let
         exec ${claudePackage}/bin/claude "$@"
         ;;
     esac
+    # In a T3 agent session a browser means the agent's own, on AGENT-1.
+    if [ -n "''${T3CODE_THREAD_ID-}" ]; then
+      export BROWSER=agent-open MOZ_NO_REMOTE=1
+    fi
     ${loadKey}
     ${loadTimeToken}
     configs=(${localClaudeArgs})
@@ -119,6 +123,10 @@ let
     exec ${claudePackage}/bin/claude "''${args[@]}"
   '';
   codexLauncher = pkgs.writeShellScript "codex-executor" ''
+    # In a T3 agent session a browser means the agent's own, on AGENT-1.
+    if [ -n "''${T3CODE_THREAD_ID-}" ]; then
+      export BROWSER=agent-open MOZ_NO_REMOTE=1
+    fi
     ${loadKey}
     if [ -z "''${EXECUTOR_API_KEY-}" ]; then
       exec ${codexPackage}/bin/codex ${localCodexArgs} "$@"

@@ -63,16 +63,18 @@ not for choosing what to click.
   page. Your first page becomes one full-screen window on AGENT-1; open more
   pages as **tabs** (`browser_tabs` `{action:"new", url}`), switch with
   `{action:"select", index}`, close finished ones with `{action:"close"}`.
-- Every `agent-chromium` window is forced onto AGENT-1 by a Hyprland rule, so
-  nothing can open on Erik's monitors. Still, don't open extra windows.
+- Every window from an agent session opens on AGENT-1; the compositor enforces
+  it. Still, don't open extra windows. To open a URL from a shell: `agent-open
+  URL` (`xdg-open` and `$BROWSER` do the same in a T3 session).
 - Erik's own browsers (Firefox, Helium, Chrome) and windows are off limits:
   never click, type in, move or capture them.
 - Tabs **persist after your session** (it's a real browser profile). When the
   task is done, close every tab you opened (`browser_tabs` `{action:"close"}`
   per tab) so the next agent starts clean. Logins stay; they live in cookies.
-- Never start another browser (no `chromium`, `google-chrome`, `firefox`,
-  `npx playwright`, headless browsers): they have none of the logins and may
-  open on Erik's screens.
+- Don't start another browser for ordinary browsing: it has none of the logins.
+  A task that really needs its own (benchmarks, a GPU test, a headed Playwright
+  run) just runs it with its own `--user-data-dir`; it opens on AGENT-1. Never
+  run `firefox` on Erik's profile: it reaches his running copy.
 - If `browser` can't connect: `systemctl --user status agent-chromium`,
   `systemctl --user restart agent-chromium` is fine (it's your browser), but
   other agents lose their tabs and session-only logins, so only when needed.

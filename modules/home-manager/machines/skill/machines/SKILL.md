@@ -125,3 +125,10 @@ pressure), do not add to it. Wait, or stop your own jobs first.
 When Erik reports lag, a freeze or a spike, do not look at `top` now: the
 moment has passed. Load the `system-history` skill and rank what ran at
 that time (per program, unit and T3 thread, recorded every 5-30 s).
+
+## Windows
+
+Anything an agent session starts opens on `AGENT-1`, workspace `agent`, enforced
+by the Hyprland plugin `packages/agent-windows`: run the program, no rule needed.
+`window-origin` says which process, cgroup and thread opened any window. Details:
+AGENTS.md, computer-use skill.

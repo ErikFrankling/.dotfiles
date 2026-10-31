@@ -39,19 +39,18 @@ Erik runs **Hyprland** (a tiling Wayland compositor) with three outputs:
 - **Workspace `agent`** is what AGENT-1 shows and the only place your input is
   accepted. **Workspace `agent-park`** is a hidden shelf on AGENT-1 for windows
   you want off screen (e.g. while recording). Both exist permanently.
-- Everything you open must end up on AGENT-1. Never open windows on Erik's
-  monitors, never switch his workspaces, never run `hyprctl dispatch
-  workspace|focuswindow|movefocus|movetoworkspace` without `silent` and an
-  explicit `address:` of *your* window, and never use `ydotool`, `wtype`,
-  `xdotool` or anything that injects global input.
-- **Never open or keep Erik's own apps or profiles on the agent seat.** His
-  Firefox, Zen, Thunderbird, Spotify, WebCord/Discord, Obsidian, Helium and T3
-  Code are his: never launch them (`firefox`, `xdg-open URL`, `thunderbird`,
-  `mailto:`), never move their windows to `agent`/`agent-park`. Single-instance
-  apps hand your launch to his running copy, and its window lands where he
-  can't find it (2026-10-26: he could not open Thunderbird). Use your own
-  instances (agent Chromium, `agent-firefox`) or headless access. The
-  agent-desktop watcher moves any of his app windows off AGENT-1 at once.
+- **Every window you start opens on AGENT-1, whatever you do.** The compositor
+  does it (`packages/agent-windows`): it recognises your session by cgroup and
+  places the window before its first frame. Moving a window of yours to his
+  monitors sends it straight back and notifies Erik with your thread. Never
+  switch his workspaces, and never use `ydotool`, `wtype`, `xdotool` or anything
+  that injects global input.
+- **Never launch Erik's own apps or profiles.** His Firefox, Zen, Thunderbird,
+  Spotify, WebCord/Discord, Obsidian, Helium and T3 Code are his: a launch
+  reaches his profile, and with a single-instance app his running copy
+  (2026-10-26: he could not open Thunderbird). Use your own instances (agent
+  Chromium) or headless access. `xdg-open` from a session like yours goes to the
+  agent Chromium. The agent-desktop watcher moves his windows off AGENT-1.
 - Erik can watch AGENT-1 with `agent-desktop view` (view-only VNC).
 
 ## Your tools (MCP servers)
@@ -72,13 +71,23 @@ FILE.png` (the whole AGENT-1 screen), `hyprctl -i 0 clients -j` (window list;
 
 ## Opening apps
 
-Start GUI apps on your workspace **and** your seat:
+Just run the program. It opens on AGENT-1 by itself, with no rule, and so does
+every later window it opens. Background it (`nohup app >/dev/null 2>&1 &`) if it
+must outlive the tool call. A URL is `agent-open URL` (or `xdg-open`). To also
+drive it with `agent-seat` input, opt in to the seat:
 
 ```sh
-hyprctl -i 0 dispatch exec '[workspace name:agent silent] env HYPRLAND_AGENT_SEAT=1 gnome-calculator'
-# Chromium/Electron apps overwrite their environment, so also pass the switch:
-hyprctl -i 0 dispatch exec '[workspace name:agent silent] env HYPRLAND_AGENT_SEAT=1 some-electron-app --hyprland-agent-seat'
+HYPRLAND_AGENT_SEAT=1 gnome-calculator &
+# Chromium/Electron apps blank their environment, so also pass the switch:
+HYPRLAND_AGENT_SEAT=1 some-electron-app --hyprland-agent-seat &
 ```
+
+`hyprctl dispatch exec` still works (it is rewritten to run in your session's
+cgroup) but gains nothing. Beware: its argument goes through `sh -c`, so an
+unquoted `&` in a URL backgrounds the command and splits it.
+
+Who opened a window, on any monitor: `window-origin ADDRESS` (or `--class REGEX`,
+`--agents`, `--erik`, `--escapes`): process chain, cgroup and T3 thread, no titles.
 
 Then find it with `mcp__cua__list_windows` or `hyprctl -i 0 clients -j` (match
 `class`, workspace `agent`). Rules:

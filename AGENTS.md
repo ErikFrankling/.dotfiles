@@ -10,7 +10,15 @@ Agents (any harness, local or cloud) never post, comment, review, message, react
 
 Erik (2026-10-26, after Thunderbird hid on `agent-park` again): "It's my app. Stop having my apps on your screen."
 
-Erik's apps (Firefox, Zen, Thunderbird, Spotify, WebCord/Discord, Obsidian, Helium, T3 Code, and any other app on his profile) always open on his monitors. Agents never launch them, never move their windows to `agent`/`agent-park`/AGENT-1, and never run a service that parks one there. Agents get their own instance and profile with an `agent-*` class (agent Chromium, `agent-firefox`, the dev T3 build) or headless access. A background copy of one of his apps (`thunderbird.service`) hides on his side (`special:mail`) and every way he opens it (launcher, command line, `mailto:`) brings it to his current workspace. The agent-desktop watcher (`modules/home-manager/computer-use/desktop.py`, `ERIK_APPS`) moves any of his windows off the agent seat; add new apps of his to that list.
+Erik's apps (Firefox, Zen, Thunderbird, Spotify, WebCord/Discord, Obsidian, Helium, T3 Code, and any other app on his profile) always open on his monitors. Agents never launch them and never move their windows to `agent`/`agent-park`. Agents get their own instance and profile or headless access. A background copy of one of his apps (`thunderbird.service`) hides on his side (`special:mail`) and every way he opens it (launcher, command line, `mailto:`) brings it to his current workspace. The agent-desktop watcher (`modules/home-manager/computer-use/desktop.py`, `ERIK_APPS`) moves any of his windows off the agent seat; add new apps of his to that list.
+
+## Hard rule: agent windows never reach Erik's monitors, and this is enforced
+
+Erik (2026-10-31): "need better ways to know they don't spawn on my screen". The compositor enforces it: `packages/agent-windows`, a Hyprland plugin, classifies every client when it connects by its cgroup (`app-t3code-agents.slice`, `app-t3code-jobs.slice`, `cua-driver.service`, `agent-computer-use*`), its process chain and `T3CODE_THREAD_ID`. A window of an agent client is tagged `agent-window` before it maps and opens on workspace `agent` with its first frame. `hyprctl dispatch exec` from an agent, also over the raw socket, is rewritten to run in the agent's slice.
+
+**So the one way to open a window is to just run the program.** No `[workspace ...]` rule, `HYPRLAND_AGENT_SEAT`, wrapper or `hyprctl` is needed for placement (the seat variable is only for agent-seat input, see the computer-use skill). URLs: `agent-open URL`, or `xdg-open`, which from an agent session goes to the agent's Chromium. Erik's kitty, launcher and keybinds, the T3 app and T3's terminal panel are outside those cgroups and keep opening on his monitors; sessions he runs by hand from kitty count as his.
+
+`window-origin` answers who opened a window (`window-origin ADDRESS`, `--class REGEX`, `--erik`, `--agents`, `--escapes`; log in `~/.local/state/window-origin/`, never with titles). An agent window that still ends up on his monitors is sent back and he gets a notification naming the thread (`window-origin alert --test --dry-run` exercises it without sending). Known gaps: an agent calling a systemd-run or other launcher by its store path to get out of the shadowed names, starting an existing user service, or asking a D-Bus service or portal to launch something: those run outside the agent's tree and cannot be told from Erik's launches.
 
 ## Critical: This is a NixOS Configuration
 
@@ -441,7 +449,7 @@ someOption = "custom-value";
 
 ### Nested compositors never touch the session (Erik's PC, 2026-10-31)
 
-A Hyprland started inside a running session rewrites the systemd user manager's environment and removes `DISPLAY` when it exits, so `bin/Hyprland` starts it without a seat. Start test compositors by the name `Hyprland -c <own config>` (not a store path) with `[workspace name:agent silent]`, set `WAYLAND_DISPLAY` only in the test client's own environment, and repair the manager with `hyprland-session-env`, not by hand.
+A Hyprland started inside a running session rewrites the systemd user manager's environment and removes `DISPLAY` when it exits, so `bin/Hyprland` starts it without a seat. Start test compositors by the name `Hyprland -c <own config>` (not a store path), set `WAYLAND_DISPLAY` only in the test client's own environment, and repair the manager with `hyprland-session-env`, not by hand.
 
 ## Local LLM System Overview
 

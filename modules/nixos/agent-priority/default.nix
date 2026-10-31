@@ -14,6 +14,7 @@
 #   which T3 never touches: idle CPU, small memory and swap caps, hard disk
 #   bandwidth caps, and systemd-oomd.
 # - `systemd-run --user` from an agent stays in the agent slice (wrapper).
+# - `xdg-open` from an agent opens the agent's Chromium (wrapper).
 # - `nix` from an agent serializes whole-system evaluations under one lock;
 #   `rebuild` (nixos-remote-switch) adds deploy guards, evaluates here and
 #   activates (`--remote`: on the builder). The nix daemon builds at idle
@@ -65,6 +66,22 @@ let
       # Code stops that one when its server restarts, which killed the
       # nightly's build on 2026-10-23. Same caps (app-t3code.slice).
       exec ${realSystemdRun} --slice=app-t3code-jobs.slice --nice=10 --property=OOMScoreAdjust=1000 "$@"
+    ''
+  );
+
+  # Shadows xdg-open too: from an agent session it opens the agent's Chromium, not
+  # whatever Erik's default handler is (his running Firefox, on his monitor).
+  agentXdgOpen = lib.hiPrio (
+    pkgs.writeShellScriptBin "xdg-open" ''
+      case "$(cat /proc/self/cgroup 2>/dev/null)" in
+        */app-t3code-agents.slice/* | */app-t3code-jobs.slice/*)
+          # Only the PC has an agent seat.
+          if [ -x "$HOME/.nix-profile/bin/agent-open" ]; then
+            exec "$HOME/.nix-profile/bin/agent-open" "$@"
+          fi
+          ;;
+      esac
+      exec ${pkgs.xdg-utils}/bin/xdg-open "$@"
     ''
   );
 
@@ -175,6 +192,7 @@ in
       {
         environment.systemPackages = [
           agentSystemdRun
+          agentXdgOpen
           agentNix
           (agentRebuild "nh" (lib.getExe config.programs.nh.package))
           (agentRebuild "nixos-rebuild" "${config.system.build.nixos-rebuild}/bin/nixos-rebuild")

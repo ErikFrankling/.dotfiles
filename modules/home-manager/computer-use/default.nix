@@ -12,11 +12,13 @@ let
   system = pkgs.stdenv.hostPlatform.system;
   cuaDriver = inputs.cua.packages.${system}.cua-driver;
   backend = pkgs.callPackage ../../../packages/computer-use { inherit hyprland; };
+  windowsPlugin = pkgs.callPackage ../../../packages/agent-windows { inherit hyprland; };
   runtimePath = lib.makeBinPath [
     hyprland
     pkgs.systemd
     pkgs.grim
     pkgs.tigervnc
+    "/run/current-system/sw" # notify-erik
   ];
   pythonSource = pkgs.runCommand "agent-desktop-python" { } ''
     mkdir -p $out
@@ -28,6 +30,13 @@ let
   desktop = pkgs.writeShellScriptBin "agent-desktop" ''
     export PATH=${runtimePath}:"$PATH"
     exec ${pkgs.python3}/bin/python3 ${./desktop.py} "$@"
+  '';
+  # Who opened a window on any monitor, and the one way to open a URL for an agent.
+  windowOrigin = pkgs.writeShellScriptBin "window-origin" ''
+    exec ${desktop}/bin/agent-desktop window-origin "$@"
+  '';
+  agentOpen = pkgs.writeShellScriptBin "agent-open" ''
+    exec ${desktop}/bin/agent-desktop open "$@"
   '';
   bridge = pkgs.writeShellScriptBin "agent-computer-use" ''
     export PATH=${runtimePath}:"$PATH"
@@ -50,6 +59,8 @@ let
       desktop
       bridge
       liveTest
+      windowOrigin
+      agentOpen
     ];
   };
   sessionUnit = {
@@ -187,6 +198,12 @@ in
         "name:agent-park,monitor:AGENT-1,persistent:true"
       ];
       windowrule = [
+        # packages/agent-windows tags every window of an agent session before
+        # it maps. This places it, and all later windows of that client.
+        "workspace name:agent silent, match:tag agent-window"
+        "no_initial_focus on, match:tag agent-window"
+        "focus_on_activate off, match:tag agent-window"
+
         "workspace name:agent silent, match:class ^(agent-chromium)$"
         "no_initial_focus on, match:class ^(agent-chromium)$"
         "focus_on_activate off, match:class ^(agent-chromium)$"
@@ -194,17 +211,6 @@ in
         "workspace name:agent silent, match:class ^(agent-firefox)$"
         "no_initial_focus on, match:class ^(agent-firefox)$"
         "focus_on_activate off, match:class ^(agent-firefox)$"
-
-        # A dev build of T3 Code (what agents launch to test T3 changes; Erik's
-        # own T3 is class com.t3tools.T3Code). The watcher below moves agent
-        # windows to AGENT-1 only after they have mapped, so on Erik's workspace
-        # each one tiled his T3 to half for a frame (the 03:40-03:49 flicker on
-        # 2026-10-23: a dev T3 and its DevTools, 12 windows in 9 minutes). This
-        # launch rule maps the dev T3 on AGENT-1 from the start. DevTools windows
-        # get their title after mapping, so no rule can catch them.
-        "workspace name:agent silent, match:class ^(com\\.t3tools\\.T3Code\\.Development)$"
-        "no_initial_focus on, match:class ^(com\\.t3tools\\.T3Code\\.Development)$"
-        "focus_on_activate off, match:class ^(com\\.t3tools\\.T3Code\\.Development)$"
       ];
     };
 
@@ -225,19 +231,32 @@ in
 
     # Powering the monitors off leaves AGENT-1 as the only output, so Hyprland
     # parks the pointer and focus there and keeps them after reconnect.
-    # The same watcher keeps agent windows off Erik's monitors and his own
-    # apps (ERIK_APPS in desktop.py) off AGENT-1. Only an app's first window
-    # follows its launch rule, so every later window of an agent-seat process
-    # (and anything a harness spawns directly) is moved to workspace agent as
-    # soon as Hyprland announces it.
+    # The same watcher keeps Erik's apps (ERIK_APPS in desktop.py) off AGENT-1
+    # and passes on the plugin's escape reports. It does not place agent
+    # windows: moving one after it mapped is a frame too late, see agent-windows.
     systemd.user.services.agent-desktop-return-focus = {
       Unit = sessionUnit // {
-        Description = "Keep agent windows on AGENT-1 and return focus when a display connects";
+        Description = "Keep Erik's apps off AGENT-1, report agent window escapes, return focus when a display connects";
       };
       Service = {
         ExecStart = "${package}/bin/agent-desktop watch-focus";
         Restart = "always";
         RestartSec = 3;
+      };
+      Install.WantedBy = [ "hyprland-session.target" ];
+    };
+
+    # Places agent windows on AGENT-1 before they map and records who opened
+    # every window. See packages/agent-windows.
+    systemd.user.services.agent-windows-plugin = {
+      Unit = sessionUnit // {
+        Description = "Load the agent-windows Hyprland plugin";
+      };
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${package}/bin/agent-desktop load-window-plugin ${windowsPlugin}/lib/agent-windows.so";
+        RemainAfterExit = true;
+        TimeoutStartSec = 30;
       };
       Install.WantedBy = [ "hyprland-session.target" ];
     };
