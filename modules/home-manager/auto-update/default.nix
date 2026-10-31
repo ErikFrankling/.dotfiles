@@ -1011,7 +1011,7 @@ let
       plugin_failing=""
       plugin_state="$dir/agent-windows-missing"
       if ! jq -e --argjson now "$now" \
-        '[.[] | select(.end > $now) | select("local/agent-windows-plugin" | test(.pattern))] | length > 0' \
+        '[.[] | select(.end > $now) | select(. as $w | "local/agent-windows-plugin" | test($w.pattern))] | length > 0' \
         <<< "$maintenance" > /dev/null; then
         live=0
         while read -r pid; do
