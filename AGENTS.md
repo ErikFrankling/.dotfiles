@@ -439,6 +439,10 @@ someOption = "custom-value";
 
 ---
 
+### Nested compositors never touch the session (Erik's PC, 2026-10-31)
+
+A Hyprland started inside a running session rewrites the systemd user manager's environment and removes `DISPLAY` when it exits, so `bin/Hyprland` starts it without a seat. Start test compositors by the name `Hyprland -c <own config>` (not a store path) with `[workspace name:agent silent]`, set `WAYLAND_DISPLAY` only in the test client's own environment, and repair the manager with `hyprland-session-env`, not by hand.
+
 ## Local LLM System Overview
 
 ### CPU Offload Policy (Erik, 2026-09-19)

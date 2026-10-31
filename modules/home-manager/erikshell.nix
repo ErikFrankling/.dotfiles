@@ -45,6 +45,68 @@ let
   # runtime environment.
   runFromTree = "${inputs.erikshell.apps.${system}.default.program} ${devTree}";
 
+  # Puts the running session's display variables back in the user manager when
+  # they are wrong. A nested Hyprland started past ../../bin/Hyprland can repoint
+  # or remove them (2026-10-23: the bar crash-looped on a dead wayland-2, and
+  # DISPLAY stayed gone for a week). Also the repair to run by hand: setting
+  # WAYLAND_DISPLAY alone is what left DISPLAY out that night.
+  hyprlandSessionEnv = pkgs.writeShellApplication {
+    name = "hyprland-session-env";
+    runtimeInputs = [
+      pkgs.dbus
+      pkgs.hyprland
+      pkgs.jq
+      pkgs.procps
+      pkgs.systemd
+    ];
+    text = ''
+      # The session is the oldest live instance: a nested one always starts
+      # after it, and `hyprctl instances` still lists a killed one.
+      pid="" socket="" instance=""
+      while read -r candidate_pid candidate_socket candidate_instance; do
+        if [ -d "/proc/$candidate_pid" ]; then
+          pid=$candidate_pid socket=$candidate_socket instance=$candidate_instance
+          break
+        fi
+      done < <(hyprctl instances -j | jq -r \
+        'sort_by(.instance | split("_")[1] | tonumber) | .[] | "\(.pid) \(.wl_socket) \(.instance)"')
+      if [ -z "$pid" ]; then
+        echo "hyprland-session-env: no running Hyprland, nothing to do"
+        exit 0
+      fi
+
+      # Xwayland is forked just before exec-once, so at login it may be a moment.
+      display=""
+      for _ in 1 2 3 4 5; do
+        xwayland=$(pgrep -P "$pid" -x Xwayland | head -n 1 || true)
+        if [ -n "$xwayland" ]; then
+          display=$(tr '\0' '\n' <"/proc/$xwayland/cmdline" | grep -m 1 '^:[0-9]' || true)
+          break
+        fi
+        sleep 1
+      done
+
+      current=$(systemctl --user show-environment)
+      wanted=("WAYLAND_DISPLAY=$socket" "HYPRLAND_INSTANCE_SIGNATURE=$instance")
+      if [ -n "$display" ]; then
+        wanted+=("DISPLAY=$display")
+      else
+        echo "hyprland-session-env: no Xwayland under Hyprland $pid, leaving DISPLAY alone"
+      fi
+
+      changes=()
+      for assignment in "''${wanted[@]}"; do
+        if ! grep -qxF -- "$assignment" <<<"$current"; then
+          changes+=("$assignment")
+        fi
+      done
+      if [ "''${#changes[@]}" -gt 0 ]; then
+        echo "hyprland-session-env: correcting ''${changes[*]}"
+        dbus-update-activation-environment --systemd "''${changes[@]}"
+      fi
+    '';
+  };
+
   # The same swap as localDev, without the rebuild: a runtime systemd drop-in
   # that overrides the unit's own ExecStart. Runtime drop-ins live under
   # $XDG_RUNTIME_DIR, i.e. /run, so nothing Nix manages is touched and the
@@ -138,6 +200,7 @@ in
     home.packages = [
       pkgs.libnotify
       devSwap
+      hyprlandSessionEnv
     ];
 
     programs.erikshell = {
@@ -179,6 +242,11 @@ in
         # The shell repo has since grown the same line; once the input is bumped
         # past fa0366a this one is redundant and can go.
         KillMode = "process";
+
+        # Everything started from the launcher inherits this process's
+        # environment, fixed when the unit starts, so correct the manager's copy
+        # first. A leading "-" because a missing variable must not cost the bar.
+        ExecStartPre = "-${hyprlandSessionEnv}/bin/hyprland-session-env";
 
         # When Hyprland dies the shell exits with it, and the default 100 ms
         # RestartSec burned the five-starts-in-ten-seconds limit before the next

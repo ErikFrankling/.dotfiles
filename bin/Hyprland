@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# First on PATH, ahead of the /run/wrappers copy, so that a Hyprland started
+# inside a running session cannot touch the session it is nested in.
+#
+# A nested Hyprland that gets a seat counts as a real session: it writes its
+# DISPLAY and WAYLAND_DISPLAY into the systemd user manager on start, and on
+# exit it unsets DISPLAY among others but puts every name back except DISPLAY.
+# That is how the manager lost DISPLAY on 2026-10-23, which broke every X11 app
+# started from the launcher (Steam) a week later. HYPRLAND_NO_SD_VARS does not
+# help: the exec-once import ignores it. Without a seat all the hooks are off.
+if [ -n "${WAYLAND_DISPLAY:-}${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+	if [ $# -eq 0 ]; then
+		# Erik's config would run his autostart and restart hyprland-session.target.
+		echo "Hyprland: nested inside a session; pass your own config with -c" >&2
+		exit 2
+	fi
+	export LIBSEAT_BACKEND=none
+fi
+
+exec /run/wrappers/bin/Hyprland "$@"
