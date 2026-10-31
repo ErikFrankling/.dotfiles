@@ -241,6 +241,8 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-10-31 05:03 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-96ca8563025d`: an agent's `heavy --small -- nix shell ... bash .v2.sh` job was killed (exit 137) after 38 s (04:52); same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
+
 - 2026-10-31 02:19 (health-watch) — `alert/SystemdUnitFailed/pc/xdg-document-portal`: the on-demand flatpak document portal exited 21 at 02:08 after 8 days; unit inactive, `systemctl --user --failed` empty, D-Bus reactivates it on use. Log-based alert, nothing to repair.
 
 - 2026-10-30 04:57 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-1d2e2586250f` and `-9ee60e7a4527`: two agent `heavy --small` probe jobs (`ls`/`find` of a rebase work dir, exit 97 and 1) failed at 04:45; same pattern as the other `agent-job-heavy-*` alerts. Units already gone, nothing failed; left alone.
