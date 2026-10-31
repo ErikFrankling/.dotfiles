@@ -155,7 +155,7 @@ def escape_alert(record, dry_run=False):
     message = (f"{record.get('class')} {what} workspace {record.get('workspace')} "
                f"({record.get('monitor')}); sent back to AGENT-1. Thread {thread}, "
                f"pid {record.get('pid')}, {(record.get('cgroup') or '').rsplit('/', 1)[-1]}.")
-    command = ["notify-erik", "-p", "high", "-t", "Agent window got onto your monitor", "--source", "window-origin"]
+    command = ["notify-erik", "-p", "high", "-t", "Agent window got onto your monitor"]
     if record.get("thread"):
         command += ["--thread", record["thread"]]
     command.append(message)
