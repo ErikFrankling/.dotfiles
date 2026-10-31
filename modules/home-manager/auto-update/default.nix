@@ -811,6 +811,7 @@ let
     name = "health-watch";
     runtimeInputs = [
       pkgs.curl
+      pkgs.hyprland
       pkgs.jq
       pkgs.iputils
       pkgs.iproute2
@@ -1002,7 +1003,32 @@ let
         [ "$dry" = 1 ] && echo "nightly build jobs, ignored: $(grep '^alert/SystemdUnitFailed/pc/agent-job-nix-nightly-' <<< "$failing_alerts" | cut -c1-120)"
         failing_alerts=$(grep -v '^alert/SystemdUnitFailed/pc/agent-job-nix-nightly-' <<< "$failing_alerts" || true)
       fi
-      failing=$(printf '%s\n%s\n' "$failing" "$failing_alerts" | sed '/^$/d')
+      # The plugin that keeps agent windows off Erik's monitors (packages/
+      # agent-windows). Nothing else places them, and a failed load is silent:
+      # windows still open, on his screen. Five minutes' grace for a session
+      # start, when Hyprland is up before the plugin unit has run; a dry run
+      # reports it at once. No live Hyprland (logged out) is not a failure.
+      plugin_failing=""
+      plugin_state="$dir/agent-windows-missing"
+      if ! jq -e --argjson now "$now" \
+        '[.[] | select(.end > $now) | select("local/agent-windows-plugin" | test(.pattern))] | length > 0' \
+        <<< "$maintenance" > /dev/null; then
+        live=0
+        while read -r pid; do
+          [ -d "/proc/$pid" ] && live=1
+        done < <(hyprctl instances -j 2> /dev/null | jq -r '.[].pid' 2> /dev/null || true)
+        plugins=$(hyprctl plugin list 2>&1 || true)
+        if [ "$live" = 0 ] || grep -q 'agent-windows' <<< "$plugins"; then
+          [ "$dry" = 1 ] || rm -f "$plugin_state"
+        else
+          [ -f "$plugin_state" ] || [ "$dry" = 1 ] || echo "$now" > "$plugin_state"
+          since=$(cat "$plugin_state" 2> /dev/null || echo "$now")
+          if [ "$dry" = 1 ] || [ $((now - since)) -ge 300 ]; then
+            plugin_failing="local/agent-windows-plugin: agent-windows is not in hyprctl plugin list, so agent windows open on Erik's monitors. Said: $(head -c 120 <<< "$plugins" | tr '\n' ' '). Unit: $(systemctl --user is-active agent-windows-plugin.service 2> /dev/null || true)."
+          fi
+        fi
+      fi
+      failing=$(printf '%s\n%s\n%s\n' "$failing" "$failing_alerts" "$plugin_failing" | sed '/^$/d')
 
       if [ "$dry" = 1 ]; then
         echo "failing now:"
