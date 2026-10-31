@@ -204,8 +204,7 @@ def window_origin(args):
                       "cgroup": "/test.scope"}, dry_run="--dry-run" in args)
         return
     if args[:1] in (["--help"], ["help"]):
-        print("window-origin [ADDRESS] [--class REGEX] [--agents] [--erik] [--escapes] [--last N] [--json]
-"
+        print("window-origin [ADDRESS] [--class REGEX] [--agents] [--erik] [--escapes] [--last N] [--json]\n"
               "window-origin alert --test [--dry-run]")
         return
     last, want, show_json, filters = 20, None, False, []
