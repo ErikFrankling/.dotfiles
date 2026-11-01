@@ -1,6 +1,6 @@
 ---
 name: model-tiers
-description: Which model, provider and reasoning effort to use for a session, a delegated sub-agent or a scheduled task on Erik's machines (Opus 5.5 vs Sonnet 5.5 vs Haiku 5.5, and Codex, Grok, Cursor and OpenCode sub-agents for trivial or bulk work). Load before launching a thread, delegating a task, scheduling a recurring task or writing an automated job, and when choosing the model for one.
+description: Which model, provider and reasoning effort to use for a session, a delegated sub-agent or a scheduled task on Erik's machines (Opus 5.5 vs Sonnet 5.5 vs Haiku 5.5, and optional Grok, Cursor and OpenCode sub-agents for trivial or bulk work). Load before launching a thread, delegating a task, scheduling a recurring task or writing an automated job, and when choosing the model for one.
 ---
 
 # Model tiers
@@ -19,11 +19,13 @@ to whatever is in place (account failover is handled separately).
 | Routine | `claude-sonnet-5-5` | medium (its default is high; lower it) | Every automated or unattended run: nightly update, morning check, health incident, scheduled tasks, dotfiles sync. Interactive work that is a few tool calls along a known path: run a command and report, follow a skill step by step, small edits, look something up, triage logs. |
 | Trivial | `claude-haiku-5-5` | low | Extremely basic, mechanical work: reformat, rename, summarize a short text, classify, extract a field, check one status, relay a message. |
 
-## Other subscriptions: Codex, Grok, Cursor, OpenCode
+## Other subscriptions: Grok, Cursor, OpenCode
 
-Erik also pays for Codex, SuperGrok (Grok + Cursor) and OpenCode. Their usage
-does not touch the Claude limits, so trivial and bulk sub-agent work goes there
-first. Every one runs as a T3 sub-agent with `delegate_task` and a `target`,
+Erik also pays for SuperGrok (Grok + Cursor) and OpenCode. Their usage
+does not touch the Claude limits, so they are options for trivial and bulk
+sub-agent work; the normal path is the Claude tiers above. **Never pick Codex
+yourself:** Erik has almost no Codex credits. Use it only if Erik picks it in
+a thread. Every one runs as a T3 sub-agent with `delegate_task` and a `target`,
 and their children have the same `t3-code` tools, so they can delegate further
 (sub-sub-agents) and read or steer T3 threads. `orchestrator_capabilities` is the live list.
 The IDs below were each tested with a real `delegate_task` on 2026-10-21.
@@ -35,13 +37,12 @@ grok.com and cursor.com are the same xAI account (ef.pro454@gmail.com, X
 @ErikFrankling); usage and the pool are at https://grok.com/dashboard/usage,
 where every call should show as "Included". There are no prepaid credits
 ($0), so when the weekly pool runs out calls fail instead of charging; switch
-to Codex or OpenCode until it resets. Don't buy credits or change the plan.
+to OpenCode or a Claude tier until it resets. Don't buy credits or change the plan.
 
 | Provider | `target` | Use it for |
 | --- | --- | --- |
-| **Codex** (preferred, the strongest of these) | `{"providerInstanceId":"codex","model":"gpt-6-luna","options":{"reasoningEffort":"low"}}` for routine work; `"model":"gpt-6.1-sol"` (low or medium) when it needs more brains | The default non-Claude sub-agent: sweeps and status checks over T3 threads, log triage, small scripted chores, code review as a second opinion, and computer use (best at it). |
 | **Grok** | `{"providerInstanceId":"grok","model":"grok-4.7"}` for research; `"grok-4.7-build-fast"` (`"options":{"reasoningEffort":"low"}`) or `"grok-build"` for quick builds | Anything on X/Twitter (posts, people, threads; it is the best at X lookups), plus quick throwaway build tasks. |
-| **Cursor** | `{"providerInstanceId":"cursor","model":"composer-2.5"}` (Cursor's own fast coding model) | A second cheap coding sub-agent: small scripted edits, chores in a repo, a quick second implementation. It also lists Claude, GPT and Gemini models; those draw on the same weekly pool, so use Claude and Codex directly for them. |
+| **Cursor** | `{"providerInstanceId":"cursor","model":"composer-2.5"}` (Cursor's own fast coding model) | A second cheap coding sub-agent: small scripted edits, chores in a repo, a quick second implementation. It also lists Claude, GPT and Gemini models; those draw on the same weekly pool, so use Claude directly for them. |
 | **OpenCode** | `{"providerInstanceId":"opencode","model":"opencode-go/deepseek-v4.1-flash","options":{"variant":"low"}}` (Go subscription); free: `"opencode/deepseek-v4.1-flash-free"`, `"opencode/glm-5.3-flash-free"` | Fast, cheap bulk: monitoring, labelling or classifying data, many small trivial checks. DeepSeek V4.1 Flash gives a lot of tokens for almost nothing. |
 
 Rules for these:
@@ -51,18 +52,17 @@ Rules for these:
   Check their output before acting on it or reporting it: spot-check a sample
   of labels, re-read the one thread a sweep says failed, run the test
   yourself. Never let one push, deploy, delete or message Erik unchecked.
-- **Order of preference** for a trivial sub-task: Codex → OpenCode → Cursor
-  → Grok (Grok first for anything on X). Cursor and Grok share one weekly
-  pool. Fall back to Claude Haiku/Sonnet only when none of them fits or they
-  are failing.
+- **Options** for a trivial sub-task: OpenCode, Cursor, Grok (Grok first for
+  anything on X); otherwise Claude Haiku/Sonnet. Cursor and Grok share one
+  weekly pool. Computer use goes to a Claude agent.
 - **Brief them fully.** A child gets only your task text: give exact paths,
   IDs, commands, the output format you want, and "do not change anything" when
   it is read-only.
 - **If a provider errors** (expired key, out of quota), switch to the next one
   and start a repair session for the broken one as the global rule says.
 - **Schedules:** a recurring routine (hourly sweep, monitor, import) should
-  delegate its work to one of these instead of running on Claude, e.g. the
-  personal agent's hourly session sweep delegates to Codex `gpt-6-luna`.
+  delegate its work to OpenCode's free model or a Claude tier, e.g. the
+  personal agent's hourly session sweep uses OpenCode's free DeepSeek model.
 
 ## Rules
 
@@ -76,8 +76,8 @@ Rules for these:
   the whole thing on Opus. Escalate after one honest failed attempt, not
   before.
 - **Sub-agents get the cheapest model that fits.** Search, file reading,
-  "find where X is", collecting logs, sweeps, labelling: Codex, OpenCode or
-  Grok first (next section), else Haiku or Sonnet. Reviews of real code
+  "find where X is", collecting logs, sweeps, labelling: Haiku or Sonnet, or
+  OpenCode or Grok (previous section). Reviews of real code
   and implementation of real features: Opus. Write the brief so a smaller
   model can do it: exact paths, the goal, what done means.
 - **Effort before model.** Raising effort on a small model is cheaper than
@@ -102,8 +102,8 @@ Rules for these:
 - Dotfiles sync before the 06:00 update: `modules/nixos/auto-update.nix`
   (`claude --model claude-sonnet-5-5`).
 - The personal agent's hourly session sweep (T3 scheduled task
-  `hourly-session-sweep-1021`, app state, not Nix): delegates to Codex
-  `gpt-6-luna`, falling back to OpenCode free DeepSeek Flash.
+  `hourly-session-sweep-1021`, app state, not Nix): uses OpenCode's
+  free DeepSeek model, doing the scan itself if that is unavailable.
 - This skill and the one-paragraph global rule:
   `modules/home-manager/company-brain.nix`.
 
@@ -149,7 +149,8 @@ kept here: Sonnet is only for routine runs, never as a cheaper coder.
   "I absolutely default to it for code reviews, architecture analysis,
   computer use, email management…" (2026-09-29,
   https://x.com/theo/status/2105001138953327067)
-  → Codex is the preferred second-opinion and computer-use sub-agent.
+  → Erik has almost no Codex credits: use a Claude agent for these, and Codex
+  only if Erik picks it.
 - **The weekly cap is the tight one.** Claude Max "20x" is mostly the 5-hour
   window; the weekly limit is only about 2× more. (2026-09-28,
   https://x.com/theo/status/2104688105983008906)
