@@ -21,7 +21,7 @@ in
         # nixpkgs_master now builds with Node 26 and pnpm 12 itself, so no nodejs override.
         t3codeBase.passthru.unwrapped.overrideAttrs (
           finalAttrs: oldAttrs: {
-            version = "0.1.6";
+            version = "0.1.7";
             src = inputs.t3code-src;
             # Thread config must extend, not replace, the harness's MCP overrides.
             # The fork carries this fix itself now (dotted "mcp_servers.t3-code" key),
