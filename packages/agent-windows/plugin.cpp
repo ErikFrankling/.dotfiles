@@ -52,7 +52,7 @@ using namespace agentwindows;
 
 inline HANDLE PHANDLE = nullptr;
 
-static constexpr auto TAG = "agent-window";
+static const std::string TAG = "agent-window";
 
 using SpawnRawProcFn = std::optional<uint64_t> (*)(Config::Supplementary::CExecutor *, const std::string &, PHLWORKSPACE, const std::string &);
 
@@ -67,7 +67,6 @@ struct ClientEntry {
 struct State {
   wl_listener clientCreated{};
   std::unordered_map<wl_client *, ClientEntry *> clients;
-  std::unordered_map<Desktop::View::CWindow *, Origin> windows;
   CFunctionHook *spawnHook = nullptr;
   std::vector<CHyprSignalListener> listeners;
   unsigned long execCount = 0;
@@ -154,39 +153,39 @@ void sendBack(PHLWINDOW window, const Origin &origin, std::string_view event) {
   });
 }
 
+// Which windows are an agent's is kept on the window itself, as its tag. A map
+// keyed by window address went stale: a window destroyed without ever mapping
+// emits no close event (vulkaninfo makes one), the allocator hands its address to
+// the next window, and on 2026-11-01 that sent Erik's WebCord dialogs to the agent
+// seat as the vulkaninfo session's. originOf reads the live client every time.
+void tagAgent(PHLWINDOW window) { window->m_ruleApplicator->m_tagKeeper.applyTag("+" + TAG, false); }
+
 void onWindowCreate(PHLWINDOW window) {
-  const auto origin = originOf(window);
-  if (origin.agent) {
-    window->m_ruleApplicator->m_tagKeeper.applyTag(TAG, false);
-    state->windows[window.get()] = origin;
-  }
+  if (originOf(window).agent)
+    tagAgent(window);
 }
 
 void onWindowOpenEarly(PHLWINDOW window) {
-  auto it = state->windows.find(window.get());
-  auto origin = it != state->windows.end() ? it->second : originOf(window);
-  if (origin.agent && it == state->windows.end()) {
-    // XWayland only: _NET_WM_PID arrives after the window is created.
-    window->m_ruleApplicator->m_tagKeeper.applyTag(TAG, false);
-    state->windows[window.get()] = origin;
-  }
+  const auto origin = originOf(window);
+  if (origin.agent)
+    tagAgent(window);  // XWayland: _NET_WM_PID arrives after the window is created.
   writeLog(record(window, origin, "open"));
   if (origin.agent && !onAgentSeat(window))
     sendBack(window, origin, "opened-outside");
 }
 
 void onWindowMove(PHLWINDOW window, PHLWORKSPACE workspace) {
-  const auto it = state->windows.find(window.get());
-  if (it == state->windows.end() || !workspace || workspace->m_name == "agent" || workspace->m_name == "agent-park")
+  if (!window->m_ruleApplicator->m_tagKeeper.isTagged(TAG, true) || !workspace || workspace->m_name == "agent" || workspace->m_name == "agent-park")
     return;
+  const auto origin = originOf(window);
   const auto peer = g_pHyprCtl ? g_pHyprCtl->m_currentRequestParams.pid : 0;
   if (peer > 0 && classify(peer, getpid()).agent) {
-    sendBack(window, it->second, "agent-moved-it");
+    sendBack(window, origin, "agent-moved-it");
     return;
   }
   // Erik took it with a keybind or from his terminal: it is his to keep.
-  writeLog(record(window, it->second, "moved-by-erik"));
-  state->windows.erase(it);
+  writeLog(record(window, origin, "moved-by-erik"));
+  window->m_ruleApplicator->m_tagKeeper.applyTag("-" + TAG, false);
 }
 
 std::optional<uint64_t> hkSpawnRawProc(Config::Supplementary::CExecutor *self, const std::string &args, PHLWORKSPACE workspace, const std::string &token) {
@@ -226,7 +225,6 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
   state->listeners.emplace_back(events.create.listen([](PHLWINDOW window) { onWindowCreate(window); }));
   state->listeners.emplace_back(events.openEarly.listen([](PHLWINDOW window) { onWindowOpenEarly(window); }));
   state->listeners.emplace_back(events.moveToWorkspace.listen([](PHLWINDOW window, PHLWORKSPACE workspace) { onWindowMove(window, workspace); }));
-  state->listeners.emplace_back(events.close.listen([](PHLWINDOW window) { state->windows.erase(window.get()); }));
 
   state->clientCreated.notify = onClientCreated;
   wl_display_add_client_created_listener(g_pCompositor->m_wlDisplay, &state->clientCreated);
