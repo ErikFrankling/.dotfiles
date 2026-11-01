@@ -249,6 +249,8 @@ Newest first; one entry per morning that needed a real repair.
 
 - 2026-11-01 07:20 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-3d582a807d11`, `-ee3dc4c9eb20`, `-c6363ce66938`: three agent `heavy --big` jobs (`sh job.sh`, `nix shell nixpkgs#sumo -c ./run.sh`, `nix shell ... bash scripts/_s.sh`) exited 255 together at 07:04:51 after 37 min to 1h of wall time with ~2 s CPU; same pattern as the other `agent-job-heavy-*` alerts. Units already gone, nothing failed; left alone.
 
+- 2026-11-01 09:25 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-ee3dc4c9eb20`: an agent's `heavy --big -- nix shell nixpkgs#sumo -c ./run.sh` job exited 255 (05:32, 07:04, 09:08, each after 1h+); same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
+
 - 2026-11-01 05:30 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-99bd24526686`: an agent's `heavy --small -- nix shell ... bash scripts/_verify.sh` job was killed (exit 137) at 05:17 after 1h14 wall time with ~2 s CPU; same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
 
 - 2026-10-31 16:10 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-berlin-day3`: an agent's `flock /tmp/cars-gpu.lock bash scripts/berlin_day.sh` job was terminated (143) after 6 s at 16:00; same pattern as the other `agent-job-*` alerts. Unit already gone, nothing failed; left alone.
