@@ -1524,11 +1524,11 @@
         "nixpkgs": "nixpkgs_8"
       },
       "locked": {
-        "lastModified": 1793427183,
-        "narHash": "sha256-TML4qusw4IYv+P+HkX55WrhRZz+ushLuTHrh4OafHvc=",
+        "lastModified": 1792033921,
+        "narHash": "sha256-59ukG6rpDD2anFbNouCCVMeg8LW6OZOMsrLWwMnsjZM=",
         "owner": "peteonrails",
         "repo": "voxtype",
-        "rev": "a45562ab9d1ea499b3c1ede91964b83957711c5c",
+        "rev": "dc499ad47444ba6ea80d8750aa3581c23120821c",
         "type": "github"
       },
       "original": {
