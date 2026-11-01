@@ -247,6 +247,8 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-11-01 05:30 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-99bd24526686`: an agent's `heavy --small -- nix shell ... bash scripts/_verify.sh` job was killed (exit 137) at 05:17 after 1h14 wall time with ~2 s CPU; same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
+
 - 2026-10-31 16:10 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-berlin-day3`: an agent's `flock /tmp/cars-gpu.lock bash scripts/berlin_day.sh` job was terminated (143) after 6 s at 16:00; same pattern as the other `agent-job-*` alerts. Unit already gone, nothing failed; left alone.
 
 - 2026-10-31 17:20 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-berlin-day6`: an agent's `flock /tmp/cars-gpu.lock bash scripts/berlin_day.sh` job was terminated (exit 143, SIGTERM) after 70 s (17:06); same pattern as `agent-job-berlin-day3`. Unit already gone, nothing failed; left alone.
