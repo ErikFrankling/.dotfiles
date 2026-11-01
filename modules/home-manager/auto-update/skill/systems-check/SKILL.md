@@ -251,6 +251,8 @@ Newest first; one entry per morning that needed a real repair.
 
 - 2026-10-31 17:20 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-berlin-day6`: an agent's `flock /tmp/cars-gpu.lock bash scripts/berlin_day.sh` job was terminated (exit 143, SIGTERM) after 70 s (17:06); same pattern as `agent-job-berlin-day3`. Unit already gone, nothing failed; left alone.
 
+- 2026-11-01 02:07 (health-watch) — `alert/HostUpdatesNotRunning/proxmox`: false alarm. unattended-upgrades ran fine (Oct 31 04:30); logrotate gzipped the log at 00:51 and `homelab-update-metrics` only read `.log`/`.log.1`, so the last-run timestamp became 0. Fix (homelab repo, `ops/updates/install.sh`): read via `zcat -f` incl. `.log.*.gz`; reinstalled on proxmox and naiaclaw, metric correct.
+
 - 2026-10-31 05:03 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-96ca8563025d`: an agent's `heavy --small -- nix shell ... bash .v2.sh` job was killed (exit 137) after 38 s (04:52); same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
 
 - 2026-10-31 02:19 (health-watch) — `alert/SystemdUnitFailed/pc/xdg-document-portal`: the on-demand flatpak document portal exited 21 at 02:08 after 8 days; unit inactive, `systemctl --user --failed` empty, D-Bus reactivates it on use. Log-based alert, nothing to repair.
