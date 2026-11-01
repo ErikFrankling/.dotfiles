@@ -247,6 +247,8 @@ short rev, no log excerpts; the thread has the details.
 
 Newest first; one entry per morning that needed a real repair.
 
+- 2026-11-01 14:55 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-hu-low`: an agent's `nix develop --command /tmp/hu/j/low.sh` job exited 101 after 13 s (14:42); same pattern as the other `agent-job-*` alerts. Unit already gone, nothing failed; left alone.
+
 - 2026-11-01 13:55 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-b92db9b3fd8f`: an agent's `heavy --small -- sh -c 'cargo build --release ... plan_runs.py smoke'` job exited 1 (13:39) after 4 min wall time; same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
 
 - 2026-11-01 07:20 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-3d582a807d11`, `-ee3dc4c9eb20`, `-c6363ce66938`: three agent `heavy --big` jobs (`sh job.sh`, `nix shell nixpkgs#sumo -c ./run.sh`, `nix shell ... bash scripts/_s.sh`) exited 255 together at 07:04:51 after 37 min to 1h of wall time with ~2 s CPU; same pattern as the other `agent-job-heavy-*` alerts. Units already gone, nothing failed; left alone.
