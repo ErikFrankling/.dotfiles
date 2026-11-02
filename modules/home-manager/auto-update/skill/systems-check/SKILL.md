@@ -246,6 +246,8 @@ short rev, no log excerpts; the thread has the details.
 ## Incident log
 
 Newest first; one entry per morning that needed a real repair.
+- 2026-11-02 06:25 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-*` (8 units) all exited 255 together at 06:12:06 after 13 min to 1 h with ~3 s CPU (the 06:00 update's activation); same pattern as the other `agent-job-heavy-*` alerts. `dbus-:1.2-org.freedesktop.secrets@1`: gnome-keyring-daemon aborted (g_variant_new assertion in open_session) at 06:05 after 11 days; D-Bus reactivates it on use. Units gone, `systemctl --user --failed` empty; left alone.
+
 
 - 2026-11-02 02:30 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-hu-h23`: an agent's `nix develop --command bash /tmp/hu/j/h23.sh` job was terminated (exit 143) at 02:16 after 5 min; same pattern as the other `agent-job-*` alerts. Unit already gone, nothing failed; left alone.
 
