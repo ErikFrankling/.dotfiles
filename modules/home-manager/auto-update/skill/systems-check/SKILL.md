@@ -200,7 +200,7 @@ running, VM 100 stopped; disk and memory not near full on the VM and the host.
   projects, not homelab infrastructure. Report their failures in one line;
   do not repair them.
 - Low free memory on the Proxmox host (~0.5 GB) is normal and by design:
-  VM 200 has a fixed 60 GB of the host's 64 GB and nothing else runs there.
+  VM 200 has a fixed 52 GB of the host's 62 GB and nothing else runs there.
   Do not mention it. Only report host memory with evidence of real pressure
   (OOM kills, heavy swapping, `kvm` or `tailscaled` killed or stalling).
 
@@ -246,6 +246,8 @@ short rev, no log excerpts; the thread has the details.
 ## Incident log
 
 Newest first; one entry per morning that needed a real repair.
+- 2026-11-02 11:55 (Erik-asked repair) — `monitor/gatus`, `monitor/alertmanager`, no SSH, `heavy` banner timeouts, VIP still pinging; health-watch started nothing (day's six sessions used, mostly on `agent-job-heavy-*` alerts). VM 200 had run out of memory: load 800-990, PSI memory full 92%, page cache gone, no swap. A 5.3 GB `nix-nightly build` evaluation on nix-builder landed on 16 openclaw-gateway (7 GB), a 6.3 GB python3.14, the emulator (5 GB) and the services. The kernel OOM killer took about 25 minutes to kill it (11:31 and 11:55, each failing the nightly build). Recovery needed no restart. Reach the VM when SSH is dead: `qm guest exec 200` on proxmox, or `ssh -o ConnectTimeout=60 naiaclaw`. Fix (homelab, `ops/earlyoom/install.sh`): earlyoom kills the top `oom_score` process, compilers and nix first, at 6% available; the kubelet evicts only on disk here. Alert `NodeMemoryStalled`. `kubectl get --raw /api/v1/nodes/naiaclaw/proxy/configz` shows the eviction settings; `journalctl -u earlyoom` on naiaclaw shows kills.
+
 - 2026-11-02 09:30 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-3b68fb85b46b`, `-ec6233dc1441`, `-80e6ec7ecc84`, `-3eb334d9fdbc`: four more agent `heavy` jobs failed together (08:16Z); same pattern as the other `agent-job-heavy-*` alerts. Units already gone, `systemctl --user --failed` empty; left alone.
 
 - 2026-11-02 07:35 (health-watch) — `alert/SystemdUnitFailed/pc/aw-outside`: transient `aw-outside-<pid>.service` units (an agent's test that starts a process outside the agent slice, probably of the agent-windows plugin) exited 230/PERSONALITY between 06:25 and 07:03. Units gone, `systemctl --user --failed` empty; left alone.
