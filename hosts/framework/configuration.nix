@@ -81,6 +81,9 @@
 
   sops.secrets."wireless.env" = { };
 
+  # OpenCode Go API key (modules/home-manager/ai.nix merges it into opencode auth.json).
+  sops.secrets.opencode-go-key.owner = username;
+
   # Moved out of the archived openvpn.nix when its import was dropped --
   # without it this host would silently lose the pc's SSH access (password
   # auth is off globally). Key name predates the pc's NixOS install.

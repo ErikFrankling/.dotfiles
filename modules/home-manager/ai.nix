@@ -344,7 +344,8 @@ in
   };
 
   # Keep the OpenCode Go key in ~/.local/share/opencode/auth.json in step with sops
-  # (PC only). OpenCode also writes that file itself (OAuth logins), so merge.
+  # (every host that declares the secret: pc, framework). OpenCode also writes that
+  # file itself (OAuth logins), so merge. Other copy: homelab secret time-decide.
   home.activation.opencodeGoKey = lib.mkIf (osConfig.sops.secrets ? opencode-go-key) (
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       auth="$HOME/.local/share/opencode/auth.json"
