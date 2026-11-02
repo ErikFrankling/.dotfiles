@@ -38,7 +38,11 @@ Erik runs **Hyprland** (a tiling Wayland compositor) with three outputs:
   as long as you use the tools below.
 - **Workspace `agent`** is what AGENT-1 shows and the only place your input is
   accepted. **Workspace `agent-park`** is a hidden shelf on AGENT-1 for windows
-  you want off screen (e.g. while recording). Both exist permanently.
+  you want off screen (e.g. while recording). Both exist permanently. AGENT-1
+  never displays `agent-park`: `packages/agent-windows` returns it to `agent` at
+  once, without touching Erik's focus or pointer, so a window on `agent-park`
+  gets no frames and an app there draws nothing until you move it back. Do not
+  use `focuswindow` or `workspace` to look at a parked window.
 - **Every window you start opens on AGENT-1, whatever you do.** The compositor
   does it (`packages/agent-windows`): it recognises your session by cgroup and
   places the window before its first frame. Moving a window of yours to his

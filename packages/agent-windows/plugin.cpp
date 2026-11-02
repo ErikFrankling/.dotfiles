@@ -14,20 +14,26 @@
 // Every map is written to window-origin's log, without titles. An agent window
 // that ends up on Erik's monitors anyway is moved back and reported on the event
 // socket as `agentwindowescape`; agent-desktop watch-focus notifies him.
+//
+// AGENT-1 always shows `agent`; see keepAgentShown for what switched it away.
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/plugins/HookSystem.hpp>
 #include <hyprland/src/Compositor.hpp>
+#include <hyprland/src/animation/WorkspaceAnimationController.hpp>
 #include <hyprland/src/config/supplementary/executor/Executor.hpp>
 #include <hyprland/src/debug/HyprCtl.hpp>
 #include <hyprland/src/desktop/Workspace.hpp>
 #include <hyprland/src/desktop/rule/windowRule/WindowRuleApplicator.hpp>
 #include <hyprland/src/desktop/view/Window.hpp>
 #include <hyprland/src/event/EventBus.hpp>
+#include <hyprland/src/layout/LayoutManager.hpp>
 #include <hyprland/src/managers/EventManager.hpp>
 #include <hyprland/src/managers/eventLoop/EventLoopManager.hpp>
 #include <hyprland/src/output/Monitor.hpp>
 #include <hyprland/src/protocols/XDGShell.hpp>
 #include <hyprland/src/protocols/core/Compositor.hpp>
+#include <hyprland/src/state/MonitorState.hpp>
+#include <hyprland/src/state/WorkspaceState.hpp>
 #include <hyprland/src/xwayland/XSurface.hpp>
 
 #include <wayland-server-core.h>
@@ -64,7 +70,7 @@ struct ClientEntry {
   Origin origin;
 };
 
-struct State {
+struct PluginState {
   wl_listener clientCreated{};
   std::unordered_map<wl_client *, ClientEntry *> clients;
   CFunctionHook *spawnHook = nullptr;
@@ -73,7 +79,7 @@ struct State {
   std::filesystem::path log;
 };
 
-State *state = nullptr;
+PluginState *state = nullptr;
 
 void onClientDestroy(wl_listener *listener, void *) {
   auto *entry = wl_container_of(listener, static_cast<ClientEntry *>(nullptr), destroy);
@@ -201,6 +207,44 @@ std::optional<uint64_t> hkSpawnRawProc(Config::Supplementary::CExecutor *self, c
   return original(self, rewriteExec(args, origin, ++state->execCount, SYSTEMD_RUN, ENV_BIN), workspace, token);
 }
 
+// `agent-park` must never be what AGENT-1 displays: windows on `agent` then get no
+// frame callbacks and agent-seat input is refused everywhere. Hyprland puts it there
+// by itself. With Erik's monitors off, his workspaces move to AGENT-1; on reconnect
+// the one it was showing goes home and moveWorkspaceToMonitor plugs the gap with the
+// first other workspace on AGENT-1, which is `agent-park` (2026-10-31, unnoticed for
+// two days). A `focuswindow` on a parked window does the same.
+//
+// internal=true is the point: the normal path unconstrains the pointer and releases
+// mouse buttons globally, which would reach Erik's game or drag. It also sends no
+// focus, warp or `workspace` event, so nothing on his monitors can tell. It skips the
+// animation and layout steps, done here. Any other workspace on AGENT-1 is left alone:
+// it is one of Erik's, there because his monitors are off.
+void keepAgentShown() {
+  for (const auto &monitor : State::monitorState()->monitors()) {
+    if (monitor->m_name != "AGENT-1" || !monitor->m_activeWorkspace || monitor->m_activeWorkspace->m_name != "agent-park")
+      continue;
+    for (const auto &candidate : State::workspaceState()->workspaces()) {
+      const auto agent = candidate.lock();
+      if (!agent || agent->m_name != "agent" || agent->m_monitor != monitor)
+        continue;
+      const auto parked = monitor->m_activeWorkspace;
+      monitor->changeWorkspace(agent, true, true, true);
+      Animation::Workspace::startAnimation(parked, Animation::Workspace::ANIMATION_TYPE_OUT, true, true);
+      Animation::Workspace::startAnimation(agent, Animation::Workspace::ANIMATION_TYPE_IN, true, true);
+      g_layoutManager->recalculateMonitor(monitor, Layout::CLayoutManager::RECALCULATE_MONITOR_REASON_WORKSPACE_CHANGE);
+      return;
+    }
+  }
+}
+
+// Later, not now: these events fire halfway through moveWorkspaceToMonitor.
+void keepAgentShownLater() {
+  g_pEventLoopManager->doLater([] {
+    if (state)
+      keepAgentShown();
+  });
+}
+
 }  // namespace
 
 APICALL EXPORT std::string PLUGIN_API_VERSION() { return HYPRLAND_API_VERSION; }
@@ -210,7 +254,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
   if (std::string{__hyprland_api_get_hash()} != __hyprland_api_get_client_hash())
     throw std::runtime_error("agent-windows: built for a different Hyprland");
 
-  state = new State;
+  state = new PluginState;
   const auto *home = std::getenv("HOME");
   state->log = std::filesystem::path(home ? home : "/tmp") / ".local/state/window-origin/windows.jsonl";
 
@@ -225,6 +269,12 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
   state->listeners.emplace_back(events.create.listen([](PHLWINDOW window) { onWindowCreate(window); }));
   state->listeners.emplace_back(events.openEarly.listen([](PHLWINDOW window) { onWindowOpenEarly(window); }));
   state->listeners.emplace_back(events.moveToWorkspace.listen([](PHLWINDOW window, PHLWORKSPACE workspace) { onWindowMove(window, workspace); }));
+
+  auto &bus = Event::bus()->m_events;
+  state->listeners.emplace_back(bus.workspace.active.listen([](PHLWORKSPACE) { keepAgentShownLater(); }));
+  state->listeners.emplace_back(bus.workspace.moveToMonitor.listen([](PHLWORKSPACE, PHLMONITOR) { keepAgentShownLater(); }));
+  state->listeners.emplace_back(bus.monitor.added.listen([](PHLMONITOR) { keepAgentShownLater(); }));
+  keepAgentShownLater();
 
   state->clientCreated.notify = onClientCreated;
   wl_display_add_client_created_listener(g_pCompositor->m_wlDisplay, &state->clientCreated);
