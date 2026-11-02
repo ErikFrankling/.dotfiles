@@ -127,6 +127,14 @@ class RecordingTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(state['status'], 'complete')
         self.assertEqual(state['final'], 'Tell me about the packages I need to get today.')
 
+    async def test_thin_retry_falls_back_to_the_draft_instead_of_losing_words(self):
+        draft = 'tell me about the packages i need to get today yeah show me the links'
+        state, _ = self.record(seconds=15, draft=draft)
+        with patch.object(gateway, 'start_worker', AsyncMock()), \
+             patch.object(gateway, 'project_context', return_value=('', [])):
+            await gateway.finalize(state, self.transcriber('[Unintelligible Speech]', *['links'] * 20))
+        self.assertEqual(state['final'], draft)
+
     async def test_truncated_long_transcript_is_redone_in_shorter_windows(self):
         draft = ' '.join(['word'] * 400)
         state, _ = self.record(seconds=200, draft=draft)

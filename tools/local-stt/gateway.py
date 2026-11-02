@@ -633,6 +633,11 @@ def restart_quality(state):
         state.pop(key, None)
 
 
+def thin(text, draft):
+    """A transcript with under half the draft's words, from a draft long enough to trust."""
+    return len(draft.split()) >= 6 and len(text.split()) < len(draft.split()) * 0.5
+
+
 def truncated(state):
     """The streaming draft hears every word; a much shorter final lost speech."""
     draft, final = len(state["draft"].split()), len(state["final"].split())
@@ -674,6 +679,7 @@ async def finalize(state, client):
         )}
         attempt = empties = 0
         candidate = None
+        partial = ""
         while True:
             seconds = (EMPTY_RETRY_WINDOWS[empties - 1] if empties and state["draft"].strip()
                        else RETRY_WINDOWS[min(attempt, len(RETRY_WINDOWS) - 1)])
@@ -687,6 +693,8 @@ async def finalize(state, client):
                     restart_quality(state)
                     attempt = max(attempt, 2)
                     continue
+                if empties and thin(state["final"], state["draft"]):
+                    raise EmptyTranscript("The retry kept less than half of the live draft.")
                 if candidate and len(candidate.split()) > len(state["final"].split()):
                     state["final"] = candidate
                 break
@@ -694,9 +702,13 @@ async def finalize(state, client):
                 raise
             except EmptyTranscript:
                 empties += 1
+                if len(state["final"].split()) > len(partial.split()):
+                    partial = state["final"]
                 restart_quality(state)
                 if empties >= (1 + len(EMPTY_RETRY_WINDOWS) if state["draft"].strip() else 2):
-                    state["final"] = candidate or ""
+                    best = max(candidate or "", partial, key=lambda text: len(text.split()))
+                    # Words from the live draft beat a transcript that lost most of them.
+                    state["final"] = state["draft"].strip() if thin(best, state["draft"]) else best
                     break
             except Exception as error:
                 log("recording.retry", state, attempt=attempt, error_type=type(error).__name__,
