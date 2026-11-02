@@ -35,9 +35,16 @@ let
       # One SSH connection per couple of minutes instead of five per run: the
       # worker's node is often loaded and each handshake costs a second.
       # Tunnels (systemd units) keep their own connection (ssh_base).
+      # One master per cgroup: it forks into the cgroup of whoever connected
+      # first and dies when that session scope or agent-job unit stops, and
+      # every job sharing it then ends with status 255 and no message, and is
+      # killed on the worker. Sharing only within a cgroup means whatever
+      # stops a master stops all its users anyway. (2026-11-02: 17 jobs in
+      # three batches that morning, each when an unrelated session ended.)
+      control_dir=''${XDG_RUNTIME_DIR:-$HOME/.cache}/heavy
+      mkdir -p "$control_dir"
       ssh_opts=("''${ssh_base[@]}" -o ControlMaster=auto
-        -o ControlPath="$HOME/.cache/heavy/cm-%C" -o ControlPersist=120)
-      mkdir -p "$HOME/.cache/heavy"
+        -o ControlPath="$control_dir/cm-$(sha256sum < /proc/self/cgroup | cut -c1-12)-%C" -o ControlPersist=120)
       target=root@${host}
       adb_port=15037
 
@@ -316,6 +323,10 @@ let
       rc=0
       wait "$ssh_pid" || rc=$?
       [ -z "$keep" ] || kill "$keep" 2> /dev/null || true
+      # ssh says nothing at LogLevel=ERROR when a connection goes away.
+      if [ "$rc" = 255 ]; then
+        echo "heavy: status 255: the SSH connection to the worker was lost, which also stops the job there (or the command itself exited 255). Nothing else is known to be wrong; run it again." >&2
+      fi
       exit "$rc"
     '';
   };
