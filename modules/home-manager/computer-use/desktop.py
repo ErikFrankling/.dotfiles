@@ -269,12 +269,19 @@ def open_url(target):
             time.sleep(0.25)
 
 
+def built_for_later_session(target, version, name):
+    """A build for another Hyprland version cannot load. The one already loaded keeps
+    working in this session and the next login loads the new one."""
+    if json.loads(run("hyprctl", "-j", "version"))["version"] == version or name not in run("hyprctl", "plugin", "list"):
+        return False
+    print(f"Keeping the loaded plugin; {target} is for Hyprland {version}, which starts at the next login", flush=True)
+    return True
+
+
 def load_window_plugin(target, version):
     # This plugin owns no seat, so a new build replaces the old one without
-    # restarting Hyprland. A build for another Hyprland version cannot load: the
-    # one loaded keeps guarding this session and the next login loads the new one.
-    if json.loads(run("hyprctl", "-j", "version"))["version"] != version and "agent-windows" in run("hyprctl", "plugin", "list"):
-        print(f"Keeping the loaded plugin; {target} is for Hyprland {version}, which starts at the next login", flush=True)
+    # restarting Hyprland.
+    if built_for_later_session(target, version, "agent-windows"):
         return
     signature = os.environ["HYPRLAND_INSTANCE_SIGNATURE"]
     marker = Path(os.environ["XDG_RUNTIME_DIR"]) / "agent-windows-plugin.json"
@@ -309,8 +316,10 @@ def main():
     session()
     if command == "exec-session" and len(sys.argv) > 2:
         os.execvp(sys.argv[2], sys.argv[2:])
-    elif command == "load-plugin" and len(sys.argv) == 3:
+    elif command == "load-plugin" and len(sys.argv) == 4:
         target = sys.argv[2]
+        if built_for_later_session(target, sys.argv[3], "computer-use"):
+            return
         signature = os.environ["HYPRLAND_INSTANCE_SIGNATURE"]
         marker = Path(os.environ["XDG_RUNTIME_DIR"]) / "agent-desktop-plugin.json"
         loaded = run("hyprctl", "plugin", "list")

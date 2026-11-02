@@ -299,7 +299,7 @@ in
       };
       Service = {
         Type = "oneshot";
-        ExecStart = "${package}/bin/agent-desktop load-plugin ${backend.plugin}/lib/guard-seat.so";
+        ExecStart = "${package}/bin/agent-desktop load-plugin ${backend.plugin}/lib/guard-seat.so ${hyprland.version}";
         RemainAfterExit = true;
         TimeoutStartSec = 30;
       };
