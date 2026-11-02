@@ -83,6 +83,16 @@
   virtualisation.docker.enable = true;
   users.extraUsers."${username}".extraGroups = [ "docker" ];
   virtualisation.vmware.host.enable = true;
+  # patchelf 0.19.2 writes vmnet-natd, the one non-PIE binary it has to grow, with
+  # a program header table its load segment no longer covers ("the PHDR segment is
+  # not covered by a LOAD segment"), so it segfaults in ld.so before main and
+  # vmware-networks fails on every start, and `rebuild` with it (status 4). Patch
+  # this package with the older patchelf; only this package changes.
+  # nix-update-doctor: 2026-11-02 https://github.com/NixOS/patchelf/releases/tag/0.19.3
+  # drop this when nixpkgs' patchelf is 0.19.3 or newer.
+  virtualisation.vmware.host.package = pkgs.vmware-workstation.overrideAttrs (old: {
+    nativeBuildInputs = [ otherPkgs.pkgsStable.patchelf ] ++ old.nativeBuildInputs;
+  });
   # aggregateModules now reads a <module>.ko.cer for every module, and vmmon and
   # vmnet install without Kbuild's modules_install so they have none, which fails
   # the build ("cat: misc/vmmon.ko.cer"). They are unsigned, so there is no
