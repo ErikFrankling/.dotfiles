@@ -16,9 +16,13 @@
       # Every bind says what it does: under Lua, `hyprctl binds` reports only
       # `dispatcher: __lua` otherwise, and the shell's keys sheet (SUPER + B) reads
       # this. ~/projects/personal/quickshell/docs/keyboard.md.
-      bindWith =
-        key: description: action: opts:
-        { _args = [ key (lua action) (opts // { inherit description; }) ]; };
+      bindWith = key: description: action: opts: {
+        _args = [
+          key
+          (lua action)
+          (opts // { inherit description; })
+        ];
+      };
       bind =
         key: description: action:
         bindWith key description action { };
@@ -149,24 +153,26 @@
             --   hyprctl workspace DP-1~1
             --   hyprctl workspace HDMI-1~10
             hl.on("hyprland.start", function()
-            ${start (
-              [
-                "nm-applet"
-                "blueman-applet"
-                "blueman-tray"
-                "spotify-tray"
-                "/usr/lib/kdeconnectd"
-                "kdeconnect-indicator"
-                "wmname LG3D"
-                "$HOME/.config/hypr/import_env tmux"
-                "$HOME/.config/hypr/import_env system"
-                "wl-paste --type text" # Stores only text data
-                "wl-paste --type image" # Stores only image data
-              ]
-              # On pc, the patched IBus frontend is owned by ibus-wayland.service.
-              ++ lib.optional (!(config.services.ibus-native-seat.enable or false)) "ibus start --type wayland"
-              ++ [ "lxqt-policykit-agent" ]
-            )}${
+            ${
+              start (
+                [
+                  "nm-applet"
+                  "blueman-applet"
+                  "blueman-tray"
+                  "spotify-tray"
+                  "/usr/lib/kdeconnectd"
+                  "kdeconnect-indicator"
+                  "wmname LG3D"
+                  "$HOME/.config/hypr/import_env tmux"
+                  "$HOME/.config/hypr/import_env system"
+                  "wl-paste --type text" # Stores only text data
+                  "wl-paste --type image" # Stores only image data
+                ]
+                # On pc, the patched IBus frontend is owned by ibus-wayland.service.
+                ++ lib.optional (!(config.services.ibus-native-seat.enable or false)) "ibus start --type wayland"
+                ++ [ "lxqt-policykit-agent" ]
+              )
+            }${
               lib.concatMapStrings (
                 w: "  hl.exec_cmd(${toLua w.exec}, { workspace = ${toLua "${toString w.workspace} silent"} })\n"
               ) cfg.initWindows
@@ -282,10 +288,14 @@
               (bindExec "XF86AudioNext" "Next track" "playerctl next")
               (bindExec "XF86AudioPrev" "Previous track" "playerctl previous")
 
-              (bind "SUPER + T" "Tag Rusty's Retirement for the right side" ''hl.dsp.window.tag({ tag = "+rtr_right", window = "title:(Rusty's Retirement)" })'')
+              (bind "SUPER + T" "Tag Rusty's Retirement for the right side"
+                ''hl.dsp.window.tag({ tag = "+rtr_right", window = "title:(Rusty's Retirement)" })''
+              )
               (bindExec "SUPER + T" "Reserve the right side of DP-1" "hyprctl monitor DP-1,addreserved,0,0,296,0")
 
-              (bind "SUPER + Y" "Untag Rusty's Retirement from the right side" ''hl.dsp.window.tag({ tag = "-rtr_right", window = "title:(Rusty's Retirement)" })'')
+              (bind "SUPER + Y" "Untag Rusty's Retirement from the right side"
+                ''hl.dsp.window.tag({ tag = "-rtr_right", window = "title:(Rusty's Retirement)" })''
+              )
               (bindExec "SUPER + Y" "Reserve the left side of DP-1" "hyprctl monitor DP-1,addreserved,0,296,0,0")
 
               # Toggle dictation. Voxtype drops the compositor into the empty
@@ -302,20 +312,30 @@
               ))
             ++
               # change workspace
-              (map (n: bind "SUPER + ${n}" "Go to workspace ${n}" ''hl.dsp.focus({ workspace = "${n}" })'') workspaces)
+              (map (
+                n: bind "SUPER + ${n}" "Go to workspace ${n}" ''hl.dsp.focus({ workspace = "${n}" })''
+              ) workspaces)
             ++ [ (bind "SUPER + 0" "Go to workspace 10" ''hl.dsp.focus({ workspace = "10" })'') ]
             ++
 
               # move window to workspace
               (map (
-                n: bind "SUPER + SHIFT + ${n}" "Move the window to workspace ${n}" ''hl.dsp.window.move({ workspace = "${n}" })''
+                n:
+                bind "SUPER + SHIFT + ${n}" "Move the window to workspace ${n}"
+                  ''hl.dsp.window.move({ workspace = "${n}" })''
               ) workspaces)
-            ++ [ (bind "SUPER + SHIFT + 0" "Move the window to workspace 10" ''hl.dsp.window.move({ workspace = "10" })'') ]
+            ++ [
+              (bind "SUPER + SHIFT + 0" "Move the window to workspace 10"
+                ''hl.dsp.window.move({ workspace = "10" })''
+              )
+            ]
             ++
 
               # move focus
               (lib.mapAttrsToList (
-                key: direction: bind "SUPER + ${key}" "Focus the window ${direction}" ''hl.dsp.focus({ direction = "${direction}" })''
+                key: direction:
+                bind "SUPER + ${key}" "Focus the window ${direction}"
+                  ''hl.dsp.focus({ direction = "${direction}" })''
               ) directions)
             ++
 
@@ -329,7 +349,9 @@
 
               # swap windows
               (lib.mapAttrsToList (
-                key: direction: bind "SUPER + SHIFT + ${key}" "Swap the window ${direction}" ''hl.dsp.window.swap({ direction = "${direction}" })''
+                key: direction:
+                bind "SUPER + SHIFT + ${key}" "Swap the window ${direction}"
+                  ''hl.dsp.window.swap({ direction = "${direction}" })''
               ) directions)
             ++ [
               # The quickshell launcher: a centred overlay window, opened from the
@@ -370,11 +392,17 @@
               # control centre a key means first hoisting it out of `Variants`, and
               # that is a change to the shell, not to this file.
               (bind "SUPER + D" "Toggle the application launcher" ''hl.dsp.global("quickshell:launcher")'')
-              (bind "SUPER + SHIFT + T" "Toggle the themes and wallpapers overlay" ''hl.dsp.global("quickshell:looks")'')
+              (bind "SUPER + SHIFT + T" "Toggle the themes and wallpapers overlay"
+                ''hl.dsp.global("quickshell:looks")''
+              )
               (bind "SUPER + B" "Toggle the keyboard and keybind sheet" ''hl.dsp.global("quickshell:keys")'')
 
-              (bindWith "SUPER + mouse:272" "Move the window with the mouse" "hl.dsp.window.drag()" { mouse = true; })
-              (bindWith "SUPER + mouse:273" "Resize the window with the mouse" "hl.dsp.window.resize()" { mouse = true; })
+              (bindWith "SUPER + mouse:272" "Move the window with the mouse" "hl.dsp.window.drag()" {
+                mouse = true;
+              })
+              (bindWith "SUPER + mouse:273" "Resize the window with the mouse" "hl.dsp.window.resize()" {
+                mouse = true;
+              })
             ]
             ++
               # locked -> do stuff even when locked
@@ -385,59 +413,58 @@
               # matter who caused it: a media key, pavucontrol, or the shell's own
               # slider. See Osd.qml. Routing the keys through the shell would only
               # add a fork per keypress and break them whenever it is not running.
-              (
-                map
-                  (
-                    {
-                      key,
-                      description,
-                      command,
-                    }:
-                    bindWith key description "hl.dsp.exec_cmd(${toLua command})" {
-                      locked = true;
-                      repeating = true;
-                    }
-                  )
-                  [
-                    # Example volume button that allows press and hold, volume limited to 150%
-                    {
-                      key = "XF86AudioRaiseVolume";
-                      description = "Volume up";
-                      command = "wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 2%+";
-                    }
-                    # Example volume button that will activate even while an input inhibitor is active
-                    {
-                      key = "XF86AudioLowerVolume";
-                      description = "Volume down";
-                      command = "wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%-";
-                    }
+              (map
+                (
+                  {
+                    key,
+                    description,
+                    command,
+                  }:
+                  bindWith key description "hl.dsp.exec_cmd(${toLua command})" {
+                    locked = true;
+                    repeating = true;
+                  }
+                )
+                [
+                  # Example volume button that allows press and hold, volume limited to 150%
+                  {
+                    key = "XF86AudioRaiseVolume";
+                    description = "Volume up";
+                    command = "wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 2%+";
+                  }
+                  # Example volume button that will activate even while an input inhibitor is active
+                  {
+                    key = "XF86AudioLowerVolume";
+                    description = "Volume down";
+                    command = "wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%-";
+                  }
 
-                    # -c backlight, because brightnessctl with no class falls back to
-                    # the keyboard LEDs when there is no backlight: on pc, plain
-                    # `brightnessctl set 10%+` was toggling the numlock light. With the
-                    # class pinned it is the screen or nothing (pc has no backlight at
-                    # all, so it is a no-op there and the OSD correctly stays away).
-                    {
-                      key = "xf86monbrightnessup";
-                      description = "Brightness up";
-                      command = "brightnessctl -c backlight set 10%+";
-                    }
-                    {
-                      key = "SUPER + U";
-                      description = "Brightness up";
-                      command = "brightnessctl -c backlight set 10%+";
-                    }
-                    {
-                      key = "xf86monbrightnessdown";
-                      description = "Brightness down";
-                      command = "brightnessctl -c backlight set 10%-";
-                    }
-                    {
-                      key = "SUPER + I";
-                      description = "Brightness down";
-                      command = "brightnessctl -c backlight set 10%-";
-                    }
-                  ]
+                  # -c backlight, because brightnessctl with no class falls back to
+                  # the keyboard LEDs when there is no backlight: on pc, plain
+                  # `brightnessctl set 10%+` was toggling the numlock light. With the
+                  # class pinned it is the screen or nothing (pc has no backlight at
+                  # all, so it is a no-op there and the OSD correctly stays away).
+                  {
+                    key = "xf86monbrightnessup";
+                    description = "Brightness up";
+                    command = "brightnessctl -c backlight set 10%+";
+                  }
+                  {
+                    key = "SUPER + U";
+                    description = "Brightness up";
+                    command = "brightnessctl -c backlight set 10%+";
+                  }
+                  {
+                    key = "xf86monbrightnessdown";
+                    description = "Brightness down";
+                    command = "brightnessctl -c backlight set 10%-";
+                  }
+                  {
+                    key = "SUPER + I";
+                    description = "Brightness down";
+                    command = "brightnessctl -c backlight set 10%-";
+                  }
+                ]
               )
             ++ [
               (bindWith "XF86AudioMute" "Mute" ''hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle")'' {

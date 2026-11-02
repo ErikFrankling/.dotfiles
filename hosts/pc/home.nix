@@ -318,7 +318,8 @@ in
   # Keeps the session that was running at the move to Lua (Hyprland 0.56) working:
   # it reloads this file whenever it changes, and without it loses every keybind.
   # nix-update-doctor: 2026-11-02 drop once this machine runs Hyprland 0.57.
-  xdg.configFile."hypr/hyprland.conf".source = ../../modules/home-manager/hyprland/legacy-0.56/pc.conf;
+  xdg.configFile."hypr/hyprland.conf".source =
+    ../../modules/home-manager/hyprland/legacy-0.56/pc.conf;
 
   hyprland =
     let
