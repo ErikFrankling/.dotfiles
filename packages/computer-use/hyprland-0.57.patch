@@ -1,0 +1,211 @@
+diff --git a/native/guard.cpp b/native/guard.cpp
+index 383c70b..09febe6 100644
+--- a/native/guard.cpp
++++ b/native/guard.cpp
+@@ -3,7 +3,8 @@
+ #error "This Nix package requires the independent seat build"
+ #endif
+ #include <hyprland/src/output/Monitor.hpp>
+-#include <hyprland/src/desktop/Workspace.hpp>
++#include <hyprland/src/desktop/view/window/Window.hpp>
++#include <hyprland/src/workspace/HLWorkspace.hpp>
+ #include <cerrno>
+ #include <chrono>
+ #include <cstdio>
+@@ -72,7 +73,7 @@ static std::string revision(PHLWINDOW w) {
+ }
+ static PHLWINDOW findWindow(const std::string &id) {
+   for (auto &w : Desktop::windowState()->windows())
+-    if (std::format("{:x}", w->m_stableID) == id && w->m_isMapped)
++    if (std::format("{:x}", w->metadata().stableID()) == id && w->mapped())
+       return w;
+   return nullptr;
+ }
+@@ -87,7 +88,7 @@ static bool locked() {
+ #include "text_transaction.hpp"
+ static bool agentWindowAllowed(PHLWINDOW w) {
+   return w && w->m_monitor && w->m_workspace &&
+-         agentDesktopAllowed(w->m_monitor->m_name, w->m_workspace->m_name);
++         agentDesktopAllowed(w->m_monitor->m_name, w->m_workspace->displayName());
+ }
+ static const std::string guardInstance = surfaceEpoch();
+ #ifdef COMPUTER_USE_INDEPENDENT_SEAT
+@@ -104,7 +105,7 @@ static void clear() {
+ static void expire() {
+   for (auto it = leases.begin(); it != leases.end();) {
+     if (locked() || Clock::now() >= it->second.until || !it->second.window ||
+-        !it->second.window->m_isMapped ||
++        !it->second.window->mapped() ||
+         it->second.surface.lock() != it->second.window->resource()) {
+       it = leases.erase(it);
+     } else
+@@ -128,13 +129,13 @@ static json execute(const json &q, pid_t owner) {
+   if (op == "input_modes") {
+     json modes = json::object();
+     for (auto &window : Desktop::windowState()->windows()) {
+-      if (!window->m_isMapped || window->m_isX11)
++      if (!window->mapped() || window->backend().isX11())
+         continue;
+       bool seat = false;
+ #ifdef COMPUTER_USE_INDEPENDENT_SEAT
+       seat = independentSeat->supports(window->resource());
+ #endif
+-      modes[std::format("{:x}", window->m_stableID)] =
++      modes[std::format("{:x}", window->metadata().stableID())] =
+           seat ? "Seat" : "Unsupported";
+     }
+     return {{"ok", true}, {"modes", modes}};
+@@ -163,7 +164,7 @@ static json execute(const json &q, pid_t owner) {
+             {"locked", locked()}};
+   if (op == "window_state") {
+     auto w = findWindow(q.value("window", ""));
+-    if (!w || w->m_isX11)
++    if (!w || w->backend().isX11())
+       throw std::runtime_error("native_window_required");
+     return {{"ok", true}, {"state", windowState(w)}};
+   }
+@@ -190,9 +191,9 @@ static json execute(const json &q, pid_t owner) {
+     if (token.size() < 20 || token.size() > 128 || leases.size() >= 64)
+       throw std::runtime_error("invalid_lease");
+     auto w = findWindow(q.value("window", ""));
+-    if (!w || w->m_isX11)
++    if (!w || w->backend().isX11())
+       throw std::runtime_error("native_window_required");
+-    if (w->m_class == "org.quickshell" || w->m_class == "computer-use")
++    if (w->metadata().appID() == "org.quickshell" || w->metadata().appID() == "computer-use")
+       throw std::runtime_error("trusted_ui_denied");
+     int ms = q.value("milliseconds", 0);
+     if (ms < 1 || ms > 3600000)
+@@ -213,11 +214,11 @@ static json execute(const json &q, pid_t owner) {
+   if (op == "release") {
+     return {{"ok", true}}; // no synthetic state survives a transaction
+   }
+-  if (!w || !w->m_isMapped || w->resource() != l.surface.lock())
++  if (!w || !w->mapped() || w->resource() != l.surface.lock())
+     throw std::runtime_error("target_closed");
+   if (!agentWindowAllowed(w))
+     throw std::runtime_error("target_outside_agent_desktop");
+-  if (!w->visible() || !w->acceptsInput())
++  if (w->isHidden() || !w->acceptsInput())
+     throw std::runtime_error("target_not_visible");
+   if (q.value("revision", "") != revision(w))
+     throw std::runtime_error("stale_geometry");
+diff --git a/native/independent_seat.hpp b/native/independent_seat.hpp
+index ee2f18c..b262501 100644
+--- a/native/independent_seat.hpp
++++ b/native/independent_seat.hpp
+@@ -134,7 +134,7 @@ class IndependentSeat {
+     auto it = leases.find(token);
+     return !locked() && rootRaw && root && it != leases.end() &&
+            Clock::now() < it->second.until && it->second.window &&
+-           it->second.window->m_isMapped && it->second.window->visible() &&
++           it->second.window->mapped() && !it->second.window->isHidden() &&
+            it->second.window->acceptsInput() &&
+            agentWindowAllowed(it->second.window.lock()) &&
+            it->second.surface.lock() == root.lock() &&
+diff --git a/native/surface_tree.hpp b/native/surface_tree.hpp
+index 9c1e7ae..89a91a4 100644
+--- a/native/surface_tree.hpp
++++ b/native/surface_tree.hpp
+@@ -16,6 +16,17 @@ static std::string surfaceEpoch() {
+ static SurfaceHandles surfaceHandles(surfaceEpoch());
+ static constexpr size_t MAX_WINDOW_SURFACES = 128;
+ 
++// Hyprland 0.57 keeps the xdg surface inside the window's backend; the surface's
++// role is the way to reach it.
++static SP<CXDGSurfaceResource> windowXdg(PHLWINDOW window) {
++  if (window->backend().isX11() || !window->backend().surface())
++    return nullptr;
++  const auto surface = window->backend().surface();
++  if (!surface->m_role || surface->m_role->role() != SURFACE_ROLE_XDG_SHELL)
++    return nullptr;
++  const auto role = dynamicPointerCast<CXDGSurfaceRole>(surface->m_role);
++  return role ? role->m_xdgSurface.lock() : nullptr;
++}
+ static bool mappedPopupAncestry(SP<CWLSurfaceResource> surface,
+                                 SP<CXDGSurfaceResource> root) {
+   if (!surface || !surface->m_role ||
+@@ -85,17 +96,17 @@ static std::vector<SurfaceNode> windowSurfaceTree(PHLWINDOW window) {
+   addTree(root, {}, "toplevel");
+   if (!treeContains(nodes, root))
+     throw std::runtime_error("window_surface_unavailable");
+-  if (window->m_popupHead) {
++  if (window->popupHead()) {
+     size_t popups = 0;
+-    window->m_popupHead->breadthfirst(
++    window->popupHead()->breadthfirst(
+         [&](SP<Desktop::View::CPopup> popup, void *) {
+           if (++popups > MAX_WINDOW_SURFACES)
+             throw std::runtime_error("surface_tree_too_large");
+-          if (!popup || !popup->visible() || popup->inert() ||
++          if (!popup || !popup->mapped() || popup->inert() ||
+               !popup->resource())
+             return;
+           if (!mappedPopupAncestry(popup->resource(),
+-                                   window->m_xdgSurface.lock()))
++                                   windowXdg(window)))
+             return;
+           const auto owner = popup->getT1Owner();
+           if (!owner || owner->resource() != root)
+@@ -130,10 +141,10 @@ static SurfaceNode selectWindowSurface(PHLWINDOW window,
+   throw std::runtime_error("surface_unavailable_rediscover");
+ }
+ static PHLWINDOW transientParent(PHLWINDOW window) {
+-  if (window->m_isX11 || !window->m_xdgSurface ||
+-      !window->m_xdgSurface->m_toplevel)
++  const auto xdg = windowXdg(window);
++  if (!xdg || !xdg->m_toplevel)
+     return nullptr;
+-  auto parent = window->m_xdgSurface->m_toplevel->m_parent.lock();
++  auto parent = xdg->m_toplevel->m_parent.lock();
+   return parent ? parent->m_window.lock() : nullptr;
+ }
+ static json windowState(PHLWINDOW window) {
+@@ -150,7 +161,7 @@ static json windowState(PHLWINDOW window) {
+   bool truncated = false;
+   const auto parent = transientParent(window);
+   for (const auto &other : Desktop::windowState()->windows()) {
+-    if (!other->m_isMapped || other == window)
++    if (!other->mapped() || other == window)
+       continue;
+     const bool child = transientParent(other) == window;
+     if (other != parent && !child)
+@@ -159,11 +170,11 @@ static json windowState(PHLWINDOW window) {
+       truncated = true;
+       break;
+     }
+-    related.push_back({{"window_id", std::format("{:x}", other->m_stableID)},
++    related.push_back({{"window_id", std::format("{:x}", other->metadata().stableID())},
+                        {"relationship", child ? "transient_child" : "parent"},
+                        {"separate_grant_required", true}});
+   }
+-  return {{"window_id", std::format("{:x}", window->m_stableID)},
++  return {{"window_id", std::format("{:x}", window->metadata().stableID())},
+           {"revision", revision(window)},
+           {"surfaces", surfaces},
+           {"related_windows", related},
+diff --git a/native/text_keyboard.hpp b/native/text_keyboard.hpp
+index 32a9c96..12af235 100644
+--- a/native/text_keyboard.hpp
++++ b/native/text_keyboard.hpp
+@@ -34,6 +34,6 @@ public:
+               F_SEAL_SHRINK | F_SEAL_GROW | F_SEAL_WRITE | F_SEAL_SEAL) < 0)
+       throw std::runtime_error("text_keymap_seal_failed");
+   }
+-  bool isVirtual() override { return true; }
++  bool isVirtual() const override { return true; }
+   SP<Aquamarine::IKeyboard> aq() override { return nullptr; }
+ };
+diff --git a/native/text_keyboard_test.cpp b/native/text_keyboard_test.cpp
+index f10e65f..3929ff0 100644
+--- a/native/text_keyboard_test.cpp
++++ b/native/text_keyboard_test.cpp
+@@ -47,7 +47,7 @@ struct IKeyboard {
+   std::string m_xkbKeymapV1String;
+   Hyprutils::OS::CFileDescriptor m_xkbKeymapV1FD;
+   virtual ~IKeyboard() = default;
+-  virtual bool isVirtual() = 0;
++  virtual bool isVirtual() const = 0;
+   virtual SP<Aquamarine::IKeyboard> aq() = 0;
+ };
+ #include "text_keyboard.hpp"

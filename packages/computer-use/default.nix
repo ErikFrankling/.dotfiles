@@ -25,6 +25,9 @@ let
   patches = [
     ./seat-only.patch
     ./seat-visibility.patch
+    # Hyprland 0.57 moved window state behind backend() and metadata(); upstream
+    # has not followed yet.
+    ./hyprland-0.57.patch
   ];
   postPatch = ''
     cp ${./agent_data_device_test.cpp} native/agent_data_device_test.cpp
