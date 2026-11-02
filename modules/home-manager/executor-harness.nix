@@ -99,6 +99,20 @@ let
     if [ -n "''${T3CODE_THREAD_ID-}" ]; then
       export BROWSER=agent-open MOZ_NO_REMOTE=1
     fi
+    # Claude Code retries a remote MCP server for about 5 seconds at startup and
+    # then never again, so a session started during an Executor outage had no
+    # mcp__executor__* tools for its whole life (2026-11-02: 8 of the 15 sessions
+    # started around a 3-minute outage). Its discovery cache lists a remote
+    # server's tools from disk and dials on the first call, which is retried on
+    # every call, so an outage now costs failed calls instead of the tools.
+    # - TTL at the 7-day maximum: a stale entry dials at startup, and a failed
+    #   dial drops the tools again. A successful dial still rewrites the entry.
+    # - Strikes: the default of 1 deletes the entry on the first failed dial.
+    # Applies to every remote MCP server of the session, claude.ai connectors too.
+    export MCP_DISCOVERY_CACHE=1
+    export MCP_DISCOVERY_CACHE_TTL_S=604800
+    export MCP_DISCOVERY_CACHE_MAX_STALE_S=604800
+    export MCP_DISCOVERY_CACHE_STRIKES=1000
     ${loadKey}
     ${loadTimeToken}
     configs=(${localClaudeArgs})
