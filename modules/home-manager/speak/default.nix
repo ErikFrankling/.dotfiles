@@ -66,11 +66,9 @@ let
   # dictation records and resumes exactly those players after: the Blue
   # Snowball hears the FiiO speakers, and on 2026-10-23 a YouTube ad became
   # the transcript of Erik's dictation.
-  # nix-update-doctor: 2026-11-02 Hyprland 0.57 takes Lua, a session started before the update still runs 0.56. Drop the fallback once both machines run 0.57.
   unbindEnter = pkgs.writeShellScript "speak-unbind-enter" ''
     hyprctl=/run/current-system/sw/bin/hyprctl
-    "$hyprctl" eval "hl.unbind('Return')" | ${pkgs.gnugrep}/bin/grep -q '^ok' ||
-      "$hyprctl" keyword unbind ", Return" >/dev/null
+    "$hyprctl" eval "hl.unbind('Return')" >/dev/null
   '';
 
   dictationHook = pkgs.writeShellApplication {
@@ -78,10 +76,8 @@ let
     runtimeInputs = [ pkgs.playerctl ];
     text = ''
       hyprctl=/run/current-system/sw/bin/hyprctl
-      # nix-update-doctor: 2026-11-02 Hyprland 0.57 takes Lua, a session started before the update still runs 0.56. Drop the fallback once both machines run 0.57.
       bind_enter() {
-        "$hyprctl" eval "hl.bind('Return', hl.dsp.exec_cmd('$1'))" | ${pkgs.gnugrep}/bin/grep -q '^ok' ||
-          "$hyprctl" keyword bind ", Return, exec, $1" >/dev/null
+        "$hyprctl" eval "hl.bind('Return', hl.dsp.exec_cmd('$1'))" >/dev/null
       }
       state=$HOME/.local/state/speak
       paused=$state/dictation-paused-players

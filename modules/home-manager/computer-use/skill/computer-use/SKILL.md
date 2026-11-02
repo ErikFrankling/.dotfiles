@@ -124,10 +124,7 @@ tidy:
   `hyprctl -i 0 dispatch 'hl.dsp.window.move({ workspace = "name:agent-park", follow = false, window = "address:0xADDR" })'`
   and bring one back with
   `hyprctl -i 0 dispatch 'hl.dsp.window.move({ workspace = "name:agent", follow = false, window = "address:0xADDR" })'`.
-  Always `follow = false`, always with your window's address. `hyprctl dispatch` takes
-  Lua since Hyprland 0.57; a session started before the update still runs 0.56 and
-  answers `Invalid dispatcher`, there it is
-  `hyprctl -i 0 dispatch movetoworkspacesilent name:agent,address:0xADDR`. Parked windows can't receive input until they're back
+  Always `follow = false`, always with your window's address. Parked windows can't receive input until they're back
   on `agent`.
 - The agent Chromium is a permanent service (its window appears when a page is open); park its window instead of closing it mid-task.
 - Window addresses come from `hyprctl -i 0 clients -j` (`address`), the

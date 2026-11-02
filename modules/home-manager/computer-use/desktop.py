@@ -58,7 +58,7 @@ def return_focus():
     monitors = query("monitors")
     human = next((m for m in monitors if m["name"] != OUTPUT and not m["disabled"]), None)
     if human and any(m["focused"] and m["name"] == OUTPUT for m in monitors):
-        hypr_dispatch(f'hl.dsp.focus({{ monitor = "{human["name"]}" }})', f"focusmonitor {human['name']}")
+        hypr_request(f'dispatch hl.dsp.focus({{ monitor = "{human["name"]}" }})')
         print(f"Returned focus from {OUTPUT} to {human['name']}", flush=True)
 
 
@@ -93,12 +93,6 @@ def hypr_request(command):
         while chunk := connection.recv(65536):
             chunks.append(chunk)
     return b"".join(chunks).decode(errors="replace")
-
-
-def hypr_dispatch(lua, legacy):
-    # nix-update-doctor: 2026-11-02 Hyprland 0.57 takes Lua, a session started before the update still runs 0.56. Drop the fallback once both machines run 0.57.
-    if not hypr_request(f"dispatch {lua}").startswith("ok"):
-        hypr_request(f"dispatch {legacy}")
 
 
 # Erik's own apps, on his own profiles. Their windows belong on his monitors.
@@ -138,8 +132,7 @@ def rescue_window(window, clients):
         return False
     target = erik_workspace()
     if target:
-        hypr_dispatch(f'hl.dsp.window.move({{ workspace = "{target if target.isdigit() else "name:" + target}", follow = false, window = "address:{window["address"]}" }})',
-                      f"movetoworkspacesilent name:{target},address:{window['address']}")
+        hypr_request(f'dispatch hl.dsp.window.move({{ workspace = "{target if target.isdigit() else "name:" + target}", follow = false, window = "address:{window["address"]}" }})')
         print(f"Moved Erik's {window['class']} window ({window['address']}) from workspace "
               f"{workspace} to {target}", flush=True)
     return True

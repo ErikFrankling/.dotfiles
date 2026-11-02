@@ -57,22 +57,19 @@ let
          + $m)[0].activeWorkspace.name')
     all=$(windows)
     for address in $(echo "$all" | jq -r '.[].address'); do
-      # nix-update-doctor: 2026-11-02 Hyprland 0.57 takes Lua, a session started before the update still runs 0.56. Drop the fallback once both machines run 0.57.
       # 0.57 refuses `name:` with a number.
       case "$target" in
         "" | *[!0-9]*) selector="name:$target" ;;
         *) selector=$target ;;
       esac
-      hyprctl dispatch "hl.dsp.window.move({ workspace = '$selector', follow = false, window = 'address:$address' })" | grep -q '^ok' ||
-        hyprctl dispatch movetoworkspacesilent "name:$target,address:$address" >/dev/null
+      hyprctl dispatch "hl.dsp.window.move({ workspace = '$selector', follow = false, window = 'address:$address' })" >/dev/null
     done
     # Focus the window just opened (a compose window), else the main window.
     focus=$(echo "$all" | jq -r --argjson b "$before" '
       ([.[] | select(.address as $a | $b | index($a) | not)]
        + [.[] | select(.initialTitle == "Mozilla Thunderbird")] + .)[0].address // empty')
     if [ -n "$focus" ]; then
-      hyprctl dispatch "hl.dsp.focus({ window = 'address:$focus' })" | grep -q '^ok' ||
-        hyprctl dispatch focuswindow "address:$focus" >/dev/null
+      hyprctl dispatch "hl.dsp.focus({ window = 'address:$focus' })" >/dev/null
     fi
     exit 0
   '';

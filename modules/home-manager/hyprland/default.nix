@@ -100,6 +100,9 @@
       wayland.windowManager.hyprland = {
         enable = true;
         xwayland.enable = true;
+        # The NixOS module installs Hyprland; a second copy here would shadow it.
+        package = null;
+        portalPackage = null;
         # Hyprland 0.57 reads nothing but Lua. Everything below becomes one
         # generated ~/.config/hypr/hyprland.lua; other modules add to the same
         # `settings` lists (window_rule, bind, workspace_rule, monitor).

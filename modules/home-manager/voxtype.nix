@@ -128,9 +128,8 @@ in
 
       # Guard the final paste keystroke with the empty Hyprland submap used by
       # the existing `voxtype_suppress` integration.
-      # nix-update-doctor: 2026-11-02 Hyprland 0.57 takes Lua, a session started before the update still runs 0.56. Drop the fallback once both machines run 0.57.
-      output.pre_output_command = "hyprctl dispatch \"hl.dsp.submap('voxtype_suppress')\" | ${pkgs.gnugrep}/bin/grep -q '^ok' || hyprctl dispatch submap voxtype_suppress";
-      output.post_output_command = "hyprctl dispatch \"hl.dsp.submap('reset')\" | ${pkgs.gnugrep}/bin/grep -q '^ok' || hyprctl dispatch submap reset";
+      output.pre_output_command = "hyprctl dispatch \"hl.dsp.submap('voxtype_suppress')\"";
+      output.post_output_command = "hyprctl dispatch \"hl.dsp.submap('reset')\"";
 
       # Voice-activity detection auto-cancels the recording after a few seconds
       # of "no speech", so any pause to think ends dictation. Disable it; we

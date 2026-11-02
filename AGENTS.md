@@ -451,11 +451,9 @@ someOption = "custom-value";
 
 Hyprland 0.57 has no hyprlang: it reads only `~/.config/hypr/hyprland.lua` and would generate a default config without it. `wayland.windowManager.hyprland.settings` takes `monitor`, `workspace_rule`, `window_rule`, `layer_rule`, `bind` and `config`. `hyprctl dispatch` takes Lua (`hl.dsp.window.move({ workspace = "name:agent", follow = false, window = "address:0x..." })`), `hyprctl keyword` is gone (`hyprctl eval`), `name:` refuses a number (`workspace = "5"`), and every bind needs a `description`, because the shell's keys sheet reads it.
 
-A session started before the move still runs 0.56. For it, `legacy-0.56/<host>.conf` stays linked as `hyprland.conf` (0.56 drops every keybind the moment the file disappears) and callers try Lua, then the legacy form. All of this carries `nix-update-doctor: 2026-11-02`; remove it once both machines run 0.57.
+### Test compositors
 
-### Nested compositors never touch the session (Erik's PC, 2026-10-31)
-
-A Hyprland started inside a running session rewrites the systemd user manager's environment and removes `DISPLAY` when it exits, so `bin/Hyprland` starts it without a seat. A generated `hyprland.lua` starts Erik's apps and its shutdown hook stops `hyprland-session.target`, so never run one nested as it is. Start test compositors by the name `Hyprland -c <own config>` (not a store path), set `WAYLAND_DISPLAY` only in the test client's own environment, and repair the manager with `hyprland-session-env`, not by hand.
+Start a test Hyprland with `LIBSEAT_BACKEND=none` and your own `-c` config. With a seat it rewrites the systemd user manager's environment and removes `DISPLAY` when it exits. Never run a generated `hyprland.lua` as it is: it starts Erik's apps and its shutdown hook stops `hyprland-session.target`.
 
 ## Local LLM System Overview
 
