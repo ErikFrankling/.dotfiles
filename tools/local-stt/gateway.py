@@ -44,6 +44,10 @@ QUALITY_SECONDS = 420
 # Final-pass window per attempt. Shorter windows need less GPU scratch memory,
 # so a recording that cannot be transcribed in one piece still completes.
 RETRY_WINDOWS = (QUALITY_SECONDS, QUALITY_SECONDS, 120, 120, CHUNK_SECONDS)
+# A pass that heard nothing while the live draft heard words is redone in short
+# windows: a loud burst early in a clip made the recogniser call all 15 s of
+# "Tell me about the packages I need to get today" unintelligible (2026-11-02).
+EMPTY_RETRY_WINDOWS = (10, 5)
 ACTIVE_SECONDS = 120
 background = set()
 # The self-test streams this spoken clip to the live recogniser every
@@ -592,7 +596,7 @@ async def refine_available(state, client, finishing=False, quality=False, second
                 response.raise_for_status()
                 data = await response.json()
             text = data.get("text", "").strip()
-            text = re.sub(r"\[(?:breathing|silence|noise|environmental sounds|music|laughter)\]\s*", "", text, flags=re.I).strip()
+            text = re.sub(r"\[(?:breathing|silence|noise|environmental sounds|music|laughter|unintelligible speech|human sounds|inaudible)\]\s*", "", text, flags=re.I).strip()
             if not text:
                 log("refinement.no_speech", state, start=start, end=end)
             state.pop("background_error", None)
@@ -671,7 +675,8 @@ async def finalize(state, client):
         attempt = empties = 0
         candidate = None
         while True:
-            seconds = RETRY_WINDOWS[min(attempt, len(RETRY_WINDOWS) - 1)]
+            seconds = (EMPTY_RETRY_WINDOWS[empties - 1] if empties and state["draft"].strip()
+                       else RETRY_WINDOWS[min(attempt, len(RETRY_WINDOWS) - 1)])
             try:
                 await refine_available(state, client, finishing=True, quality=True, seconds=seconds)
                 if candidate is None and truncated(state) and state["bytes"] > 120 * SAMPLE_BYTES:
@@ -690,7 +695,7 @@ async def finalize(state, client):
             except EmptyTranscript:
                 empties += 1
                 restart_quality(state)
-                if empties >= 2:
+                if empties >= (1 + len(EMPTY_RETRY_WINDOWS) if state["draft"].strip() else 2):
                     state["final"] = candidate or ""
                     break
             except Exception as error:

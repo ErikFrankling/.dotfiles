@@ -118,6 +118,15 @@ class RecordingTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(state['status'], 'complete')
         self.assertEqual(state['final'], '')
 
+    async def test_unintelligible_pass_is_redone_in_short_windows_when_the_draft_heard_words(self):
+        state, _ = self.record(seconds=15, draft='tell me about the packages')
+        with patch.object(gateway, 'start_worker', AsyncMock()), \
+             patch.object(gateway, 'project_context', return_value=('', [])):
+            await gateway.finalize(state, self.transcriber(
+                '[Unintelligible Speech]', 'Tell me about the packages', 'I need to get today.'))
+        self.assertEqual(state['status'], 'complete')
+        self.assertEqual(state['final'], 'Tell me about the packages I need to get today.')
+
     async def test_truncated_long_transcript_is_redone_in_shorter_windows(self):
         draft = ' '.join(['word'] * 400)
         state, _ = self.record(seconds=200, draft=draft)
