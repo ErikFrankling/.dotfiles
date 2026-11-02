@@ -57,13 +57,23 @@ let
          + $m)[0].activeWorkspace.name')
     all=$(windows)
     for address in $(echo "$all" | jq -r '.[].address'); do
-      hyprctl dispatch movetoworkspacesilent "name:$target,address:$address" >/dev/null
+      # nix-update-doctor: 2026-11-02 Hyprland 0.57 takes Lua, a session started before the update still runs 0.56. Drop the fallback once both machines run 0.57.
+      # 0.57 refuses `name:` with a number.
+      case "$target" in
+        "" | *[!0-9]*) selector="name:$target" ;;
+        *) selector=$target ;;
+      esac
+      hyprctl dispatch "hl.dsp.window.move({ workspace = '$selector', follow = false, window = 'address:$address' })" | grep -q '^ok' ||
+        hyprctl dispatch movetoworkspacesilent "name:$target,address:$address" >/dev/null
     done
     # Focus the window just opened (a compose window), else the main window.
     focus=$(echo "$all" | jq -r --argjson b "$before" '
       ([.[] | select(.address as $a | $b | index($a) | not)]
        + [.[] | select(.initialTitle == "Mozilla Thunderbird")] + .)[0].address // empty')
-    [ -n "$focus" ] && hyprctl dispatch focuswindow "address:$focus" >/dev/null
+    if [ -n "$focus" ]; then
+      hyprctl dispatch "hl.dsp.focus({ window = 'address:$focus' })" | grep -q '^ok' ||
+        hyprctl dispatch focuswindow "address:$focus" >/dev/null
+    fi
     exit 0
   '';
 in
@@ -263,9 +273,15 @@ in
     # Main windows only: their initial title is "Mozilla Thunderbird". When
     # Thunderbird is already on Erik's screen, agent-desktop's watcher
     # (computer-use/desktop.py) brings any further main window to him.
-    wayland.windowManager.hyprland.settings.windowrule = lib.mkIf config.thunderbird.autostart [
-      "workspace special:mail silent, match:class ^(thunderbird)$, match:initial_title ^(Mozilla Thunderbird)$"
-      "no_initial_focus on, match:class ^(thunderbird)$, match:initial_title ^(Mozilla Thunderbird)$"
+    wayland.windowManager.hyprland.settings.window_rule = lib.mkIf config.thunderbird.autostart [
+      {
+        match = {
+          class = "^(thunderbird)$";
+          initial_title = "^(Mozilla Thunderbird)$";
+        };
+        workspace = "special:mail silent";
+        no_initial_focus = true;
+      }
     ];
 
     # Replaces the package's own launcher entry under the same name, so

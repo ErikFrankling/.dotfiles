@@ -16,8 +16,8 @@ web apps) first.
 AGENT-1 is 1920x1080 and records exactly what workspace `agent` shows.
 
 - Put **only the window you're demonstrating** on workspace `agent`; park
-  everything else: `hyprctl -i 0 dispatch movetoworkspacesilent
-  name:agent-park,address:0xADDR` (see computer-use). One window fills the
+  everything else: `hyprctl -i 0 dispatch 'hl.dsp.window.move({ workspace =
+  "name:agent-park", follow = false, window = "address:0xADDR" })'` (see computer-use). One window fills the
   screen and looks clean.
 - Browser demos: the agent Chromium window. Close extra Playwright pages and
   navigate to the starting point before recording.

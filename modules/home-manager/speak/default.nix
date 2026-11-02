@@ -66,11 +66,23 @@ let
   # dictation records and resumes exactly those players after: the Blue
   # Snowball hears the FiiO speakers, and on 2026-10-23 a YouTube ad became
   # the transcript of Erik's dictation.
+  # nix-update-doctor: 2026-11-02 Hyprland 0.57 takes Lua, a session started before the update still runs 0.56. Drop the fallback once both machines run 0.57.
+  unbindEnter = pkgs.writeShellScript "speak-unbind-enter" ''
+    hyprctl=/run/current-system/sw/bin/hyprctl
+    "$hyprctl" eval "hl.unbind('Return')" | ${pkgs.gnugrep}/bin/grep -q '^ok' ||
+      "$hyprctl" keyword unbind ", Return" >/dev/null
+  '';
+
   dictationHook = pkgs.writeShellApplication {
     name = "t3-dictation-hook";
     runtimeInputs = [ pkgs.playerctl ];
     text = ''
       hyprctl=/run/current-system/sw/bin/hyprctl
+      # nix-update-doctor: 2026-11-02 Hyprland 0.57 takes Lua, a session started before the update still runs 0.56. Drop the fallback once both machines run 0.57.
+      bind_enter() {
+        "$hyprctl" eval "hl.bind('Return', hl.dsp.exec_cmd('$1'))" | ${pkgs.gnugrep}/bin/grep -q '^ok' ||
+          "$hyprctl" keyword bind ", Return, exec, $1" >/dev/null
+      }
       state=$HOME/.local/state/speak
       paused=$state/dictation-paused-players
       # Proof without watchers: when it fired and whether T3 had focus
@@ -80,7 +92,7 @@ let
       echo "$(date +%FT%T) ''${1-} focus=$class" >> "$state/dictation-hook.log"
       case "''${1-}" in
         recording)
-          "$hyprctl" keyword bind ", Return, exec, ${pkgs.t3code}/bin/t3 app dictation --send" >/dev/null
+          bind_enter "${pkgs.t3code}/bin/t3 app dictation --send"
           for player in $(playerctl -l 2>/dev/null || true); do
             if [ "$(playerctl -p "$player" status 2>/dev/null || true)" = Playing ]; then
               playerctl -p "$player" pause 2>/dev/null || true
@@ -90,7 +102,7 @@ let
           done
           ;;
         *)
-          "$hyprctl" keyword unbind ", Return" >/dev/null
+          ${unbindEnter}
           if [ -f "$paused" ]; then
             sort -u "$paused" | while read -r player; do
               playerctl -p "$player" play 2>/dev/null || true
@@ -150,9 +162,9 @@ in
           # While a dictation records, t3-dictation-hook binds plain Enter to
           # "send". A safety net: Enter is plain Enter again whenever speak
           # starts or stops, however a recording ended.
-          ExecStartPre = "-/run/current-system/sw/bin/hyprctl keyword unbind \", Return\"";
+          ExecStartPre = "-${unbindEnter}";
           ExecStart = "${lib.getExe speak} daemon";
-          ExecStopPost = "-/run/current-system/sw/bin/hyprctl keyword unbind \", Return\"";
+          ExecStopPost = "-${unbindEnter}";
           Restart = "on-failure";
           RestartSec = 5;
           Environment = [
@@ -176,23 +188,55 @@ in
       # erikshell's 58 px rail; notifications keep the top right), above
       # everything, never taking focus. Its app-id is the main window's, so
       # it is matched by title. Send/cancel without clicking into it.
-      wayland.windowManager.hyprland.extraConfig =
-        lib.concatMapStrings
-          (rule: ''
-            windowrule = ${rule}, match:title ^(T3 Code — Speak reply)$
-          '')
-          [
-            "float 1"
-            "pin 1"
-            "no_initial_focus 1"
-            "size 420 240"
-            "move 70 12"
+      wayland.windowManager.hyprland.settings.window_rule = [
+        {
+          match.title = "^(T3 Code — Speak reply)$";
+          float = true;
+          pin = true;
+          no_initial_focus = true;
+          size = [
+            420
+            240
           ];
-      wayland.windowManager.hyprland.settings.bindd = [
-        "$mod ALT, Return, Send the spoken reply, exec, ${replyWindow} --send"
-        "$mod ALT, Escape, Close the spoken-reply window, exec, ${replyWindow} --cancel"
-        "$mod ALT, M, Next voice mode (Conversation / Voice out only / Silent), exec, ${cycleMode}"
+          move = [
+            70
+            12
+          ];
+        }
       ];
+      wayland.windowManager.hyprland.settings.bind =
+        map
+          (
+            {
+              key,
+              command,
+              description,
+            }:
+            {
+              _args = [
+                key
+                (lib.generators.mkLuaInline "hl.dsp.exec_cmd(${lib.generators.toLua { } command})")
+                { inherit description; }
+              ];
+            }
+          )
+          [
+            {
+              key = "SUPER + ALT + Return";
+              command = "${replyWindow} --send";
+              description = "Send the spoken reply";
+            }
+            {
+              key = "SUPER + ALT + Escape";
+              command = "${replyWindow} --cancel";
+              description = "Close the spoken-reply window";
+            }
+            {
+              key = "SUPER + ALT + M";
+              command = "${cycleMode}";
+              description = "Next voice mode (Conversation / Voice out only / Silent)";
+            }
+          ];
 
       # ext-idle-notify: no input for 5 minutes = Erik is away from the PC.
       systemd.user.services.speak-presence = {

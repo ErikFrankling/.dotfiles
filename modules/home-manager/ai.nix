@@ -58,7 +58,9 @@ let
           # Workspace 1 is Erik's: the window rule in modules/home-manager/hyprland
           # places the window there, and the exec rule makes it hold when this
           # script is not the one placing it. The loop below is the backstop.
-          "$hyprctl" dispatch exec "[workspace 1 silent] t3code-desktop" >/dev/null
+          # nix-update-doctor: 2026-11-02 Hyprland 0.57 takes Lua, a session started before the update still runs 0.56. Drop the fallback once both machines run 0.57.
+          "$hyprctl" dispatch "hl.dsp.exec_cmd('t3code-desktop', { workspace = '1 silent' })" | grep -q '^ok' ||
+            "$hyprctl" dispatch exec "[workspace 1 silent] t3code-desktop" >/dev/null
           # 2026-10-25: this relaunch ran with focus on the headless AGENT-1
           # output and the window opened on workspace `agent`. Never leave the
           # main window on an agent workspace.
@@ -67,7 +69,8 @@ let
             address=$("$hyprctl" clients -j | jq -r '[.[] | select(.class == "com.t3tools.T3Code" and (.title | startswith("T3 Code — Speak reply") | not)) | select(.workspace.name == "agent" or .workspace.name == "agent-park")] | first | .address // empty' 2>/dev/null || true)
             if [ -n "$address" ]; then
               echo "T3 Code window $address opened on an agent workspace; moving it to workspace 1"
-              "$hyprctl" dispatch movetoworkspacesilent "1,address:$address" >/dev/null
+              "$hyprctl" dispatch "hl.dsp.window.move({ workspace = '1', follow = false, window = 'address:$address' })" | grep -q '^ok' ||
+                "$hyprctl" dispatch movetoworkspacesilent "1,address:$address" >/dev/null
             fi
             # Settled: the main window exists and is on workspace 1.
             if "$hyprctl" clients -j | jq -e 'any(.[]; .class == "com.t3tools.T3Code" and .workspace.id == 1)' >/dev/null 2>&1; then break; fi

@@ -189,29 +189,45 @@ in
     # actual compositor. Do not hot-unload a plugin that owns a Wayland seat.
     wayland.windowManager.hyprland.settings = {
       # A gap keeps ordinary pointer motion from entering the headless output.
-      monitor = [ "AGENT-1,1920x1080@30,10000x0,1" ];
+      monitor = [
+        {
+          output = "AGENT-1";
+          mode = "1920x1080@30";
+          position = "10000x0";
+          scale = 1;
+        }
+      ];
       # `agent` is what AGENT-1 shows (and the only workspace the seat plugin
       # accepts input on); `agent-park` is a hidden shelf for windows that
       # should not be on screen, e.g. while recording a demo.
-      workspace = [
-        "name:agent,monitor:AGENT-1,default:true,persistent:true"
-        "name:agent-park,monitor:AGENT-1,persistent:true"
+      workspace_rule = [
+        {
+          workspace = "name:agent";
+          monitor = "AGENT-1";
+          default = true;
+          persistent = true;
+        }
+        {
+          workspace = "name:agent-park";
+          monitor = "AGENT-1";
+          persistent = true;
+        }
       ];
-      windowrule = [
-        # packages/agent-windows tags every window of an agent session before
-        # it maps. This places it, and all later windows of that client.
-        "workspace name:agent silent, match:tag agent-window"
-        "no_initial_focus on, match:tag agent-window"
-        "focus_on_activate off, match:tag agent-window"
-
-        "workspace name:agent silent, match:class ^(agent-chromium)$"
-        "no_initial_focus on, match:class ^(agent-chromium)$"
-        "focus_on_activate off, match:class ^(agent-chromium)$"
-
-        "workspace name:agent silent, match:class ^(agent-firefox)$"
-        "no_initial_focus on, match:class ^(agent-firefox)$"
-        "focus_on_activate off, match:class ^(agent-firefox)$"
-      ];
+      window_rule =
+        map
+          (match: {
+            inherit match;
+            workspace = "name:agent silent";
+            no_initial_focus = true;
+            focus_on_activate = false;
+          })
+          [
+            # packages/agent-windows tags every window of an agent session before
+            # it maps. This places it, and all later windows of that client.
+            { tag = "agent-window"; }
+            { class = "^(agent-chromium)$"; }
+            { class = "^(agent-firefox)$"; }
+          ];
     };
 
     systemd.user.services.agent-desktop = {
@@ -254,7 +270,7 @@ in
       };
       Service = {
         Type = "oneshot";
-        ExecStart = "${package}/bin/agent-desktop load-window-plugin ${windowsPlugin}/lib/agent-windows.so";
+        ExecStart = "${package}/bin/agent-desktop load-window-plugin ${windowsPlugin}/lib/agent-windows.so ${hyprland.version}";
         RemainAfterExit = true;
         TimeoutStartSec = 30;
       };

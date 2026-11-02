@@ -58,7 +58,7 @@ def return_focus():
     monitors = query("monitors")
     human = next((m for m in monitors if m["name"] != OUTPUT and not m["disabled"]), None)
     if human and any(m["focused"] and m["name"] == OUTPUT for m in monitors):
-        run("hyprctl", "dispatch", "focusmonitor", human["name"])
+        hypr_dispatch(f'hl.dsp.focus({{ monitor = "{human["name"]}" }})', f"focusmonitor {human['name']}")
         print(f"Returned focus from {OUTPUT} to {human['name']}", flush=True)
 
 
@@ -93,6 +93,12 @@ def hypr_request(command):
         while chunk := connection.recv(65536):
             chunks.append(chunk)
     return b"".join(chunks).decode(errors="replace")
+
+
+def hypr_dispatch(lua, legacy):
+    # nix-update-doctor: 2026-11-02 Hyprland 0.57 takes Lua, a session started before the update still runs 0.56. Drop the fallback once both machines run 0.57.
+    if not hypr_request(f"dispatch {lua}").startswith("ok"):
+        hypr_request(f"dispatch {legacy}")
 
 
 # Erik's own apps, on his own profiles. Their windows belong on his monitors.
@@ -132,7 +138,8 @@ def rescue_window(window, clients):
         return False
     target = erik_workspace()
     if target:
-        hypr_request(f"dispatch movetoworkspacesilent name:{target},address:{window['address']}")
+        hypr_dispatch(f'hl.dsp.window.move({{ workspace = "{target if target.isdigit() else "name:" + target}", follow = false, window = "address:{window["address"]}" }})',
+                      f"movetoworkspacesilent name:{target},address:{window['address']}")
         print(f"Moved Erik's {window['class']} window ({window['address']}) from workspace "
               f"{workspace} to {target}", flush=True)
     return True
@@ -262,9 +269,13 @@ def open_url(target):
             time.sleep(0.25)
 
 
-def load_window_plugin(target):
+def load_window_plugin(target, version):
     # This plugin owns no seat, so a new build replaces the old one without
-    # restarting Hyprland.
+    # restarting Hyprland. A build for another Hyprland version cannot load: the
+    # one loaded keeps guarding this session and the next login loads the new one.
+    if json.loads(run("hyprctl", "-j", "version"))["version"] != version and "agent-windows" in run("hyprctl", "plugin", "list"):
+        print(f"Keeping the loaded plugin; {target} is for Hyprland {version}, which starts at the next login", flush=True)
+        return
     signature = os.environ["HYPRLAND_INSTANCE_SIGNATURE"]
     marker = Path(os.environ["XDG_RUNTIME_DIR"]) / "agent-windows-plugin.json"
     wanted = {"session": signature, "path": target}
@@ -312,8 +323,8 @@ def main():
         if not (Path(os.environ["XDG_RUNTIME_DIR"]) / "computer-use/guard.sock").is_socket():
             raise RuntimeError(f"Compositor plugin did not start: {reply}")
         marker.write_text(json.dumps({"session": signature, "path": target}))
-    elif command == "load-window-plugin" and len(sys.argv) == 3:
-        load_window_plugin(sys.argv[2])
+    elif command == "load-window-plugin" and len(sys.argv) == 4:
+        load_window_plugin(sys.argv[2], sys.argv[3])
     elif command == "open" and len(sys.argv) == 3:
         open_url(sys.argv[2])
     elif command == "ensure-output":

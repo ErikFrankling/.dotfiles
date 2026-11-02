@@ -86,8 +86,8 @@ HYPRLAND_AGENT_SEAT=1 gnome-calculator &
 HYPRLAND_AGENT_SEAT=1 some-electron-app --hyprland-agent-seat &
 ```
 
-`hyprctl dispatch exec` still works (it is rewritten to run in your session's
-cgroup) but gains nothing. Beware: its argument goes through `sh -c`, so an
+`hyprctl dispatch "hl.dsp.exec_cmd('...')"` still works (it is rewritten to run in
+your session's cgroup) but gains nothing. Beware: its argument goes through `sh -c`, so an
 unquoted `&` in a URL backgrounds the command and splits it.
 
 Who opened a window, on any monitor: `window-origin ADDRESS` (or `--class REGEX`,
@@ -109,7 +109,8 @@ Then find it with `mcp__cua__list_windows` or `hyprctl -i 0 clients -j` (match
   screen for a moment and, without the seat marker, can't take your input.
   Always launch with the full command above.
 - Close what you open when you are done:
-  `hyprctl -i 0 dispatch closewindow address:0x...` (your window's address only).
+  `hyprctl -i 0 dispatch 'hl.dsp.window.close({ window = "address:0x..." })'` (your
+  window's address only).
 
 ## Window handling on AGENT-1
 
@@ -120,11 +121,13 @@ tidy:
 - One app on screen at a time is best: it fills AGENT-1, screenshots are
   sharp, and recordings look good.
 - Park windows you need later instead of stacking them:
-  `hyprctl -i 0 dispatch movetoworkspacesilent name:agent-park,address:0xADDR`
+  `hyprctl -i 0 dispatch 'hl.dsp.window.move({ workspace = "name:agent-park", follow = false, window = "address:0xADDR" })'`
   and bring one back with
-  `hyprctl -i 0 dispatch movetoworkspacesilent name:agent,address:0xADDR`.
-  Always `movetoworkspacesilent` (never plain `movetoworkspace`), always with
-  your window's address. Parked windows can't receive input until they're back
+  `hyprctl -i 0 dispatch 'hl.dsp.window.move({ workspace = "name:agent", follow = false, window = "address:0xADDR" })'`.
+  Always `follow = false`, always with your window's address. `hyprctl dispatch` takes
+  Lua since Hyprland 0.57; a session started before the update still runs 0.56 and
+  answers `Invalid dispatcher`, there it is
+  `hyprctl -i 0 dispatch movetoworkspacesilent name:agent,address:0xADDR`. Parked windows can't receive input until they're back
   on `agent`.
 - The agent Chromium is a permanent service (its window appears when a page is open); park its window instead of closing it mid-task.
 - Window addresses come from `hyprctl -i 0 clients -j` (`address`), the

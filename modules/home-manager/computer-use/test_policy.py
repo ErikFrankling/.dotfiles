@@ -71,13 +71,19 @@ class ReturnFocus(unittest.TestCase):
     HUMAN = {"name": "DP-3", "disabled": False}
 
     def dispatched(self, monitors):
-        with patch("desktop.query", return_value=monitors), patch("desktop.run") as process:
+        with patch("desktop.query", return_value=monitors), patch("desktop.hypr_request", return_value="ok") as request:
             return_focus()
-        return [call.args for call in process.call_args_list]
+        return [call.args for call in request.call_args_list]
 
     def test_reconnected_display_takes_focus_back_from_agent_output(self):
         monitors = [self.AGENT | {"focused": True}, self.HUMAN | {"focused": False}]
-        self.assertEqual(self.dispatched(monitors), [("hyprctl", "dispatch", "focusmonitor", "DP-3")])
+        self.assertEqual(self.dispatched(monitors), [('dispatch hl.dsp.focus({ monitor = "DP-3" })',)])
+
+    def test_session_from_before_the_update_gets_the_legacy_dispatcher(self):
+        monitors = [self.AGENT | {"focused": True}, self.HUMAN | {"focused": False}]
+        with patch("desktop.query", return_value=monitors), patch("desktop.hypr_request", return_value="Invalid dispatcher") as request:
+            return_focus()
+        self.assertEqual(request.call_args_list[1].args, ("dispatch focusmonitor DP-3",))
 
     def test_never_moves_focus_otherwise(self):
         for monitors in ([self.AGENT | {"focused": True}],

@@ -42,7 +42,8 @@ in
       Environment = [
         "TODO_NUDGE_TIME_URL=https://time.erikfrankling.duckdns.org/api/summary/line"
         # The hourly review also shows Erik's next 24 hours (modules/home-manager/calendar).
-        "TODO_NUDGE_CALENDAR_CMD=calendar-next --hours 24"
+        # Quoted whole: the value has spaces, and systemd splits Environment= on them.
+        ''"TODO_NUDGE_CALENDAR_CMD=calendar-next --hours 24"''
         "PATH=%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin"
       ];
     };

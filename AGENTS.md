@@ -14,7 +14,7 @@ Erik's apps (Firefox, Zen, Thunderbird, Spotify, WebCord/Discord, Obsidian, Heli
 
 ## Hard rule: agent windows never reach Erik's monitors, and this is enforced
 
-Erik (2026-10-31): "need better ways to know they don't spawn on my screen". The compositor enforces it: `packages/agent-windows`, a Hyprland plugin, classifies every client when it connects by its cgroup (`app-t3code-agents.slice`, `app-t3code-jobs.slice`, `cua-driver.service`, `agent-computer-use*`), its process chain and `T3CODE_THREAD_ID`. A window of an agent client is tagged `agent-window` before it maps and opens on workspace `agent` with its first frame. `hyprctl dispatch exec` from an agent, also over the raw socket, is rewritten to run in the agent's slice.
+Erik (2026-10-31): "need better ways to know they don't spawn on my screen". The compositor enforces it: `packages/agent-windows`, a Hyprland plugin, classifies every client when it connects by its cgroup (`app-t3code-agents.slice`, `app-t3code-jobs.slice`, `cua-driver.service`, `agent-computer-use*`), its process chain and `T3CODE_THREAD_ID`. A window of an agent client is tagged `agent-window` before it maps and opens on workspace `agent` with its first frame. An `exec` from an agent over the Hyprland socket (`hyprctl dispatch`, `hyprctl eval`, raw socket) is rewritten to run in the agent's slice.
 
 **So the one way to open a window is to just run the program.** No `[workspace ...]` rule, `HYPRLAND_AGENT_SEAT`, wrapper or `hyprctl` is needed for placement (the seat variable is only for agent-seat input, see the computer-use skill). URLs: `agent-open URL`, or `xdg-open`, which from an agent session goes to the agent's Chromium. Erik's kitty, launcher and keybinds, the T3 app and T3's terminal panel are outside those cgroups and keep opening on his monitors; sessions he runs by hand from kitty count as his.
 
@@ -447,9 +447,15 @@ someOption = "custom-value";
 
 ---
 
+### Hyprland is configured in Lua (since 0.57, 2026-11-02)
+
+Hyprland 0.57 has no hyprlang: it reads only `~/.config/hypr/hyprland.lua` and would generate a default config without it. `wayland.windowManager.hyprland.settings` takes `monitor`, `workspace_rule`, `window_rule`, `layer_rule`, `bind` and `config`. `hyprctl dispatch` takes Lua (`hl.dsp.window.move({ workspace = "name:agent", follow = false, window = "address:0x..." })`), `hyprctl keyword` is gone (`hyprctl eval`), `name:` refuses a number (`workspace = "5"`), and every bind needs a `description`, because the shell's keys sheet reads it.
+
+A session started before the move still runs 0.56. For it, `legacy-0.56/<host>.conf` stays linked as `hyprland.conf` (0.56 drops every keybind the moment the file disappears) and callers try Lua, then the legacy form. All of this carries `nix-update-doctor: 2026-11-02`; remove it once both machines run 0.57.
+
 ### Nested compositors never touch the session (Erik's PC, 2026-10-31)
 
-A Hyprland started inside a running session rewrites the systemd user manager's environment and removes `DISPLAY` when it exits, so `bin/Hyprland` starts it without a seat. Start test compositors by the name `Hyprland -c <own config>` (not a store path), set `WAYLAND_DISPLAY` only in the test client's own environment, and repair the manager with `hyprland-session-env`, not by hand.
+A Hyprland started inside a running session rewrites the systemd user manager's environment and removes `DISPLAY` when it exits, so `bin/Hyprland` starts it without a seat. A generated `hyprland.lua` starts Erik's apps and its shutdown hook stops `hyprland-session.target`, so never run one nested as it is. Start test compositors by the name `Hyprland -c <own config>` (not a store path), set `WAYLAND_DISPLAY` only in the test client's own environment, and repair the manager with `hyprland-session-env`, not by hand.
 
 ## Local LLM System Overview
 

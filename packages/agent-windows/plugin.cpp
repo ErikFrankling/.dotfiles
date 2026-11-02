@@ -2,7 +2,7 @@
 //
 // Every Wayland client is classified when it connects (origin.hpp says why then).
 // A window of an agent client gets the tag `agent-window` when it is created,
-// and the static rule `workspace name:agent silent, match:tag agent-window`
+// and the static rule `workspace = "name:agent silent", match = { tag = "agent-window" }`
 // (modules/home-manager/computer-use) places it during mapWindow, before the
 // compositor has shown anything. This covers every window of the client, not
 // just the first, which is all a `[workspace ...]` exec rule covers.
@@ -16,34 +16,35 @@
 // socket as `agentwindowescape`; agent-desktop watch-focus notifies him.
 //
 // AGENT-1 always shows `agent`; see keepAgentShown for what switched it away.
+#include <hyprland/src/animation/WorkspaceAnimationController.hpp>
+#include <hyprland/src/layout/LayoutManager.hpp>
+#include <hyprland/src/state/MonitorState.hpp>
+#include <hyprland/src/state/WorkspaceState.hpp>
 #include <hyprland/src/plugins/PluginAPI.hpp>
 #include <hyprland/src/plugins/HookSystem.hpp>
 #include <hyprland/src/Compositor.hpp>
-#include <hyprland/src/animation/WorkspaceAnimationController.hpp>
 #include <hyprland/src/config/supplementary/executor/Executor.hpp>
-#include <hyprland/src/debug/HyprCtl.hpp>
-#include <hyprland/src/desktop/Workspace.hpp>
 #include <hyprland/src/desktop/rule/windowRule/WindowRuleApplicator.hpp>
-#include <hyprland/src/desktop/view/Window.hpp>
+#include <hyprland/src/desktop/view/window/Window.hpp>
 #include <hyprland/src/event/EventBus.hpp>
-#include <hyprland/src/layout/LayoutManager.hpp>
-#include <hyprland/src/managers/EventManager.hpp>
+#include <hyprland/src/ipc/s1/S1.hpp>
+#include <hyprland/src/ipc/s2/S2.hpp>
 #include <hyprland/src/managers/eventLoop/EventLoopManager.hpp>
 #include <hyprland/src/output/Monitor.hpp>
-#include <hyprland/src/protocols/XDGShell.hpp>
 #include <hyprland/src/protocols/core/Compositor.hpp>
-#include <hyprland/src/state/MonitorState.hpp>
-#include <hyprland/src/state/WorkspaceState.hpp>
-#include <hyprland/src/xwayland/XSurface.hpp>
+#include <hyprland/src/workspace/HLWorkspace.hpp>
 
 #include <wayland-server-core.h>
 
 #include <chrono>
 #include <cstdlib>
+#include <dlfcn.h>
 #include <filesystem>
 #include <format>
+#include <fstream>
 #include <unistd.h>
 #include <unordered_map>
+#include <utility>
 
 #include "origin.hpp"
 
@@ -61,6 +62,7 @@ inline HANDLE PHANDLE = nullptr;
 static const std::string TAG = "agent-window";
 
 using SpawnRawProcFn = std::optional<uint64_t> (*)(Config::Supplementary::CExecutor *, const std::string &, PHLWORKSPACE, const std::string &);
+using SocketDispatchFn = IPC::Socket1::SResponse (*)(IPC::Socket1::CSocket1 *, std::string, pid_t);
 
 namespace {
 
@@ -74,6 +76,10 @@ struct PluginState {
   wl_listener clientCreated{};
   std::unordered_map<wl_client *, ClientEntry *> clients;
   CFunctionHook *spawnHook = nullptr;
+  CFunctionHook *dispatchHook = nullptr;
+  // Who asked, while a request from the Hyprland socket is being answered. Zero
+  // for keybinds, exec-once, rules and the compositor's own requests.
+  pid_t peer = 0;
   std::vector<CHyprSignalListener> listeners;
   unsigned long execCount = 0;
   std::filesystem::path log;
@@ -102,9 +108,10 @@ void remember(wl_client *client) {
 void onClientCreated(wl_listener *, void *data) { remember(static_cast<wl_client *>(data)); }
 
 wl_client *clientOf(PHLWINDOW window) {
-  if (window->m_isX11 || !window->m_xdgSurface || !window->m_xdgSurface->m_owner)
+  if (window->backend().isX11())
     return nullptr;
-  return window->m_xdgSurface->m_owner->client();
+  const auto surface = window->backend().surface();
+  return surface ? surface->client() : nullptr;
 }
 
 Origin originOf(PHLWINDOW window) {
@@ -114,13 +121,13 @@ Origin originOf(PHLWINDOW window) {
     return state->clients.at(client)->origin;
   }
   // XWayland: the client is the X server, _NET_WM_PID names the real process.
-  const auto pid = window->getPID();
+  const auto pid = window->backend().pid();
   return pid > 1 ? classify(pid, getpid()) : Origin{};
 }
 
-bool onAgentSeat(PHLWINDOW window) {
-  return window->m_workspace && (window->m_workspace->m_name == "agent" || window->m_workspace->m_name == "agent-park");
-}
+bool isAgentWorkspace(const PHLWORKSPACE &workspace) { return workspace->displayName() == "agent" || workspace->displayName() == "agent-park"; }
+
+bool onAgentSeat(PHLWINDOW window) { return window->m_workspace && isAgentWorkspace(window->m_workspace); }
 
 std::string record(PHLWINDOW window, const Origin &origin, std::string_view event) {
   const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -135,8 +142,8 @@ std::string record(PHLWINDOW window, const Origin &origin, std::string_view even
   return std::format(
       "{{\"ts_ms\":{},\"event\":{},\"address\":\"0x{:x}\",\"class\":{},\"pid\":{},\"x11\":{},\"monitor\":{},\"workspace\":{},\"agent\":{},\"via\":{},\"thread\":{},\"cgroup\":{},"
       "\"chain\":{}}}",
-      now, jsonString(event), reinterpret_cast<uintptr_t>(window.get()), jsonString(window->m_class), window->getPID(), window->m_isX11 ? "true" : "false",
-      jsonString(window->m_monitor ? window->m_monitor->m_name : ""), jsonString(window->m_workspace ? window->m_workspace->m_name : ""), origin.agent ? "true" : "false",
+      now, jsonString(event), reinterpret_cast<uintptr_t>(window.get()), jsonString(window->metadata().appID()), window->backend().pid(), window->backend().isX11() ? "true" : "false",
+      jsonString(window->m_monitor ? window->m_monitor->m_name : ""), jsonString(window->m_workspace ? window->m_workspace->displayName() : ""), origin.agent ? "true" : "false",
       jsonString(origin.via), jsonString(origin.thread), jsonString(origin.cgroup), chain);
 }
 
@@ -151,11 +158,12 @@ void writeLog(const std::string &line) {
 void sendBack(PHLWINDOW window, const Origin &origin, std::string_view event) {
   const auto line = record(window, origin, event);
   writeLog(line);
-  g_pEventManager->postEvent(SHyprIPCEvent{.event = "agentwindowescape", .data = line});
+  IPC::Socket2::sock()->postEvent({.event = "agentwindowescape", .data = line});
   const PHLWINDOWREF ref = window;
   g_pEventLoopManager->doLater([ref] {
     if (const auto w = ref.lock())
-      HyprlandAPI::invokeHyprctlCommand("dispatch", std::format("movetoworkspacesilent name:agent,address:0x{:x}", reinterpret_cast<uintptr_t>(w.get())));
+      HyprlandAPI::invokeHyprctlCommand(
+          "dispatch", std::format("hl.dsp.window.move({{ workspace = \"name:agent\", follow = false, window = \"address:0x{:x}\" }})", reinterpret_cast<uintptr_t>(w.get())));
   });
 }
 
@@ -181,11 +189,10 @@ void onWindowOpenEarly(PHLWINDOW window) {
 }
 
 void onWindowMove(PHLWINDOW window, PHLWORKSPACE workspace) {
-  if (!window->m_ruleApplicator->m_tagKeeper.isTagged(TAG, true) || !workspace || workspace->m_name == "agent" || workspace->m_name == "agent-park")
+  if (!window->m_ruleApplicator->m_tagKeeper.isTagged(TAG, true) || !workspace || isAgentWorkspace(workspace))
     return;
   const auto origin = originOf(window);
-  const auto peer = g_pHyprCtl ? g_pHyprCtl->m_currentRequestParams.pid : 0;
-  if (peer > 0 && classify(peer, getpid()).agent) {
+  if (state->peer > 0 && classify(state->peer, getpid()).agent) {
     sendBack(window, origin, "agent-moved-it");
     return;
   }
@@ -196,15 +203,26 @@ void onWindowMove(PHLWINDOW window, PHLWORKSPACE workspace) {
 
 std::optional<uint64_t> hkSpawnRawProc(Config::Supplementary::CExecutor *self, const std::string &args, PHLWORKSPACE workspace, const std::string &token) {
   const auto original = reinterpret_cast<SpawnRawProcFn>(state->spawnHook->m_original);
-  // pid is non-zero only while a request from the Hyprland socket is being
-  // answered. Keybinds, exec-once and rules go through here with 0.
-  const auto peer = g_pHyprCtl ? g_pHyprCtl->m_currentRequestParams.pid : 0;
-  if (peer <= 0)
+  if (state->peer <= 0)
     return original(self, args, workspace, token);
-  const auto origin = classify(peer, getpid());
+  const auto origin = classify(state->peer, getpid());
   if (!origin.agent)
     return original(self, args, workspace, token);
   return original(self, rewriteExec(args, origin, ++state->execCount, SYSTEMD_RUN, ENV_BIN), workspace, token);
+}
+
+// Hyprland gives the peer's pid only to the command it runs, and `dispatch` and
+// `eval` run Lua, which reaches spawnRawProc and moveToWorkspace with no way to
+// pass it on. Every socket request comes through here, `plugin unload` too: then
+// PLUGIN_EXIT runs inside the original and this frame has to return afterwards, which
+// is why state can be gone below and why PLUGIN_INIT pins this library in memory.
+IPC::Socket1::SResponse hkSocketDispatch(IPC::Socket1::CSocket1 *self, std::string request, pid_t pid) {
+  const auto original = reinterpret_cast<SocketDispatchFn>(state->dispatchHook->m_original);
+  const auto outer = std::exchange(state->peer, pid);
+  auto response = original(self, std::move(request), pid);
+  if (state)
+    state->peer = outer;
+  return response;
 }
 
 // `agent-park` must never be what AGENT-1 displays: windows on `agent` then get no
@@ -221,11 +239,11 @@ std::optional<uint64_t> hkSpawnRawProc(Config::Supplementary::CExecutor *self, c
 // it is one of Erik's, there because his monitors are off.
 void keepAgentShown() {
   for (const auto &monitor : State::monitorState()->monitors()) {
-    if (monitor->m_name != "AGENT-1" || !monitor->m_activeWorkspace || monitor->m_activeWorkspace->m_name != "agent-park")
+    if (monitor->m_name != "AGENT-1" || !monitor->m_activeWorkspace || monitor->m_activeWorkspace->displayName() != "agent-park")
       continue;
     for (const auto &candidate : State::workspaceState()->workspaces()) {
       const auto agent = candidate.lock();
-      if (!agent || agent->m_name != "agent" || agent->m_monitor != monitor)
+      if (!agent || agent->displayName() != "agent" || agent->monitor() != monitor)
         continue;
       const auto parked = monitor->m_activeWorkspace;
       monitor->changeWorkspace(agent, true, true, true);
@@ -245,6 +263,16 @@ void keepAgentShownLater() {
   });
 }
 
+CFunctionHook *hookOnly(HANDLE handle, const std::string &symbol, void *destination) {
+  const auto found = HyprlandAPI::findFunctionsByName(handle, symbol);
+  if (found.size() != 1)
+    throw std::runtime_error("agent-windows: " + symbol + " not found exactly once");
+  auto *hook = HyprlandAPI::createFunctionHook(handle, found[0].address, destination);
+  if (!hook || !hook->hook())
+    throw std::runtime_error("agent-windows: could not hook " + symbol);
+  return hook;
+}
+
 }  // namespace
 
 APICALL EXPORT std::string PLUGIN_API_VERSION() { return HYPRLAND_API_VERSION; }
@@ -254,16 +282,16 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
   if (std::string{__hyprland_api_get_hash()} != __hyprland_api_get_client_hash())
     throw std::runtime_error("agent-windows: built for a different Hyprland");
 
+  Dl_info self{};
+  if (!dladdr(reinterpret_cast<void *>(hkSocketDispatch), &self) || !dlopen(self.dli_fname, RTLD_NOW | RTLD_NOLOAD | RTLD_NODELETE))
+    throw std::runtime_error("agent-windows: could not pin the library in memory");
+
   state = new PluginState;
   const auto *home = std::getenv("HOME");
   state->log = std::filesystem::path(home ? home : "/tmp") / ".local/state/window-origin/windows.jsonl";
 
-  const auto found = HyprlandAPI::findFunctionsByName(handle, "_ZN6Config13Supplementary9CExecutor12spawnRawProc");
-  if (found.size() != 1)
-    throw std::runtime_error("agent-windows: spawnRawProc not found exactly once");
-  state->spawnHook = HyprlandAPI::createFunctionHook(handle, found[0].address, reinterpret_cast<void *>(hkSpawnRawProc));
-  if (!state->spawnHook || !state->spawnHook->hook())
-    throw std::runtime_error("agent-windows: could not hook spawnRawProc");
+  state->spawnHook = hookOnly(handle, "_ZN6Config13Supplementary9CExecutor12spawnRawProc", reinterpret_cast<void *>(hkSpawnRawProc));
+  state->dispatchHook = hookOnly(handle, "_ZN3IPC7Socket18CSocket18dispatch", reinterpret_cast<void *>(hkSocketDispatch));
 
   auto &events = Event::bus()->m_events.window;
   state->listeners.emplace_back(events.create.listen([](PHLWINDOW window) { onWindowCreate(window); }));
@@ -274,7 +302,6 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
   state->listeners.emplace_back(bus.workspace.active.listen([](PHLWORKSPACE) { keepAgentShownLater(); }));
   state->listeners.emplace_back(bus.workspace.moveToMonitor.listen([](PHLWORKSPACE, PHLMONITOR) { keepAgentShownLater(); }));
   state->listeners.emplace_back(bus.monitor.added.listen([](PHLMONITOR) { keepAgentShownLater(); }));
-  keepAgentShownLater();
 
   state->clientCreated.notify = onClientCreated;
   wl_display_add_client_created_listener(g_pCompositor->m_wlDisplay, &state->clientCreated);
@@ -291,6 +318,8 @@ APICALL EXPORT void PLUGIN_EXIT() {
   state->listeners.clear();
   if (state->spawnHook)
     HyprlandAPI::removeFunctionHook(PHANDLE, state->spawnHook);
+  if (state->dispatchHook)
+    HyprlandAPI::removeFunctionHook(PHANDLE, state->dispatchHook);
   delete state;
   state = nullptr;
 }
