@@ -5,7 +5,7 @@
 # export.py reads only local files: the Canvas archive that
 # canvas-archive-refresh just updated (archive.json, deadlines.json, TimeEdit
 # schedule.json) and the curated rules in ~/projects/kth/school/overrides.json
-# (which course code is Erik's, items settled for a later round, notes). It
+# (course names for shared rooms, items settled for a later round, notes). It
 # never talks to Canvas. It writes ~/projects/kth/school/items.json and POSTs
 # it to /api/ingest; the server keeps Erik's done toggles.
 #

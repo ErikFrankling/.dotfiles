@@ -2,9 +2,13 @@
 to https://school.erikfrankling.duckdns.org (homelab apps/school.yaml).
 
 Reads only local files: archive.json (Canvas API data from refresh.py),
-deadlines.json (dates found on course pages), each course's schedule.json
-(TimeEdit) and the curated ~/projects/kth/school/overrides.json. Never talks
-to Canvas, so it cannot change anything there.
+deadlines.json (dates transcribed from course pages), each course's
+schedule.json (TimeEdit) and the curated ~/projects/kth/school/overrides.json.
+Never talks to Canvas, so it cannot change anything there.
+
+Every date says where it came from (opens_source, due_source): "canvas", "course
+page", "announcement", "schedule" or "inferred". A window with no stated opening
+gets opens = null and is listed in no_opening; dates are never made up.
 
 usage: export.py [--no-push]   (SCHOOL_INGEST_TOKEN in the environment to push)
 """
@@ -19,6 +23,11 @@ ARCHIVE = Path(os.environ.get("CANVAS_ARCHIVE", HOME / "projects/kth/canvas-arch
 SCHOOL = Path(os.environ.get("SCHOOL_DIR", HOME / "projects/kth/school"))
 URL = os.environ.get("SCHOOL_URL", "https://school.erikfrankling.duckdns.org")
 TZ = ZoneInfo("Europe/Stockholm")
+TERM_YEAR = datetime.now(TZ).year if datetime.now(TZ).month >= 8 else datetime.now(TZ).year - 1  # Aug-Jul
+
+
+def dayKeyOf(s):
+    return datetime.fromisoformat(s).astimezone(TZ).date().isoformat()
 
 
 # ---------- HTML -> Markdown (enough for Canvas descriptions) ----------
@@ -191,7 +200,7 @@ def key_phrase(title):
 def kind_of(title, fallback="assignment"):
     t = title.lower()
     if re.search(r"registration|register|sign-?up|signup", t):
-        return "registration"
+        return "action"
     if re.search(r"peer[- ]?review|give feedback|feedback to", t):
         return "peer review"
     if re.search(r"re-?exam|written exam|\bexam\b|tentamen|oral exam|c-exam", t):
@@ -213,19 +222,186 @@ def match(rule, course_id, title):
     return bool(re.search(rule["title_re"], title, re.I))
 
 
+# ---------- dates written in course pages and announcements ----------
+MONTHS = {m: i + 1 for i, m in enumerate("jan feb mar apr may jun jul aug sep oct nov dec".split())}
+DATE = (r"(?:(mon|tue|wed|thu|fri|sat|sun)[a-z]*\.?,?\s+)?(\d{1,2})(?:st|nd|rd|th)?\s+"
+        r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?(?:,?\s+(20\d\d))?"
+        r"(?:(?:,?\s*(?:at\s+)?)(\d{1,2})[:.](\d\d))?")
+DATE_US = r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?\b"
+
+
+def page_lines(h):
+    """Plain text lines of a Canvas page: inline tags vanish without a gap, blocks break."""
+    h = re.sub(r"(?i)</(tr|p|li|h\d|div|td|ul|ol)>|<br\s*/?>", "\n", h or "")
+    text = html.unescape(re.sub(r"<[^>]+>", "", h)).replace("\xa0", " ")
+    return [l for l in (re.sub(r"[ \t]+", " ", x).strip() for x in text.split("\n")) if l]
+
+
+def implied_year(mo, day, ref):
+    """A date without a year is the next one after ref (when it was written), or this academic year."""
+    if not ref:
+        return TERM_YEAR if mo >= 8 else TERM_YEAR + 1
+    return ref.year + (1 if (mo, day) < (ref.month, ref.day) and ref.month - mo > 3 else 0)
+
+
+def when(m, ref=None):
+    """A DATE match as a Stockholm datetime and whether it had a time. A weekday that
+    disagrees means we misread it, so it gives None."""
+    wd, day, mon, year, hh, mm = m.groups()[:6]
+    mo = MONTHS[mon.lower()]
+    y = int(year) if year else implied_year(mo, int(day), ref)
+    try:
+        d = datetime(y, mo, int(day), int(hh or 0), int(mm or 0), tzinfo=TZ)
+    except ValueError:
+        return None, False
+    if wd and d.strftime("%a").lower() != wd.lower():
+        print(f"weekday mismatch, ignored: {m.group(0)}")
+        return None, False
+    return d, hh is not None
+
+
+def utc(d):
+    return d.astimezone(timezone.utc).isoformat()
+
+
+def key(t):
+    return re.sub(r"[^a-z0-9]", "", t.lower())
+
+
+def set_opens(it, dt, all_day, source, url):
+    """Canvas's own unlock date is the truth; anything else only fills a gap."""
+    if it.get("opens_source") == "canvas" or not dt or dt >= it["due"]:
+        return
+    it.update(opens=dt, opens_source=source, opens_url=url, opens_all_day=all_day)
+
+
+def page_sources(c):
+    """(slug, url, lines) for a course's pages and syllabus."""
+    base = f"https://canvas.kth.se/courses/{c['course']['id']}"
+    for p in c.get("pages") or []:
+        yield p.get("url"), f"{base}/pages/{p.get('url')}", page_lines((p.get("detail") or p).get("body"))
+    if c["course"].get("syllabus_body"):
+        yield "syllabus", f"{base}/assignments/syllabus", page_lines(c["course"]["syllabus_body"])
+
+
+def read_pages(items, by_course, rules):
+    """Live dates from course pages: release and due tables, quiz windows and curated lines.
+    Read on every run, so an edit to the page reaches the calendar the next morning."""
+    release = re.compile(DATE + r"\s*(release|due)\s*:\s*(.+)", re.I)
+    quiz = re.compile(DATE + r"\s*-\s*(quiz \d+),\s*open from (\d{1,2})\s*am", re.I)
+    for cid, c in by_course.items():
+        mine = [i for i in items if i["course_id"] == cid]
+        find = lambda thing: [i for i in mine if key(i["title"]).startswith(key(thing))]
+        for slug, url, lines in page_sources(c):
+            for line in lines:
+                if m := release.search(line):
+                    d, timed = when(m)
+                    field, thing = m.group(7).lower(), m.group(8)
+                    hits = find(thing)
+                    if not d or not hits:
+                        if d and field == "release":
+                            print(f"release line matches no item: {cid} {line[:80]}")
+                        continue
+                    for i in hits:
+                        if field == "release":
+                            set_opens(i, utc(d), not timed, "course page", url)
+                        elif i["due_source"] == "course page" and timed and i["due"] != utc(d):
+                            print(f"due moved on the page: {i['title']} {i['due']} -> {utc(d)}")
+                            i["due"] = utc(d)
+                if m := quiz.search(line):
+                    d, _ = when(m)
+                    if d:
+                        for i in find(m.group(7)):
+                            set_opens(i, utc(d.replace(hour=int(m.group(8)))), False, "course page", url)
+                for r in rules:
+                    if int(r["course"]) == cid and slug == r["page"] and re.search(r["line_re"], line, re.I) and (m := re.search(DATE, line, re.I)):
+                        d, timed = when(m)
+                        if d:
+                            for i in mine:
+                                if re.search(r["items_re"], i["title"], re.I):
+                                    set_opens(i, utc(d), not timed, "course page", url)
+
+
+ACT = re.compile(r"\b(sign(?:ing)? up|sign-up|signup|register|registration|apply|applications?|enrol|book|fill in|submit your)\b", re.I)
+BY = re.compile(r"\b(by|before|until|deadline|closes?|latest)\b", re.I)
+SPAN = re.compile(r"\bopen\s+(\d{1,2})\s*[-–]\s*(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*(?:\s+(20\d\d))?", re.I)
+
+
+def sentence_dates(sentence, ref):
+    """Every date in a sentence, in order, in either "12 November" or "November 12" form."""
+    out = []
+    for m in re.finditer(DATE, sentence, re.I):
+        d, timed = when(m, ref)
+        if d:
+            out.append((m.start(), d, timed))
+    for m in re.finditer(DATE_US, sentence, re.I):
+        if not any(abs(m.start() - p) < 12 for p, _, _ in out):
+            try:
+                mo = MONTHS[m.group(1).lower()]
+                out.append((m.start(), datetime(implied_year(mo, int(m.group(2)), ref), mo, int(m.group(2)), tzinfo=TZ), False))
+            except ValueError:
+                pass
+    return [(d, t) for _, d, t in sorted(out, key=lambda x: x[0])]
+
+
+def read_announcements(c, cutoff):
+    """Things to do stated in announcements: (announcement, sentence, opens, closes, timed)."""
+    for a in c.get("announcements") or []:
+        if not a.get("posted_at"):  # not published yet
+            continue
+        posted = datetime.fromisoformat(a["posted_at"].replace("Z", "+00:00")).astimezone(TZ)
+        for line in page_lines(a.get("message")):
+            for sentence in re.split(r"(?<=[.!?])\s+", line):
+                if m := SPAN.search(sentence):
+                    mo = MONTHS[m.group(3).lower()]
+                    y = int(m.group(4) or implied_year(mo, int(m.group(1)), posted))
+                    start = datetime(y, mo, int(m.group(1)), tzinfo=TZ)
+                    end = datetime(y, mo, int(m.group(2)), 23, 59, tzinfo=TZ)
+                    if end >= cutoff:
+                        yield a, sentence, start, end, False
+                    continue
+                if not ACT.search(sentence):
+                    continue
+                dates = sentence_dates(sentence, posted)
+                if not dates:
+                    continue
+                opener = re.search(r"\bopens?\b", sentence, re.I)
+                closer = re.search(r"\bcloses?\b", sentence, re.I)
+                if opener and closer and len(dates) >= 2:
+                    (o, _), (e, t) = dates[0], dates[1]
+                elif BY.search(sentence):
+                    (e, t), o = dates[-1], None
+                else:
+                    continue
+                e = e if t else e.replace(hour=23, minute=59)
+                if e >= cutoff and e.isoformat()[:10] >= a.get("posted_at", "")[:10]:
+                    yield a, sentence, o, e, t
+
+
 # ---------- build ----------
 def main():
     arch = json.loads((ARCHIVE / "archive.json").read_text())
     ov = json.loads((SCHOOL / "overrides.json").read_text())
     courses = {int(k): v for k, v in ov["courses"].items()}
+    # refresh.py archives every course of the current term, so a new course needs no list
+    # here; overrides only rename rooms that hold several course codes.
+    for c in arch["courses"]:
+        cid, name = c["course"]["id"], c["course"]["name"]
+        if cid not in courses:
+            code, _, rest = name.partition(" ")
+            title = re.sub(r"\s*\([^)]*\)\s*$", "", re.sub(r"^(HT|VT)\d\d\s+", "", rest)).strip()
+            courses[cid] = {"code": code.split("/")[0], "name": title or name}
+            print(f"course without overrides: {code} {title}")
     since = iso(ov.get("since", "2026-08-01"))
-    by_course = {c["course"]["id"]: c for c in arch["courses"] if c["course"]["id"] in courses}
+    by_course = {c["course"]["id"]: c for c in arch["courses"]}
+    cutoff = datetime.now(TZ) - timedelta(days=14)
     items = []
 
     def new_item(cid, iid, title, kind, due, **kw):
         it = {"id": iid, "course": courses[cid]["code"], "course_name": courses[cid]["name"], "course_id": cid,
-              "title": title, "kind": kind, "due": due, "start": None, "all_day": False, "lock_at": None,
-              "unlock_at": None, "canvas": None, "auto_done": False, "auto_reason": None, "deferred": None,
+              "title": title, "kind": kind, "due": due, "due_source": "canvas", "start": None, "all_day": False, "lock_at": None,
+              "opens": None, "opens_source": None, "opens_url": None, "opens_all_day": False, "opens_group": None,
+              "origin": "export", "canvas": None, "auto_done": False, "auto_reason": None, "deferred": None,
               "description": "", "sources": [], "notes": [], "related": [], "facts": []}
         it.update(kw)
         return it
@@ -254,7 +430,9 @@ def main():
             good_grade = st == "graded" and (s.get("score") or 0) > 0 and str(s.get("grade")).lower() not in ("incomplete", "f", "fail", "0")
             done = bool(s.get("submitted_at")) or good_grade or bool(s.get("excused"))
             it = new_item(cid, f"canvas-assignment-{a['id']}", re.sub(r"^Assignment:\s*", "", a["name"]), "quiz" if a.get("quiz_id") else kind_of(a["name"]),
-                          iso(a.get("due_at")), lock_at=iso(a.get("lock_at")), unlock_at=iso(a.get("unlock_at")),
+                          iso(a.get("due_at")), lock_at=iso(a.get("lock_at")),
+                          opens=iso(a.get("unlock_at")), opens_source="canvas" if a.get("unlock_at") else None,
+                          opens_url=a.get("html_url") if a.get("unlock_at") else None,
                           canvas={"state": st, "submitted_at": s.get("submitted_at"), "grade": s.get("grade"), "score": s.get("score"),
                                   "points": a.get("points_possible"), "missing": s.get("missing"), "late": s.get("late"),
                                   "types": a.get("submission_types") or []},
@@ -272,6 +450,7 @@ def main():
                         text = "file" if "/files/" in url else "page" if "/pages/" in url else "discussion" if "/discussion_topics/" in url else url.split("//")[-1][:60]
                     src(it, f"Linked: {text[:80]}", url)
             it["_norm"] = norm(a["name"])
+            it["_group"] = a.get("group_category_id")
             items.append(it)
 
     # Funka (accessibility) variants of a quiz are the same task.
@@ -331,6 +510,7 @@ def main():
         if cid not in courses or not d.get("due"):
             continue
         title, due = d["title"], iso(d.get("closes") or d["due"]) if d.get("type") != "Seminar" else iso(d["due"])
+        origin = "schedule" if "timeedit" in (d.get("source") or "") else "course page"
         m = re.match(r"(.*?)\s+(opens|closes)(?:\s*\(.*\))?$", title)
         start = None
         if d.get("type") == "Registration" and m and (d["course"], m.group(1)) in windows:
@@ -340,7 +520,7 @@ def main():
             title = m.group(1)
             if "closes" in w:
                 due = iso(w["closes"]["due"])
-                start = iso(w["opens"]["due"]) if "opens" in w else None
+                start = utc(datetime.fromisoformat(w["opens"]["due"]).replace(tzinfo=TZ)) if "opens" in w else None
             else:
                 title, due = d["title"], iso(w["opens"]["due"])
         elif d.get("type") == "Registration" and m:
@@ -348,7 +528,7 @@ def main():
         title = re.sub(r":\s*closes \d\d:\d\d$", "", title)
         n = norm(title)
         # Already a Canvas item? Fill a missing date or add the page as a source.
-        pkind = kind_of(title, {"Seminar": "seminar", "Exam": "exam", "Quiz window": "quiz", "Registration": "registration"}.get(d.get("type"), "assignment"))
+        pkind = kind_of(title, {"Seminar": "seminar", "Exam": "exam", "Quiz window": "quiz", "Registration": "action"}.get(d.get("type"), "assignment"))
         cands = [i for i in items if i["course_id"] == cid and i["_norm"] and n and (i["_norm"] == n or re.match(re.escape(n) + r"\b", i["_norm"]) or re.match(re.escape(i["_norm"]) + r"\b", n))]
         cands = [i for i in cands if not i["due"] or not due or abs(datetime.fromisoformat(i["due"]) - datetime.fromisoformat(due)) <= timedelta(days=1)]
         if not cands and due:  # same kind of task at the same minute: the page restates a Canvas deadline
@@ -357,13 +537,15 @@ def main():
         if cands:
             for i in cands:
                 if not i["due"]:
-                    i["due"], i["all_day"] = due, bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", d["due"]))
+                    i["due"], i["due_source"], i["all_day"] = due, origin, bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", d["due"]))
                 src(i, "Course page", d.get("source"))
                 if d.get("notes"):
                     i["notes"].append(d["notes"])
             continue
         it = new_item(cid, "page-" + hashlib.sha1(f"{cid}|{title}".encode()).hexdigest()[:12], title,
-                      pkind, due, start=start, all_day=bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", d["due"])))
+                      pkind, due, due_source=origin, all_day=bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", d["due"])))
+        if start:
+            it.update(opens=start, opens_source=origin, opens_url=d.get("source"), opens_all_day=True)
         if d.get("notes"):
             it["notes"].append(d["notes"])
         src(it, "Course page" if "canvas.kth.se" in (d.get("source") or "") else "TimeEdit" if "timeedit" in (d.get("source") or "") else "KTH page", d.get("source"))
@@ -387,7 +569,7 @@ def main():
                 continue
             title = m.group(4).split(",")[0].strip()
             it = new_item(cid, f"timeedit-{m.group(5)}", f"{title} ({m.group(4).split(',', 1)[1].strip()})" if "," in m.group(4) else title,
-                          "exam", s, start=None)
+                          "exam", s, due_source="schedule", start=None)
             it["facts"].append(("Time", f"{m.group(2)}–{m.group(3)}"))
             src(it, "TimeEdit schedule", next((l.split("Source: ")[1].strip() for l in (folder / "SCHEDULE.md").read_text().splitlines() if l.startswith("Source: ")), None) if (folder / "SCHEDULE.md").exists() else None)
             it["_norm"] = norm(title)
@@ -395,13 +577,56 @@ def main():
 
     # 4. Curated rules: exclusions, items settled for a later round, notes, extras.
     items = [i for i in items if i["due"] and i["due"] >= since and not any(match(r, i["course_id"], i["title"]) for r in ov.get("exclude", []))]
-    for x in ov.get("extra", []):
-        cid = int(x["course"])
-        it = new_item(cid, x["id"], x["title"], x.get("kind", kind_of(x["title"])), iso(x["due"]), start=iso(x.get("start")))
-        it["description"] = x.get("markdown", "")
-        for s_ in x.get("sources", []):
-            src(it, s_["label"], s_["url"])
-        items.append(it)
+    read_pages(items, by_course, ov.get("page_rules", []))
+
+    # 5. Things to do that are not Canvas assignments.
+    # Stated in an announcement; a date that is already an action just gains the source.
+    for cid, c in by_course.items():
+        for a, sentence, o, e, timed in read_announcements(c, cutoff):
+            due, url = utc(e), a.get("html_url")
+            host = next((i for i in items if i["course_id"] == cid and i["kind"] == "action" and dayKeyOf(i["due"]) == dayKeyOf(due)), None)
+            if not host:
+                host = new_item(cid, "ann-" + hashlib.sha1(f"{cid}|{a['id']}|{due[:10]}".encode()).hexdigest()[:12], a["title"].strip(), "action", due,
+                                due_source="announcement", all_day=not timed)
+                host["_norm"] = norm(a["title"])
+                items.append(host)
+            src(host, f"Announcement: {a['title']}", url)
+            host["notes"].append(sentence)
+            if o and not host["opens"]:
+                set_opens(host, utc(o), True, "announcement", url)
+    # An assignment that needs a group: joining it has no deadline of its own, so the
+    # assignment's own dates are the inferred window, and Canvas tells if it is done.
+    for it in [i for i in items if i["canvas"] and i.get("_group") and i["due"] >= utc(cutoff)]:
+        cid, word = it["course_id"], it["title"].split()[0].lower()
+        joined = next((g for g in arch.get("my_groups") or [] if g.get("course_id") == cid and
+                       (g.get("group_category_id") == it["_group"] or word in g["name"].lower())), None)
+        act = new_item(cid, f"join-{it['id']}", f"Join a group: {it['title']}", "action", it["due"], due_source="inferred",
+                       auto_done=bool(joined), auto_reason=f"member of {joined['name']} in Canvas" if joined else None)
+        act["notes"].append("Canvas gives no separate group deadline; this has to happen before the assignment is due.")
+        set_opens(act, it["opens"], False, "inferred", it["opens_url"])
+        src(act, "Assignment in Canvas", next((s_["url"] for s_ in it["sources"]), None))
+        act["_norm"] = key(act["title"])
+        items.append(act)
+    # Canvas slots that must be booked; the last slot is the last chance, not a stated deadline.
+    slots = {}
+    for g in arch.get("appointment_groups") or []:
+        cid = next((int(x.split("_")[1]) for x in g.get("context_codes") or [] if x.startswith("course_")), None)
+        if cid in by_course and re.search(ov.get("book_slots_re", "$^"), g["title"], re.I) and g.get("start_at"):
+            slots.setdefault((cid, re.sub(r"\s*\(Option \d+\)", "", g["title"]).strip()), []).append(g)
+    for (cid, title), gs in slots.items():
+        last, booked = max(g["start_at"] for g in gs), not any(g.get("requiring_action") for g in gs)
+        act = new_item(cid, "book-" + hashlib.sha1(f"{cid}|{title}".encode()).hexdigest()[:12], f"Book a slot: {title}", "action", iso(last),
+                       due_source="inferred", auto_done=booked, auto_reason="slot booked in Canvas" if booked else None)
+        act["notes"].append(f"{len(gs)} slots in Canvas. The date is the last slot, so book before they fill up.")
+        src(act, "Sign up in Canvas", gs[0].get("html_url"))
+        act["_norm"] = key(title)
+        items.append(act)
+    # Levels of one task open together: the calendar shows one opening.
+    for it in items:
+        if it["opens"]:
+            it["opens_group"] = re.sub(r"(\s*-\s*[A-F] level|\.[A-F])$", "", it["title"])
+
+    items = [i for i in items if i["due"] >= since and not any(match(r, i["course_id"], i["title"]) for r in ov.get("exclude", []))]
     for it in items:
         for r in ov.get("deferred", []):
             if match(r, it["course_id"], it["title"]):
@@ -410,7 +635,7 @@ def main():
             if match(r, it["course_id"], it["title"]):
                 it["notes"].append(r["markdown"])
 
-    # 5. Announcements that mention the item.
+    # 6. Announcements that mention the item.
     for it in items:
         c = by_course.get(it["course_id"])
         if not c:
@@ -438,28 +663,36 @@ def main():
         for h in hits[:5]:
             src(it, f"Announcement: {h['title']}", h["url"])
 
-    # 6. The markdown page and a content hash for "changed since".
+    # 7. The markdown page and a content hash for "changed since".
     for it in items:
         it["markdown"] = page(it)
         it["detail"] = detail_of(it)
         it.pop("_norm", None)
-        body = {k: it[k] for k in ("title", "due", "start", "lock_at", "markdown", "deferred", "auto_done")}
+        it.pop("_group", None)
+        body = {k: it[k] for k in ("title", "due", "opens", "start", "lock_at", "markdown", "deferred", "auto_done")}
         it["hash"] = hashlib.sha1(json.dumps(body, sort_keys=True).encode()).hexdigest()[:16]
         for k in ("description", "notes", "related", "facts"):
             it.pop(k, None)
     items.sort(key=lambda i: (i["due"], i["course"], i["title"]))
-    out = {"generated_at": datetime.now(timezone.utc).isoformat(), "archive_retrieved_at": arch.get("retrieved_at"), "items": items}
+    now = utc(datetime.now(TZ))
+    no_opening = [{"course": i["course"], "title": i["title"], "kind": i["kind"], "due": i["due"], "id": i["id"]} for i in items
+                  if not i["opens"] and i["due"] > now and not i["auto_done"] and not i["deferred"] and i["kind"] not in ("exam", "seminar", "event")]
+    out = {"generated_at": datetime.now(timezone.utc).isoformat(), "archive_retrieved_at": arch.get("retrieved_at"), "items": items, "no_opening": no_opening}
     (SCHOOL / "items.json").write_text(json.dumps(out, ensure_ascii=False, indent=1))
     counts = {}
     for i in items:
         counts[i["course"]] = counts.get(i["course"], 0) + 1
     print(len(items), "items", json.dumps(counts))
+    opening = {}
+    for key_ in {(i["course"], i["opens"], i["opens_group"]) for i in items if i["opens"]}:
+        opening[key_[0]] = opening.get(key_[0], 0) + 1
+    print("opening events", json.dumps(opening), "| open items with no known opening:", len(no_opening))
     if "--no-push" not in sys.argv:
         push(out)
 
 
 KIND_WORD = {"assignment": "Assignment", "quiz": "Quiz", "lab": "Lab", "seminar": "Seminar", "exam": "Exam",
-             "peer review": "Peer review", "registration": "Registration window", "event": "Event"}
+             "peer review": "Peer review", "action": "To do", "event": "Event"}
 
 
 def page(it):
@@ -487,20 +720,21 @@ def body_of(it):
 
 def detail_of(it):
     """The same content as page(), structured, so the web page can lay it out."""
-    return {"facts": [[k, v] for k, v in facts_of(it) if k not in ("What", "Due", "When")],
+    return {"facts": [[k, v] for k, v in facts_of(it) if k not in ("What", "Due", "When", "Opens")],
             "notes": list(dict.fromkeys(it["notes"])), "body": body_of(it) if it["description"] else "",
             "related": it["related"]}
 
 
 def facts_of(it):
     facts = [("What", f"{KIND_WORD.get(it['kind'], it['kind'].title())} in {it['course']} {it['course_name']}")]
+    if it["opens"]:
+        tag = "" if it["opens_source"] == "canvas" else f" (per {it['opens_source']}, not a Canvas date)"
+        facts.append(("Opens", (fmt(it["opens"]).rsplit(",", 1)[0] if it["opens_all_day"] else fmt(it["opens"])) + tag))
     if it["start"]:
-        facts.append(("Opens" if it["kind"] == "registration" else "Starts", fmt(it["start"])))
+        facts.append(("Starts", fmt(it["start"])))
     facts.append(("Due" if it["kind"] not in ("exam", "seminar", "event") else "When", fmt(it["due"]) + (" (date only)" if it["all_day"] else "")))
     if it["lock_at"] and it["lock_at"] != it["due"]:
         facts.append(("Closes", fmt(it["lock_at"]) + " (late submissions accepted until then)"))
-    if it["unlock_at"]:
-        facts.append(("Opens", fmt(it["unlock_at"])))
     cv = it["canvas"]
     if cv:
         if cv.get("points"):
