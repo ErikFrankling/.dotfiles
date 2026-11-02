@@ -539,7 +539,7 @@ def main():
                 if not i["due"]:
                     i["due"], i["due_source"], i["all_day"] = due, origin, bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}", d["due"]))
                 src(i, "Course page", d.get("source"))
-                if d.get("notes"):
+                if d.get("notes") and not (i["canvas"] and "may not yet have a Canvas" in d["notes"]):
                     i["notes"].append(d["notes"])
             continue
         it = new_item(cid, "page-" + hashlib.sha1(f"{cid}|{title}".encode()).hexdigest()[:12], title,
