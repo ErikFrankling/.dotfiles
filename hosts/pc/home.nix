@@ -124,6 +124,7 @@ in
     ../../modules/home-manager/school-sync
     ../../modules/home-manager/x-graph.nix
     ../../modules/home-manager/search-sync.nix
+    ../../modules/home-manager/fleet-push-creds.nix
     ../../modules/home-manager/machines
     ../../modules/home-manager/heavy # `heavy`: heavy agent work on the homelab worker
     ../../modules/home-manager/t3-android-release # Android release of the T3 fork without GitHub Actions
