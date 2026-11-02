@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# First on PATH, ahead of the /run/wrappers copy, so that a Hyprland started
+# First on PATH, ahead of the system copy, so that a Hyprland started
 # inside a running session cannot touch the session it is nested in.
 #
 # A nested Hyprland that gets a seat counts as a real session: it writes its
@@ -17,4 +17,6 @@ if [ -n "${WAYLAND_DISPLAY:-}${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
 	export LIBSEAT_BACKEND=none
 fi
 
-exec /run/wrappers/bin/Hyprland "$@"
+# The system package, the one the agent-windows plugin is built against. NixOS
+# has no /run/wrappers copy; pointing there stopped every login on 2026-11-02.
+exec /run/current-system/sw/bin/Hyprland "$@"
