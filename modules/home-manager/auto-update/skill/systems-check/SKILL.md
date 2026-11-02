@@ -246,6 +246,8 @@ short rev, no log excerpts; the thread has the details.
 ## Incident log
 
 Newest first; one entry per morning that needed a real repair.
+- 2026-11-02 07:35 (health-watch) — `alert/SystemdUnitFailed/pc/aw-outside`: transient `aw-outside-<pid>.service` units (an agent's test that starts a process outside the agent slice, probably of the agent-windows plugin) exited 230/PERSONALITY between 06:25 and 07:03. Units gone, `systemctl --user --failed` empty; left alone.
+
 - 2026-11-02 06:25 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-*` (8 units) all exited 255 together at 06:12:06 after 13 min to 1 h with ~3 s CPU (the 06:00 update's activation); same pattern as the other `agent-job-heavy-*` alerts. `dbus-:1.2-org.freedesktop.secrets@1`: gnome-keyring-daemon aborted (g_variant_new assertion in open_session) at 06:05 after 11 days; D-Bus reactivates it on use. Units gone, `systemctl --user --failed` empty; left alone.
 
 
