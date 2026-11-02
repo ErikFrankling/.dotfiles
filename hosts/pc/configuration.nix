@@ -83,6 +83,24 @@
   virtualisation.docker.enable = true;
   users.extraUsers."${username}".extraGroups = [ "docker" ];
   virtualisation.vmware.host.enable = true;
+  # aggregateModules now reads a <module>.ko.cer for every module, and vmmon and
+  # vmnet install without Kbuild's modules_install so they have none, which fails
+  # the build ("cat: misc/vmmon.ko.cer"). They are unsigned, so there is no
+  # certificate to add: an empty file is what is true. Only this package changes;
+  # the kernel and its other modules stay cached.
+  # nix-update-doctor: 2026-11-02 https://github.com/NixOS/nixpkgs/issues/575192
+  # (fix: https://github.com/NixOS/nixpkgs/pull/578004); drop this when it lands.
+  boot.kernelPackages = pkgs.linuxPackages.extend (
+    _: super: {
+      vmware = super.vmware.overrideAttrs (old: {
+        postInstall = (old.postInstall or "") + ''
+          for module in $out/lib/modules/*/misc/*.ko*; do
+            touch "''${module%%.ko*}.ko.cer"
+          done
+        '';
+      });
+    }
+  );
 
   # boot.kernelParams = [ "acpi_backlight=none" ];
   # boot.kernelParams = [ "amdgpu.backlight=0" "acpi_backlight=none" ];
