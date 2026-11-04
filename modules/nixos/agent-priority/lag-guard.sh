@@ -134,6 +134,13 @@ full() { # io|memory -> highest "full" avg10 across Erik's cgroups
   local f
   for f in "/sys/fs/cgroup/user.slice/user-$ERIK_UID.slice"/session-*.scope "/sys/fs/cgroup/user.slice/user-$ERIK_UID.slice/user@$ERIK_UID.service/app.slice"/*; do
     case $f in */app-t3code.slice) continue ;; esac
+    # A background service with its own memory cap (search-sync, x-graph)
+    # stalls against that cap by design; that is not Erik's desktop. On
+    # 2026-11-03 the hourly search-sync run (MemoryMax=3G, 20-38 % full at
+    # its own limit, every other cgroup 0 %) got three agent jobs killed.
+    if [ "$1" = memory ] && { [ "$(cat "$f/memory.max" 2>/dev/null)" != max ] || [ "$(cat "$f/memory.high" 2>/dev/null)" != max ]; }; then
+      continue
+    fi
     [ -r "$f/$1.pressure" ] && awk '/^full/ { for (i = 1; i <= NF; i++) if ($i ~ /^avg10=/) { sub("avg10=", "", $i); printf "%d\n", $i } }' "$f/$1.pressure"
   done | sort -n | tail -n 1
 }
