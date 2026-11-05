@@ -246,6 +246,8 @@ short rev, no log excerpts; the thread has the details.
 ## Incident log
 
 Newest first; one entry per morning that needed a real repair.
+- 2026-11-05 08:00 (health-watch) — `alert/NodeCPUSteal/naiaclaw`: 1 core stolen (12% steal) because VM 200 itself was oversubscribed (load 47-75 on 8 vCPUs: Android/node/hermesc builds, k3s, containerd) and the host has the same 8 threads for kvm plus overhead. Host memory PSI 0, no swap, KSM off, nothing else on the host. Workload-driven, no fault; left alone.
+
 - 2026-11-05 05:05 (health-watch) — `alert/ProxmoxUsableMemoryLow/proxmox`: false alarm. Page cache (4.4 GiB, reclaimable) filled MemFree, so `MemFree - CmaFree` read 1.1 GiB while MemAvailable was 6.4 GiB and memory PSI 0, no OOM, VM 200 at 52 GiB. Fix (homelab f225653): the rule uses `MemAvailable - CmaFree`; docs/updates.md updated.
 
 - 2026-11-05 06:05 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-658817d35f60`: an agent's `heavy --small --no-develop -- nix shell ... .rebase-check/check.sh typecheck; test` job was killed (exit 137) at 05:33 after 1h09 wall time with ~2 s CPU; same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
