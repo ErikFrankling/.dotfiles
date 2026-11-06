@@ -8,7 +8,7 @@
 
 # Claude Code and Codex use CLIProxyAPI on the homelab (homelab repo
 # apps/cliproxy.yaml, docs/cliproxy.md) instead of their own logins. Every
-# Claude and Codex subscription is signed in there once (`cliproxy-login`), and
+# Claude and Codex subscription is signed in there once (its own panel, /management.html), and
 # the hub pools them: a session sticks to one account and moves when that
 # account hits its limit. This replaces the per-account T3 Code instances.
 #
@@ -22,18 +22,7 @@ let
   cfg = config.cliproxy;
   hub = "https://cliproxy.erikfrankling.duckdns.org";
   clientKey = osConfig.sops.secrets.cliproxy-client-key.path;
-  managementKey = osConfig.sops.secrets.cliproxy-management-key.path;
   python = pkgs.python3.withPackages (ps: [ ps.tomli-w ]);
-
-  cliproxyLogin = pkgs.writeShellApplication {
-    name = "cliproxy-login";
-    runtimeInputs = [ pkgs.xdg-utils ];
-    text = ''
-      export CLIPROXY_URL="${hub}"
-      export CLIPROXY_MANAGEMENT_KEY_FILE="${managementKey}"
-      exec ${python}/bin/python3 -I ${./login.py} "$@"
-    '';
-  };
 
   codexConfig = pkgs.writeText "cliproxy-codex.py" ''
     import os, sys, tomllib, tomli_w
@@ -78,8 +67,6 @@ in
   };
 
   config = {
-    home.packages = [ cliproxyLogin ];
-
     home.activation.cliproxyClients = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       settings="$HOME/.claude/settings.json"
       mkdir -p "$HOME/.claude" "$HOME/.codex"

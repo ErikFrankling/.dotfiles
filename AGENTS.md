@@ -20,6 +20,26 @@ Erik (2026-10-31): "need better ways to know they don't spawn on my screen". The
 
 `window-origin` answers who opened a window (`window-origin ADDRESS`, `--class REGEX`, `--erik`, `--agents`, `--escapes`; log in `~/.local/state/window-origin/`, never with titles). An agent window that still ends up on his monitors is sent back and he gets a notification naming the thread (`window-origin alert --test --dry-run` exercises it without sending). `health-watch` reports the plugin missing as `local/agent-windows-plugin`. Known gaps: an agent calling a systemd-run or other launcher by its store path to get out of the shadowed names, starting an existing user service, or asking a D-Bus service or portal to launch something: those run outside the agent's tree and cannot be told from Erik's launches.
 
+## Hard rule: use what exists, don't wrap it (Erik, 2026-11-06)
+
+Erik: "stop overcomplicating ... if someone else has packaged something for
+NixOS you probably don't have to wrap it". Agents here keep writing wrappers,
+helper scripts, merge scripts and custom tools around things that already
+work. Don't.
+
+- **Use the upstream package, module and UI as they are.** If nixpkgs, a
+  NixOS/Home Manager module or the project's own flake packages it, use that
+  directly. If the tool ships its own login page, dashboard, CLI flag or config
+  option for the job, use that, not a script of your own.
+- **No wrapper scripts, shims or helper CLIs** unless there is no other way to
+  get it working, and say why in a comment. "Nicer UX" is not a reason.
+- **The smallest change that works.** One config option beats a module; a
+  module beats a script; a script beats a new service. Delete scaffolding you
+  turn out not to need.
+- Before building anything, check: does upstream already do this? Search
+  nixpkgs (`nix search nixpkgs X`), the Home Manager options and the tool's
+  docs first.
+
 ## Critical: This is a NixOS Configuration
 
 **Everything must be done the Nix way.** This is a declarative NixOS configuration — no imperative steps allowed.
