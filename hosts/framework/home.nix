@@ -6,6 +6,10 @@
 }:
 
 {
+  # Keep the running 0.56 session's bindings when Home Manager installs Lua.
+  # Hyprland 0.57 ignores this file; remove after Framework has logged into 0.57.
+  xdg.configFile."hypr/hyprland.conf".source = ./hyprland-0.56.conf;
+
   imports = [
     ../../modules/home-manager
     ../../modules/home-manager/desktop.nix
