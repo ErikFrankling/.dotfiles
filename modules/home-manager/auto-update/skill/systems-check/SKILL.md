@@ -246,6 +246,7 @@ short rev, no log excerpts; the thread has the details.
 ## Incident log
 
 Newest first; one entry per morning that needed a real repair.
+- 2026-11-06 17:30 (health-watch) — `alert/DiskFillingUp//dev/nvme0n1p4/ext4/pc`: / at 82% used (311G free, just under the 20% line). No runaway: largest user dirs are ~/.cache (73G: spotify 19G, sd-models 11G, huggingface 9G, fleet-build 7.5G) and ~/.local/share (37G, Steam 11G); `nh clean --keep-since 4d --keep 3` is already enabled. Erik's own caches, left alone.
 - 2026-11-06 16:10 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-10f22d00a7d2`: an agent's `heavy --small -- bash scripts/macro/bday.sh` job was killed (exit 137) at 15:53 after 10 min; same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
 
 - 2026-11-06 13:30 (health-watch) — `alert/SystemdUnitFailed/framework/*` (13 user units plus fstrim, zram setup): the framework was powered off cleanly at 13:15 and booted again (uptime 11 min). The shutdown stopped the units and the journal-based alert read that as failures. After boot `is-system-running` = running, nothing failed; left alone.
