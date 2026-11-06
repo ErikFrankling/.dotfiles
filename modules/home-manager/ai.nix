@@ -241,6 +241,7 @@ in
     inputs.codex-desktop-linux.homeManagerModules.default
     ./omp
     ./t3code-connection.nix
+    ./cliproxy
   ];
 
   nixpkgs.config.allowBroken = true;

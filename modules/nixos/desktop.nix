@@ -15,6 +15,7 @@
     ./obs.nix
     ./firefox.nix
     ./ai.nix
+    ./cliproxy.nix
   ];
 
   nixpkgs.overlays = [ inputs.claude-desktop.overlays.default ];

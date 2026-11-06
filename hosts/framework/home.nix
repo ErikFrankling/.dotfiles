@@ -29,6 +29,10 @@
     device = "framework";
   };
 
+  # The laptop does nothing on its iGPU worth watching: no gpu or vram rings
+  # in the shell's rail (Erik, 2026-11-06).
+  programs.erikshell.metrics.gpu = false;
+
   wayland.windowManager.hyprland.settings = {
     device = [
       {

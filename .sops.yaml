@@ -16,6 +16,12 @@ creation_rules:
     - age:
       - *primary
       - *wsl
+  # Shared by every host: the CLIProxyAPI client and management keys (modules/nixos/cliproxy.nix).
+  - path_regex: secrets/cliproxy\.yaml$
+    key_groups:
+    - age:
+      - *primary
+      - *wsl
   - path_regex: hosts/[^/]+/secrets/.*\.(yaml|json|ovpn|txt)$
     key_groups:
     - age:
