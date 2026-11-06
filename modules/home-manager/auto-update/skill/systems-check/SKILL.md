@@ -246,6 +246,8 @@ short rev, no log excerpts; the thread has the details.
 ## Incident log
 
 Newest first; one entry per morning that needed a real repair.
+- 2026-11-06 18:30 (health-watch) — `phone/cliproxy`, `phone/executor`, `phone/fleet`, `phone/openclaw` 403 (lan-only routes), same stale tailscaled CONNECT tunnels as 2026-10-26. Fix: `ssh naiaclaw 'sudo ss -K state established dst 192.168.50.100 dport = :443'`; all phone checks 200 within ~3 minutes. `agent-job-rebuild-pc-eed7f186a87d` already gone, nothing failed; `/` at 83% used (297G free), same Erik caches as the 17:30 entry; left alone.
+
 - 2026-11-06 17:30 (health-watch) — `alert/DiskFillingUp//dev/nvme0n1p4/ext4/pc`: / at 82% used (311G free, just under the 20% line). No runaway: largest user dirs are ~/.cache (73G: spotify 19G, sd-models 11G, huggingface 9G, fleet-build 7.5G) and ~/.local/share (37G, Steam 11G); `nh clean --keep-since 4d --keep 3` is already enabled. Erik's own caches, left alone.
 - 2026-11-06 16:10 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-10f22d00a7d2`: an agent's `heavy --small -- bash scripts/macro/bday.sh` job was killed (exit 137) at 15:53 after 10 min; same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
 
