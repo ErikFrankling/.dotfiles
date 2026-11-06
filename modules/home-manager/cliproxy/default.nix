@@ -62,7 +62,7 @@ in
 {
   options.cliproxy.clients.enable = lib.mkOption {
     type = lib.types.bool;
-    default = false;
+    default = true;
     description = "Point Claude Code and Codex on this host at the homelab CLIProxyAPI.";
   };
 
