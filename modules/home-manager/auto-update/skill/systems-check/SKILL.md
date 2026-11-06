@@ -246,6 +246,8 @@ short rev, no log excerpts; the thread has the details.
 ## Incident log
 
 Newest first; one entry per morning that needed a real repair.
+- 2026-11-06 06:35 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-ddb6ad8607c4`: an agent's `heavy --small --no-develop -- bash -c 'cd .../t3code-rebase-*/.rebase-check && ls ...'` probe exited 1 after 1 s (06:22); same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
+
 - 2026-11-05 08:00 (health-watch) — `alert/NodeCPUSteal/naiaclaw`: 1 core stolen (12% steal) because VM 200 itself was oversubscribed (load 47-75 on 8 vCPUs: Android/node/hermesc builds, k3s, containerd) and the host has the same 8 threads for kvm plus overhead. Host memory PSI 0, no swap, KSM off, nothing else on the host. Workload-driven, no fault; left alone.
 
 - 2026-11-05 10:10 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-heavy-353099c6f580`: an agent's `heavy --small --shell android -- nix shell nixpkgs#nodejs_26 -c .rebase-check/pair.sh install` job exited 2 (09:58) after 5 s; same pattern as the other `agent-job-heavy-*` alerts. Unit already gone, nothing failed; left alone.
