@@ -14,9 +14,20 @@
     #   }
     # )
     inputs.nix-matlab.overlay
+    # nix-matlab builds its packages from nixpkgs.legacyPackages, so this
+    # system's nixpkgs.config (the gtk+ handler below) never reaches them.
+    # Re-instantiate the same FHS env (its own buildFHSEnv args) with our pkgs.
+    (final: prev: { matlab = final.buildFHSEnv prev.matlab.args; })
   ];
 
   environment.systemPackages = with pkgs; [ matlab ];
+
+  # nix-matlab's FHS env needs gtk2 (MATLAB >= 2021b loads it). nixpkgs 1d06008
+  # (2026-11-03) marks gtk2 broken ahead of its removal before NixOS 27.05
+  # (nixpkgs#410814), and allowBroken does not cover it. It is still built and
+  # cached, so only downgrade this one problem to a warning. Drop this once
+  # nix-matlab stops listing gtk2, or replace it when nixpkgs removes gtk2.
+  nixpkgs.config.problems.handlers."gtk+".broken = "warn";
 }
 
 # Follow these instructions to install matlab has to be done imperatively on every machine:

@@ -58,7 +58,12 @@
     zed-editor
     # Grok Bot desktop agent. See the grok-bot input in flake.nix for why this
     # flake and not the other one. Needs a SuperGrok or Cursor plan to log in.
-    inputs.grok-bot.packages.${pkgs.stdenv.hostPlatform.system}.default
+    # Its package.nix hardcodes electron_42, which nixpkgs marked insecure (EOL)
+    # on 2026-11-03. Every bundled .node module is pure N-API (no v8/node C++
+    # symbols), so it runs on the supported default electron.
+    (inputs.grok-bot.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+      electron_42 = pkgs.electron;
+    })
   ];
 
   nixpkgs.config.permittedInsecurePackages = [
