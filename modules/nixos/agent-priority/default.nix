@@ -205,6 +205,20 @@ in
         # disk caps apply (the default delegates only cpu, memory and pids).
         systemd.services."user@".serviceConfig.Delegate = "cpu cpuset io memory pids";
 
+        # Agent scratch ages out instead of filling the disk (2026-11-07: free
+        # space fell from 297G to 118G overnight). /tmp is on disk here and
+        # agents leave GBs in it (Claude scratchpads, sandboxes, test runs);
+        # systemd's own tmp.conf keeps it 10 days. 00-nixos.conf sorts first,
+        # so this line wins over that one.
+        systemd.tmpfiles.rules = [ "q /tmp 1777 root root 3d" ];
+        # Every agent worktree builds its own cargo target/ (4-7G each) and
+        # nothing removes it once the run is done: 18 Claude workflow
+        # worktrees in wasm-box held 88G. Build output idle for 2 days goes.
+        systemd.user.tmpfiles.rules = [
+          "e %h/projects/*/.claude/worktrees/*/target - - - 2d"
+          "e %h/.t3/worktrees/*/*/target - - - 2d"
+        ];
+
         systemd.user.slices.app-t3code = {
           description = "T3 Code agents, behind Erik's own apps";
           sliceConfig = {
