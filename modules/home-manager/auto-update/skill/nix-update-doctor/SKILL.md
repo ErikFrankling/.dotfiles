@@ -68,11 +68,9 @@ long, and do not hurry to finish.
    the cause (hold the input back first, drop the override, stop the hung
    job with `agent-job stop <name>`, stop retrying), or stop that part of the
    run and ship the rest.
-4. **Tell Erik the cause**, once:
-   `nix-nightly notify "<cause>, <how long>, justified|not justified: <what you did>"`,
-   for example
-   `nix-nightly notify "Hyprland recompiled for nixpkgs 3ec6363 (Aquamarine overlay), 68 min so far, justified: nixpkgs ships tonight, letting it finish"`.
-   Never only the symptom ("the update is slow", "took 2 h").
+4. **Record the cause** in the session report, then continue. No checkpoint,
+   progress, successful update, rebase or release notification. Erik does not
+   need to supervise the engineering.
 
 Then go on with the run; the summary (step 7) repeats the finding.
 
@@ -121,10 +119,10 @@ run on the homelab). Never a bare `nix build` of a closure or `home.path` in
 the run: on 2026-10-25 one ran for 84 minutes and compiled a Hyprland for a
 nixpkgs that was then held back anyway.
 
-Stop after 5 failed repair rounds. Then push nothing, run
-`nix-nightly notify "<the cause, in one sentence Erik can act on>"`, and write
-the full story in your final message: what broke, what you tried, what you
-would do next.
+After 5 failed repair rounds, change approach. Keep the known-good system live,
+record evidence and continue or arrange a durable handoff. Escalate to Erik only
+for an exact human-only action, via an attention item and one linked notification.
+A build failure or hard rebase is still your work.
 
 A partial update is a success, not a failure. Holding one input back and
 shipping the rest is the normal outcome of a bad night, and the fastest
@@ -207,7 +205,7 @@ ask about that."
   port the fork's behaviour onto upstream's new code and verify it yourself,
   including the phone flows on the emulator (step 6).
 - Notify Erik only with results, once, at the end:
-  `nix-nightly notify "T3 fork rebased onto <tag>: <n> commits kept, <m> dropped; released <APK or OTA id>"`.
+  Record the rebase and release result in the thread; do not send a notification.
   Never a request for help, a question or a decision for him.
 - Keep the old build live meanwhile. `erik/main`, `t3code-src` and the phone
   stay where they are until the rebased tree passes steps 5 and 6; the flake

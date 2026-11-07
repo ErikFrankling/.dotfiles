@@ -32,8 +32,8 @@ Discord copy is silent too. Swiping the app away from recents is fine.
 ```js
 // threadId: from t3_thread_list (currentThreadId); environmentId only off the PC
 await tools.notify.send({
-  title: "Nightly update blocked",            // short; shows in bold
-  message: "nix flake update broke hyprland; needs your call on pinning.",
+  title: "GitHub sign-in expired",            // short; shows in bold
+  message: "Sign in to GitHub so the queued release can resume.",
   priority: "high",                           // urgent | high | normal | low
   threadId: "<your thread id>",
   source: "nix-nightly",                      // short name of what you are
@@ -46,7 +46,7 @@ await tools.notify.status({});                // budget and recent sends
 **From a shell, script, scheduled task or systemd unit (PC and framework):**
 
 ```sh
-notify-erik -p high -t "Nightly update blocked" --thread "$THREAD_ID" "nix flake update broke hyprland"
+notify-erik -p high -t "GitHub sign-in expired" --thread "$THREAD_ID" "Sign in to GitHub so the queued release can resume."
 notify-erik --code 482913 -t "GitHub code: 482913"
 notify-erik status
 ```
@@ -132,3 +132,12 @@ the message in your final report instead.
   session on 2026-10-21.
 - ntfy server: homelab repo `kubernetes/homelab/apps/ntfy.yaml`, Gatus check
   `phone/ntfy`.
+
+## Unattended maintenance (Erik, 2026-11-07)
+
+No success, progress, checkpoint, routine reboot, retry-budget or "please fix"
+notifications from updates, fork rebases, morning checks or incident sessions.
+You own engineering problems, including difficult ones. Before requesting
+attention, state the exact action only Erik can perform and why automation
+cannot do it; create/update an attention item and link its owning thread.
+A problem that disappears when Erik says "fix it" was never a valid escalation.

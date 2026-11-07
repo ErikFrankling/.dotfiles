@@ -134,6 +134,11 @@ if ! flock -n 8; then
 fi
 guard
 
+# Maintenance belongs to activation, not an agent remembering a prompt.
+if [ "$action" != boot ] && command -v health-watch >/dev/null; then
+  health-watch maintenance 15 "rebuild activation on $HOST" "$HOST|t3code"
+fi
+
 if [ "$action" = switch ] || [ "$action" = boot ]; then
   sudo nix-env --profile /nix/var/nix/profiles/system --set "$out"
 fi

@@ -55,7 +55,7 @@ let
 
       notify() {
         echo "$2"
-        notify-send --app-name "System update" --urgency "$1" "System update" "$2" || true
+        # Repair automation consumes the journal; routine updates never page Erik.
       }
 
       ${lib.optionalString cfg.homeNetworkOnly ''
@@ -77,7 +77,6 @@ let
       fi
 
       cd ${dotfiles}
-      before=$(git rev-parse HEAD)
 
       in_sync() {
         git fetch --quiet origin main \
@@ -108,11 +107,6 @@ let
         pushed_local_work=true
       fi
 
-      if [ "$(git rev-parse HEAD)" = "$before" ]; then
-        echo "nothing new on main"
-        exit 0
-      fi
-
       # --max-jobs 0: fetch, never build. Main only moves once the homelab has
       # built it, so this fails only for work the homelab has not seen yet.
       if ! system=$(nix build --no-link --print-out-paths --max-jobs 0 \
@@ -124,6 +118,16 @@ let
         fi
         notify critical "The update was pulled but not applied: part of it is missing from the cache. Details: $log/rebuild.log"
         exit 1
+      fi
+
+      # Retry failed downloads/switches even when git already reached main.
+      if [ "$(readlink -f /run/current-system)" = "$system" ] \
+        && [ "$(readlink -f /nix/var/nix/profiles/system)" = "$system" ]; then
+        echo "desired system already active"
+        exit 0
+      fi
+      if command -v health-watch >/dev/null; then
+        health-watch maintenance 15 "automatic system activation on ${hostName}" '${hostName}|t3code'
       fi
 
       # Activation runs as its own system unit. Run from in here it would be a
@@ -151,11 +155,7 @@ let
       system=$1
       rev=$2
 
-      notify() {
-        systemd-run --machine=${username}@.host --user --quiet --collect \
-          ${pkgs.libnotify}/bin/notify-send --app-name "System update" \
-          --urgency "$1" "System update" "$2" || true
-      }
+      notify() { echo "$2"; }
 
       if ! nix-env --profile /nix/var/nix/profiles/system --set "$system" \
         || ! "$system/bin/switch-to-configuration" switch; then
