@@ -1,0 +1,74 @@
+.....{"time": 1794065867.8160036, "event": "worker.idle_warm_skipped", "running": ["qwen3.5-27b"]}
+.{"time": 1794065867.8174028, "event": "worker.idle_warm", "model": "higgs-tts"}
+{"time": 1794065867.8174517, "event": "worker.idle_warmed", "model": "higgs-tts", "status": 200}
+.{"time": 1794065867.821154, "event": "worker.make_room", "status": 200, "free_vram": 12884901888}
+./home/erikf/.dotfiles/tools/local-stt/test_gateway.py:26: NotAppKeyWarning: It is recommended to use web.AppKey instances for keys.
+https://docs.aiohttp.org/en/stable/web_advanced.html#application-s-config
+  app['client'] = None
+.{"time": 1794065867.8286572, "event": "recording.finalizing", "recording_id": "recording", "bytes": 32000}
+{"time": 1794065867.8291173, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 0, "end": 32000}
+{"time": 1794065867.8322482, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 0, "end": 32000, "seconds": 0.003, "characters": 21}
+{"time": 1794065867.8324072, "event": "recording.complete", "recording_id": "recording", "seconds": 0.004, "characters": 21, "attempts": 1}
+.{"time": 1794065867.8354676, "event": "refinement.background_failed", "recording_id": "recording", "error_type": "RuntimeError", "error": "GPU guard"}
+..{"time": 1794065867.8454616, "event": "recording.finalizing", "recording_id": "recording", "bytes": 32000}
+{"time": 1794065867.8459346, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 0, "end": 32000}
+{"time": 1794065867.845984, "event": "recording.retry", "recording_id": "recording", "attempt": 0, "error_type": "RuntimeError", "error": "not enough free GPU memory", "resources": null}
+{"time": 1794065867.8463116, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 0, "end": 32000}
+{"time": 1794065867.8463588, "event": "recording.retry", "recording_id": "recording", "attempt": 1, "error_type": "RuntimeError", "error": "final worker exited during startup", "resources": null}
+{"time": 1794065867.8466847, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 0, "end": 32000}
+{"time": 1794065867.847217, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 0, "end": 32000, "seconds": 0.001, "characters": 13}
+{"time": 1794065867.8473518, "event": "recording.complete", "recording_id": "recording", "seconds": 0.002, "characters": 13, "attempts": 3}
+.{"time": 1794065867.8502352, "event": "recording.finalizing", "recording_id": "recording", "bytes": 32000}
+{"time": 1794065867.8505015, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 0, "end": 32000}
+....{"time": 1794065867.8770268, "event": "recording.finalizing", "recording_id": "recording", "bytes": 32000}
+{"time": 1794065867.8773189, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 0, "end": 32000}
+{"time": 1794065867.877964, "event": "refinement.no_speech", "recording_id": "recording", "start": 0, "end": 32000}
+{"time": 1794065867.8779824, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 0, "end": 32000, "seconds": 0.001, "characters": 0}
+{"time": 1794065867.8781319, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 0, "end": 32000}
+{"time": 1794065867.8784473, "event": "refinement.no_speech", "recording_id": "recording", "start": 0, "end": 32000}
+{"time": 1794065867.8784628, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 0, "end": 32000, "seconds": 0.0, "characters": 0}
+{"time": 1794065867.878491, "event": "recording.complete", "recording_id": "recording", "seconds": 0.001, "characters": 0, "attempts": 2}
+.{"time": 1794065867.8837764, "event": "recording.start", "recording_id": "11111111-2222-3333-4444-555555555555"}
+.{"time": 1794065867.8923666, "event": "recording.finalizing", "recording_id": "recording", "bytes": 480000}
+{"time": 1794065867.893284, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 0, "end": 480000}
+{"time": 1794065867.8939438, "event": "refinement.no_speech", "recording_id": "recording", "start": 0, "end": 480000}
+{"time": 1794065867.8939679, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 0, "end": 480000, "seconds": 0.001, "characters": 0}
+{"time": 1794065867.8983505, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 0, "end": 219200}
+{"time": 1794065867.8986778, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 0, "end": 219200, "seconds": 0.0, "characters": 5}
+{"time": 1794065867.9066296, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 219200, "end": 480000}
+{"time": 1794065867.906959, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 219200, "end": 480000, "seconds": 0.0, "characters": 5}
+{"time": 1794065867.9100103, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 0, "end": 91200}
+{"time": 1794065867.9103382, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 0, "end": 91200, "seconds": 0.0, "characters": 5}
+{"time": 1794065867.9160154, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 91200, "end": 182400}
+{"time": 1794065867.9164054, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 91200, "end": 182400, "seconds": 0.0, "characters": 5}
+{"time": 1794065867.9239979, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 182400, "end": 273600}
+{"time": 1794065867.924335, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 182400, "end": 273600, "seconds": 0.0, "characters": 5}
+{"time": 1794065867.9330556, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 273600, "end": 364800}
+{"time": 1794065867.9333837, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 273600, "end": 364800, "seconds": 0.0, "characters": 5}
+{"time": 1794065867.9399762, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 364800, "end": 480000}
+{"time": 1794065867.9403124, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 364800, "end": 480000, "seconds": 0.0, "characters": 5}
+{"time": 1794065867.9404705, "event": "recording.complete", "recording_id": "recording", "seconds": 0.048, "characters": 69, "attempts": 3}
+.{"time": 1794065867.9478753, "event": "recording.finalizing", "recording_id": "recording", "bytes": 6400000}
+{"time": 1794065867.957231, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 0, "end": 6400000}
+{"time": 1794065867.958068, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 0, "end": 6400000, "seconds": 0.001, "characters": 15}
+{"time": 1794065867.9582646, "event": "recording.truncated", "recording_id": "recording", "characters": 15}
+{"time": 1794065867.9987836, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 0, "end": 2875200}
+{"time": 1794065867.9992702, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 0, "end": 2875200, "seconds": 0.0, "characters": 999}
+{"time": 1794065868.059259, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 2875200, "end": 6400000}
+{"time": 1794065868.0597732, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 2875200, "end": 6400000, "seconds": 0.001, "characters": 999}
+{"time": 1794065868.0608232, "event": "recording.complete", "recording_id": "recording", "seconds": 0.113, "characters": 1999, "attempts": 3}
+Executing <Task finished name='Task-126' coro=<RecordingTests.test_truncated_long_transcript_is_redone_in_shorter_windows() done, defined at /home/erikf/.dotfiles/tools/local-stt/test_gateway.py:138> result=None created at /nix/store/qiqccdw5mm23af2pj7fl8iwfnh5gypjb-python3-3.14.8-env/lib/python3.14/asyncio/runners.py:110> took 0.118 seconds
+.{"time": 1794065868.066736, "event": "recording.finalizing", "recording_id": "recording", "bytes": 480000}
+{"time": 1794065868.0675297, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 0, "end": 480000}
+{"time": 1794065868.0682993, "event": "refinement.no_speech", "recording_id": "recording", "start": 0, "end": 480000}
+{"time": 1794065868.068316, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 0, "end": 480000, "seconds": 0.001, "characters": 0}
+{"time": 1794065868.0729752, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 0, "end": 219200}
+{"time": 1794065868.0733187, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 0, "end": 219200, "seconds": 0.0, "characters": 26}
+{"time": 1794065868.0809383, "event": "refinement.start", "recording_id": "recording", "quality": true, "start": 219200, "end": 480000}
+{"time": 1794065868.0812638, "event": "refinement.complete", "recording_id": "recording", "quality": true, "start": 219200, "end": 480000, "seconds": 0.0, "characters": 20}
+{"time": 1794065868.0814059, "event": "recording.complete", "recording_id": "recording", "seconds": 0.015, "characters": 47, "attempts": 2}
+...
+----------------------------------------------------------------------
+Ran 24 tests in 0.305s
+
+OK
