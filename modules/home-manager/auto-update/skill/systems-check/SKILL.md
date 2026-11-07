@@ -246,6 +246,8 @@ short rev, no log excerpts; the thread has the details.
 ## Incident log
 
 Newest first; one entry per morning that needed a real repair.
+- 2026-11-07 02:10 (health-watch) — `phone/executor`, `phone/fleet`, `phone/openclaw` 403 again (stale tailscaled tunnels after the cliproxy/Gatus deploys). Fix: `ssh naiaclaw 'sudo ss -K state established dst 192.168.50.100 dport = :443'`; checks pass. `/` fell from 297G to 163G free (91% used, critical alert) within 8 h: no single runaway; wasm-box agent worktrees/build (~40G), ~/.t3 94G, ~/.cache. Erik's data, left alone; Erik notified. `agent-job-heavy-6debc701b447`: gone, left alone.
+
 - 2026-11-07 00:10 (health-watch) — `alert/SystemdUnitFailed/pc/bluetooth`, `agent-job-lcm-base`, `agent-job-lcd-fit`: bluetooth is active again (restarted 23:49 by the activation, only HFP SDP "Host is down" noise from a paired device); the two agent jobs exited 1 (2 min) and 143 (19 min); same pattern as the other `agent-job-*` alerts. Units gone, `systemctl --user --failed` empty. `/` at 90% used (185G free, down from 311G at 17:30); biggest are Erik's caches (~/.cache 87G: spotify 19G, sd-models 11G, huggingface 9G, fleet 8G); left alone.
 
 - 2026-11-07 01:05 (health-watch) — `alert/SystemdUnitFailed/pc/agent-job-md4-p12` and `-lct0-final`: agent jobs (a cars-data `patterns.py p12` run, a `lct0.sh final` run) exited 1 at 00:43 and 00:39; same pattern as the other `agent-job-*` alerts. Units already gone, `systemctl --user --failed` empty. `/` now 90% used (183G free, was 83% at 18:30), still Erik's caches/projects; left alone, worth Erik's glance.
