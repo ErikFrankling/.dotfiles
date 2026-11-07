@@ -5,7 +5,7 @@
 # pushes to main once both closures are built, so main is the state: whatever
 # is on main is in the cache. Once a day this module pulls main and rebuilds
 # with building forbidden (--max-jobs 0). Anything that would have to compile
-# makes the run stop with a notification instead.
+# leaves the known-good system running and retries without notifying Erik.
 #
 # Local work in ~/.dotfiles, committed or not, is handed to a headless Claude
 # session first, which commits it, merges main and pushes (the dotfiles-sync
@@ -13,7 +13,7 @@
 # rebuild is skipped for the day and tomorrow's build picks the changes up.
 #
 # It never reboots. When the new system has a different kernel it leaves a
-# desktop notification saying so.
+# journal record saying so.
 #
 # The nightly job that updates flake.lock and drives the build is PC-only and
 # lives in ../home-manager/auto-update.
@@ -242,6 +242,8 @@ in
         serviceConfig = {
           Type = "oneshot";
           ExecStart = lib.getExe updateScript;
+          Restart = "on-failure";
+          RestartSec = "15min";
         };
       };
 

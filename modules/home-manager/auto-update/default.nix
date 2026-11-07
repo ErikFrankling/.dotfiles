@@ -1006,7 +1006,7 @@ let
              | sort_by(.key) | map(.value) | join("/")) as $id
           | ("alert/" + .labels.alertname + (if $id == "" then "" else "/" + $id end)) as $key
           | (.startsAt[0:19] + "Z" | fromdateiso8601) as $began
-          | select([$windows[] | select($began >= .start - 60 and $began <= .end + 600)
+          | select([$windows[] | select($now <= .end + 1800 and $began >= .start - 60 and $began <= .end + 600)
                     | select(. as $w | $key | test($w.pattern))] | length == 0)
           | "\($key): \(.annotations.summary // "")"
             + (if .annotations.description then " " + (.annotations.description | .[0:300]) else "" end)
@@ -1124,9 +1124,12 @@ let
       <health-report>
       $failing
       </health-report>"
-      if ${lib.getExe startIncident} "$prompt"; then
-        echo "$now" > "$dir/last-start"
-        log "started session for: $(echo "$failing" | tr '\n' ' ')"
+      if launch=$(${lib.getExe startIncident} "$prompt"); then
+        echo "$launch"
+        if grep -qE 'started T3 Code thread|started a headless session' <<< "$launch"; then
+          echo "$now" > "$dir/last-start"
+          log "started session for: $(echo "$failing" | tr '\n' ' ')"
+        fi
       else
         log "launch failed; retry on next poll"
         exit 1
