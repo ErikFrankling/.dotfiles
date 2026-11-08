@@ -1108,13 +1108,13 @@ let
       # a healthy service. If this read fails, retain prior attempts.
       observed_alerts=$(curl -fsS --max-time 15 \
         'https://alertmanager.erikfrankling.duckdns.org/api/v2/alerts?active=true') || observed_alerts=null
-      decision=$(jq -n --argjson now "$now" --argjson dry "$dry" \
+      # Stream observations: Gatus history can exceed the kernel argv limit.
+      decision=$(printf '%s\n' "$owner_snapshot" "''${statuses:-null}" "$observed_alerts" \
+        | jq -s --argjson now "$now" --argjson dry "$dry" \
         --arg root '${incidentDir}/dotfiles' --arg failing "$failing" \
         --arg previous "$(cat "$dir/active" 2>/dev/null || true)" \
-        --argjson shell "$owner_snapshot" --argjson statuses "''${statuses:-null}" \
-        --argjson alerts "$observed_alerts" \
         '{now:$now,dry:($dry==1),root:$root,failing:$failing,previous:$previous,
-          shell:$shell,statuses:$statuses,alerts:$alerts}' \
+          shell:.[0],statuses:.[1],alerts:.[2]}' \
         | python3 ${./incident_state.py} "$dir/retry-state.json" decide)
       eligible=$(jq -r .eligible <<< "$decision")
       if [ -n "$failing" ] && [ -z "$eligible" ]; then
