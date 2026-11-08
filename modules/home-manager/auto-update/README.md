@@ -48,3 +48,20 @@ also inspect Executor, the Framework and Alertmanager; unread sources are
 reported as coverage gaps. Offline laptops apply from their persistent update
 timer when reachable on mains at home. Maintenance windows are bounded: a real
 failure persisting after the window still needs repair.
+
+## Retry regression, 2026-11-08
+
+`incident_state.py` persists attempted identities, explicit evidence and quota
+reset generations under health-watch's flock, using atomic state replacement.
+Cooldown is only a rate ceiling, never retry authorization. Timestamps, values
+and changing subsets of old failures do not create new attempts. Ten minutes
+of confirmed recovery (not silencing or missing data) ends an episode.
+`health-watch changed KEY "deployment revision / verified cleared blocker"`
+records material evidence; the same evidence permits only one attempt.
+Quota reset permits one attempt only when T3 does not already own its resume.
+Missing ownership data fails closed while monitoring continues.
+
+The legacy HealthCheckStillFailing Prometheus rule was session=false and
+bypassed session=true suppression. Alertmanager now routes that rule by name
+to none, even for old alerts and resolved messages; it remains audit-visible
+and does not create a second repair attempt after three hours.

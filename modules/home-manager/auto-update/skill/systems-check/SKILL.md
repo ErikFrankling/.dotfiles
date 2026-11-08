@@ -79,6 +79,27 @@ mode appears; use upstream primitives first and link the evidence. Judge the
 loop by verified outcomes, recovery after interruption, duplicate prevention,
 and how few human actions it needs, not how many sessions completed.
 
+## Retry contract (2026-11-08 regression)
+
+Cooldown expiry, midnight, a changed timestamp, a tiny metric fluctuation and
+502/503 alternation do not authorize retrying an unchanged failed repair.
+`health-watch` persists attempted incident keys in `retry-state.json`. It only
+retries after ten minutes of observed recovery followed by recurrence, a new
+incident, or recorded material evidence. After a corrective deployment or a
+verified cleared blocker, record `health-watch changed INCIDENT_KEY "commit or
+specific evidence"`. Repeating the same evidence does not create another try.
+Never use a date/time or "try again" as evidence. The morning audit follows
+this same rule: retain ownership and investigate new evidence, never resurrect
+all yesterday's failed sessions merely because another morning arrived.
+
+Provider quota blocks are explicit blockers: do not retry before resetAt.
+T3 owns an already-armed reset resume; do not create another session for it.
+A reset can justify one new attempt if no owner remains, not hourly retries.
+`HealthCheckStillFailing` is audit-only in Alertmanager, including its resolved
+messages. Elapsed downtime never establishes that Erik can fix it. Do not send
+repeated unresolved notifications; use the existing attention item only when
+there is an actual new human-only action.
+
 ## Incident procedure (started by health-watch)
 
 For lag, a freeze, memory or swap pressure, or a hard reboot: load the

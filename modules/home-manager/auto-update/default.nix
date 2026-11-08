@@ -488,7 +488,10 @@ let
           if jq -e --arg root ${clone} '
             [.projects[] | select(.workspaceRoot == $root) | .id] as $projects
             | any(.threads[]; .projectId as $p | ($projects | index($p)) != null
-              and (.activeRunId != null or ((.pendingBackgroundTasks // []) | length) > 0))
+              and (.activeRunId != null or ((.pendingBackgroundTasks // []) | length) > 0
+                or ((.limitRecovery.autoResume // false) and
+                    ((.limitRecovery.resetAt[0:19] + "Z" | fromdateiso8601) + 1800 > now))
+                or ((.limitRecovery.resetAt // "") > (now | todateiso8601))))
           ' <<< "$snapshot" >/dev/null; then
             echo "T3 session still owns this checkout; leaving it alone"
             exit 0
@@ -847,6 +850,7 @@ let
     name = "health-watch";
     runtimeInputs = [
       pkgs.curl
+      pkgs.python3
       pkgs.hyprland
       pkgs.jq
       pkgs.iputils
@@ -888,6 +892,12 @@ let
       # (2026-10-23 01:32). Alerts that began before the window are real.
       windows="$dir/maintenance"
       case "''${1:-}" in
+        changed)
+          [ $# -eq 3 ] || { echo 'usage: health-watch changed INCIDENT_KEY "changed revision / cleared blocker evidence"' >&2; exit 2; }
+          jq -n --arg key "$2" --arg evidence "$3" '{key:$key,evidence:$evidence}' \
+            | python3 ${./incident_state.py} "$dir/retry-state.json" changed
+          exit 0
+          ;;
         maintenance)
           if [ $# -eq 1 ]; then
             now=$(date +%s)
@@ -1087,6 +1097,34 @@ let
         fi
       done
 
+      # Observe ownership even when maintenance hides every candidate. An
+      # unavailable ownership API cannot authorize an unowned duplicate repair.
+      if ! owner_snapshot=$(curl -fsS --max-time 15 -H 'x-t3-orchestration-protocol: 2' \
+        http://127.0.0.1:3773/api/orchestration/shell); then
+        echo "=> deferred: cannot establish repair ownership"
+        exit 0
+      fi
+      # Use unsuppressed observations to establish recovery: a silence is not
+      # a healthy service. If this read fails, retain prior attempts.
+      observed_alerts=$(curl -fsS --max-time 15 \
+        'https://alertmanager.erikfrankling.duckdns.org/api/v2/alerts?active=true') || observed_alerts=null
+      decision=$(jq -n --argjson now "$now" --argjson dry "$dry" \
+        --arg root '${incidentDir}/dotfiles' --arg failing "$failing" \
+        --arg previous "$(cat "$dir/active" 2>/dev/null || true)" \
+        --argjson shell "$owner_snapshot" --argjson statuses "''${statuses:-null}" \
+        --argjson alerts "$observed_alerts" \
+        '{now:$now,dry:($dry==1),root:$root,failing:$failing,previous:$previous,
+          shell:$shell,statuses:$statuses,alerts:$alerts}' \
+        | python3 ${./incident_state.py} "$dir/retry-state.json" decide)
+      eligible=$(jq -r .eligible <<< "$decision")
+      if [ -n "$failing" ] && [ -z "$eligible" ]; then
+        echo "=> no session: $(jq -r .reason <<< "$decision") (quota reset epoch $(jq -r .quotaReset <<< "$decision"))"
+        # Keep the actual fault visible in the audit without relaunching it.
+        [ "$dry" = 1 ] || printf '%s\n' "$failing" > "$dir/active"
+        exit 0
+      fi
+      failing="$eligible"
+
       if [ -z "$failing" ]; then
         if [ -f "$dir/active" ] && [ "$dry" = 0 ]; then
           log "recovered: $(head -c 300 "$dir/active" | tr '\n' ' ')"
@@ -1127,6 +1165,8 @@ let
       if launch=$(${lib.getExe startIncident} "$prompt"); then
         echo "$launch"
         if grep -qE 'started T3 Code thread|started a headless session' <<< "$launch"; then
+          jq --argjson now "$now" '. + {now:$now}' <<< "$decision" \
+            | python3 ${./incident_state.py} "$dir/retry-state.json" commit
           echo "$now" > "$dir/last-start"
           log "started session for: $(echo "$failing" | tr '\n' ' ')"
         fi
