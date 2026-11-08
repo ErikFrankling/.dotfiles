@@ -1111,10 +1111,10 @@ let
       # Stream observations: Gatus history can exceed the kernel argv limit.
       decision=$(printf '%s\n' "$owner_snapshot" "''${statuses:-null}" "$observed_alerts" \
         | jq -s --argjson now "$now" --argjson dry "$dry" \
-        --arg root '${incidentDir}/dotfiles' --arg failing "$failing" \
+        --argjson maintenance "$maintenance" --arg root '${incidentDir}/dotfiles' --arg failing "$failing" \
         --arg previous "$(cat "$dir/active" 2>/dev/null || true)" \
         '{now:$now,dry:($dry==1),root:$root,failing:$failing,previous:$previous,
-          shell:.[0],statuses:.[1],alerts:.[2]}' \
+          shell:.[0],statuses:.[1],alerts:.[2],maintenance:$maintenance}' \
         | python3 ${./incident_state.py} "$dir/retry-state.json" decide)
       eligible=$(jq -r .eligible <<< "$decision")
       if [ -n "$failing" ] && [ -z "$eligible" ]; then
@@ -1126,7 +1126,7 @@ let
       failing="$eligible"
 
       if [ -z "$failing" ]; then
-        if [ -f "$dir/active" ] && [ "$dry" = 0 ]; then
+        if [ -f "$dir/active" ] && [ "$dry" = 0 ] && [ "$(jq -r .outstanding <<< "$decision")" = 0 ]; then
           log "recovered: $(head -c 300 "$dir/active" | tr '\n' ' ')"
           rm -f "$dir/active"
         fi

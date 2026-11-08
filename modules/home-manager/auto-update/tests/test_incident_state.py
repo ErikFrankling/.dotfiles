@@ -58,6 +58,13 @@ class RetryScenarios(unittest.TestCase):
         self.data.update(failing=self.line, alerts=None)
         self.assertTrue(policy.decide(self.state, self.data)["eligible"])
 
+    def test_maintenance_cannot_clear_attempt_while_alerts_rearm(self):
+        self.data.update(alerts=[], failing="", maintenance=[{"end": 20000, "pattern": "DiskFillingUp"}])
+        policy.decide(self.state, self.data)
+        self.data["now"] += 1000
+        policy.decide(self.state, self.data)
+        self.assertTrue(self.state["attempts"])
+
     def test_short_recovery_does_not_allow_retry(self):
         self.data.update(alerts=[], failing="")
         policy.decide(self.state, self.data)

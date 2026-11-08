@@ -5,6 +5,7 @@ attempt identity: no upstream component correlates their state for this watcher.
 """
 import json
 import os
+import re
 from pathlib import Path
 import sys
 from datetime import datetime
@@ -65,7 +66,10 @@ def decide(state, data):
             if incident.startswith("alert/"):
                 health[incident] = incident not in active
     for incident, attempt in list(attempts.items()):
-        if health.get(incident) is True:
+        # A deployment can temporarily empty Alertmanager while rules re-arm.
+        maintained = any(w["end"] + 600 > now and re.search(w["pattern"], incident)
+                         for w in data.get("maintenance", []))
+        if not maintained and health.get(incident) is True:
             since = attempt.setdefault("healthySince", now)
             if now - since >= 600:
                 del attempts[incident]
@@ -85,7 +89,7 @@ def decide(state, data):
             eligible.append(line)
     reason = "quota-blocked" if blocked else "existing-owner" if owned else "unchanged" if not eligible else "changed-evidence"
     return {"eligible": "\n".join(eligible) if not blocked and not owned else "",
-            "reason": reason, "quotaReset": reset}
+            "reason": reason, "quotaReset": reset, "outstanding": len(attempts)}
 
 
 def main():
