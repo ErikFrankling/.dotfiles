@@ -245,14 +245,14 @@
       formatter.${system} = nixFormatter;
 
       # USB installer for the samsung-ablo laptop (hosts/samsung-ablo/README.md):
-      # nix build --no-link --print-out-paths .#samsung-ablo-installer-iso
-      packages.${system}.samsung-ablo-installer-iso =
+      # nix build --no-link --print-out-paths .#samsung-ablo-installer-img
+      packages.${system}.samsung-ablo-installer-img =
         (nixpkgs.lib.nixosSystem {
           modules = [
             ./hosts/samsung-ablo/installer.nix
             { nixpkgs.hostPlatform = system; }
           ];
-        }).config.system.build.isoImage;
+        }).config.system.build.images.raw-efi;
 
       nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" "wsl" "samsung-ablo" ] (
         hostName:

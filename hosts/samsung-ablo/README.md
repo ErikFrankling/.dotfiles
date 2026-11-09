@@ -12,7 +12,7 @@ SOC 2 research: `~/projects/ablo/research/`.
 | `soc2.nix` | SOC 2 controls: disk encryption check, screen lock, ClamAV, 1Password, firewall |
 | `vanta.nix` | Vanta Device Monitor from the official .deb, run through nix-ld |
 | `disko.nix` | Disk layout: 1 GB EFI + LUKS2 ext4 root |
-| `installer.nix` | The USB installer: root SSH with the pc's key, newest kernel, NetworkManager |
+| `installer.nix` | The USB installer (GPT disk image): root SSH with the pc's key, newest kernel, NetworkManager |
 | `secrets/secrets.yaml` | sops: Tailscale OAuth key, Syncthing identity, OpenCode/Executor keys, later `vanta-key` |
 
 ## Install, step by step
@@ -20,14 +20,17 @@ SOC 2 research: `~/projects/ablo/research/`.
 **Erik** does the steps that need hands at the laptop. **Agent** means a
 session on the pc.
 
-1. **Agent**: build the installer and write it to a stick.
-   `nix build --no-link --print-out-paths .#samsung-ablo-installer-iso`, then
-   `sudo dd if=<iso> of=/dev/sdX bs=4M oflag=direct conv=fsync`.
+1. **Agent**: build the installer (a GPT disk image; this laptop ignores a dd-written ISO) and write it to a stick.
+   `nix build --no-link --print-out-paths .#samsung-ablo-installer-img`, then
+   `sudo dd if=<result>/*.img of=/dev/sdX bs=4M oflag=direct conv=fsync`, then `sudo sgdisk -e /dev/sdX`.
 2. **Erik**, BIOS (F2 at the Samsung logo, or from Windows Shift+Restart >
    Troubleshoot > Advanced options > UEFI Firmware Settings):
-   Secure Boot Control **Off**, Fast BIOS Mode **Off**, any VMD/RST/RAID
-   storage mode **off/AHCI**. F10 saves. Then F10 at the logo for the boot
-   menu, pick the stick.
+   tiles SysInfo / Advanced / Security / Boot (BIOS PRHK.1.4.56.576, 2026).
+   **Boot**: Secure Boot Control **Off**, USB Booting **On** (there is no
+   Fast BIOS Mode on this model). Stick in the USB-A port on the right
+   before power-on. **Boot Device Priority >** Boot Option #1 = the stick,
+   **Save** > OK. A dd-written ISO never shows up in that list; the GPT image
+   does.
 3. **Erik**: network. Ethernet just works; for Wi-Fi run `nmtui`. The console
    shows the address.
 4. **Agent**: finds the installer on the LAN (port 22, hostname
