@@ -281,6 +281,13 @@
         HostKeyAlias framework
         ConnectTimeout 15
         User erikf
+      # Work laptop (hosts/samsung-ablo), same route as the framework.
+      Host samsung-ablo
+        Hostname 100.76.35.74
+        ProxyJump proxmox
+        HostKeyAlias samsung-ablo
+        ConnectTimeout 15
+        User erikf
       Host octopi
         Hostname 192.168.50.162
         User pi

@@ -70,11 +70,25 @@ session on the pc.
    `sbctl --disable-landlock create-keys`), `/etc/ssh/ssh_host_ed25519_key`
    (pinned in `modules/nixos/default.nix`) and `/home/erikf/.ssh/id_ed25519`
    (sops decrypts with it).
+
+   The install did **not** register a firmware boot entry (only Windows Boot
+   Manager was listed). From the installer: `efibootmgr --create --disk
+   /dev/nvme0n1 --part 1 --loader '\EFI\systemd\systemd-bootx64.efi' --label
+   'Linux Boot Manager'`, then `efibootmgr -o <that>,<Windows>,...`.
 5. **Erik**: type the LUKS passphrase at boot. Hyprland starts (autologin
    after the disk passphrase). Run `passwd`: the screen lock checks this
    password, and the initial one is the shared default.
+
+   First boot, 2026-11-09: Syncthing created `~/.config` as root before Home
+   Manager ran, so `home-manager-erikf` failed (dconf: permission denied) and
+   Hyprland did not start. Fix: `sudo chown erikf:users ~/.config && sudo
+   systemctl restart home-manager-erikf getty@tty1`.
 6. **Agent** over SSH: clone `~/.dotfiles`, check Tailscale came up (the OAuth
-   key in sops joins it as `tag:client`), and add the SSH alias.
+   key in sops joins it as `tag:client`). Reach it with `ssh samsung-ablo`
+   (tailnet IP through proxmox). Its LAN IPv4 does not answer the pc once
+   Tailscale accepts the home subnet route; IPv6 link-local does. The desk's
+   USB Ethernet adapter sits behind the KVM, so the laptop loses it whenever
+   the KVM switches to the pc: use Wi-Fi.
 7. **Secure Boot** (lanzaboote already signs the boot files). Windows asks for
    the BitLocker recovery key once after this.
    - **Erik**: BIOS > Secure Boot: clear the keys / Setup Mode (not found in
