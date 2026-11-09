@@ -111,6 +111,13 @@ in
   #   ip6tables -t mangle -D OUTPUT -o CloudflareWARP -j CONNMARK --set-mark 0xf41 2>/dev/null || true
   # '';
 
+  # Retirement migration: firewall reload does not flush the mangle table.
+  # Remove rules left by older generations without adding WARP exceptions.
+  networking.firewall.extraCommands = ''
+    iptables -t mangle -D OUTPUT -o CloudflareWARP -j CONNMARK --set-mark 0xf41 2>/dev/null || true
+    ip6tables -t mangle -D OUTPUT -o CloudflareWARP -j CONNMARK --set-mark 0xf41 2>/dev/null || true
+  '';
+
   # Each importing host must carry a `mullvad-account` entry in its default
   # sops file, i.e.:  sops hosts/<host>/secrets/secrets.yaml
   # mullvad-account: "1234567890123456"
