@@ -163,6 +163,10 @@ in
           # timeout (ioctl EAGAIN, libhsakmt retries), ~6 min for the 8.7 GB
           # model, past the 5 min health check. From 2026-10-21 every start
           # timed out; staged copies run at disk speed (repair 2026-11-09).
+          #
+          # The Triton cache persists (as for Breeze): otherwise the first
+          # request after every start JIT-compiles kernel_unified_attention,
+          # ~55 s before any audio.
           cmd = ''
             ${docker} run --rm --name higgs-tts \
             --device /dev/kfd --device /dev/dri --security-opt seccomp=unconfined \
@@ -170,6 +174,7 @@ in
             -v ${ttsDir}/higgs-tts-3-4b:/model:ro \
             -v ${ttsDir}/cache/hf:/root/.cache/huggingface \
             -v ${ttsDir}/cache/miopen:/miopen \
+            -v ${ttsDir}/cache/triton:/root/.triton \
             -v ${ttsDir}/voices/higgs-speakers:/speakers \
             -e SPEAKER_SAMPLES_DIR=/speakers \
             -e HF_HUB_OFFLINE=1 \
