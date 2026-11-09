@@ -1,176 +1,19 @@
-# SOC 2 endpoint controls for the samsung-ablo laptop. Only this host imports
-# it. Each control says how it is met and how to show it (README.md has the
-# evidence commands).
+# SOC 2 endpoint controls for the samsung-ablo laptop, one file each.
+# README.md has the commands that show each one to an auditor.
 #
-# Background: Vanta's Device Monitor does not support NixOS. On Linux it only
-# checks disk encryption anyway; screen lock, antivirus and password manager
-# are shown with manual evidence (help.vanta.com 11345596). Research notes:
-# ~/projects/ablo/research/.
-{
-  config,
-  lib,
-  pkgs,
-  username,
-  ...
-}:
-let
-  # Lock after this long without input. 5 minutes is at or below what common
-  # SOC 2 policies ask for (5-15 min); use the company's policy value.
-  lockAfterSeconds = 300;
-in
+# Vanta's Device Monitor does not support NixOS and on Linux only checks disk
+# encryption, so these are shown with manual evidence (help.vanta.com
+# 11345596). Research: ~/projects/ablo/research/.
 {
   imports = [
+    ./disk-encryption.nix
+    ./screen-lock.nix
+    ./fingerprint.nix
+    ./antivirus.nix
     ./vanta.nix
-    # Password manager: the 1Password app and CLI (same module as the other
-    # laptops).
-    ../../modules/nixos/1password.nix
+    ../../modules/nixos/1password.nix # password manager
   ];
 
-  # --- Disk encryption: NixOS lives on a LUKS2 partition (cryptroot,
-  # hardware-configuration.nix). Windows, on the same disk, has BitLocker. ---
-  assertions = [
-    {
-      assertion =
-        config.boot.initrd.luks.devices ? cryptroot
-        && config.fileSystems."/".device == "/dev/mapper/cryptroot";
-      message = "soc2.nix: the root file system must be on the LUKS device cryptroot.";
-    }
-    {
-      assertion = config.networking.firewall.enable;
-      message = "soc2.nix: the firewall must stay on.";
-    }
-  ];
-
-  # The disk unlocks itself with the TPM, like BitLocker's default, so the
-  # laptop can boot on its charger and take the nightly update unattended.
-  # The key is sealed to this exact boot chain (lanzaboote measured boot,
-  # systemd-pcrlock: firmware PCR 0, boot loader and kernel PCR 4, Secure Boot
-  # state PCR 7) and lanzaboote re-seals it on every update. Booting anything
-  # else, or a tampered NixOS, gets the passphrase prompt (Plymouth). The
-  # session is locked right after autologin (below), so a powered-on laptop
-  # still needs the password or a fingerprint.
-  # One-time enrollment, keeping the passphrase slot as recovery:
-  #   systemd-cryptenroll --tpm2-device=auto \
-  #     --tpm2-pcrlock=/var/lib/systemd/pcrlock.json /dev/nvme0n1p5
-  boot.lanzaboote.measuredBoot = {
-    enable = true;
-    pcrs = [
-      0
-      4
-      7
-    ];
-  };
-  boot.initrd.luks.devices.cryptroot.crypttabExtraOpts = [ "tpm2-device=auto" ];
-  boot.plymouth.enable = true;
-
-  # Lid closed on the charger: lock, stay awake (the 06:00 update needs it
-  # running). On battery it still suspends, locked first by hypridle.
-  services.logind.settings.Login.HandleLidSwitchExternalPower = "lock";
-
-  # Fingerprint (Goodix 27c6:6984, libfprint goodixmoc). Enroll with
-  # `fprintd-enroll`. hyprlock talks to fprintd itself, so its PAM service
-  # stays password-only (both at once makes hyprlock wait on PAM).
-  services.fprintd.enable = true;
-  security.pam.services.hyprlock.fprintAuth = false;
-
-  # --- Screen lock: hypridle locks with hyprlock after idle and before sleep. ---
-  # The NixOS module adds hyprlock's PAM service, so it checks the login
-  # password. Locking uses ext-session-lock: if hyprlock dies the session
-  # stays locked.
-  programs.hyprlock.enable = true;
-  home-manager.users.${username} = {
-    # Lock as soon as the autologin session starts: the disk unlocks without
-    # a passphrase, so this is where a person proves who they are.
-    systemd.user.services.lock-at-login = {
-      Unit = {
-        Description = "Lock the session right after autologin";
-        After = [ "graphical-session.target" ];
-        PartOf = [ "graphical-session.target" ];
-        # Not on rebuilds: only when a session starts.
-        X-SwitchMethod = "keep-old";
-      };
-      Service.ExecStart = "${pkgs.hyprlock}/bin/hyprlock";
-      Install.WantedBy = [ "graphical-session.target" ];
-    };
-    services.hypridle = {
-      enable = true;
-      settings = {
-        general = {
-          lock_cmd = "pidof hyprlock || hyprlock";
-          before_sleep_cmd = "loginctl lock-session";
-          # Hold sleep until the lock screen is actually up.
-          inhibit_sleep = 3;
-        };
-        listener = [
-          {
-            timeout = lockAfterSeconds;
-            on-timeout = "loginctl lock-session";
-          }
-        ];
-      };
-    };
-    programs.hyprlock = {
-      enable = true;
-      # The NixOS module installs it (with PAM); this only writes the config.
-      package = null;
-      settings = {
-        general = {
-          # Unlock always needs the password, even right after locking.
-          grace = 0;
-          hide_cursor = true;
-        };
-        # Touch the sensor or type the password, whichever comes first.
-        auth = {
-          "fingerprint:enabled" = true;
-        };
-        # Black: the screen is OLED and has no idle blanking here.
-        background = [ { color = "rgb(000000)"; } ];
-        input-field = [
-          {
-            size = "300, 50";
-            position = "0, -80";
-            halign = "center";
-            valign = "center";
-            outline_thickness = 2;
-            placeholder_text = "Password";
-          }
-        ];
-      };
-    };
-  };
-
-  # --- Anti-malware: ClamAV with fresh signatures, on-access scanning of
-  # downloads, and a weekly scan. Detections go to the journal, which Alloy
-  # ships to the homelab (modules/nixos/observability). ---
-  services.clamav = {
-    updater.enable = true;
-    daemon = {
-      enable = true;
-      settings = {
-        OnAccessIncludePath = [
-          "/home/${username}/Downloads"
-          "/tmp"
-        ];
-        # Report, do not block: blocking on-access stalls browsers mid-download.
-        OnAccessPrevention = false;
-        OnAccessExtraScanning = true;
-        # clamd reads the files itself; never scan its own reads.
-        OnAccessExcludeUname = "clamav";
-      };
-    };
-    clamonacc.enable = true;
-    scanner = {
-      enable = true;
-      # Weekly, at lunch: a laptop is asleep at the module's default 04:00.
-      interval = "Mon *-*-* 12:00:00";
-    };
-  };
-  systemd.timers.clamdscan.timerConfig.Persistent = true;
-  systemd.services.clamdscan.serviceConfig = {
-    Nice = 19;
-    IOSchedulingClass = "idle";
-  };
-
-  # --- Patching: the daily auto-update (configuration.nix, autoUpdate). ---
-  # --- Firewall: NixOS default (on, asserted above). ---
+  # Firewall: the NixOS default (on). Patching: the daily auto-update
+  # (configuration.nix). Secure Boot: modules/nixos/secure-boot.nix.
 }
