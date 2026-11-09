@@ -149,6 +149,13 @@ let
       remote() { ssh "''${ssh_opts[@]}" "$target" "$@"; }
       q() { printf '%q ' "$@"; }
 
+      # Files are compared by checksum and not given this PC's mtimes: a file
+      # that changed gets the worker's current time, one that did not is left
+      # alone. With -a (2026-11-09) a changed file kept an mtime older than
+      # the worker's last build (copied with cp -a, another checkout), so
+      # cargo's fingerprints called it fresh and skipped the rebuild.
+      rsync_flags=(-rlpcz --no-owner --no-group)
+
       sync_up() {
         remote "mkdir -p $(q "$ws/.heavy")" || die "cannot reach the worker (${host}:${toString port}); nothing was run locally"
         # Exit 24: files vanished while syncing (another session at work); fine.
@@ -161,7 +168,7 @@ let
           # not synced either; the worker's copy gets a repository of its own.
           list=$(mktemp)
           git -C "$local_root" ls-files -z --cached --others --exclude-standard > "$list"
-          rsync -az --no-owner --no-group --from0 --files-from="$list" --ignore-missing-args \
+          rsync "''${rsync_flags[@]}" --from0 --files-from="$list" --ignore-missing-args \
             -e "ssh ''${ssh_opts[*]}" "$local_root/" "$target:$ws/" || rc=$?
           [ "$rc" = 0 ] || [ "$rc" = 24 ] || { rm -f "$list"; die "sync to the worker failed; nothing was run locally"; }
           # Delete on the worker what an earlier sync put there and this one
@@ -177,7 +184,7 @@ let
           # Not a repository: the whole directory, minus the usual bulk.
           filters=(--exclude=node_modules/ --exclude=.direnv/ --exclude=/result --exclude='result-*'
             --exclude=.venv/ --exclude=.gradle/ --exclude=/.heavy/)
-          rsync -az --no-owner --no-group --delete "''${filters[@]}" -e "ssh ''${ssh_opts[*]}" \
+          rsync "''${rsync_flags[@]}" --delete "''${filters[@]}" -e "ssh ''${ssh_opts[*]}" \
             "$local_root/" "$target:$ws/" || rc=$?
           [ "$rc" = 0 ] || [ "$rc" = 24 ] || die "sync to the worker failed; nothing was run locally"
         fi

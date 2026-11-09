@@ -390,12 +390,14 @@ let
             fi
           done
 
-          # Collect if the node's disk is getting low; nix.conf on the builder
-          # does the same mid-build.
+          # The builder's routine collection, once, after the builds: below
+          # 150 GiB free on the node's disk. nix.conf's min-free there is only
+          # an emergency backstop at 80 GiB; at 150 every remote build ran its
+          # own full GC under the GC lock and hung (homelab, 2026-11-09).
           ssh nix-builder 8>&- '
             export PATH=/nix/var/builder/bin:$PATH
             free=$(df --output=avail -BG /nix | tail -n 1 | tr -dc 0-9)
-            if [ "$free" -lt 80 ]; then nix-collect-garbage > /dev/null 2>&1; fi
+            if [ "$free" -lt 150 ]; then nix-collect-garbage > /dev/null 2>&1; fi
           ' || true
           # last-build says whether main was built; a deploy build of some
           # other checkout must not overwrite it.
