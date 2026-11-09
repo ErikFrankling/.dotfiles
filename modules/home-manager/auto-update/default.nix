@@ -349,7 +349,9 @@ let
               out=""
             else
               # timeout signals the whole process group (nix-remote, its ssh
-              # to the builder), so nothing keeps building after the deadline.
+              # to the builder); nix-remote runs the remote nix with
+              # --pdeathsig, so it stops when that ssh goes away and nothing
+              # keeps building after the deadline.
               out=$(NIX_REMOTE_FETCH=0 timeout -k 30 "$left" \
                 /run/current-system/sw/bin/nix-remote build \
                 --no-link --print-out-paths "$(attr "$host")" 2> "$log" 8>&-) || status=$?

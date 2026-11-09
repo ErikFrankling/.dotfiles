@@ -106,7 +106,12 @@ if [ "$sub" = build ] && [ "$dry" = 0 ]; then
   [ "${NIX_REMOTE_FETCH:-1}" = 1 ] && fetch=1
 fi
 
-remote="export PATH=/nix/var/builder/bin:\$PATH; exec nix --extra-experimental-features 'nix-command flakes' $(printf '%q ' "${args[@]}")"
+# Without a pty, sshd sends the remote command no signal when the connection
+# drops, so a killed or timed-out nix-remote left its build running on the
+# builder: the 2026-11-08 prebuild's timeout orphaned an Electron source build
+# that ran 34 h and starved the homelab (load ~200). --pdeathsig TERM stops nix
+# (cleanly, like Ctrl-C) as soon as its sshd session goes away.
+remote="export PATH=/nix/var/builder/bin:\$PATH; exec setpriv --pdeathsig TERM nix --extra-experimental-features 'nix-command flakes' $(printf '%q ' "${args[@]}")"
 tty=()
 [ -t 0 ] && [ -t 1 ] && [ "$fetch" = 0 ] && tty=(-tt)
 
