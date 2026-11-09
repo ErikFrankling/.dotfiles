@@ -41,12 +41,57 @@ in
     }
   ];
 
+  # The disk unlocks itself with the TPM, like BitLocker's default, so the
+  # laptop can boot on its charger and take the nightly update unattended.
+  # The key is sealed to this exact boot chain (lanzaboote measured boot,
+  # systemd-pcrlock: firmware PCR 0, boot loader and kernel PCR 4, Secure Boot
+  # state PCR 7) and lanzaboote re-seals it on every update. Booting anything
+  # else, or a tampered NixOS, gets the passphrase prompt (Plymouth). The
+  # session is locked right after autologin (below), so a powered-on laptop
+  # still needs the password or a fingerprint.
+  # One-time enrollment, keeping the passphrase slot as recovery:
+  #   systemd-cryptenroll --tpm2-device=auto \
+  #     --tpm2-pcrlock=/var/lib/systemd/pcrlock.json /dev/nvme0n1p5
+  boot.lanzaboote.measuredBoot = {
+    enable = true;
+    pcrs = [
+      0
+      4
+      7
+    ];
+  };
+  boot.initrd.luks.devices.cryptroot.crypttabExtraOpts = [ "tpm2-device=auto" ];
+  boot.plymouth.enable = true;
+
+  # Lid closed on the charger: lock, stay awake (the 06:00 update needs it
+  # running). On battery it still suspends, locked first by hypridle.
+  services.logind.settings.Login.HandleLidSwitchExternalPower = "lock";
+
+  # Fingerprint (Goodix 27c6:6984, libfprint goodixmoc). Enroll with
+  # `fprintd-enroll`. hyprlock talks to fprintd itself, so its PAM service
+  # stays password-only (both at once makes hyprlock wait on PAM).
+  services.fprintd.enable = true;
+  security.pam.services.hyprlock.fprintAuth = false;
+
   # --- Screen lock: hypridle locks with hyprlock after idle and before sleep. ---
   # The NixOS module adds hyprlock's PAM service, so it checks the login
   # password. Locking uses ext-session-lock: if hyprlock dies the session
   # stays locked.
   programs.hyprlock.enable = true;
   home-manager.users.${username} = {
+    # Lock as soon as the autologin session starts: the disk unlocks without
+    # a passphrase, so this is where a person proves who they are.
+    systemd.user.services.lock-at-login = {
+      Unit = {
+        Description = "Lock the session right after autologin";
+        After = [ "graphical-session.target" ];
+        PartOf = [ "graphical-session.target" ];
+        # Not on rebuilds: only when a session starts.
+        X-SwitchMethod = "keep-old";
+      };
+      Service.ExecStart = "${pkgs.hyprlock}/bin/hyprlock";
+      Install.WantedBy = [ "graphical-session.target" ];
+    };
     services.hypridle = {
       enable = true;
       settings = {
@@ -73,6 +118,10 @@ in
           # Unlock always needs the password, even right after locking.
           grace = 0;
           hide_cursor = true;
+        };
+        # Touch the sensor or type the password, whichever comes first.
+        auth = {
+          "fingerprint:enabled" = true;
         };
         # Black: the screen is OLED and has no idle blanking here.
         background = [ { color = "rgb(000000)"; } ];
