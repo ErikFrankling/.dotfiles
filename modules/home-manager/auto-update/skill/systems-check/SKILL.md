@@ -297,6 +297,8 @@ short rev, no log excerpts; the thread has the details.
 ## Incident log
 
 Newest first; one entry per morning that needed a real repair.
+- 2026-11-09 12:22 (health-watch) — `lan/kokoro-tts` refused connections. The pod restarted 262 times in 23h: model load never finished before the liveness probe (initialDelay 120 s, 5×30 s) killed it, because the k3s node ran at load 200-260 and the pod had cpu.weight 1. Fix (homelab 1b59a17, eadd045): `startupProbe` (40 min budget) and `10000 homelab kokoro-tts-*` in `config/cpu-priority/rules`. New pod ready in ~2 min, Gatus check passes. A GPU/ML pod with slow startup needs a startupProbe and a cpu-priority rule.
+
 
 - 2026-11-09 12:20 (Erik-asked, disk follow-up; corrects the entry above) — `/` free was 18.4-19.7% (df -h shows GiB: 349GiB = 374.8GB; I had mixed units), alert line 379.6GB of 1898GB; the 1 h `for:` kept it from firing as free space bounced with agent builds. Growth since 11-07: `cars-data` 80G to 184G (`truth/` 42G new, `datasets/` 64G, an agent `fetch-i24` job writing `datasets/i24-motion`, no live owning thread, so the detached job is the owner and was left running). Fix: moved 8 finished, re-downloadable datasets (pneuma-full, songdo-full, jt25-opendd, sysmo-sweden, laddms-stage1, levelx, ved, helsinki-drones-full; 47G, last written 11-02..11-06, no open files) to `/mnt/data/cars-data-datasets/` (ext4, 931G disk, was 383G free) with rsync, a checksum pass (`rsync -c -n -i`) and `diff -rq` through the symlink before each original was removed; the old paths are symlinks. `/` now 22.26% free (422GB), `/mnt/data` 331GB free. `truth/` and `replay/` (derived, 83G) and the active `i24-motion` stay. Next growth: a bigger fetch should be pointed at `/mnt/data`.
 
