@@ -14,6 +14,7 @@
     ../../modules/home-manager/bro
     ../../modules/home-manager/speak # `speak` tool: refuses here (PC speakers only)
     inputs.time.homeManagerModules.agent-v2
+    ./t3code.nix # work agents run here, not on the pc
   ];
 
   # Time v2: screen, input, lid, lock, battery and Wi-Fi each minute, to the
