@@ -320,7 +320,7 @@ in
     # vscode-fhs
     # windsurf
     inputs.opencode-desktop-nix.packages.${system}.default
-    lmstudio
+    # lmstudio # pc only: hosts/pc/home.nix (no local AI on the laptops)
     # inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.pi # Disabled - npm registry 500 blocking rebuild
   ];
 

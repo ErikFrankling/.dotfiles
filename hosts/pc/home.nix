@@ -277,6 +277,9 @@ in
 
   home.packages = with pkgs; [
     prismlauncher
+    # Local models run on this machine only; the laptops run no AI (Erik,
+    # 2026-11-09). Moved here from modules/home-manager/ai.nix.
+    lmstudio
   ];
 
   # VNC into this desktop from the laptop and the phone (LAN/tailnet only —
