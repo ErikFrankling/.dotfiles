@@ -62,7 +62,10 @@
     # Keep it at v0.35.0 or later: older builds open a private AT-SPI socket to
     # every accessible app, and each session leaks 3 pidfds into those apps.
     cua.url = "github:trycua/cua/cua-driver-rs-v0.38.0";
-    cua.inputs.nixpkgs.follows = "nixpkgs";
+    # nix-update-doctor: 2026-11-09 nixpkgs f4a03c0's cargo hook exports
+    # ZSTD_SYS_USE_PKG_CONFIG, and cua-driver (zstd-sys) does not list zstd or
+    # pkg-config, so it fails under our nixpkgs: it uses its own pin instead.
+    # cua.inputs.nixpkgs.follows = "nixpkgs";
 
     time.url = "github:ErikFrankling/time";
     time.inputs.nixpkgs.follows = "nixpkgs";
