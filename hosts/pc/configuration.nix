@@ -44,6 +44,7 @@
     ../../modules/nixos/dev-preview.nix
     ../../modules/nixos/local-stt.nix
     ../../modules/nixos/desktop.nix
+    ../../modules/nixos/1password.nix
     # Was disabled for a while: under getty autologin PAM never unlocked the
     # keyring, so every Secret Service request prompted for a password nobody
     # knew. The module now seeds a passwordless, always-unlocked keyring.

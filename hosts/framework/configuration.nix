@@ -22,6 +22,7 @@
     ./dock-awake.nix
     ../../modules/nixos/auto-update.nix
     ../../modules/nixos/desktop.nix
+    ../../modules/nixos/1password.nix
     # ../../modules/nixos/keyring.nix -- disabled: the default keyring on disk
     # was Default_Keyring, not login.keyring, so PAM never unlocked it and
     # every Secret Service request prompted for a password nobody knew.
