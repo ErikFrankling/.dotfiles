@@ -153,6 +153,16 @@ in
           #     -F audio_sample=@${ttsDir}/voices/erik.wav -F name=erik \
           #     -F consent=true -F "ref_text=$(cat ${ttsDir}/voices/erik.txt)"
           # Speed: the request's "speed" field (1.0 = model pace).
+          #
+          # GPU_PINNED_MIN_XFER_SIZE: HIP copies host memory to the GPU through
+          # its pinned staging buffer instead of pinning the source in place.
+          # vLLM copies each weight straight from the checkpoint's private
+          # mmap; pinning that in place goes through KFD SVM, whose
+          # hmm_range_fault write-faults (copy-on-write) every page and so
+          # invalidates its own range: each tensor sat out the 1 s HMM retry
+          # timeout (ioctl EAGAIN, libhsakmt retries), ~6 min for the 8.7 GB
+          # model, past the 5 min health check. From 2026-10-21 every start
+          # timed out; staged copies run at disk speed (repair 2026-11-09).
           cmd = ''
             ${docker} run --rm --name higgs-tts \
             --device /dev/kfd --device /dev/dri --security-opt seccomp=unconfined \
@@ -164,6 +174,7 @@ in
             -e SPEAKER_SAMPLES_DIR=/speakers \
             -e HF_HUB_OFFLINE=1 \
             -e MIOPEN_FIND_MODE=FAST -e MIOPEN_USER_DB_PATH=/miopen -e MIOPEN_CUSTOM_CACHE_DIR=/miopen \
+            -e GPU_PINNED_MIN_XFER_SIZE=4096 \
             ${higgsImage} serve /model --omni --trust-remote-code --served-model-name higgs-tts \
             --host 0.0.0.0 --port 8095 \
             --gpu-memory-utilization 0.5 --max-model-len 4096 --enforce-eager
