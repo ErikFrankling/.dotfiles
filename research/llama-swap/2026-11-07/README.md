@@ -1,6 +1,69 @@
 # Centralizing local inference lifecycle in LlamaSwap
 
 2026-11-07. Investigation and executable scheduling prototype, not a production migration.
+Implemented on 2026-11-09; see the next section. The rest is the original investigation.
+
+## Implemented (2026-11-09)
+
+Erik approved the design. Commits 90acb5f7, a67b101c and c3690826 are live on the PC.
+
+- llama-swap now uses the capacity router with one `vram` pool of 16384 MiB:
+  the 7900 XT's 20464 MiB minus ~4 GiB for the desktop, which measured
+  3.4 GiB. Declared peaks (MiB): `dictation-preview` 1280,
+  `dictation-final` 11264, `read-aloud-summary` 3456, `higgs-tts` 10880,
+  `breeze-tts-2` 8960, every big Qwen 15104 (it runs with only the live
+  recogniser, as before). FIFO priority is 100 for speech and 50 for
+  read-aloud.
+- The recognisers are llama-swap models (`modules/nixos/local-stt.nix`,
+  commands in `tools/local-stt/workers.nix`). They get `LD_LIBRARY_PATH=`
+  because llama-swap's service points it at llama.cpp's `libggml.so.0`, which
+  Nemotron would otherwise load instead of its own.
+- The gateway runs no model. It reaches both recognisers through
+  `/upstream/<model>/` and uploads WAV bytes (multipart; decoding options moved
+  to `default_request_options`), so recordings stay 0700. `releaseStt`,
+  `gpuRoom`, `make_room`, `/release-gpu`, the memory guard and the read-aloud
+  group are gone. The gateway forces an unload only in two cases: to replace
+  one of its own recognisers that stopped answering, and to take back the GPU
+  it lent to Higgs when a recording starts while Higgs is still loading
+  (llama-swap would otherwise hold the recording behind a load of several
+  minutes).
+- `captureBuffer: 0`, because transcripts and read-aloud texts would otherwise
+  be readable in the LAN-exposed UI. `rocm-smi` is on the service PATH; the
+  dashboard now shows GPU memory and temperatures.
+- Docker models stop with `docker stop -t 3`. After a failed start llama-swap
+  waits only 5 s (hard-coded) before killing the `docker run` client and
+  counting the model as stopped. With `-t 15`, a dying Higgs kept its VRAM
+  while the final recogniser loaded: 19.8 GiB total.
+
+Tests: `tools/local-stt/test_gateway.py` (25) and
+`tools/local-stt/test_scheduling.py` (14). The second runs the real llama-swap
+with the generated production settings and fake models, plus the real gateway
+through it.
+
+Real GPU, 42 s synthetic recording through the live gateway:
+
+| Case | Final recogniser ready after start | Stop to final text | Peak total VRAM |
+| --- | --- | --- | --- |
+| Live draft + summary resident | 15.4 s (cold load) | 4.0 s | 18.2 GiB |
+| Live recogniser killed mid-recording, final killed mid-pass, Higgs starting | ~37 s (take-back, then load) | 46.8 s (one 502 retry) | 17.6 GiB |
+
+Not yet done, or found broken:
+
+- **Higgs has not started since 2026-10-21.** It hangs after loading its
+  weights until the 5-minute health timeout. This is unrelated to this change,
+  and a repair session is working on it. Read-aloud falls back to Kokoro until
+  it is fixed.
+- **Big-Qwen VRAM beside the live recogniser was not re-measured.** The pairing
+  is unchanged from before (the gateway never unloaded the live recogniser),
+  and loading 13+ GB with the desktop in the crash band is not worth risking
+  for a test.
+- **Scheduling is not preemptive.** Speech waits for a request that is already
+  running, and with overlapping clients a ready model's fast path can keep it
+  busy (reproduced above). The time tracker, the only background batch client,
+  has sent llama-swap no request in 30 days. Its classifier runs two
+  overlapping workers and treats a 429 as an hour-long stand-down, so if it
+  moves back to the local GPU, decide the policy then: a `concurrencyLimit` is
+  not the answer for that client.
 
 ## Decision
 
