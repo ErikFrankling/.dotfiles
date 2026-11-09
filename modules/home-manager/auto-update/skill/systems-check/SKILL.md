@@ -297,6 +297,7 @@ short rev, no log excerpts; the thread has the details.
 ## Incident log
 
 Newest first; one entry per morning that needed a real repair.
+- 2026-11-09 13:55 (health-watch) — `alert/CronJobFailing/executor-recycler`: its `kubectl top` got "Metrics API not available". metrics-server (kube-system) was not Ready for 36 h, 140 restarts, kubelet scrape timeouts at node load 200+ (cpu.weight 1). Fix (homelab ce81893): `10000 kube-system metrics-server-*` in `config/cpu-priority/rules`, pod recreated, `kubectl top nodes` works. Same starvation class as authentik/kokoro/flux: any pod others depend on needs a cpu-priority rule. kyverno also had no endpoints at the time (not investigated; recovering).
 - 2026-11-09 12:22 (health-watch) — `lan/kokoro-tts` refused connections. The pod restarted 262 times in 23h: model load never finished before the liveness probe (initialDelay 120 s, 5×30 s) killed it, because the k3s node ran at load 200-260 and the pod had cpu.weight 1. Fix (homelab 1b59a17, eadd045): `startupProbe` (40 min budget) and `10000 homelab kokoro-tts-*` in `config/cpu-priority/rules`. New pod ready in ~2 min, Gatus check passes. A GPU/ML pod with slow startup needs a startupProbe and a cpu-priority rule.
 
 
