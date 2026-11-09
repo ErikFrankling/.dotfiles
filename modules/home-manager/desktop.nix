@@ -72,25 +72,41 @@
 
   services.syncthing.tray.enable = true;
 
-  # Chrome on Linux uses its NSS database for locally trusted authorities.
-  # Cloudflare WARP cannot manage that database on NixOS, so keep the account
-  # Gateway CA installed declaratively for both desktop machines.
-  home.activation.installHuskCloudflareGatewayCA = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    cert_db="$HOME/.pki/nssdb"
-    cert_name="Husk Cloudflare Gateway CA"
+  # Husk retired 2026-11-09; retained as a configuration reference.
+  # # Chrome on Linux uses its NSS database for locally trusted authorities.
+  # # Cloudflare WARP cannot manage that database on NixOS, so keep the account
+  # # Gateway CA installed declaratively for both desktop machines.
+  # home.activation.installHuskCloudflareGatewayCA = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  #   cert_db="$HOME/.pki/nssdb"
+  #   cert_name="Husk Cloudflare Gateway CA"
 
-    $DRY_RUN_CMD mkdir -p "$cert_db"
-    if [ ! -f "$cert_db/cert9.db" ]; then
-      $DRY_RUN_CMD ${pkgs.nssTools}/bin/certutil -N --empty-password -d "sql:$cert_db"
-    fi
+  #   $DRY_RUN_CMD mkdir -p "$cert_db"
+  #   if [ ! -f "$cert_db/cert9.db" ]; then
+  #     $DRY_RUN_CMD ${pkgs.nssTools}/bin/certutil -N --empty-password -d "sql:$cert_db"
+  #   fi
 
-    $DRY_RUN_CMD ${pkgs.nssTools}/bin/certutil -D -d "sql:$cert_db" -n "$cert_name" >/dev/null 2>&1 || true
-    $DRY_RUN_CMD ${pkgs.nssTools}/bin/certutil -A \
-      -d "sql:$cert_db" \
-      -n "$cert_name" \
-      -t "C,," \
-      -i ${../../certificates/cloudflare-gateway-ca.pem}
+  #   $DRY_RUN_CMD ${pkgs.nssTools}/bin/certutil -D -d "sql:$cert_db" -n "$cert_name" >/dev/null 2>&1 || true
+  #   $DRY_RUN_CMD ${pkgs.nssTools}/bin/certutil -A \
+  #     -d "sql:$cert_db" \
+  #     -n "$cert_name" \
+  #     -t "C,," \
+  #     -i ${../../certificates/cloudflare-gateway-ca.pem}
+  # '';
+  # Retire the persisted NSS copies too; removing an install policy alone
+  # does not remove certificates it previously imported into browser profiles.
+  home.activation.removeHuskCloudflareGatewayCA = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    expected=$(${pkgs.openssl}/bin/openssl x509 -in ${../../certificates/cloudflare-gateway-ca.pem} -outform DER | ${pkgs.coreutils}/bin/sha256sum)
+    for cert_db in "$HOME/.pki/nssdb" "$HOME"/.mozilla/firefox/*; do
+      [ -f "$cert_db/cert9.db" ] || continue
+      for cert_name in "Husk Cloudflare Gateway CA" "Gateway CA - Cloudflare Managed G2 30ce68fb6a2cf6dcf76d849cff087a97 - Cloudflare, Inc."; do
+        actual=$(${pkgs.nssTools}/bin/certutil -L -d "sql:$cert_db" -n "$cert_name" -a 2>/dev/null | ${pkgs.openssl}/bin/openssl x509 -outform DER 2>/dev/null | ${pkgs.coreutils}/bin/sha256sum) || continue
+        if [ "$actual" = "$expected" ]; then
+          $DRY_RUN_CMD ${pkgs.nssTools}/bin/certutil -D -d "sql:$cert_db" -n "$cert_name"
+        fi
+      done
+    done
   '';
+
   gtk = {
     enable = true;
 

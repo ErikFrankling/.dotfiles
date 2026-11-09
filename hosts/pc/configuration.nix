@@ -224,7 +224,7 @@
 
   # Open ports in the firewall.
   networking.firewall.allowedTCPPorts = [
-    6789 # husk localhost web UI — reachable on the LAN for dev review
+    # 6789 # retired Husk localhost web UI — reachable on the LAN for dev review
   ];
 
   # T3 Code web UI and wayvnc — reachable only through the physical LAN

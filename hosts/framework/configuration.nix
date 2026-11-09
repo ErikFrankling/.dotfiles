@@ -17,7 +17,7 @@
     ../../modules/nixos/tailscale.nix
     # Must come after tailscale.nix: it layers a husk-security.dev-only
     # override on top of the '~.' default route Tailscale installs.
-    ../../modules/nixos/husk-dns.nix
+    # ../../modules/nixos/husk-dns.nix # retired with Husk
     ../../modules/nixos/laptop.nix
     ./dock-awake.nix
     ../../modules/nixos/auto-update.nix

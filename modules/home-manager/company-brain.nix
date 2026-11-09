@@ -22,7 +22,7 @@ let
     "${home}/.claude/skills"
     "${home}/.codex/skills"
     "${home}/.agents/skills"
-    "${home}/projects/new/husk/husk-agent-pack/skills"
+    # "${home}/projects/new/husk/husk-agent-pack/skills" # retired Husk imports
   ];
   # Global instructions for every Claude Code and Codex session (T3 Code's Codex
   # uses its own CODEX_HOME, ~/.codex-t3).
@@ -91,6 +91,19 @@ let
 in
 {
   home.packages = [ sync ];
+
+  # Remove only the manually installed Husk skill links, never repository code
+  # or independently installed skills. Keep the personal Brain service.
+  home.activation.retireHuskSkillLinks = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    for dir in "$HOME/.agents/skills" "$HOME/.claude/skills" "$HOME/.codex/skills" "$HOME/.codex-t3/skills"; do
+      for skill in husk-company-context husk-document-work; do
+        link="$dir/$skill"
+        if [ -L "$link" ] && [ "$(readlink "$link")" = "$HOME/projects/new/husk/husk-agent-pack/skills/$skill" ]; then
+          $DRY_RUN_CMD rm "$link"
+        fi
+      done
+    done
+  '';
 
   home.file = {
     ".claude/CLAUDE.md".text = instructions;

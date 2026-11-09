@@ -36,12 +36,12 @@
     extensions = [ "hdokiejnpimakedhajhdlcegeplioahd" ];
     # Earlier, narrower attempt: allow only Microsoft's domains.
     # extraOpts.CookiesAllowedForUrls = [
-    #   "[*.]microsoftonline.com"
-    #   "[*.]microsoft.com"
-    #   "[*.]live.com"
-    #   "[*.]office.com"
-    #   "[*.]sharepoint.com"
-    #   "[*.]skype.com"
+    # "[*.]microsoftonline.com"
+    # "[*.]microsoft.com"
+    # "[*.]live.com"
+    # "[*.]office.com"
+    # "[*.]sharepoint.com"
+    # "[*.]skype.com"
     # ];
   };
 
@@ -96,62 +96,66 @@
   # virtualisation.vmware.host.enable = true;
   programs.nm-applet.enable = true;
 
-  services.cloudflare-warp.enable = true;
+  # Husk retired 2026-11-09; retained as a configuration reference.
+  # services.cloudflare-warp.enable = true;
 
-  # WARP cannot parse NixOS's systemd version ("261.3", no dash), so it never
-  # programs systemd-resolved and falls back to overwriting /etc/resolv.conf
-  # with its local resolver. Programs that go through resolved (nearly all of
-  # them, via nss-resolve) then never ask that resolver once Mullvad claims
-  # `~.` on its own link, and the Gateway-only work names stop resolving.
-  # Naming the work domains here routes exactly those to WARP's resolver
-  # whatever else is up.
-  services.resolved.settings.Resolve = {
-    DNS = "127.0.2.2 127.0.2.3";
-    Domains = "~husk-security.dev ~cloudflareaccess.com";
-  };
+  # # WARP cannot parse NixOS's systemd version ("261.3", no dash), so it never
+  # # programs systemd-resolved and falls back to overwriting /etc/resolv.conf
+  # # with its local resolver. Programs that go through resolved (nearly all of
+  # # them, via nss-resolve) then never ask that resolver once Mullvad claims
+  # # `~.` on its own link, and the Gateway-only work names stop resolving.
+  # # Naming the work domains here routes exactly those to WARP's resolver
+  # # whatever else is up.
+  # services.resolved.settings.Resolve = {
+  #   DNS = "127.0.2.2 127.0.2.3";
+  #   Domains = "~husk-security.dev ~cloudflareaccess.com";
+  # };
 
-  # Pin the Zero Trust organization. Without this the client re-registers as a
-  # personal "Free" account whenever the Teams session is lost, which swaps the
-  # org's include-only split tunnel for the consumer exclude list -- i.e. full
-  # tunnel for everything outside RFC1918. That both hides the internal
-  # dashboards and swallows the home VPN endpoint (see ./openvpn.nix).
-  # The file must be copied (C+), not symlinked: warp-svc opens it without
-  # following symlinks and a store symlink fails with ELOOP, so the whole
-  # local policy (organization pin, service_mode) is silently ignored.
-  systemd.tmpfiles.rules = [
-    "C+ /var/lib/cloudflare-warp/mdm.xml 0644 root root - ${pkgs.writeText "warp-mdm.xml" ''
-      <dict>
-        <key>organization</key>
-        <string>small-forest-3d80</string>
-        <key>auto_connect</key>
-        <integer>0</integer>
-        ${
-          # On the framework, Tailscale owns DNS (tailnet override -> AdGuard),
-          # so WARP must run "Secure Web Gateway without DNS filtering"
-          # (tunnelonly): the include-mode split tunnel to the Husk ingress IPs
-          # keeps working, but warp-svc no longer rewrites /etc/resolv.conf or
-          # intercepts port 53 -- in the default warp+doh mode the two daemons
-          # fight over DNS and connecting to the tailnet kills all resolution.
-          # Caveat: hostname-based include entries are inert in this mode (they
-          # rely on WARP snooping DNS answers), and so is Gateway's private-DNS
-          # resolver policy, which never sees a query. The *.husk-security.dev
-          # names are therefore resolved on the host by ./husk-dns.nix, which
-          # maps them to the ingress VIPs (10.0.127.250/.251); the IP include
-          # entries above are what actually routes them.
-          # The pc keeps the default mode: it is off the tailnet, and its
-          # Mullvad/WARP interplay is a separate question.
-          pkgs.lib.optionalString (config.networking.hostName == "framework") ''
-            <key>service_mode</key>
-            <string>tunnelonly</string>
-          ''
-        }
-      </dict>
-    ''}"
-  ];
+  # # Pin the Zero Trust organization. Without this the client re-registers as a
+  # # personal "Free" account whenever the Teams session is lost, which swaps the
+  # # org's include-only split tunnel for the consumer exclude list -- i.e. full
+  # # tunnel for everything outside RFC1918. That both hides the internal
+  # # dashboards and swallows the home VPN endpoint (see ./openvpn.nix).
+  # # The file must be copied (C+), not symlinked: warp-svc opens it without
+  # # following symlinks and a store symlink fails with ELOOP, so the whole
+  # # local policy (organization pin, service_mode) is silently ignored.
+  # systemd.tmpfiles.rules = [
+  #   "C+ /var/lib/cloudflare-warp/mdm.xml 0644 root root - ${pkgs.writeText "warp-mdm.xml" ''
+  #     <dict>
+  #       <key>organization</key>
+  #       <string>small-forest-3d80</string>
+  #       <key>auto_connect</key>
+  #       <integer>0</integer>
+  #       ${
+  #         # On the framework, Tailscale owns DNS (tailnet override -> AdGuard),
+  #         # so WARP must run "Secure Web Gateway without DNS filtering"
+  #         # (tunnelonly): the include-mode split tunnel to the Husk ingress IPs
+  #         # keeps working, but warp-svc no longer rewrites /etc/resolv.conf or
+  #         # intercepts port 53 -- in the default warp+doh mode the two daemons
+  #         # fight over DNS and connecting to the tailnet kills all resolution.
+  #         # Caveat: hostname-based include entries are inert in this mode (they
+  #         # rely on WARP snooping DNS answers), and so is Gateway's private-DNS
+  #         # resolver policy, which never sees a query. The *.husk-security.dev
+  #         # names are therefore resolved on the host by ./husk-dns.nix, which
+  #         # maps them to the ingress VIPs (10.0.127.250/.251); the IP include
+  #         # entries above are what actually routes them.
+  #         # The pc keeps the default mode: it is off the tailnet, and its
+  #         # Mullvad/WARP interplay is a separate question.
+  #         pkgs.lib.optionalString (config.networking.hostName == "framework") ''
+  #           <key>service_mode</key>
+  #           <string>tunnelonly</string>
+  #         ''
+  #       }
+  #     </dict>
+  #   ''}"
+  # ];
 
-  # Cloudflare's Linux client cannot install the account Gateway CA on NixOS.
-  # Trust it system-wide so CLI tools can verify WARP-only HTTPS services.
-  security.pki.certificateFiles = [ ../../certificates/cloudflare-gateway-ca.pem ];
+  # # Cloudflare's Linux client cannot install the account Gateway CA on NixOS.
+  # # Trust it system-wide so CLI tools can verify WARP-only HTTPS services.
+  # security.pki.certificateFiles = [ ../../certificates/cloudflare-gateway-ca.pem ];
+  # Remove the old copied enrollment policy; recovery credentials are archived.
+  systemd.tmpfiles.rules = [ "r /var/lib/cloudflare-warp/mdm.xml" ];
+
   security.polkit.enable = true;
   # The setuid pkexec wrapper is opt-in since 2026-06. Every nixpkgs desktop
   # module (GNOME, XFCE, ...) turns it on; Hyprland has none, so GParted and

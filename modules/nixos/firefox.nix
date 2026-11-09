@@ -42,28 +42,29 @@ in
           Locked = true;
         };
 
-        Certificates = {
-          Install = [ ../../certificates/cloudflare-gateway-ca.pem ];
-        };
+        # Husk retired 2026-11-09; retained as a configuration reference.
+        #       Certificates = {
+        #         Install = [ ../../certificates/cloudflare-gateway-ca.pem ];
+        #       };
 
-        # The WARP-private Husk apps are resolved locally, by the split
-        # resolver in ../../modules/nixos/husk-dns.nix. Whenever Firefox has
-        # DNS-over-HTTPS on it bypasses the system resolver entirely, so those
-        # names would NXDOMAIN at Cloudflare's public resolver and the
-        # dashboards would break in Firefox only. Excluding the domain keeps
-        # DoH exactly as it is for everything else. Deliberately does not set
-        # Enabled: this is a carve-out, not a policy on whether to use DoH.
-        DNSOverHTTPS = {
-          ExcludedDomains = [ "husk-security.dev" ];
-        };
+        #       # The WARP-private Husk apps are resolved locally, by the split
+        #       # resolver in ../../modules/nixos/husk-dns.nix. Whenever Firefox has
+        #       # DNS-over-HTTPS on it bypasses the system resolver entirely, so those
+        #       # names would NXDOMAIN at Cloudflare's public resolver and the
+        #       # dashboards would break in Firefox only. Excluding the domain keeps
+        #       # DoH exactly as it is for everything else. Deliberately does not set
+        #       # Enabled: this is a carve-out, not a policy on whether to use DoH.
+        #       DNSOverHTTPS = {
+        #         ExcludedDomains = [ "husk-security.dev" ];
+        #       };
 
         # DisableTelemetry = true;
         # DisableFirefoxStudies = true;
         # EnableTrackingProtection = {
-        #   Value = true;
-        #   Locked = true;
-        #   Cryptomining = true;
-        #   Fingerprinting = true;
+        # Value = true;
+        # Locked = true;
+        # Cryptomining = true;
+        # Fingerprinting = true;
         # };
         # DisablePocket = true;
         # DisableFirefoxAccounts = true;
@@ -184,8 +185,8 @@ in
 
           # 1Password:
           # "{d634138d-c276-4fc8-924b-40a0ea21d284}" = {
-          #   install_url = "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager/latest.xpi";
-          #   installation_mode = "force_installed";
+          # install_url = "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager/latest.xpi";
+          # installation_mode = "force_installed";
           # };
         };
 
@@ -193,8 +194,8 @@ in
         # Check about:config for options.
         Preferences = {
           # "browser.contentblocking.category" = {
-          #   Value = "strict";
-          #   Status = "locked";
+          # Value = "strict";
+          # Status = "locked";
           # };
           # "extensions.pocket.enabled" = lock-false;
           # "extensions.screenshots.disabled" = lock-true;

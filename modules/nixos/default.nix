@@ -181,7 +181,7 @@
     # probe fails, warp never reaches Connected, and it cannot install the
     # resolver that would have answered. Without this the client is stuck at
     # "Connectivity check failed due to DNS Lookup Failed" forever.
-    settings.Resolve.ResolveUnicastSingleLabel = true;
+    # settings.Resolve.ResolveUnicastSingleLabel = true; # retired WARP workaround
   };
 
   nixpkgs.config.allowBroken = true;
