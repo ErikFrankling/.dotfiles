@@ -36,7 +36,7 @@ let
   hosts = [
     "pc"
     "framework"
-    "ablo" # work laptop (hosts/ablo)
+    "samsung-ablo" # work laptop (hosts/samsung-ablo)
   ];
   keepPerHost = 5;
   # `nix-nightly build` gives up on both hosts together after this long. Only

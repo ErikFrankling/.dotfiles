@@ -1,4 +1,4 @@
-# SOC 2 endpoint controls for the ablo work laptop. Only this host imports
+# SOC 2 endpoint controls for the samsung-ablo laptop. Only this host imports
 # it. Each control says how it is met and how to show it (README.md has the
 # evidence commands).
 #

@@ -1,4 +1,4 @@
-# ablo: work laptop
+# samsung-ablo: work laptop
 
 Samsung Galaxy Book6 Pro 14 (Intel Core Ultra 7 356H, Panther Lake), Erik's
 laptop for Ablo. NixOS, set up like `framework`, plus the SOC 2 endpoint
@@ -21,7 +21,7 @@ SOC 2 research: `~/projects/ablo/research/`.
 session on the pc.
 
 1. **Agent**: build the installer and write it to a stick.
-   `nix build --no-link --print-out-paths .#ablo-installer-iso`, then
+   `nix build --no-link --print-out-paths .#samsung-ablo-installer-iso`, then
    `sudo dd if=<iso> of=/dev/sdX bs=4M oflag=direct conv=fsync`.
 2. **Erik**, BIOS (F2 at the Samsung logo, or from Windows Shift+Restart >
    Troubleshoot > Advanced options > UEFI Firmware Settings):
@@ -31,12 +31,12 @@ session on the pc.
 3. **Erik**: network. Ethernet just works; for Wi-Fi run `nmtui`. The console
    shows the address.
 4. **Agent**: finds the installer on the LAN (port 22, hostname
-   `ablo-installer`), saves `nixos-generate-config --no-filesystems
+   `samsung-ablo-installer`), saves `nixos-generate-config --no-filesystems
    --show-hardware-config` as `hardware-configuration.nix`, commits, and runs
    from the pc:
 
    ```sh
-   nixos-anywhere --flake .#ablo --target-host root@<ip> \
+   nixos-anywhere --flake .#samsung-ablo --target-host root@<ip> \
      --disk-encryption-keys /tmp/disk.key <file with the LUKS passphrase> \
      --extra-files <dir> --chown /home/erikf 1000:100
    ```
@@ -61,7 +61,7 @@ session on the pc.
    If this BIOS has no way to clear the keys, Secure Boot stays off; LUKS
    still covers the disk-encryption control.
 8. **Vanta**: put the key from https://app.vanta.com/computers?tab=unmonitored
-   into sops (`sops hosts/ablo/secrets/secrets.yaml`, key `vanta-key`), add
+   into sops (`sops hosts/samsung-ablo/secrets/secrets.yaml`, key `vanta-key`), add
    `sops.secrets.vanta-key = { };` to `vanta.nix`, check `ownerEmail` there,
    rebuild. `sudo /var/vanta/vanta-cli status`.
 

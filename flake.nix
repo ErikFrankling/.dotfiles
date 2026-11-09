@@ -92,7 +92,7 @@
     };
 
     # Declarative partitioning; nixos-anywhere uses it to install a host
-    # (hosts/ablo/disko.nix: LUKS2 root).
+    # (hosts/samsung-ablo/disko.nix: LUKS2 root).
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -244,17 +244,17 @@
     {
       formatter.${system} = nixFormatter;
 
-      # USB installer for the ablo laptop (hosts/ablo/README.md):
-      # nix build --no-link --print-out-paths .#ablo-installer-iso
-      packages.${system}.ablo-installer-iso =
+      # USB installer for the samsung-ablo laptop (hosts/samsung-ablo/README.md):
+      # nix build --no-link --print-out-paths .#samsung-ablo-installer-iso
+      packages.${system}.samsung-ablo-installer-iso =
         (nixpkgs.lib.nixosSystem {
           modules = [
-            ./hosts/ablo/installer.nix
+            ./hosts/samsung-ablo/installer.nix
             { nixpkgs.hostPlatform = system; }
           ];
         }).config.system.build.isoImage;
 
-      nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" "wsl" "ablo" ] (
+      nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" "wsl" "samsung-ablo" ] (
         hostName:
         let
           username = "erikf";

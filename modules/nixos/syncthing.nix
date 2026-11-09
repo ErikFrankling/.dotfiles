@@ -56,8 +56,8 @@
         "wsl" = {
           id = "OQRWWW2-OXN5S6J-7NVS2NJ-O7LSPMD-EIAY3LF-PUP5TBQ-GHZT7OR-URCISQF";
         };
-        # Work laptop (hosts/ablo), identity in its sops file.
-        "ablo" = {
+        # Work laptop (hosts/samsung-ablo), identity in its sops file.
+        "samsung-ablo" = {
           id = "PZEQEKZ-5EMC4LL-MH5JCJT-UFSA25L-VEIYR3G-ZSGTCW6-BMOFJEJ-UB6BTQW";
         };
       };
@@ -72,7 +72,7 @@
             "pixel-10-pro"
             "pc"
             "wsl"
-            "ablo"
+            "samsung-ablo"
           ];
           versioning.type = "staggered";
           type = "sendreceive";
@@ -84,7 +84,7 @@
             "ubuntu-hp"
             "framework"
             "pc"
-            "ablo"
+            "samsung-ablo"
           ];
           versioning.type = "staggered";
           type = "sendreceive";
@@ -108,7 +108,7 @@
           devices = [
             "framework"
             "pc"
-            "ablo"
+            "samsung-ablo"
           ];
           type = "sendreceive";
         };

@@ -1,4 +1,4 @@
-# Whole-disk layout for the ablo laptop, applied by nixos-anywhere at install
+# Whole-disk layout for the samsung-ablo laptop, applied by nixos-anywhere at install
 # time (README.md). Everything but the EFI partition is LUKS2: the SOC 2
 # disk-encryption control. The passphrase is asked for at every boot.
 #

@@ -1,4 +1,4 @@
-# ablo: Erik's work laptop (Samsung Galaxy Book6 Pro 14, Intel Core Ultra 7
+# samsung-ablo: Erik's work laptop (Samsung Galaxy Book6 Pro 14, Intel Core Ultra 7
 # 356H "Panther Lake"). Set up like the framework, plus the SOC 2 controls in
 # soc2.nix. Install and first-boot steps: README.md in this folder.
 {
@@ -30,7 +30,7 @@
     inputs.batmon.nixosModules.default
   ];
 
-  networking.hostName = "ablo";
+  networking.hostName = "samsung-ablo";
 
   # Panther Lake (Xe3 graphics, BE211 Wi-Fi, SoundWire audio) wants a new
   # kernel; the LTS one is too old for parts of it.

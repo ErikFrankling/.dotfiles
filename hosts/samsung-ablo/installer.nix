@@ -1,7 +1,7 @@
-# USB installer for the ablo laptop: the stock NixOS minimal ISO plus what
+# USB installer for the samsung-ablo laptop: the stock NixOS minimal ISO plus what
 # lets an agent on the pc take over the moment it is on the network.
 #
-#   nix build --no-link --print-out-paths .#ablo-installer-iso
+#   nix build --no-link --print-out-paths .#samsung-ablo-installer-iso
 #
 # - root accepts the pc's SSH key, so nobody types a password;
 # - the newest kernel, so a 2026 laptop's NVMe, Wi-Fi and graphics work;
@@ -17,7 +17,7 @@
 {
   imports = [ (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix") ];
 
-  networking.hostName = "ablo-installer";
+  networking.hostName = "samsung-ablo-installer";
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
   # ZFS often lags the newest kernel and nothing here needs it.
@@ -34,7 +34,7 @@
   # Show the address on the console, in case the pc cannot find it.
   services.getty.helpLine = lib.mkAfter ''
 
-    ablo installer. Network: plug in Ethernet, or run `nmtui` for Wi-Fi.
+    samsung-ablo installer. Network: plug in Ethernet, or run `nmtui` for Wi-Fi.
     Addresses: \4
   '';
 

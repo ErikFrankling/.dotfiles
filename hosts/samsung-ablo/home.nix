@@ -20,7 +20,7 @@
   # local Alloy (queued on disk while away from home).
   services.time-agent-v2 = {
     enable = true;
-    device = "ablo";
+    device = "samsung-ablo";
   };
 
   # Nothing on the iGPU worth watching (same as the framework).

@@ -294,8 +294,8 @@
     # Pinned so unattended sessions (the morning systems check) can connect
     # in BatchMode without a first-contact prompt.
     knownHosts.framework.publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICZdbNRoE0KoFkRepeyTaxn/H0C84wlU/0zKguASTub5";
-    # Generated before install and placed by nixos-anywhere (hosts/ablo/README.md).
-    knownHosts.ablo.publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP5K5UIC0HoIp+45A4jKL/R6wWNqk0LIW+8ROmo+MBjD";
+    # Generated before install and placed by nixos-anywhere (hosts/samsung-ablo/README.md).
+    knownHosts.samsung-ablo.publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP5K5UIC0HoIp+45A4jKL/R6wWNqk0LIW+8ROmo+MBjD";
   };
 
   # Open ports in the firewall.
