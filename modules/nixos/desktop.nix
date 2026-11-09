@@ -55,6 +55,7 @@
     gparted
     gthumb
     vlc
+    slack
     xrdb
     # inputs.helium.packages.${pkgs.stdenv.hostPlatform.system}.default
     # Same Helium AppImage, re-wrapped so its bwrap sandbox can see the host's

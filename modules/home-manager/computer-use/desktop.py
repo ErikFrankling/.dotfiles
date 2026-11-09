@@ -101,7 +101,7 @@ def hypr_request(command):
 # and stays on the agent seat whatever its class.
 ERIK_APPS = re.compile(r"^(firefox|zen.*|thunderbird|spotify|webcord|discord|vesktop"
                        r"|md\.obsidian\.Obsidian|obsidian|helium|com\.t3tools\.T3Code"
-                       r"|signal|org\.telegram\.desktop|teams-for-linux|Slack)$", re.IGNORECASE)
+                       r"|signal|org\.telegram\.desktop|teams-for-linux|Slack|1Password)$", re.IGNORECASE)
 
 
 def erik_app(window):
