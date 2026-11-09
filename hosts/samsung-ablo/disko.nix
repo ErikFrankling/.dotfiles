@@ -1,3 +1,5 @@
+# NOT USED: Erik kept Windows (dual boot, 2026-11-09). Kept for reference;
+# configuration.nix has the import commented out.
 # Whole-disk layout for the samsung-ablo laptop, applied by nixos-anywhere at install
 # time (README.md). Everything but the EFI partition is LUKS2: the SOC 2
 # disk-encryption control. The passphrase is asked for at every boot.

@@ -26,11 +26,14 @@ in
     ../../modules/nixos/1password.nix
   ];
 
-  # --- Disk encryption: LUKS2 on everything but /boot (disko.nix). ---
+  # --- Disk encryption: NixOS lives on a LUKS2 partition (cryptroot,
+  # hardware-configuration.nix). Windows, on the same disk, has BitLocker. ---
   assertions = [
     {
-      assertion = config.boot.initrd.luks.devices ? cryptroot;
-      message = "soc2.nix: the root file system must be on LUKS (disko.nix).";
+      assertion =
+        config.boot.initrd.luks.devices ? cryptroot
+        && config.fileSystems."/".device == "/dev/mapper/cryptroot";
+      message = "soc2.nix: the root file system must be on the LUKS device cryptroot.";
     }
     {
       assertion = config.networking.firewall.enable;

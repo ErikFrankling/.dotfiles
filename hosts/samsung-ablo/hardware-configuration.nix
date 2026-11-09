@@ -29,4 +29,24 @@
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.intel.npu.enable = true;
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+
+  # Not generated: dual boot with Windows (README.md, step 4). NixOS is on a
+  # LUKS2 partition made in the space freed from Windows, named
+  # "samsung-ablo-luks" by sgdisk; /boot is Windows' EFI partition.
+  boot.initrd.luks.devices.cryptroot = {
+    device = "/dev/disk/by-partlabel/samsung-ablo-luks";
+    allowDiscards = true;
+  };
+  fileSystems."/" = {
+    device = "/dev/mapper/cryptroot";
+    fsType = "ext4";
+  };
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-uuid/2478-097F";
+    fsType = "vfat";
+    options = [
+      "fmask=0077"
+      "dmask=0077"
+    ];
+  };
 }

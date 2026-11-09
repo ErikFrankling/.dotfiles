@@ -15,8 +15,11 @@
 {
   imports = [
     ./hardware-configuration.nix
-    inputs.disko.nixosModules.disko
-    ./disko.nix
+    # Dual boot instead (Erik, 2026-11-09: keep Windows, ~200 GB, for testing
+    # Windows apps). The LUKS partition and file systems are in
+    # hardware-configuration.nix; README.md has the partitioning commands.
+    # inputs.disko.nixosModules.disko
+    # ./disko.nix # whole-disk layout that would wipe Windows
     ./soc2.nix
     ../../modules/nixos
     ../../modules/nixos/secure-boot.nix
@@ -38,6 +41,9 @@
 
   # Secure Boot through lanzaboote (modules/nixos/secure-boot.nix); keys are
   # in /var/lib/sbctl, enrolled after install (README.md).
+  # /boot is Windows' 800 MB EFI partition, shared; the boot menu lists
+  # Windows too. Each generation is a ~70 MB signed image, so keep few.
+  boot.lanzaboote.configurationLimit = 5;
   boot.loader.efi.canTouchEfiVariables = true;
 
   hardware.graphics.extraPackages = with pkgs; [
