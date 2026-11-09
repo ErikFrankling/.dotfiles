@@ -168,7 +168,12 @@ in
             --host 0.0.0.0 --port 8095 \
             --gpu-memory-utilization 0.5 --max-model-len 4096 --enforce-eager
           '';
-          cmdStop = "${docker} stop -t 15 higgs-tts";
+          # Gone within 3 s: llama-swap treats a model as stopped once its
+          # `docker run` client exits, and after a failed start it waits only
+          # 5 s before killing that client, which leaves the container (and
+          # its VRAM) running. With -t 15 a dying Higgs overlapped the final
+          # recogniser loading in its place: 19.8 GiB total (2026-11-09).
+          cmdStop = "${docker} stop -t 3 higgs-tts";
           proxy = "http://127.0.0.1:5811";
           checkEndpoint = "/health";
           aliases = [ "higgs" ];
@@ -360,7 +365,7 @@ in
             -v ${ttsDir}/cache/triton:/root/.triton \
             ${breezeImage} /model --host 0.0.0.0 --port 7860
           '';
-          cmdStop = "${docker} stop -t 15 breeze-tts-2";
+          cmdStop = "${docker} stop -t 3 breeze-tts-2"; # see higgs-tts
           proxy = "http://127.0.0.1:5810";
           checkEndpoint = "/health";
           ttl = 900;
