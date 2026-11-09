@@ -63,6 +63,77 @@ let
       echo "t3code: enabled the Grok and Cursor providers in $file"
     '';
   };
+  # The server is keep-old: a rebuild never restarts it, because a restart
+  # kills every running agent (the new server stops the old agent scopes),
+  # including background subagents of long sessions. On 2026-11-09 agents
+  # that had deployed fork changes restarted it by hand three times in two
+  # hours, each time killing 10-15 multi-hour Opus subagents of other threads.
+  # So the restart that puts a new build live is this unit's: activation
+  # queues it when the unit changed, and it restarts the server only once no
+  # agent is working. Agents cannot restart it themselves (the systemctl guard
+  # in modules/nixos/agent-priority). Erik restarts it whenever he likes.
+  t3codeMarkStarted = pkgs.writeShellScript "t3-code-mark-started" ''
+    ${pkgs.coreutils}/bin/readlink -f "$HOME/.config/systemd/user/t3code.service" >"$XDG_RUNTIME_DIR/t3code-running-unit" || true
+  '';
+  t3codeRestartWhenIdle = pkgs.writeShellApplication {
+    name = "t3code-restart-when-idle";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.findutils
+      pkgs.gawk
+      pkgs.sqlite
+      pkgs.systemd
+    ];
+    text = ''
+      unit_file="$HOME/.config/systemd/user/t3code.service"
+      stamp="$XDG_RUNTIME_DIR/t3code-running-unit"
+      db="$HOME/.t3/userdata/statev2.sqlite"
+      agents=/sys/fs/cgroup/user.slice/user-$(id -u).slice/user@$(id -u).service/app.slice/app-t3code.slice/app-t3code-agents.slice
+
+      pending() {
+        systemctl --user is-active --quiet t3code.service \
+          && [ "$(readlink -f "$unit_file")" != "$(cat "$stamp" 2>/dev/null)" ]
+      }
+      cpu_usec() { awk '$1 == "usage_usec" { print $2 }' "$agents/cpu.stat" 2>/dev/null || echo 0; }
+
+      # Busy when any of these holds; prints why.
+      busy() {
+        local runs recent used
+        # A T3 run (turn) that is queued, running or waiting on a request.
+        # One older than 12 hours is more likely stuck than working, and must
+        # not hold the restart forever; the checks below still see real work.
+        runs=$(sqlite3 -readonly "file:$db?mode=ro" \
+          "select count(*) from orchestration_v2_projection_runs where status in ('pending','running','waiting') and requested_at > strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-12 hours');" \
+          2>/dev/null || echo "?")
+        if [ "$runs" != 0 ]; then echo "$runs active T3 run(s)"; return 0; fi
+        # Background subagents keep working after their parent's turn ended;
+        # they write their transcripts on every step (a Bash call lasts at
+        # most 10 minutes).
+        recent=$(find "$HOME/.claude/projects" "$HOME/.codex/sessions" -name '*.jsonl' -mmin -10 2>/dev/null | head -1)
+        if [ -n "$recent" ]; then echo "agent transcript written in the last 10 minutes ($recent)"; return 0; fi
+        # Builds, tests and other long commands an agent left running.
+        used=$(( ($(cpu_usec) - cpu_before) / 1000000 ))
+        if [ "$used" -ge 15 ]; then echo "agents used $used s CPU in the last minute"; return 0; fi
+        return 1
+      }
+
+      last=""
+      while pending; do
+        cpu_before=$(cpu_usec)
+        sleep 60
+        pending || break
+        if reason=$(busy); then
+          [ "$reason" = "$last" ] || echo "Waiting: $reason"
+          last=$reason
+          continue
+        fi
+        echo "No agent is working; restarting t3code.service on the new build"
+        systemctl --user restart t3code.service
+        exit 0
+      done
+      echo "t3code.service already runs its current unit; nothing to do"
+    '';
+  };
   # Runs as ExecStop of t3code.service, i.e. only when systemd is stopping the
   # unit (systemctl stop/restart, t3 doctor, a reboot). Tells health-watch and
   # Alertmanager that the outage is expected so no repair session starts for
@@ -234,10 +305,11 @@ in
 
   systemd.user.services.t3code = {
     Unit.Description = "T3 Code web server";
-    # Rebuilds update CLI dependencies too. Restarting this server interrupts
-    # every active agent turn; apply updates on the next deliberate restart.
-    # In particular, rebuilding the MCP adapter patch does not repair live
-    # Codex sessions. See research/t3code-executor-activation.md.
+    # Rebuilds update CLI dependencies too. Restarting this server kills
+    # every running agent; t3code-restart-when-idle (below) applies an update
+    # once no agent is working. In particular, rebuilding the MCP adapter
+    # patch does not repair live Codex sessions. See
+    # research/t3code-executor-activation.md.
     Unit.X-SwitchMethod = "keep-old";
     # Tells `t3 service status` / `t3 doctor` that Nix owns this unit, so t3
     # reports it healthy instead of trying to re-render it (fork: bootService.ts).
@@ -247,6 +319,9 @@ in
       ExecStartPre = [
         "${t3WaitForClock}"
         "${t3CodexPrepare}"
+        # Records which unit file this server started from, so
+        # t3code-restart-when-idle knows whether a newer one waits.
+        "-${t3codeMarkStarted}"
       ];
       ExecStart = "${pkgs.t3code}/bin/t3 serve --host 0.0.0.0 --port 3773";
       # Marks every deliberate stop as expected for health-watch/Alertmanager.
@@ -283,6 +358,28 @@ in
 
     Install.WantedBy = [ "default.target" ];
   };
+
+  systemd.user.services.t3code-restart-when-idle = {
+    Unit.Description = "Restart T3 Code on its new build once no agent is working";
+    # Activation must not restart this one either: it would lose its wait.
+    Unit.X-SwitchMethod = "keep-old";
+    Service = {
+      Type = "oneshot";
+      ExecStart = lib.getExe t3codeRestartWhenIdle;
+      TimeoutStartSec = "infinity";
+    };
+  };
+
+  # After a rebuild changed t3code.service, queue the idle restart. A running
+  # instance keeps waiting and restarts onto whatever the unit is by then.
+  home.activation.t3codeRestartWhenIdle = lib.hm.dag.entryAfter [ "reloadSystemd" ] ''
+    export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+    if [ "$(${pkgs.coreutils}/bin/readlink -f "$HOME/.config/systemd/user/t3code.service")" \
+      != "$(cat "$XDG_RUNTIME_DIR/t3code-running-unit" 2>/dev/null)" ]; then
+      echo "t3code.service changed; it restarts once no agent is working (journalctl --user -u t3code-restart-when-idle)"
+      run ${pkgs.systemd}/bin/systemctl --user start --no-block t3code-restart-when-idle.service || true
+    fi
+  '';
 
   home.activation.t3codeEnableProviders = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     run ${lib.getExe t3EnableProviders}

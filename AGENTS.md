@@ -20,6 +20,20 @@ Erik (2026-10-31): "need better ways to know they don't spawn on my screen". The
 
 `window-origin` answers who opened a window (`window-origin ADDRESS`, `--class REGEX`, `--erik`, `--agents`, `--escapes`; log in `~/.local/state/window-origin/`, never with titles). An agent window that still ends up on his monitors is sent back and he gets a notification naming the thread (`window-origin alert --test --dry-run` exercises it without sending). `health-watch` reports the plugin missing as `local/agent-windows-plugin`. Known gaps: an agent calling a systemd-run or other launcher by its store path to get out of the shadowed names, starting an existing user service, or asking a D-Bus service or portal to launch something: those run outside the agent's tree and cannot be told from Erik's launches.
 
+## Hard rule: agents never restart T3 Code (Erik, 2026-11-09)
+
+A restart of `t3code.service` kills every running agent of every thread,
+background subagents included; on 2026-11-09 three hand restarts after fork
+deploys killed 10-15 multi-hour subagents each. Agents never stop or restart
+it (`systemctl`, `systemd-run ... systemctl`, `t3 service restart`,
+`t3 doctor`); the agent `systemctl` guard (`modules/nixos/agent-priority`)
+refuses it. A rebuild that changes the server queues
+`t3code-restart-when-idle.service` (`hosts/pc/home.nix`), which restarts it
+once no T3 run is active, no agent transcript was written for 10 minutes and
+the agent slice is idle. Your own turn counts, so a fork change goes live after
+you finish: report it as queued (`journalctl --user -u
+t3code-restart-when-idle` says why it waits), never as a reason to restart.
+
 ## Hard rule: use what exists, don't wrap it (Erik, 2026-11-06)
 
 Erik: "stop overcomplicating ... if someone else has packaged something for

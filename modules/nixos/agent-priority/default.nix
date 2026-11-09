@@ -15,6 +15,7 @@
 #   bandwidth caps, and systemd-oomd.
 # - `systemd-run --user` from an agent stays in the agent slice (wrapper).
 # - `xdg-open` from an agent opens the agent's Chromium (wrapper).
+# - `systemctl` from an agent cannot stop or restart t3code.service (wrapper).
 # - `nix` from an agent serializes whole-system evaluations under one lock;
 #   `rebuild` (nixos-remote-switch) adds deploy guards, evaluates here and
 #   activates (`--remote`: on the builder). The nix daemon builds at idle
@@ -66,6 +67,38 @@ let
       # Code stops that one when its server restarts, which killed the
       # nightly's build on 2026-10-23. Same caps (app-t3code.slice).
       exec ${realSystemdRun} --slice=app-t3code-jobs.slice --nice=10 --property=OOMScoreAdjust=1000 "$@"
+    ''
+  );
+
+  # Shadows systemctl: agents may not stop or restart the T3 Code server. A
+  # restart kills every running agent of every thread, background subagents
+  # included (2026-11-09: three hand restarts after fork deploys in two hours
+  # killed 10-15 multi-hour subagents each time). The server goes onto a new
+  # build through t3code-restart-when-idle (hosts/pc/home.nix). Matches the
+  # agent and job slices, so `systemd-run ... systemctl` and `t3 service
+  # restart`/`t3 doctor` from an agent are caught too; Erik's T3 terminals and
+  # everything outside app-t3code.slice get the real systemctl.
+  agentSystemctl = lib.hiPrio (
+    pkgs.writeShellScriptBin "systemctl" ''
+      real=${config.systemd.package}/bin/systemctl
+      case "$(cat /proc/self/cgroup 2>/dev/null)" in
+        */t3code-terminal-*) exec "$real" "$@" ;;
+        */app-t3code.slice/*) ;;
+        *) exec "$real" "$@" ;;
+      esac
+      verb="" t3=0
+      for arg in "$@"; do
+        case "$arg" in
+          stop | restart | try-restart | reload-or-restart | try-reload-or-restart | kill | freeze | disable | mask | isolate) verb=$arg ;;
+          t3code | t3code.service) t3=1 ;;
+        esac
+      done
+      if [ -n "$verb" ] && [ "$t3" = 1 ]; then
+        echo "systemctl (agent guard): agents may not $verb t3code.service: it kills every running agent, background subagents of other threads included (Erik, 2026-11-09)." >&2
+        echo "A rebuild that changes the server queues t3code-restart-when-idle.service, which restarts it once no agent is working; your own turn counts, so it happens after you finish. Queue it by hand: systemctl --user start --no-block t3code-restart-when-idle.service. Why it waits: journalctl --user -u t3code-restart-when-idle." >&2
+        exit 1
+      fi
+      exec "$real" "$@"
     ''
   );
 
@@ -192,6 +225,7 @@ in
       {
         environment.systemPackages = [
           agentSystemdRun
+          agentSystemctl
           agentXdgOpen
           agentNix
           (agentRebuild "nh" (lib.getExe config.programs.nh.package))

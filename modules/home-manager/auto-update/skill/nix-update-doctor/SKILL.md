@@ -224,9 +224,10 @@ ask about that."
   nix-update-doctor skill to the end. No human attends this job and none
   ever will: never ask a human anything and never stop because the work is
   unattended or large. You may rewrite and force-push erik/main (the backup
-  tag stays), change and push the dotfiles, build on the homelab, restart T3
-  Code (an expected restart) and publish the phone build or OTA. Notify Erik
-  only with the result." Then end this session; the follow-up owns the job.
+  tag stays), change and push the dotfiles, build on the homelab, rebuild
+  (T3 Code then restarts by itself once no agent is working; never restart
+  it by hand) and publish the phone build or OTA. Notify Erik only with the
+  result." Then end this session; the follow-up owns the job.
 
 The rebase is a session of its own at 04:00 (`t3code-fork.timer`), in its own
 dotfiles clone (`~/.local/state/t3code-fork/dotfiles`), never part of the
