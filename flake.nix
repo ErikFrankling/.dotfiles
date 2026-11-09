@@ -91,6 +91,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Declarative partitioning; nixos-anywhere uses it to install a host
+    # (hosts/ablo/disko.nix: LUKS2 root).
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
+
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";
       # IMPORTANT: we're using "libgbm" and is only available in unstable so ensure
@@ -239,7 +244,17 @@
     {
       formatter.${system} = nixFormatter;
 
-      nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" "wsl" ] (
+      # USB installer for the ablo laptop (hosts/ablo/README.md):
+      # nix build --no-link --print-out-paths .#ablo-installer-iso
+      packages.${system}.ablo-installer-iso =
+        (nixpkgs.lib.nixosSystem {
+          modules = [
+            ./hosts/ablo/installer.nix
+            { nixpkgs.hostPlatform = system; }
+          ];
+        }).config.system.build.isoImage;
+
+      nixosConfigurations = nixpkgs.lib.genAttrs [ "vm" "pc" "framework" "wsl" "ablo" ] (
         hostName:
         let
           username = "erikf";

@@ -1,0 +1,77 @@
+{
+  inputs,
+  ...
+}:
+
+{
+  imports = [
+    ../../modules/home-manager
+    ../../modules/home-manager/desktop.nix
+    ../../modules/home-manager/print
+    ../../modules/home-manager/auto-update
+    ../../modules/home-manager/machines
+    ../../modules/home-manager/notify # phone notifications skill
+    ../../modules/home-manager/bro
+    ../../modules/home-manager/speak # `speak` tool: refuses here (PC speakers only)
+    inputs.time.homeManagerModules.agent-v2
+  ];
+
+  # Time v2: screen, input, lid, lock, battery and Wi-Fi each minute, to the
+  # local Alloy (queued on disk while away from home).
+  services.time-agent-v2 = {
+    enable = true;
+    device = "ablo";
+  };
+
+  # Nothing on the iGPU worth watching (same as the framework).
+  programs.erikshell.metrics.gpu = false;
+
+  hyprland = {
+    keyboards = [
+      {
+        name = "erik-frankling-dactyl_manuform_5x6_64";
+        kb_layout = "us, se";
+        multilang = true;
+      }
+      {
+        name = "at-translated-set-2-keyboard";
+        kb_layout = "us, se";
+        multilang = true;
+      }
+    ];
+    monitors = [
+      {
+        name = "eDP-1";
+        width = 2880;
+        height = 1800;
+        scale = "2";
+        refreshRate = 120;
+        x = 0;
+        y = 0;
+      }
+    ];
+
+    initWindows = [
+      {
+        exec = "kitty";
+        monitor = "eDP-1";
+        workspace = 1;
+      }
+      {
+        exec = "kitty";
+        monitor = "eDP-1";
+        workspace = 2;
+      }
+      {
+        exec = "firefox";
+        monitor = "eDP-1";
+        workspace = 3;
+      }
+      {
+        exec = "obsidian";
+        monitor = "eDP-1";
+        workspace = 4;
+      }
+    ];
+  };
+}
