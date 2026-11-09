@@ -410,6 +410,18 @@ in
     # `below replay -t "10 min ago"` is top/htop scrolled back in time, with
     # the cgroup tree (T3 thread scopes, apps) and every process. Also records
     # processes that lived between two samples (eBPF exit stats).
+    # nix-update-doctor: 2026-11-09 nixpkgs f4a03c0 builds below 0.11.0
+    # without zstd in buildInputs, so zstd-sys cannot find libzstd via
+    # pkg-config (the services.below module has no package option).
+    # Remove once nixpkgs adds zstd to pkgs/by-name/be/below/package.nix.
+    nixpkgs.overlays = [
+      (final: prev: {
+        below = prev.below.overrideAttrs (old: {
+          buildInputs = (old.buildInputs or [ ]) ++ [ final.zstd ];
+        });
+      })
+    ];
+
     services.below = {
       enable = true;
       compression.enable = true;
