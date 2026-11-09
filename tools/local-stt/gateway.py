@@ -82,10 +82,11 @@ async def llama_swap_running(client):
 
 
 async def unload(client, model):
-    """Restart one of dictation's own recognisers after it stopped answering.
+    """Restart one of dictation's own recognisers after it stopped answering,
+    or take back the GPU lent to IDLE_WARM_MODEL before it finished loading.
 
-    Never used to make room: llama-swap does that, and only with idle models.
-    Stopping a model this way fails the requests it is serving.
+    Never used to make room otherwise: llama-swap does that, and only with
+    idle models. Stopping a model this way fails the requests it is serving.
     """
     try:
         async with client.post(f"{LLAMA_SWAP}/api/models/unload/{model}",
@@ -122,6 +123,24 @@ async def warm_idle_model(client):
         return
     log("worker.idle_warm", model=IDLE_WARM_MODEL)
     await warm(IDLE_WARM_MODEL, client)
+
+
+async def take_back_and_warm_final(client):
+    """A recording started: load the final recogniser while Erik talks.
+
+    llama-swap makes a request wait while the model it would unload is still
+    starting, and the big voice takes minutes to start. Lent while dictation
+    was idle and not ready yet, it serves nobody: stop it, so the recording
+    does not wait for that load to finish.
+    """
+    if IDLE_WARM_MODEL:
+        try:
+            if (await llama_swap_running(client)).get(IDLE_WARM_MODEL) == "starting":
+                log("worker.take_back", worker=IDLE_WARM_MODEL)
+                await unload(client, IDLE_WARM_MODEL)
+        except (OSError, asyncio.TimeoutError, ValueError) as error:
+            log("worker.take_back_failed", error=str(error))
+    await warm(FINAL_MODEL, client)
 
 
 async def idle_lender(client):
@@ -654,7 +673,7 @@ async def action(request):
         sessions[identifier] = state
         save(state)
         ensure_preview(state, request.app["client"])
-        spawn(warm(FINAL_MODEL, request.app["client"]))
+        spawn(take_back_and_warm_final(request.app["client"]))
         return web.json_response(result(state))
     state = sessions.get(data.get("id"))
     if state is None or state["owner"] != owner:

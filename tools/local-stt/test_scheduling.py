@@ -47,6 +47,9 @@ async def backend():
             f.write(json.dumps(dict(model=name, kind=kind, time=time.monotonic(), pid=os.getpid(), **fields)) + "\n")
 
     event("start")
+    slow = root / f"{name}.slow"
+    if slow.exists():  # a model that takes this many seconds to load
+        await asyncio.sleep(float(slow.read_text()))
 
     async def realtime(request):
         # Nemotron's realtime protocol, as far as the gateway uses it.
@@ -332,6 +335,24 @@ class GatewayTests(Harness):
         state = await self.finish(recording)
         self.assertTrue(state["final"])
         self.assertEqual(await self.running(), {"dictation-preview", "read-aloud-summary", "dictation-final"})
+
+    async def test_recording_takes_back_the_gpu_lent_to_a_voice_still_loading(self):
+        (self.root / "higgs-tts.slow").write_text("20")
+        lend = self.launch("higgs-tts", "/v1/models")  # what the idle lender sends
+
+        async def loading():
+            return "higgs-tts" in await self.running("starting")
+        await self.until(loading, "voice did not start loading")
+        began = time.monotonic()
+        recording = await self.record(seconds=2)
+
+        async def final_ready():
+            return "dictation-final" in await self.running()
+        await self.until(final_ready, "final recogniser waited for the voice", seconds=8)
+        self.assertLess(time.monotonic() - began, 8)
+        self.assertNotIn("higgs-tts", await self.running(None))
+        self.assertNotEqual(await lend, 200)  # the lender's own request, nobody else's
+        self.assertTrue((await self.finish(recording))["final"])
 
     async def test_a_recording_that_waits_behind_a_long_llm_job_still_completes(self):
         await self.load("qwen3.8-27b")
