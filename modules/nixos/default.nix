@@ -287,7 +287,7 @@
       Host proxmox
         Hostname 192.168.50.10
         User root
-      Host naiaclaw
+      Host k8s naiaclaw
         Hostname 192.168.50.100
         User ubuntu
     ";

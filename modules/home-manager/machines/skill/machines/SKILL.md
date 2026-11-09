@@ -10,15 +10,15 @@ description: Erik's machines, how they connect, and how much load each can take.
 | **pc** | Erik's desktop: Ryzen 7 7800X3D, 16 threads, 30 GB RAM, RX 7900 XT 20 GB. LAN `192.168.50.232`. Runs Hyprland, his browsers, T3 Code (port 3773) and every agent session. | You are usually on it |
 | **framework** | Erik's laptop, NixOS. Often asleep, off or away. | `ssh framework` (through the Proxmox Tailscale node; fails when asleep) |
 | **proxmox** | Hypervisor, i7-6700K, 8 threads, 62 GB RAM. Runs the Tailscale subnet router for `192.168.50.0/24`. | `ssh proxmox` (root) |
-| **naiaclaw** | VM 200 on proxmox: the k3s node for the homelab, 8 threads, 52 GB RAM, no swap. VIP `192.168.50.100`. | `ssh naiaclaw`, then `sudo kubectl ...` |
-| **nix-builder** | A pod on naiaclaw: Nix build server and binary cache (`https://nix-cache.erikfrankling.duckdns.org`). | `ssh nix-builder`; builds with `nix build --store ssh-ng://root@192.168.50.100:2222` |
+| **k8s** | VM 200 on proxmox: the k3s node for the homelab (Kubernetes node name `naiaclaw`), 8 threads, 52 GB RAM, no swap. `192.168.50.100`. | `ssh k8s`, then `sudo kubectl ...` |
+| **nix-builder** | A pod on k8s: Nix build server and binary cache (`https://nix-cache.erikfrankling.duckdns.org`). | `ssh nix-builder`; builds with `nix build --store ssh-ng://root@192.168.50.100:2222` |
 
 - Erik's phone and the laptop away from home reach the LAN over Tailscale.
 - The homelab is configured in the homelab repo (`~/projects/personal/homelab`) and applied by Flux. The NixOS machines are configured in `~/.dotfiles`.
-- naiaclaw is often CPU-saturated. No pod requests CPU (a Kyverno policy
+- k8s is often CPU-saturated. No pod requests CPU (a Kyverno policy
   zeroes requests, so CPU never blocks scheduling). The homelab
   `cpu-priority` DaemonSet gives the nix-builder `cpu.weight` 10000 and runs
-  Onyx indexing, sandboxes and `heavy` jobs at `cpu.idle`, so the nightly
+  Onyx indexing and `heavy` jobs at `cpu.idle`, so the nightly
   build goes first.
 - Do not start VM 100 on proxmox (its address collides with the k3s VIP). Never reboot or power off any machine.
 

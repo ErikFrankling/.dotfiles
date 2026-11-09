@@ -780,7 +780,7 @@ let
           echo "homelab main: ''${hl:0:8}"
           # Deliberately expanded remotely.
           # shellcheck disable=SC2016
-          timeout 120 ssh -o BatchMode=yes naiaclaw '
+          timeout 120 ssh -o BatchMode=yes k8s '
             k() { sudo kubectl "$@"; }
             echo "flux: suspended=$(k -n homelab get kustomization homelab -o jsonpath="{.spec.suspend}")" \
               "applied=$(k -n homelab get kustomization homelab -o jsonpath="{.status.lastAppliedRevision}")" \
@@ -790,14 +790,14 @@ let
             k get deploy -A --no-headers | awk "{split(\$3,a,\"/\"); if (a[1]!=a[2]) print \"  \" \$1 \"/\" \$2 \" \" \$3}"
             echo "pods not running (by namespace):"
             k get pods -A --no-headers | grep -vE " (Running|Completed) " | awk "{print \"  \" \$1, \$2, \$4}"
-            echo "naiaclaw disk /: $(df -h --output=avail,pcent / | tail -n 1 | xargs); memory available: $(free -h | awk "/Mem:/ {print \$7}")"
-          ' 2>&1 | quiet || echo "naiaclaw: UNREACHABLE"
+            echo "k8s disk /: $(df -h --output=avail,pcent / | tail -n 1 | xargs); memory available: $(free -h | awk "/Mem:/ {print \$7}")"
+          ' 2>&1 | quiet || echo "k8s: UNREACHABLE"
           # shellcheck disable=SC2016
           timeout 60 ssh -o BatchMode=yes proxmox '
             echo "proxmox: up $(uptime -p | sed "s/up //"), memory available $(free -h | awk "/Mem:/ {print \$7}")"
             qm list | awk "NR>1 {print \"  vm\", \$1, \$2, \$3}"
           ' 2>&1 | quiet || echo "proxmox: UNREACHABLE"
-          echo "homelab main applied: $(timeout 60 ssh -o BatchMode=yes naiaclaw 'sudo kubectl -n homelab get kustomization homelab -o jsonpath={.status.lastAppliedRevision}' 2>/dev/null | grep -q "$hl" && echo yes || echo NO)"
+          echo "homelab main applied: $(timeout 60 ssh -o BatchMode=yes k8s 'sudo kubectl -n homelab get kustomization homelab -o jsonpath={.status.lastAppliedRevision}' 2>/dev/null | grep -q "$hl" && echo yes || echo NO)"
           if curl -fsS --max-time 15 -o /dev/null ${cacheUrl}/nix-cache-info; then
             echo "nix cache: answering"
           else

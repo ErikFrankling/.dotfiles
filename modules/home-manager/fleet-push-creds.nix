@@ -1,5 +1,5 @@
 # fleet-push-creds: keeps the provider keys in Fleet's Bifrost (namespace fleet on
-# naiaclaw, repo ~/projects/fleet, deploy/push-creds.sh) current, and reports the
+# k8s, repo ~/projects/fleet, deploy/push-creds.sh) current, and reports the
 # plans' usage to Fleet's control.
 #
 # It reads the access tokens from ~/.codex/auth.json and ~/.grok/auth.json and the

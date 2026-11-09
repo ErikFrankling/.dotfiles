@@ -25,7 +25,7 @@ repair all three systems, within the limits below.
   `~/projects/personal/homelab`); they may hold work in progress.
 - `ssh framework` reaches the laptop through the Proxmox host's Tailscale
   node, at home or away. It fails when the laptop is asleep or off.
-- `ssh naiaclaw` is the k3s VM (`sudo kubectl ...`), `ssh proxmox` the
+- `ssh k8s` is the k3s VM (`sudo kubectl ...`), `ssh proxmox` the
   hypervisor (root), `ssh nix-builder` the build server / binary cache.
 - Read `AGENTS.md` in both repos before changing either. Nightly state:
   `~/.local/state/nix-nightly/` and the nightly thread in T3 Code.
@@ -142,7 +142,7 @@ Where to look:
   query is in its rule file.
 - Alertmanager: `curl -s 'https://alertmanager.erikfrankling.duckdns.org/api/v2/alerts?active=true' | jq`.
 - On the machine itself: `journalctl` (`--user -u` for user units),
-  `ssh naiaclaw 'sudo kubectl ...'`.
+  `ssh k8s 'sudo kubectl ...'`.
 
 1. Read the incident log at the end of this file and
    `~/.local/state/health-watch/incidents.log`. The same fault may have
@@ -245,9 +245,6 @@ running, VM 100 stopped; disk and memory not near full on the VM and the host.
 - Pods in `Error`/`ContainerStatusUnknown` that belong to a ReplicaSet or Job
   which has since succeeded are leftovers; deleting `status.phase=Failed`
   pods is safe. A pod failing *now* is a real fault: read its logs.
-- The `naiaclaw-system`, `p9` and `nc-*` namespaces are Erik's other
-  projects, not homelab infrastructure. Report their failures in one line;
-  do not repair them.
 - Low free memory on the Proxmox host (~0.5 GB) is normal and by design:
   VM 200 has a fixed 52 GB of the host's 62 GB and nothing else runs there.
   Do not mention it. Only report host memory with evidence of real pressure
@@ -290,9 +287,8 @@ Fixed: Flux was suspended since Aug 21; resumed it at homelab main.
 ```
 
 Other examples of lines: `PC: restart when convenient, new kernel 6.18.55`,
-`Framework: asleep since 22:10, updates on next wake`, `Homelab: naiaclaw
-event-sweep failing (not homelab, left alone)`. No paths, no hashes beyond the
-short rev, no log excerpts; the thread has the details.
+`Framework: asleep since 22:10, updates on next wake`. No paths, no hashes
+beyond the short rev, no log excerpts; the thread has the details.
 
 ## Incident log
 
