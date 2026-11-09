@@ -12,33 +12,20 @@ let
   # llama-cpp = pkgs.llama-cpp-rocm;
   # llama-cpp = llama-cpp-vulkan;
 
-  # Every GPU model here first asks the dictation gateway (local-stt) to unload
-  # its idle 10 GB final recogniser, so one GPU workload runs at a time: the
-  # request that just arrived wins over whatever sat idle. Harmless if
-  # local-stt is busy or not running.
-  releaseStt = pkgs.writeShellScript "release-stt-gpu" ''
-    ${pkgs.curl}/bin/curl -s -m 20 -X POST http://127.0.0.1:8781/release-gpu || true
-    exec "$@"
-  '';
-
-  # Starts the command only if this much GPU memory is free (after releaseStt).
-  # releaseStt is refused while a recording is active, and starting anyway
-  # stacked Higgs on the busy recogniser: 20.9 GB total, dictation's memory
-  # guard killed its own worker (2026-10-18). Failing the request is better.
-  gpuRoom = pkgs.writeShellScript "gpu-room" ''
-    need=$(( $1 * 1024 * 1024 * 1024 )); shift
-    for _ in $(seq 1 20); do
-      free=0
-      for used in /sys/class/drm/card*/device/mem_info_vram_used; do
-        total=$(cat "''${used%_used}_total")
-        [ "$total" -gt $(( 4 * 1024 * 1024 * 1024 )) ] && free=$(( total - $(cat "$used") ))
-      done
-      [ "$free" -ge "$need" ] && exec "$@"
-      sleep 0.5
-    done
-    echo "gpu-room: only $(( free / 1024 / 1024 )) MiB GPU memory free (dictation busy?), not starting" >&2
-    exit 1
-  '';
+  # One scheduler for the whole GPU (Erik, 2026-11-09): llama-swap runs every
+  # model on it, dictation's two recognisers included (modules/nixos/local-stt.nix).
+  # Each model declares the VRAM it needs at its peak (MiB); any set that fits
+  # the pool may stay loaded together. Loading a model unloads idle ones until
+  # it fits, never one that is still answering a request: a request waits in
+  # the queue instead (speech first). The pool is the 7900 XT's 20464 MiB minus
+  # ~4 GiB for the desktop (measured 3.4 GiB, 2026-11-09). Earlier this was a
+  # group plus wrapper scripts that asked local-stt to unload and checked free
+  # VRAM, with local-stt unloading llama-swap's models in turn; the two
+  # managers raced and force-unloaded busy models.
+  # Design and scheduler tests: research/llama-swap/2026-11-07.
+  vramPool = 16384;
+  # The big LLMs fill the card, so they run with only the live recogniser.
+  bigLlm = vramPool - 1280;
 
   # Breeze TTS 2 (BreezeBlue, #1 open-weight TTS on the Artificial Analysis
   # arena, Sep 2026). Upstream only ships CUDA; this runs its eager PyTorch path
@@ -97,24 +84,29 @@ in
       healthCheckTimeout = 300;
       logLevel = "debug";
       startPort = 5800;
+      # No request/response captures: they would keep dictation transcripts
+      # and read-aloud texts in memory, readable in the UI from the whole LAN.
+      captureBuffer = 0;
 
-      # Read-aloud in T3 Code: the summary model stays loaded beside dictation
-      # (3.3 GiB), and the big voice joins it while dictation is idle (the
-      # speech gateway lends the GPU after 30 minutes; see local-stt.nix).
-      # swap = false lets both run together; exclusive = true unloads the big
-      # LLMs when either starts, and loading a big LLM unloads both.
+      routing = {
+        router = {
+          use = "capacity";
+          settings.capacity.pools.vram = vramPool;
+        };
+        scheduler = {
+          use = "fifo";
+          # Interactive read-aloud before background LLM work in the queue
+          # (dictation is 100, local-stt.nix).
+          settings.fifo.priority = {
+            "read-aloud-summary" = 50;
+            "higgs-tts" = 50;
+          };
+        };
+      };
+
       # Loaded at startup, so the first read-aloud after a restart or rebuild
       # does not wait ~20 s for the summary model.
       hooks.on_startup.preload = [ "read-aloud-summary" ];
-
-      groups."read-aloud" = {
-        swap = false;
-        exclusive = true;
-        members = [
-          "read-aloud-summary"
-          "higgs-tts"
-        ];
-      };
 
       models = {
         "read-aloud-summary" = {
@@ -123,7 +115,9 @@ in
 
           # Erik's pick from the 2026-10-18 taste test. The 5 GB file loads
           # to 3.3 GiB of VRAM, so it fits beside dictation and stays loaded
-          # (no ttl). No releaseStt: it must never unload dictation.
+          # (no ttl).
+          capacities.vram = 3456;
+          evict_cost = 50;
           cmd = ''
             ${llama-cpp}/bin/llama-server \
             --port 5807 \
@@ -145,10 +139,12 @@ in
           name = "Higgs TTS 3 4B (text-to-speech)";
           description = "Boson AI Higgs TTS 3 on vLLM-Omni (ROCm, Docker) — OpenAI POST /upstream/higgs-tts/v1/audio/speech, voice \"erik\"";
 
-          # ~10.6 GiB at --gpu-memory-utilization 0.5 (weights + 1.8 GiB KV).
-          # With the summary model and the desktop that is ~17.5 GiB total.
-          # releaseStt unloads dictation's final recogniser first; dictation
-          # in turn unloads this model when it needs the room back.
+          # ~10.6 GiB at --gpu-memory-utilization 0.5 (weights + 1.8 GiB KV),
+          # a share of the whole card that vLLM checks is free at startup.
+          # Fits beside the summary model and the live recogniser, not beside
+          # the final one: whichever of the two is idle makes room.
+          capacities.vram = 10880;
+          evict_cost = 10;
           #
           # Voices: uploads persist in ${ttsDir}/voices/higgs-speakers and are
           # restored at startup. "erik" is the voice Erik picked (cut from a
@@ -158,7 +154,7 @@ in
           #     -F consent=true -F "ref_text=$(cat ${ttsDir}/voices/erik.txt)"
           # Speed: the request's "speed" field (1.0 = model pace).
           cmd = ''
-            ${releaseStt} ${gpuRoom} 11 ${docker} run --rm --name higgs-tts \
+            ${docker} run --rm --name higgs-tts \
             --device /dev/kfd --device /dev/dri --security-opt seccomp=unconfined \
             --ipc=host -p 127.0.0.1:5811:8095 \
             -v ${ttsDir}/higgs-tts-3-4b:/model:ro \
@@ -197,7 +193,7 @@ in
           # two 32k slots, so a 60-minute screenshot batch fits one slot.
           # IQ4_XS full offload @ 4096 measured 19.9GB (crash band).
           cmd = ''
-            ${releaseStt} ${llama-cpp}/bin/llama-server \
+            ${llama-cpp}/bin/llama-server \
             --port 5806 \
             --model /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q3_K_XL.gguf \
             --mmproj /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.8-27B-GGUF/mmproj-F16.gguf \
@@ -222,6 +218,8 @@ in
 
           proxy = "http://127.0.0.1:5806";
           ttl = 10800;
+          capacities.vram = bigLlm;
+          evict_cost = 30;
           # Server-side sampling enforcement. llama-server lets request-body
           # params silently override CLI flags, and greedy decoding
           # (temperature 0) is a documented endless-repetition failure mode
@@ -246,7 +244,7 @@ in
           description = "Qwen3.5 27B with Unsloth IQ4_NL quantization";
 
           cmd = ''
-            ${releaseStt} ${llama-cpp}/bin/llama-server \
+            ${llama-cpp}/bin/llama-server \
             --port 5800 \
             --model /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-IQ4_NL.gguf \
             --n-gpu-layers 999 \
@@ -266,6 +264,8 @@ in
 
           proxy = "http://127.0.0.1:5800";
           ttl = 10800;
+          capacities.vram = bigLlm;
+          evict_cost = 30;
           aliases = [
             "qwen"
             "qwen3.5"
@@ -278,7 +278,7 @@ in
 
           # --model /mnt/data/ai-models/llama-cpp/models/mradermacher/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-i1-GGUF/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled.i1-IQ4_XS.gguf \
           cmd = ''
-            ${releaseStt} ${llama-cpp}/bin/llama-server \
+            ${llama-cpp}/bin/llama-server \
             --port 5802 \
             --model /mnt/data/ai-models/llama-cpp/models/mradermacher/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-i1-GGUF/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled-heretic-v2.i1-Q4_K_S.gguf \
             --n-gpu-layers 999 \
@@ -298,6 +298,8 @@ in
 
           proxy = "http://127.0.0.1:5802";
           ttl = 10800;
+          capacities.vram = bigLlm;
+          evict_cost = 30;
           aliases = [
             "opus"
             "qwopus"
@@ -309,7 +311,7 @@ in
           description = "Qwen3.5-35B-A3B MoE with Unsloth UD-IQ4_NL (17.8GB) - 3B active params";
 
           cmd = ''
-            ${releaseStt} ${llama-cpp}/bin/llama-server \
+            ${llama-cpp}/bin/llama-server \
             --port 5803 \
             --model /mnt/data/ai-models/llama-cpp/models/unsloth/Qwen3.5-35B-A3B-GGUF/Qwen3.5-35B-A3B-UD-IQ4_NL.gguf \
             --n-gpu-layers 999 \
@@ -330,6 +332,8 @@ in
 
           proxy = "http://127.0.0.1:5803";
           ttl = 10800;
+          capacities.vram = bigLlm;
+          evict_cost = 30;
           aliases = [
             "a3b"
             "moe"
@@ -344,8 +348,11 @@ in
           # Multipart API, so clients use llama-swap's /upstream/<model>/ passthrough.
           # --rm + a fixed name; cmdStop stops the container, not just the CLI.
           # MIOpen kernel cache persisted, otherwise every start recompiles.
+          # 7.7 GiB loaded, 8.7 GiB while speaking.
+          capacities.vram = 8960;
+          evict_cost = 5;
           cmd = ''
-            ${releaseStt} ${docker} run --rm --name breeze-tts-2 \
+            ${docker} run --rm --name breeze-tts-2 \
             --device /dev/kfd --device /dev/dri --security-opt seccomp=unconfined \
             --ipc=host -p 127.0.0.1:5810:7860 \
             -v ${ttsDir}/Breeze-TTS-2:/model:ro \
@@ -413,6 +420,9 @@ in
   systemd.services.llama-swap = {
     after = [ "mnt-data.mount" ];
     requires = [ "mnt-data.mount" ];
+    # The UI's GPU telemetry reads rocm-smi; without it on PATH the dashboard
+    # shows no GPU and no memory use.
+    path = [ pkgs.rocmPackages.rocm-smi ];
 
     environment = {
       LD_LIBRARY_PATH = "${llama-cpp}/lib";

@@ -11,33 +11,32 @@ import uuid
 import wave
 from pathlib import Path
 
-from aiohttp import ClientSession, ClientTimeout, ClientWSTimeout, WSMsgType, web
+from aiohttp import ClientSession, ClientTimeout, ClientWSTimeout, FormData, WSMsgType, web
 
 ROOT = Path(os.environ.get("STT_RECORDINGS", "/var/lib/local-stt"))
-NEMO = os.environ.get("STT_STREAM_URL", "http://127.0.0.1:8782")
-VIBE = os.environ.get("STT_FINAL_URL", "http://127.0.0.1:8783")
-# The final recogniser shares the GPU with llama-swap (LLMs, TTS): it unloads
-# after this much idle time, on request from llama-swap, and asks llama-swap
-# to unload its idle model before loading itself.
-FINAL_IDLE_SECONDS = float(os.environ.get("STT_FINAL_IDLE_SECONDS", "18000"))
-LLAMA_SWAP = os.environ.get("STT_LLAMA_SWAP_URL", "")
+# llama-swap runs both recognisers, like every other model on this GPU: it
+# starts them, keeps what fits loaded, queues a request until its model fits,
+# and never stops a model that is still answering one (modules/nixos/local-stt.nix).
+LLAMA_SWAP = os.environ.get("STT_LLAMA_SWAP_URL", "http://127.0.0.1:8000")
+PREVIEW_MODEL = "dictation-preview"
+FINAL_MODEL = "dictation-final"
+NEMO = f"{LLAMA_SWAP}/upstream/{PREVIEW_MODEL}"
+VIBE = f"{LLAMA_SWAP}/upstream/{FINAL_MODEL}"
+# A final pass may wait in llama-swap's queue behind a running job (it does
+# not interrupt one) and for its model to load, before transcribing.
+FINAL_TIMEOUT = 600
+# Once dictation has been idle this long, the GPU is lent to this llama-swap
+# model (read-aloud's big voice) unless something outside LLAMA_SWAP_KEEP runs.
+# Loading it makes llama-swap unload the idle final recogniser.
+FINAL_IDLE_SECONDS = float(os.environ.get("STT_FINAL_IDLE_SECONDS", "1800"))
 LLAMA_SWAP_KEEP = set(filter(None, os.environ.get("STT_LLAMA_SWAP_KEEP", "").split(",")))
-# Once dictation has gone idle and its recogniser is unloaded, the GPU is lent
-# to this llama-swap model (read-aloud's big voice), unless llama-swap is busy
-# with something outside LLAMA_SWAP_KEEP.
 IDLE_WARM_MODEL = os.environ.get("STT_IDLE_WARM_MODEL", "")
-FINAL_VRAM_BYTES = 11 * 1024**3
-# The loaded recogniser holds ~9.2 GiB. Below this much free GPU memory a load
-# cannot succeed and would only push the desktop into its crash band.
-FINAL_LOAD_BYTES = 9.5 * 1024**3
-last_used = {}
+final_used = time.monotonic()
 # Recordings are not time-limited for the user (Erik talks for half an hour
 # and more); this only bounds a runaway client: four hours of 16 kHz PCM.
 MAX_BYTES = 16000 * 2 * 4 * 60 * 60
 sessions = {}
 final_lock = asyncio.Lock()
-workers = {}
-worker_locks = {name: asyncio.Lock() for name in ("preview", "final")}
 SAMPLE_BYTES = 32000
 CHUNK_SECONDS = 30
 QUALITY_SECONDS = 420
@@ -75,90 +74,65 @@ def log(event, state=None, **fields):
 
 
 
-async def stop_worker(name):
-    process = workers.pop(name, None)
-    if process and process.returncode is None:
-        try:
-            process.terminate()
-        except ProcessLookupError:
-            return
-        try:
-            await asyncio.wait_for(process.wait(), 5)
-        except asyncio.TimeoutError:
-            process.kill()
-            await process.wait()
-
-
-async def start_worker(name, client):
-    last_used[name] = time.monotonic()
-    async with worker_locks[name]:
-        await _start_worker(name, client)
-
-
-def vram_free():
-    free = []
-    for used in Path("/sys/class/drm").glob("card*/device/mem_info_vram_used"):
-        total = int((used.parent / "mem_info_vram_total").read_text())
-        if total > 4 * 1024**3:
-            free.append(total - int(used.read_text()))
-    return max(free, default=0)
-
-
 async def llama_swap_running(client):
-    async with client.get(LLAMA_SWAP + "/running", timeout=ClientTimeout(total=10)) as response:
-        return [entry.get("model", "") for entry in (await response.json()).get("running", [])]
+    """Model -> state ("ready", "starting", ...) of what llama-swap has loaded."""
+    async with client.get(LLAMA_SWAP + "/running", timeout=ClientTimeout(total=5)) as response:
+        return {entry.get("model", ""): entry.get("state", "")
+                for entry in (await response.json()).get("running", [])}
 
 
-async def make_room(client):
-    """Ask llama-swap to unload its (idle) models when the final recogniser won't fit.
+async def unload(client, model):
+    """Restart one of dictation's own recognisers after it stopped answering.
 
-    Models in STT_LLAMA_SWAP_KEEP (the small read-aloud summary model) fit beside
-    dictation and stay; everything else goes first, and all of it only if that
-    was not enough.
+    Never used to make room: llama-swap does that, and only with idle models.
+    Stopping a model this way fails the requests it is serving.
     """
-    if LLAMA_SWAP and vram_free() < FINAL_VRAM_BYTES:
-        try:
-            status = None
-            for model in await llama_swap_running(client):
-                if model not in LLAMA_SWAP_KEEP:
-                    async with client.post(f"{LLAMA_SWAP}/api/models/unload/{model}",
-                                           timeout=ClientTimeout(total=30)) as response:
-                        status = response.status
-            for _ in range(25):
-                if vram_free() >= FINAL_VRAM_BYTES:
-                    break
-                await asyncio.sleep(0.2)
-            if vram_free() < FINAL_VRAM_BYTES:
-                async with client.get(LLAMA_SWAP + "/unload", timeout=ClientTimeout(total=30)) as response:
-                    status = response.status
-            # llama-swap answers before its model process has released the GPU.
-            for _ in range(25):
-                if vram_free() >= FINAL_VRAM_BYTES:
-                    break
-                await asyncio.sleep(0.2)
-            log("worker.make_room", status=status, free_vram=vram_free())
-        except (OSError, asyncio.TimeoutError) as error:
-            log("worker.make_room_failed", error=str(error))
-    if vram_free() < FINAL_LOAD_BYTES:
-        raise RuntimeError(f"not enough free GPU memory for the final recogniser ({vram_free() / 1024**3:.1f} GiB)")
+    try:
+        async with client.post(f"{LLAMA_SWAP}/api/models/unload/{model}",
+                               timeout=ClientTimeout(total=30)) as response:
+            log("worker.unloaded", worker=model, status=response.status)
+    except (OSError, asyncio.TimeoutError) as error:
+        log("worker.unload_failed", worker=model, error=str(error))
 
 
-async def warm_idle_model():
-    if not (LLAMA_SWAP and IDLE_WARM_MODEL):
+async def warm(model, client):
+    """Have llama-swap load a model now (it queues until the model fits)."""
+    global final_used
+    if model == FINAL_MODEL:
+        final_used = time.monotonic()
+    try:
+        async with client.get(f"{LLAMA_SWAP}/upstream/{model}/v1/models",
+                              timeout=ClientTimeout(total=FINAL_TIMEOUT)) as response:
+            log("worker.warm", worker=model, status=response.status)
+    except (OSError, asyncio.TimeoutError) as error:
+        log("worker.warm_failed", worker=model, error=str(error))
+
+
+async def warm_idle_model(client):
+    if not IDLE_WARM_MODEL:
         return
     try:
-        async with ClientSession() as client:
-            running = await llama_swap_running(client)
-            if any(model not in LLAMA_SWAP_KEEP | {IDLE_WARM_MODEL} for model in running):
-                log("worker.idle_warm_skipped", running=running)
-                return
-            log("worker.idle_warm", model=IDLE_WARM_MODEL)
-            # Any request through llama-swap starts the model; it may take minutes.
-            async with client.get(f"{LLAMA_SWAP}/upstream/{IDLE_WARM_MODEL}/health",
-                                  timeout=ClientTimeout(total=600)) as response:
-                log("worker.idle_warmed", model=IDLE_WARM_MODEL, status=response.status)
+        running = await llama_swap_running(client)
+        ours = LLAMA_SWAP_KEEP | {IDLE_WARM_MODEL, PREVIEW_MODEL, FINAL_MODEL}
+        if IDLE_WARM_MODEL in running or any(model not in ours for model in running):
+            log("worker.idle_warm_skipped", running=sorted(running))
+            return
     except (OSError, asyncio.TimeoutError, ValueError) as error:
         log("worker.idle_warm_failed", error=str(error))
+        return
+    log("worker.idle_warm", model=IDLE_WARM_MODEL)
+    await warm(IDLE_WARM_MODEL, client)
+
+
+async def idle_lender(client):
+    """Lend the GPU to IDLE_WARM_MODEL once per idle period of dictation."""
+    lent_for = None
+    while True:
+        await asyncio.sleep(60)
+        if (not busy() and lent_for != final_used
+                and time.monotonic() - final_used > FINAL_IDLE_SECONDS):
+            lent_for = final_used
+            await warm_idle_model(client)
 
 
 def active(state):
@@ -171,17 +145,19 @@ def busy():
     return any(active(s) for s in sessions.values())
 
 
-def dictation_state():
+async def dictation_state(client):
     """Whether dictation holds the GPU: a recording in progress, or the final
-    recogniser still loaded (it unloads after STT_FINAL_IDLE_SECONDS idle)."""
-    final = workers.get("final")
-    loaded = bool(final and final.returncode is None)
+    recogniser still loaded in llama-swap."""
+    try:
+        loaded = (await llama_swap_running(client)).get(FINAL_MODEL) == "ready"
+    except (OSError, asyncio.TimeoutError, ValueError):
+        loaded = False
     return {"busy": busy(), "final_loaded": loaded, "active": busy() or loaded}
 
 
-async def health(_request):
-    # Read aloud asks this before picking a voice: the big one only while dictation is idle.
-    return web.json_response({"ok": True, "dictation": dictation_state()})
+async def health(request):
+    # The speak daemon reads dictation.busy before talking out loud.
+    return web.json_response({"ok": True, "dictation": await dictation_state(request.app["client"])})
 
 
 def problems():
@@ -208,7 +184,6 @@ async def deep_health(_request):
 
 async def run_selftest(client):
     pcm = Path(PROBE_PCM).read_bytes()
-    await asyncio.wait_for(start_worker("preview", client), 60)
     async with client.ws_connect(NEMO + "/v1/audio/transcriptions/realtime",
                                  timeout=ClientWSTimeout(ws_close=5)) as ws:
         await ws.send_json({"type": "session.update", "session": {
@@ -245,88 +220,8 @@ async def selftest_loop(client):
                 log("selftest.failed", attempt=attempt, error=message)
                 selftest.update(ok=False, error=message)
                 # Alive but not answering never heals by itself: replace it.
-                async with worker_locks["preview"]:
-                    await stop_worker("preview")
+                await unload(client, PREVIEW_MODEL)
         await asyncio.sleep(SELFTEST_SECONDS)
-
-
-async def release_gpu(_request):
-    """Called by llama-swap before it loads a model: unload the idle final recogniser."""
-    process = workers.get("final")
-    if busy() or not process or process.returncode is not None:
-        return web.json_response({"released": False, "busy": busy()})
-    await stop_worker("final")
-    log("worker.released", worker="final")
-    return web.json_response({"released": True})
-
-
-async def _start_worker(name, client):
-    process = workers.get(name)
-    if process and process.returncode is None:
-        return
-    if name == "preview":
-        command = [os.environ["STT_NEMO_BINARY"], "serve", "--asr-model", os.environ["STT_NEMO_MODEL"],
-                   "--host", "127.0.0.1", "--port", NEMO.rsplit(":", 1)[1], "--backend", "vulkan",
-                   "--threads", "4", "--no-ui", "--read-timeout", "1900"]
-        url = NEMO + "/v1/models"
-    else:
-        await make_room(client)
-        command = [os.environ["STT_VIBE_BINARY"], "--config", os.environ["STT_VIBE_CONFIG"]]
-        url = VIBE + "/v1/models"
-    workers[name] = await asyncio.create_subprocess_exec(*command)
-    log("worker.start", worker=name, pid=workers[name].pid)
-    for _ in range(600):
-        if name not in workers or workers[name].returncode is not None:
-            raise RuntimeError(f"{name} worker exited during startup")
-        try:
-            async with client.get(url, timeout=ClientTimeout(total=1)) as response:
-                if response.status == 200:
-                    return
-        except (OSError, asyncio.TimeoutError):
-            pass
-        await asyncio.sleep(0.2)
-    await stop_worker(name)
-    raise TimeoutError(f"{name} worker did not become ready")
-
-
-async def monitor():
-    # Observe total device memory, including the compositor and other workloads.
-    # These bounds are a guard, not a GPU reservation.
-    while True:
-        await asyncio.sleep(0.2)
-        final = workers.get("final")
-        if (final and final.returncode is None and not busy()
-                and time.monotonic() - last_used.get("final", 0) > FINAL_IDLE_SECONDS):
-            log("worker.idle_unload", worker="final")
-            await stop_worker("final")
-            spawn(warm_idle_model())
-        vram = max((int(p.read_text()) for p in Path("/sys/class/drm").glob("card*/device/mem_info_vram_used")), default=0)
-        memory = dict(line.split(":", 1) for line in Path("/proc/meminfo").read_text().splitlines())
-        available = int(memory["MemAvailable"].split()[0]) * 1024
-        for name, process in sorted(list(workers.items()), key=lambda item: item[0] != "final"):
-            if process.returncode is not None:
-                continue
-            try:
-                status = dict(line.split(":", 1) for line in Path(f"/proc/{process.pid}/status").read_text().splitlines() if ":" in line)
-            except FileNotFoundError:
-                continue
-            anonymous = int(status.get("RssAnon", "0").split()[0]) * 1024
-            swap = int(status.get("VmSwap", "0").split()[0]) * 1024
-            for state in sessions.values():
-                if active(state):
-                    peaks = state.setdefault("resources", {})
-                    for key, value in {"total_vram_bytes": vram, "anonymous_ram_bytes": anonymous, "swap_bytes": swap}.items():
-                        peaks[key] = max(peaks.get(key, 0), value)
-            # Low host RAM only counts against a worker that is itself holding
-            # RAM: the models live on the GPU, so stopping a ~100 MiB process
-            # frees nothing and costs a minute-long reload on the next recording.
-            hungry = available < 3 * 1024**3 and anonymous + swap > 1024**3
-            if vram > 19.5 * 1024**3 or hungry or anonymous > 6 * 1024**3 or swap > 256 * 1024**2:
-                log("worker.memory_guard", worker=name, pid=process.pid, total_vram=vram,
-                    available_ram=available, anonymous_ram=anonymous, swap=swap,
-                    recordings=[s["id"] for s in sessions.values() if active(s)])
-                await stop_worker(name)
-                break
 
 
 def project_context(directory, draft):
@@ -467,10 +362,7 @@ async def preview(state, client):
     # restarting the shared worker under every live recording, forever.
     while active(state) and (state["status"] == "recording" or sent < state["bytes"]):
         ws = reader = None
-        process_seen = None
         try:
-            await start_worker("preview", client)
-            process_seen = workers.get("preview")
             ws = await client.ws_connect(
                 NEMO + "/v1/audio/transcriptions/realtime", timeout=ClientWSTimeout(ws_close=10)
             )
@@ -495,14 +387,9 @@ async def preview(state, client):
         except asyncio.CancelledError:
             raise
         except Exception as error:
+            # Reconnect: llama-swap restarts a worker that exited, and the
+            # self-test replaces one that is alive but no longer answers.
             log("preview.interrupted", state, error_type=type(error).__name__, error=str(error))
-            # A worker that is alive but no longer answers never heals, and
-            # start_worker only replaces one that exited: restart it.
-            # Another recording may have replaced it already: do not kill the new one.
-            async with worker_locks["preview"]:
-                if workers.get("preview") is process_seen:
-                    await stop_worker("preview")
-            log("worker.restarted", state, worker="preview")
         finally:
             if ws is not None:
                 await ws.close()
@@ -562,6 +449,7 @@ def merge_transcripts(previous, current):
 
 
 async def refine_available(state, client, finishing=False, quality=False, seconds=None):
+    global final_used
     # The short background sections are progress, not the final quality result.
     # Keep separate checkpoints so retries never mistake them for the long-context pass.
     offset_key = "quality_bytes" if quality else "refined_bytes"
@@ -585,14 +473,19 @@ async def refine_available(state, client, finishing=False, quality=False, second
                 output.writeframes(pcm[start:end])
             began = time.monotonic()
             log("refinement.start", state, quality=quality, start=start, end=end)
-            await start_worker("final", client)
             context, state["vocabulary"] = await asyncio.to_thread(project_context, state["project"], state["draft"])
             state["context"] = context
-            async with client.post(VIBE + "/v1/audio/transcriptions", json={
-                "model": "vibevoice", "audio": str(wav), "language": "en", "text": context,
-                "options": {"temperature": 0, "max_tokens": 4096 if quality else 1024,
-                            "num_beams": 1, "audio_chunk_mode": "none"},
-            }, timeout=ClientTimeout(total=300)) as response:
+            # Upload the audio rather than name the file: the recogniser runs
+            # as llama-swap's user and the recordings stay private to this one.
+            # Decoding options are in its config (tools/local-stt/workers.nix).
+            form = FormData()
+            form.add_field("model", "vibevoice")
+            form.add_field("language", "en")
+            form.add_field("text", context)
+            form.add_field("file", wav.read_bytes(), filename=wav.name, content_type="audio/wav")
+            final_used = time.monotonic()
+            async with client.post(VIBE + "/v1/audio/transcriptions", data=form,
+                                   timeout=ClientTimeout(total=FINAL_TIMEOUT)) as response:
                 response.raise_for_status()
                 data = await response.json()
             text = data.get("text", "").strip()
@@ -712,12 +605,12 @@ async def finalize(state, client):
                     break
             except Exception as error:
                 log("recording.retry", state, attempt=attempt, error_type=type(error).__name__,
-                    error=str(error), resources=state.get("resources"))
+                    error=str(error))
                 state["last_error"] = f"{type(error).__name__}: {error}"[:300]
                 # A worker that answered with an error may be wedged; a fresh
                 # one is cheap next to a transcript that never arrives.
                 if attempt % 2:
-                    await stop_worker("final")
+                    await unload(client, FINAL_MODEL)
                 save(state)
                 await asyncio.sleep(min(60, 2 * 2 ** min(attempt, 5)))
             attempt += 1
@@ -734,13 +627,6 @@ def ensure_preview(state, client):
     task = state.get("preview")
     if task is None or task.done():
         state["preview"] = asyncio.create_task(preview(state, client))
-
-
-async def warm(name, client):
-    try:
-        await start_worker(name, client)
-    except Exception as error:
-        log("worker.warm_failed", worker=name, error=str(error))
 
 
 async def action(request):
@@ -768,7 +654,7 @@ async def action(request):
         sessions[identifier] = state
         save(state)
         ensure_preview(state, request.app["client"])
-        spawn(warm("final", request.app["client"]))
+        spawn(warm(FINAL_MODEL, request.app["client"]))
         return web.json_response(result(state))
     state = sessions.get(data.get("id"))
     if state is None or state["owner"] != owner:
@@ -829,20 +715,13 @@ async def lifecycle(app):
             continue
     async with ClientSession(timeout=ClientTimeout(total=30)) as client:
         app["client"] = client
-        watcher = asyncio.create_task(monitor())
         if PROBE_PCM:
             spawn(selftest_loop(client))
-        async def warm_all():
-            for name in ("preview", "final"):
-                await warm(name, client)
-        warmer = asyncio.create_task(warm_all())
+        spawn(idle_lender(client))
         for state in sessions.values():
             if state["status"] == "finalizing":
                 state["task"] = asyncio.create_task(finalize(state, client))
         yield
-        warmer.cancel()
-        await asyncio.gather(warmer, return_exceptions=True)
-        watcher.cancel()
         tasks = []
         for state in sessions.values():
             for key in ("preview", "task", "refiner"):
@@ -853,9 +732,6 @@ async def lifecycle(app):
         for task in background:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
-        await asyncio.gather(watcher, return_exceptions=True)
-        for name in list(workers):
-            await stop_worker(name)
 
 
 if __name__ == "__main__":
@@ -865,5 +741,4 @@ if __name__ == "__main__":
     app.router.add_post("/dictation", action)
     app.router.add_get("/health", health)
     app.router.add_get("/health/deep", deep_health)
-    app.router.add_post("/release-gpu", release_gpu)
     web.run_app(app, host="127.0.0.1", port=int(os.environ.get("STT_PORT", "8781")), access_log=None)

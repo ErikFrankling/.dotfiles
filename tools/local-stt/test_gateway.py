@@ -89,39 +89,56 @@ class RecordingTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_finalization_outlasts_worker_failures(self):
         state, pcm = self.record(draft='Keep my first draft.')
-        failures = [RuntimeError('not enough free GPU memory'), RuntimeError('final worker exited during startup'), None]
-        with patch.object(gateway, 'start_worker', AsyncMock(side_effect=failures)), \
-             patch.object(gateway, 'stop_worker', AsyncMock()) as stop, \
+        client = self.transcriber('Full quality.')
+        response = client.post.return_value.__aenter__.return_value
+        client.post.return_value.__aenter__ = AsyncMock(side_effect=[
+            RuntimeError('502 from llama-swap'), RuntimeError('final worker exited'), response])
+        with patch.object(gateway, 'unload', AsyncMock()) as unload, \
              patch.object(gateway.asyncio, 'sleep', AsyncMock()) as sleep, \
              patch.object(gateway, 'project_context', return_value=('', [])):
-            await gateway.finalize(state, self.transcriber('Full quality.'))
+            await gateway.finalize(state, client)
         self.assertEqual(state['status'], 'complete')
         self.assertEqual(state['final'], 'Full quality.')
         self.assertEqual(state['error'], '')
         self.assertEqual([call.args[0] for call in sleep.call_args_list], [2, 4])
-        stop.assert_awaited_once_with('final')
+        unload.assert_awaited_once_with(client, 'dictation-final')
         self.assertEqual((gateway.ROOT / 'recording' / 'audio.pcm').read_bytes(), pcm)
 
     async def test_interrupted_finalization_resumes_after_restart(self):
         state, _ = self.record()
-        with patch.object(gateway, 'start_worker', AsyncMock(side_effect=gateway.asyncio.CancelledError)):
+        client = MagicMock()
+        client.post.return_value.__aenter__ = AsyncMock(side_effect=gateway.asyncio.CancelledError)
+        with patch.object(gateway, 'project_context', return_value=('', [])):
             with self.assertRaises(gateway.asyncio.CancelledError):
-                await gateway.finalize(state, None)
+                await gateway.finalize(state, client)
         saved = json.loads((gateway.ROOT / 'recording' / 'state.json').read_text())
         self.assertEqual(saved['status'], 'finalizing')
 
+    async def test_audio_is_uploaded_through_llama_swap_not_named_by_path(self):
+        state, pcm = self.record(draft='Upload me.')
+        client = self.transcriber('Uploaded.')
+        with patch.object(gateway, 'project_context', return_value=('Context', [])):
+            await gateway.finalize(state, client)
+        url = client.post.call_args.args[0]
+        form = client.post.call_args.kwargs['data']
+        self.assertEqual(url, 'http://127.0.0.1:8000/upstream/dictation-final/v1/audio/transcriptions')
+        self.assertNotIn('json', client.post.call_args.kwargs)
+        fields = {field[0]['name']: field for field in form._fields}
+        self.assertEqual(fields['file'][0]['filename'], 'chunk-0-32000.wav')
+        self.assertTrue(fields['file'][2].endswith(pcm))
+        self.assertEqual(fields['text'][2], 'Context')
+        self.assertNotIn(str(gateway.ROOT), repr([f[2] for f in form._fields if isinstance(f[2], str)]))
+
     async def test_silence_completes_without_text_instead_of_retrying_forever(self):
         state, _ = self.record()
-        with patch.object(gateway, 'start_worker', AsyncMock()), \
-             patch.object(gateway, 'project_context', return_value=('', [])):
+        with patch.object(gateway, 'project_context', return_value=('', [])):
             await gateway.finalize(state, self.transcriber('[silence]', ''))
         self.assertEqual(state['status'], 'complete')
         self.assertEqual(state['final'], '')
 
     async def test_unintelligible_pass_is_redone_in_short_windows_when_the_draft_heard_words(self):
         state, _ = self.record(seconds=15, draft='tell me about the packages')
-        with patch.object(gateway, 'start_worker', AsyncMock()), \
-             patch.object(gateway, 'project_context', return_value=('', [])):
+        with patch.object(gateway, 'project_context', return_value=('', [])):
             await gateway.finalize(state, self.transcriber(
                 '[Unintelligible Speech]', 'Tell me about the packages', 'I need to get today.'))
         self.assertEqual(state['status'], 'complete')
@@ -130,16 +147,14 @@ class RecordingTests(unittest.IsolatedAsyncioTestCase):
     async def test_thin_retry_falls_back_to_the_draft_instead_of_losing_words(self):
         draft = 'tell me about the packages i need to get today yeah show me the links'
         state, _ = self.record(seconds=15, draft=draft)
-        with patch.object(gateway, 'start_worker', AsyncMock()), \
-             patch.object(gateway, 'project_context', return_value=('', [])):
+        with patch.object(gateway, 'project_context', return_value=('', [])):
             await gateway.finalize(state, self.transcriber('[Unintelligible Speech]', *['links'] * 20))
         self.assertEqual(state['final'], draft)
 
     async def test_truncated_long_transcript_is_redone_in_shorter_windows(self):
         draft = ' '.join(['word'] * 400)
         state, _ = self.record(seconds=200, draft=draft)
-        with patch.object(gateway, 'start_worker', AsyncMock()), \
-             patch.object(gateway, 'project_context', return_value=('', [])):
+        with patch.object(gateway, 'project_context', return_value=('', [])):
             await gateway.finalize(state, self.transcriber('Only the start.', draft[:1000], draft[1000:]))
         self.assertEqual(state['final'], draft)
         self.assertEqual(len(state['quality_segments']), 2)
@@ -175,8 +190,7 @@ class RecordingTests(unittest.IsolatedAsyncioTestCase):
         client = MagicMock()
         client.post.return_value.__aenter__ = AsyncMock(return_value=response)
         client.post.return_value.__aexit__ = AsyncMock(return_value=False)
-        with patch.object(gateway, 'start_worker', AsyncMock()), \
-             patch.object(gateway, 'project_context', return_value=('Project context', [])):
+        with patch.object(gateway, 'project_context', return_value=('Project context', [])):
             await gateway.finalize(state, client)
         self.assertEqual(state['status'], 'complete')
         self.assertEqual(state['final'], 'Full-context wording.')
@@ -230,48 +244,51 @@ class LlamaSwapSharingTests(unittest.IsolatedAsyncioTestCase):
     def client(self, running):
         client = MagicMock()
         client.get = MagicMock(side_effect=lambda url, **_: FakeResponse(
-            {'running': [{'model': m, 'state': 'ready'} for m in running]} if url.endswith('/running') else None))
+            {'running': [{'model': m, 'state': s} for m, s in running.items()]} if url.endswith('/running') else None))
         client.post = MagicMock(side_effect=lambda url, **_: FakeResponse())
         return client
 
-    async def test_make_room_keeps_the_small_summary_model(self):
-        client = self.client(['read-aloud-summary', 'higgs-tts'])
-        calls = []
-        free = lambda: 0 if not calls.append(1) and len(calls) == 1 else 12 * 1024**3
-        with patch.multiple(gateway, LLAMA_SWAP='http://swap', LLAMA_SWAP_KEEP={'read-aloud-summary'}), \
-                patch.object(gateway, 'vram_free', side_effect=free):
-            await gateway.make_room(client)
-        unloaded = [call.args[0] for call in client.post.call_args_list]
-        self.assertEqual(unloaded, ['http://swap/api/models/unload/higgs-tts'])
-        self.assertFalse(any(call.args[0].endswith('/unload') for call in client.get.call_args_list))
-
     async def test_idle_warm_leaves_a_busy_llama_swap_alone(self):
-        client = self.client(['qwen3.5-27b'])
-        session = MagicMock()
-        session.__aenter__ = AsyncMock(return_value=client)
-        session.__aexit__ = AsyncMock(return_value=False)
+        client = self.client({'qwen3.5-27b': 'ready'})
         with patch.multiple(gateway, LLAMA_SWAP='http://swap', LLAMA_SWAP_KEEP={'read-aloud-summary'},
-                            IDLE_WARM_MODEL='higgs-tts'), patch.object(gateway, 'ClientSession', return_value=session):
-            await gateway.warm_idle_model()
+                            IDLE_WARM_MODEL='higgs-tts'):
+            await gateway.warm_idle_model(client)
         self.assertEqual([call.args[0] for call in client.get.call_args_list], ['http://swap/running'])
 
-    async def test_idle_warm_starts_the_voice_beside_the_summary_model(self):
-        client = self.client(['read-aloud-summary'])
-        session = MagicMock()
-        session.__aenter__ = AsyncMock(return_value=client)
-        session.__aexit__ = AsyncMock(return_value=False)
+    async def test_idle_warm_asks_llama_swap_for_the_voice_and_lets_it_make_room(self):
+        client = self.client({'read-aloud-summary': 'ready', 'dictation-preview': 'ready', 'dictation-final': 'ready'})
         with patch.multiple(gateway, LLAMA_SWAP='http://swap', LLAMA_SWAP_KEEP={'read-aloud-summary'},
-                            IDLE_WARM_MODEL='higgs-tts'), patch.object(gateway, 'ClientSession', return_value=session):
-            await gateway.warm_idle_model()
-        self.assertIn('http://swap/upstream/higgs-tts/health', [call.args[0] for call in client.get.call_args_list])
+                            IDLE_WARM_MODEL='higgs-tts'):
+            await gateway.warm_idle_model(client)
+        self.assertIn('http://swap/upstream/higgs-tts/v1/models', [call.args[0] for call in client.get.call_args_list])
+        client.post.assert_not_called()  # no forced unloads: llama-swap evicts the idle recogniser
 
+    async def test_idle_lender_lends_once_per_idle_period(self):
+        sleeps = 0
+        async def tick(_):
+            nonlocal sleeps
+            sleeps += 1
+            if sleeps > 3:
+                raise gateway.asyncio.CancelledError
+        with patch.object(gateway, 'warm_idle_model', AsyncMock()) as lend, \
+             patch.object(gateway, 'busy', return_value=False), \
+             patch.object(gateway, 'final_used', gateway.time.monotonic() - gateway.FINAL_IDLE_SECONDS - 1), \
+             patch.object(gateway.asyncio, 'sleep', tick):
+            with self.assertRaises(gateway.asyncio.CancelledError):
+                await gateway.idle_lender(None)
+        lend.assert_awaited_once()
 
-    def test_health_reports_dictation_holding_the_gpu(self):
-        final = MagicMock(returncode=None)
-        with patch.dict(gateway.workers, {"final": final}, clear=True), patch.object(gateway, "busy", return_value=False):
-            self.assertEqual(gateway.dictation_state(), {"busy": False, "final_loaded": True, "active": True})
-        with patch.dict(gateway.workers, {}, clear=True), patch.object(gateway, "busy", return_value=False):
-            self.assertEqual(gateway.dictation_state(), {"busy": False, "final_loaded": False, "active": False})
+    async def test_health_reports_dictation_holding_the_gpu(self):
+        with patch.object(gateway, "busy", return_value=False):
+            self.assertEqual(await gateway.dictation_state(self.client({'dictation-final': 'ready'})),
+                             {"busy": False, "final_loaded": True, "active": True})
+            self.assertEqual(await gateway.dictation_state(self.client({'dictation-final': 'starting'})),
+                             {"busy": False, "final_loaded": False, "active": False})
+        broken = MagicMock()
+        broken.get = MagicMock(side_effect=OSError('llama-swap down'))
+        with patch.object(gateway, "busy", return_value=True):
+            self.assertEqual(await gateway.dictation_state(broken),
+                             {"busy": True, "final_loaded": False, "active": True})
 
 
 class TidyTests(unittest.TestCase):
