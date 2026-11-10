@@ -10,14 +10,16 @@ let
   moveWorkspaces =
     monitor:
     "hyprctl -i 0 eval "
-    + lib.escapeShellArg ''
-      for _, workspace in ipairs(hl.get_workspaces()) do
-        if workspace.name ~= "agent" and workspace.name ~= "agent-park" then
-          hl.dsp.workspace.move({ workspace = workspace.addressable_name, monitor = ${builtins.toJSON monitor} })()
+    + lib.escapeShellArg (
+      lib.replaceStrings [ "\n" ] [ " " ] ''
+        for _, workspace in ipairs(hl.get_workspaces()) do
+          if workspace.name ~= "agent" and workspace.name ~= "agent-park" then
+            hl.dsp.workspace.move({ workspace = workspace.addressable_name, monitor = ${builtins.toJSON monitor} })()
+          end
         end
-      end
-      hl.dsp.focus({ monitor = ${builtins.toJSON monitor} })()
-    '';
+        hl.dsp.focus({ monitor = ${builtins.toJSON monitor} })()
+      ''
+    );
 in
 {
   imports = [
