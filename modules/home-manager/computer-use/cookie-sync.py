@@ -156,7 +156,7 @@ def digest(cookies):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--firefox-root", default=os.path.expanduser("~/.mozilla/firefox"))
+    ap.add_argument("--firefox-root", help="profile root (default: XDG location, then legacy location)")
     ap.add_argument("--port", type=int, default=9222)
     ap.add_argument("--state", default=os.path.join(
         os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state")), "agent-cookie-sync", "state.json"))
@@ -167,7 +167,11 @@ def main():
     ap.add_argument("-v", "--verbose", action="store_true", help="list the sites pushed")
     args = ap.parse_args()
 
-    profile = firefox_profile(args.firefox_root)
+    roots = [args.firefox_root] if args.firefox_root else [
+        os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "mozilla", "firefox"),
+        os.path.expanduser("~/.mozilla/firefox"),
+    ]
+    profile = next((p for root in roots if (p := firefox_profile(root))), None)
     if not profile:
         print("no Firefox profile with cookies; nothing to sync")
         return
