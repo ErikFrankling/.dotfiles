@@ -21,6 +21,7 @@
     # inputs.disko.nixosModules.disko
     # ./disko.nix # whole-disk layout that would wipe Windows
     ./soc2.nix
+    ./executor.nix
     ./shim.nix # factory-trusted boot chain, staged without changing BootOrder
     ../../modules/nixos
     ../../modules/nixos/secure-boot.nix
@@ -71,11 +72,10 @@
   ];
   services.fwupd.enable = true;
 
-  # Daily: pull main and switch to the system the homelab built. Like the
-  # framework, only on mains power and at home.
+  # Work laptop: receive cached updates away from home too (on mains power).
   autoUpdate = {
     enable = true;
-    homeNetworkOnly = true;
+    homeNetworkOnly = false;
   };
 
   sops.defaultSopsFile = ./secrets/secrets.yaml;

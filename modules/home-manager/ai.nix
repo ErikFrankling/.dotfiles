@@ -99,10 +99,19 @@ let
   # };
   # codexCli = if agentDesktopEnabled then agentDesktopHarnesses.codex else codexCliUpstream;
   # claudeCli = if agentDesktopEnabled then agentDesktopHarnesses.claude else claudeCliUpstream;
-  executorKeyFile = osConfig.sops.secrets.executor-api-key.path;
+  executorKeyFile =
+    if hostName == "samsung-ablo" then
+      "/run/secrets/executor-work-api-key"
+    else
+      osConfig.sops.secrets.executor-api-key.path;
   executorHarnesses = import ./executor-harness.nix {
     inherit pkgs lib;
     keyFile = executorKeyFile;
+    url =
+      if hostName == "samsung-ablo" then
+        "http://localhost:4788/mcp"
+      else
+        "https://executor.erikfrankling.duckdns.org/mcp";
     timeMcpTokenFile = osConfig.sops.secrets.time-mcp-token.path or null;
     searchMcpTokenFile = osConfig.sops.secrets.search-mcp-token.path or null;
     codexPackage = codexCliUpstream;

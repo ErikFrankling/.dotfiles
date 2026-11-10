@@ -15,6 +15,7 @@
   keyFile,
   codexPackage,
   claudePackage,
+  url ? "https://executor.erikfrankling.duckdns.org/mcp",
   # The Time MCP bearer token (sops) and the one folder whose Claude sessions
   # get it: the personal agent. Its .mcp.json (hosts/pc/home.nix) reads
   # ${TIME_MCP_TOKEN}; no other session even has the variable.
@@ -28,7 +29,6 @@
   localMcpServers ? { },
 }:
 let
-  url = "https://executor.erikfrankling.duckdns.org/mcp";
   loadKey = ''
     if [ -r ${keyFile} ]; then
       EXECUTOR_API_KEY="$(< ${keyFile})"
