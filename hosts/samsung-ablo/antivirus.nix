@@ -28,7 +28,7 @@
         # synchronous prevention off so scans do not stall desktop I/O.
         OnAccessPrevention = false;
         # Service database churn is scanned by the scheduled scan instead.
-        OnAccessExcludeUname = [
+        OnAccessExcludeUname = lib.mkForce [
           "clamav"
           "executor-work"
         ];
