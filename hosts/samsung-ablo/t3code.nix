@@ -7,7 +7,22 @@
 # One-time, in the app: Settings > Environments > turn off "Local
 # environment" (the app's built-in server, which dies with the window), then
 # `t3 pair` and open the pairing link to add this server.
+{ lib, pkgs, ... }:
 {
+  # Home Manager exposes server/client settings, but not Electron's
+  # desktop-settings.json. Merge this upstream setting, preserving the
+  # app's other preferences; its own server already owns the data directory.
+  home.activation.t3codeRemoteDesktop = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    file="$HOME/.t3/userdata/desktop-settings.json"
+    if [ -e "$file" ]; then
+      run ${pkgs.jq}/bin/jq '.localEnvironmentEnabled = false' "$file" > "$file.tmp"
+    else
+      run mkdir -p "$(dirname "$file")"
+      printf '%s\n' '{"localEnvironmentEnabled":false}' > "$file.tmp"
+    fi
+    run mv "$file.tmp" "$file"
+  '';
+
   programs.t3code = {
     enable = true;
     server.enable = true;
