@@ -28,6 +28,10 @@
         # synchronous prevention off so scans do not stall desktop I/O.
         OnAccessPrevention = false;
         OnAccessExcludeUname = "clamav";
+        # Avoid duplicate events from the root-run baseline scan client.
+        # User-origin accesses stay monitored; root-only accesses rely on
+        # the explicit scheduled scan rather than on-access detection.
+        OnAccessExcludeRootUID = true;
         OnAccessMaxThreads = 1;
         OnAccessMaxFileSize = "100M";
         ExcludePath = "^/var/lib/clamav/quarantine(/|$)";
@@ -49,6 +53,9 @@
   # own quarantine support, without a custom detection/removal script.
   systemd.services.clamav-clamonacc.serviceConfig.ExecStart =
     lib.mkForce "${pkgs.clamav}/bin/clamonacc -F --fdpass --move=/var/lib/clamav/quarantine";
+  # Let activation finish when the scan starts, not when the full scan ends.
+  # The timer cannot start another instance while this one is running.
+  systemd.services.clamdscan.serviceConfig.Type = lib.mkForce "exec";
   systemd.services.clamdscan.serviceConfig.ExecStart =
     lib.mkForce "${pkgs.clamav}/bin/clamdscan --fdpass --infected --move=/var/lib/clamav/quarantine /home /var/lib /tmp /etc /var/tmp";
   systemd.slices.system-clamav.sliceConfig = {
