@@ -27,6 +27,42 @@
   # Nothing on the iGPU worth watching (same as the framework).
   programs.erikshell.metrics.gpu = false;
 
+  # At the desk the KVM gives the laptop the pc's two screens; the built-in
+  # one turns off, as on the framework. Matched by model, not connector: the
+  # KVM's DP-n names change each time it switches.
+  services.kanshi = {
+    enable = true;
+    systemdTarget = "hyprland-session.target";
+    settings = [
+      {
+        profile.name = "undocked";
+        profile.outputs = [
+          {
+            criteria = "eDP-1";
+            status = "enable";
+          }
+        ];
+      }
+      {
+        profile.name = "docked";
+        profile.outputs = [
+          {
+            criteria = "eDP-1";
+            status = "disable";
+          }
+          {
+            criteria = "Samsung Electric Company U28E590 *";
+            status = "enable";
+          }
+          {
+            criteria = "Samsung Electric Company U28D590 *";
+            status = "enable";
+          }
+        ];
+      }
+    ];
+  };
+
   hyprland = {
     keyboards = [
       {
@@ -48,6 +84,28 @@
         scale = "2";
         refreshRate = 120;
         x = 0;
+        y = 0;
+      }
+      # Same layout as on the pc. 30 Hz: the KVM's single 2-lane DisplayPort
+      # link cannot carry two 4K screens at 60 Hz, and with no rule here
+      # Hyprland finds no mode for the second one and crashes on a config
+      # reload (2026-11-10).
+      {
+        name = "desc:Samsung Electric Company U28E590";
+        width = 3840;
+        height = 2160;
+        refreshRate = 30;
+        scale = "2";
+        x = 0;
+        y = 0;
+      }
+      {
+        name = "desc:Samsung Electric Company U28D590";
+        width = 3840;
+        height = 2160;
+        refreshRate = 30;
+        scale = "2";
+        x = 1920;
         y = 0;
       }
     ];
