@@ -22,6 +22,6 @@ Google Cloud needs an Ablo-owned Web application OAuth client with the exact
 redirect URI `http://127.0.0.1:4788/api/oauth/callback`, Google Drive API enabled,
 and an Internal consent audience when available. Enter client credentials only
 in Executor's secure connection form. No credentials belong in this repository.
-Google Cloud currently requires fresh user verification; no Google account is
-linked yet. Deployment alone does not grant access. After consent, verify a
-read-only search before claiming the connection is working.
+Connected 2026-11-10 after creating an organization-internal OAuth client and
+enabling the Drive API. A real `driveFilesList` call through Executor succeeded.
+Credentials are stored by Executor, not in this repository.

@@ -12,8 +12,9 @@ authorize sending email or other communications without Erik approving the
 specific message.
 
 Framework `apps` is pinned to the installed host's 0.0.1-beta.95. Source passes a
-strict TypeScript check. Google API access remains unverified until OAuth is
-completed; no account is connected by these files alone.
+strict TypeScript check. Connected 2026-11-10: Gmail profile and mail-search
+calls through Executor succeeded after enabling the API and completing consent.
+Credentials are stored by Executor, not in these files.
 
 App ID remains `app_3f14b67d-055b-42b0-b48f-8db13e02a205`.
 Setup: http://127.0.0.1:4788/apps/app_3f14b67d-055b-42b0-b48f-8db13e02a205/setup

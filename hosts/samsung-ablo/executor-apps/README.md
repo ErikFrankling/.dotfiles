@@ -12,13 +12,13 @@ and API key; they do not establish access to any external work account.
 
 | Integration | Installed | Remaining user step |
 | --- | --- | --- |
-| [Drive](google-drive-readonly/README.md) | Upstream full Drive API | Google Cloud verification, OAuth client and consent |
-| [Gmail](gmail-readonly/README.md) | Upstream curated tools and full Gmail API | Same Google client, Gmail API enabled and consent |
+| [Drive](google-drive-readonly/README.md) | Full Drive API; connected and file-list read verified | None |
+| [Gmail](gmail-readonly/README.md) | Curated tools and full Gmail API; profile and mail search verified | None |
 | [Linear](linear-readonly/README.md) | Official MCP, OAuth `read write`; connected and read verified | None |
 | [PostHog](posthog-readonly/README.md) | Official MCP, operational read/write scopes; connected | None |
-| Vercel | Native API app and official OAuth MCP | Account 2FA required by team policy before either connection |
+| Vercel | Official OAuth MCP connected; Ablo project read verified | None for MCP; separate API-token app remains unlinked |
 | AWS | Native AWS CLI and `ablo` SSO session installed | SSO authentication, then account/role selection; AWS MCP not yet installed |
-| 1Password vault access | `op` CLI installed; account list empty | Ablo account and allowed vault access |
+| 1Password vault access | `op` CLI working; native desktop Environments MCP configured in both harnesses | Desktop unlock/authorization when requested |
 
 For Google, use an Ablo-owned Cloud project, enable **Google Drive API** and
 **Gmail API**, configure Internal audience if available, and create a **Web
@@ -51,9 +51,11 @@ integration may require interactive unlock; unattended automation needs a
 vault-scoped service account supplied through a secure secret prompt. The
 catalog's 1Password app is Events Reporting (audit data), and the public
 1Password developer MCP is documentation, neither provides vault access.
-No vault contents were read for this setup.
+Vault access was verified. The Vercel item's authenticator and recovery codes
+were saved in 1Password while enabling the team's required 2FA. The native
+desktop MCP manages 1Password Environments; use `op` for vault items.
 
 After each account is linked, verify a real read through Executor. Retrieve the
 company security policy from Drive before drawing policy compliance conclusions.
-The Needs-you list tracks Google verification, Vercel 2FA, and AWS/1Password
-authentication. Linear and PostHog consent items have been completed.
+Google and Vercel setup are complete. AWS SSO authentication remains on the
+Needs-you list; no AWS credential was found in the accessible work vaults.
