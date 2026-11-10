@@ -27,7 +27,11 @@
         # Quarantine using clamonacc's native --move option below. Keep
         # synchronous prevention off so scans do not stall desktop I/O.
         OnAccessPrevention = false;
-        OnAccessExcludeUname = "clamav";
+        # Service database churn is scanned by the scheduled scan instead.
+        OnAccessExcludeUname = [
+          "clamav"
+          "executor-work"
+        ];
         # Avoid duplicate events from the root-run baseline scan client.
         # User-origin accesses stay monitored; root-only accesses rely on
         # the explicit scheduled scan rather than on-access detection.
