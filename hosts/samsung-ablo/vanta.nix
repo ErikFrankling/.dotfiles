@@ -19,7 +19,7 @@
 }:
 let
   ownerEmail = "erik@abloatai.com";
-  region = "us";
+  region = "eu";
   hasKey = config.sops.secrets ? vanta-key;
 
   vanta = pkgs.stdenvNoCC.mkDerivation rec {
@@ -40,6 +40,7 @@ let
 in
 {
   programs.nix-ld.enable = true;
+  sops.secrets.vanta-key = { };
 
   systemd.services.vanta = {
     description = "Vanta monitoring software";
