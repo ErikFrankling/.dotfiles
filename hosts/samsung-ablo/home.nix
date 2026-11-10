@@ -1,24 +1,29 @@
 {
   inputs,
   lib,
+  pkgs,
   ...
 }:
 let
   # Hyprland's disconnect fallback is the first remaining monitor, which can
   # be AGENT-1. Kanshi configures outputs but cannot relocate workspaces: use
   # its native exec hook and Hyprland's Lua API, leaving agent workspaces alone.
+  # A store script is necessary because kanshi reparses/escapes inline Lua
+  # quotes before passing exec to sh. It also keeps Lua out of kanshi syntax.
   moveWorkspaces =
     monitor:
-    "hyprctl -i 0 eval "
-    + lib.escapeShellArg (
-      lib.replaceStrings [ "\n" ] [ " " ] ''
-        for _, workspace in ipairs(hl.get_workspaces()) do
-          if workspace.name ~= "agent" and workspace.name ~= "agent-park" then
-            hl.dsp.workspace.move({ workspace = workspace.addressable_name, monitor = ${builtins.toJSON monitor} })()
+    toString (
+      pkgs.writeShellScript "dock-workspaces" (
+        "hyprctl -i 0 eval "
+        + lib.escapeShellArg ''
+          for _, workspace in ipairs(hl.get_workspaces()) do
+            if workspace.name ~= "agent" and workspace.name ~= "agent-park" then
+              hl.dispatch(hl.dsp.workspace.move({ workspace = workspace.addressable_name, monitor = ${builtins.toJSON monitor} }))
+            end
           end
-        end
-        hl.dsp.focus({ monitor = ${builtins.toJSON monitor} })()
-      ''
+          hl.dispatch(hl.dsp.focus({ monitor = ${builtins.toJSON monitor} }))
+        ''
+      )
     );
 in
 {
