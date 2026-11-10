@@ -96,6 +96,12 @@ in
         # Youtube-shorts block	extension	1.5.3	true	app-profile	{34daeb50-c2d2-4f14-886a-7160b24d66a4}
         # Block Site	extension	0.5.6	false	app-profile	{54e2eb33-18eb-46ad-a4e4-1329c29f6e17}
         ExtensionSettings = {
+          # Sidebery was present only in the PC's mutable profile. Declare it
+          # so new laptops get the same vertical-tab extension.
+          "{3c078156-979c-498b-8990-85f7987dd929}" = {
+            install_url = "https://addons.mozilla.org/firefox/downloads/latest/sidebery/latest.xpi";
+            installation_mode = "force_installed";
+          };
           # "*".installation_mode = "blocked"; # blocks all addons except the ones specified below
           # uBlock Origin:
           "uBlock0@raymondhill.net" = {
@@ -193,6 +199,26 @@ in
         # ---- PREFERENCES ----
         # Check about:config for options.
         Preferences = {
+          "sidebar.verticalTabs" = {
+            Value = true;
+            Status = "user";
+          };
+          "sidebar.main.tools" = {
+            Value = "{3c078156-979c-498b-8990-85f7987dd929},passwords";
+            Status = "user";
+          };
+          "sidebar.backupState" = {
+            Value = builtins.toJSON {
+              command = "_3c078156-979c-498b-8990-85f7987dd929_-sidebar-action";
+              panelOpen = true;
+              panelWidth = 200;
+              launcherVisible = true;
+              launcherExpanded = false;
+              launcherWidth = 54;
+              bookmarksExpandedFolders = [ ];
+            };
+            Status = "user";
+          };
           # "browser.contentblocking.category" = {
           # Value = "strict";
           # Status = "locked";

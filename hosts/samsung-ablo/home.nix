@@ -74,7 +74,7 @@ in
             criteria = "Dell Inc. DELL U2724DE *";
             status = "enable";
             mode = "2560x1440@120Hz";
-            scale = 1.0;
+            scale = 2.0;
             position = "0,0";
           }
           {
@@ -144,7 +144,7 @@ in
         width = 2560;
         height = 1440;
         refreshRate = 120;
-        scale = "1";
+        scale = "2";
         x = 0;
         y = 0;
       }
@@ -173,7 +173,7 @@ in
         width = 2560;
         height = 1440;
         refreshRate = 60;
-        scale = "1.333333";
+        scale = "2";
         x = 1920;
         y = 0;
       }

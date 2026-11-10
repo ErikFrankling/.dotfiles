@@ -1,5 +1,5 @@
 # Native logind -> hypridle -> hyprlock integration, shared by the power menu
-# and Super+L. Idle timeouts and login locking remain host policy.
+# and Super+Ctrl+L. Idle timeouts and login locking remain host policy.
 # https://wiki.hypr.land/Hypr-Ecosystem/hypridle/
 { username, lib, ... }:
 {

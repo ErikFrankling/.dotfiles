@@ -7,5 +7,9 @@
   # hyprlock talks to fprintd itself; with pam_fprintd in its PAM stack too,
   # it would wait for the finger before taking the password.
   security.pam.services.hyprlock.fprintAuth = false;
-  home-manager.users.${username}.programs.hyprlock.settings.auth."fingerprint:enabled" = true;
+  home-manager.users.${username}.programs.hyprlock.settings.auth = {
+    "fingerprint:enabled" = true;
+    "fingerprint:ready_message" = "Touch the fingerprint reader or enter your password";
+    "fingerprint:present_message" = "Reading fingerprint…";
+  };
 }

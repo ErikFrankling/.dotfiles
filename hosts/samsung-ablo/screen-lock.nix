@@ -75,7 +75,7 @@
           }
           {
             monitor = "";
-            text = "Enter your password to unlock";
+            text = "$FPRINTPROMPT";
             font_family = "Sans";
             font_size = 14;
             color = "rgb(94a3b8)";
@@ -92,6 +92,7 @@
             monitor = "";
             fade_on_empty = false;
             placeholder_text = "Password";
+            fail_text = "$PAMFAIL$FPRINTFAIL";
             size = "340, 64";
             position = "0, -35";
             rounding = 14;
