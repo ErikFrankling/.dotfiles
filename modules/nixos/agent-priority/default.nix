@@ -244,13 +244,19 @@ in
         # agents leave GBs in it (Claude scratchpads, sandboxes, test runs);
         # systemd's own tmp.conf keeps it 10 days. 00-nixos.conf sorts first,
         # so this line wins over that one.
-        systemd.tmpfiles.rules = [ "q /tmp 1777 root root 3d" ];
+        # 2026-11-10: 3d was still too slow (agents wrote 100G in hours, / fell
+        # to 5% free), and the cleaner only ran daily. Idle for 1d goes, and the
+        # cleaner runs hourly (system and user); active files stay (age counts
+        # from last use).
+        systemd.tmpfiles.rules = [ "q /tmp 1777 root root 1d" ];
+        systemd.timers.systemd-tmpfiles-clean.timerConfig.OnUnitActiveSec = lib.mkForce "1h";
+        systemd.user.timers.systemd-tmpfiles-clean.timerConfig.OnUnitActiveSec = lib.mkForce "1h";
         # Every agent worktree builds its own cargo target/ (4-7G each) and
         # nothing removes it once the run is done: 18 Claude workflow
         # worktrees in wasm-box held 88G. Build output idle for 2 days goes.
         systemd.user.tmpfiles.rules = [
-          "e %h/projects/*/.claude/worktrees/*/target - - - 2d"
-          "e %h/.t3/worktrees/*/*/target - - - 2d"
+          "e %h/projects/*/.claude/worktrees/*/target - - - 6h"
+          "e %h/.t3/worktrees/*/*/target - - - 6h"
         ];
 
         systemd.user.slices.app-t3code = {
