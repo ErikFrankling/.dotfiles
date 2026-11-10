@@ -22,7 +22,6 @@
     services.hypridle = {
       enable = true;
       settings = {
-        animations.enabled = false;
         general = {
           lock_cmd = "pidof hyprlock || hyprlock";
           before_sleep_cmd = "loginctl lock-session";
@@ -48,6 +47,7 @@
       enable = true;
       package = null; # installed by the NixOS module above
       settings = {
+        animations.enabled = false;
         general = {
           immediate_render = true;
           hide_cursor = false;

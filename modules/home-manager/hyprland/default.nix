@@ -173,7 +173,7 @@
                 ]
                 # On pc, the patched IBus frontend is owned by ibus-wayland.service.
                 ++ lib.optional (!(config.services.ibus-native-seat.enable or false)) "ibus start --type wayland"
-                ++ [ "lxqt-policykit-agent" ]
+                ++ lib.optional (!config.services.polkit-gnome.enable) "lxqt-policykit-agent"
               )
             }${
               lib.concatMapStrings (
