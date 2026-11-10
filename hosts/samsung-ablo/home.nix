@@ -7,6 +7,7 @@
   imports = [
     ../../modules/home-manager
     ../../modules/home-manager/desktop.nix
+    ../../modules/home-manager/computer-use
     ../../modules/home-manager/print
     ../../modules/home-manager/auto-update
     ../../modules/home-manager/machines
@@ -16,6 +17,10 @@
     inputs.time.homeManagerModules.agent-v2
     ./t3code.nix # work agents run here, not on the pc
   ];
+
+  # Local browser, agent monitor and input seat. Harnesses get these local
+  # MCP servers from ai.nix; work desktop control stays on this laptop.
+  programs.agent-desktop.enable = true;
 
   # Time v2: screen, input, lid, lock, battery and Wi-Fi each minute, to the
   # local Alloy (queued on disk while away from home).
