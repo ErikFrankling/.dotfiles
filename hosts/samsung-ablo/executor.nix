@@ -27,6 +27,12 @@ in
   # The upstream server binds only to loopback. Machine credentials protect
   # API access; neither harness needs interactive approvals to connect.
   environment.systemPackages = [ executor ];
+  users.groups.executor-work = { };
+  users.users.executor-work = {
+    isSystemUser = true;
+    group = "executor-work";
+    home = "/var/lib/executor-work-local";
+  };
   sops.secrets.executor-work-api-key.owner = username;
   sops.secrets.executor-work-encryption-key = { };
   sops.templates.executor-work-env.content = ''
@@ -48,7 +54,8 @@ in
     };
     serviceConfig = {
       ExecStart = "${executor}/bin/executor serve";
-      User = username;
+      User = "executor-work";
+      Group = "executor-work";
       StateDirectory = "executor-work-local";
       StateDirectoryMode = "0700";
       EnvironmentFile = config.sops.templates.executor-work-env.path;
