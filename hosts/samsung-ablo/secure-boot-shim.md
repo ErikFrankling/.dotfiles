@@ -57,4 +57,27 @@ platform erase, delete ESP contents, or replace factory keys. If the shim test
 fails, disable Secure Boot and select the existing Linux Boot Manager; the
 Windows Boot Manager and normal Linux entry remain present.
 
-TPM disk auto-unlock remains a separate follow-up after this chain is proven.
+## Physical result and TPM enrollment, 2026-11-10
+
+Verified on the laptop: `SecureBoot enabled`, `BootCurrent: 0001`,
+`BootOrder: 0001,0000,0002`, enrolled db.cer, systemd-boot262 loaded from
+`/EFI/nixos-shim/grubx64.efi`, lanzastub1.1.0. The Samsung BIOS dropdown
+omitted entry0001 while it was outside BootOrder. Adding it first with
+`sudo efibootmgr --bootorder 0001,0000,0002` made the successful boot possible.
+Keep both original entries. A direct boot through entry0000 does not export
+shim's runtime MOK list, so a negative mokutil test there is not evidence
+that enrollment was lost. Verify through shim before enrolling again.
+
+TPM key slot1 was enrolled with `systemd-cryptenroll --tpm2-device=auto
+--tpm2-pcrs=7+14 /dev/nvme0n1p5` after this verified Secure Boot. PCR7 binds
+firmware policy; PCR14 also binds shim/MOK policy. Existing password slot0
+remains. A root-only pre-enrollment header backup is at
+`/var/lib/sbctl/pre-shim-backup/luks-header-before-tpm.img`.
+
+Non-disruptive token-only unlock passed:
+`sudo env LD_LIBRARY_PATH=/run/current-system/sw/lib/cryptsetup cryptsetup
+open --test-passphrase --token-only /dev/nvme0n1p5`.
+The library path is needed for this standalone cryptsetup test on NixOS;
+systemd in initrd already provides its TPM integration. No disk mapping was
+opened or mounted by the test. Full automatic startup still needs a physical
+reboot test; keep the recovery password for changed firmware/key policy.
