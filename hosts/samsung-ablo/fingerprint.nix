@@ -11,12 +11,14 @@
   # LXQt 2.4's authentication agent crashed in Session::completed after a
   # 1Password fingerprint request (2026-11-10). Use the upstream GNOME
   # agent, managed by Home Manager, instead of the unsupervised LXQt agent.
-  home-manager.users.${username}.services.polkit-gnome.enable = true;
-  home-manager.users.${username}.systemd.user.services.polkit-gnome.Service.Restart = "on-failure";
+  home-manager.users.${username} = {
+    services.polkit-gnome.enable = true;
+    systemd.user.services.polkit-gnome.Service.Restart = "on-failure";
 
-  home-manager.users.${username}.programs.hyprlock.settings.auth = {
-    "fingerprint:enabled" = true;
-    "fingerprint:ready_message" = "Touch the fingerprint reader or enter your password";
-    "fingerprint:present_message" = "Reading fingerprint…";
+    programs.hyprlock.settings.auth = {
+      "fingerprint:enabled" = true;
+      "fingerprint:ready_message" = "Touch the fingerprint reader or enter your password";
+      "fingerprint:present_message" = "Reading fingerprint…";
+    };
   };
 }

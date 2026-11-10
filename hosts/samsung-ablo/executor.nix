@@ -1,21 +1,60 @@
-{ ... }:
 {
-  # Independent work instance: no personal integrations or account database.
-  # Upstream selfhost image, pinned to the version already used successfully
-  # in the homelab. The UI, API and MCP share port 4400.
-  virtualisation.oci-containers.backend = "docker";
-  virtualisation.oci-containers.containers.executor-work = {
-    image = "ghcr.io/usefulsoftwareco/executor-selfhost:2.0.0-beta.24@sha256:39d8ce360adf86df46e953f43551dad4440d04d7246d30fc7b0d6f3f5cfed3f7";
-    ports = [ "127.0.0.1:4788:4400" ];
-    volumes = [ "/var/lib/executor-work:/app/data" ];
+  config,
+  pkgs,
+  username,
+  ...
+}:
+let
+  # Upstream ships a standalone Linux runtime; nixpkgs has no package for
+  # Executor 2. Repack it unchanged and run through the host's nix-ld.
+  executor = pkgs.stdenvNoCC.mkDerivation {
+    pname = "executor-local";
+    version = "2.0.0-beta.24";
+    src = pkgs.fetchurl {
+      url = "https://github.com/UsefulSoftwareCo/executor/releases/download/executor%402.0.0-beta.24/executor-2.0.0-beta.24-linux-x64.tgz";
+      sha256 = "78451d349150c365cc44717d6d45329ba4026af4a52cfa5de7c494532ce825b6";
+    };
+    installPhase = ''
+      mkdir -p $out/libexec/executor $out/bin
+      cp -a . $out/libexec/executor/
+      ln -s $out/libexec/executor/executor $out/bin/executor
+    '';
+    dontFixup = true;
+  };
+in
+{
+  # Local mode uses device pairing, not hosted administrator passwords.
+  # The upstream server binds only to loopback. Machine credentials protect
+  # API access; neither harness needs interactive approvals to connect.
+  environment.systemPackages = [ executor ];
+  sops.secrets.executor-work-api-key.owner = username;
+  sops.secrets.executor-work-encryption-key = { };
+  sops.templates.executor-work-env.content = ''
+    EXECUTOR_API_KEY=${config.sops.placeholder.executor-work-api-key}
+    EXECUTOR_ENCRYPTION_KEY=${config.sops.placeholder.executor-work-encryption-key}
+  '';
+  systemd.services.executor-work = {
+    description = "Ablo local Executor";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
     environment = {
-      BETTER_AUTH_URL = "http://localhost:4788";
+      EXECUTOR_DATA_DIR = "/var/lib/executor-work-local";
+      EXECUTOR_PORT = "4788";
+      EXECUTOR_KEY_STORAGE = "file";
       DO_NOT_TRACK = "1";
     };
-    extraOptions = [
-      "--memory=3g"
-      "--cpus=2"
-    ];
+    serviceConfig = {
+      ExecStart = "${executor}/bin/executor serve";
+      User = username;
+      StateDirectory = "executor-work-local";
+      StateDirectoryMode = "0700";
+      EnvironmentFile = config.sops.templates.executor-work-env.path;
+      Restart = "on-failure";
+      RestartSec = 5;
+      MemoryMax = "3G";
+      CPUQuota = "200%";
+      UMask = "0077";
+    };
   };
-  systemd.tmpfiles.rules = [ "d /var/lib/executor-work 0700 root root -" ];
 }

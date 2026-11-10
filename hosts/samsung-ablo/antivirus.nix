@@ -1,5 +1,5 @@
-# Anti-malware: ClamAV with daily signature updates, on-access scanning of
-# downloads and /tmp, and a weekly full scan. Detections go to the journal,
+# Anti-malware: ClamAV with hourly update checks, mount-wide on-access
+# scanning and a weekly scan. Detections go to the journal,
 # which Alloy ships to the homelab (modules/nixos/observability), and pop up
 # as a desktop notification. ClamTk is the GUI (scans, history, quarantine).
 {
@@ -14,18 +14,22 @@
     daemon = {
       enable = true;
       settings = {
-        OnAccessIncludePath = [
-          "/home/${username}"
-          "/tmp"
-        ];
+        # ClamAV 1.5.4's directory walker only installed watches on the two
+        # include roots on this host, silently missing existing subfolders.
+        # Its native fanotify mount watch covers the root filesystem instead.
+        # /nix/store is a separate read-only bind mount; /run, /proc etc. are
+        # separate mounts too. No per-directory watcher/helper is needed.
+        OnAccessMountPath = "/";
+        OnAccessDisableDDD = true;
         # clamonacc refuses to watch the directory clamd keeps its own temp
         # files in, which is /tmp by default.
         TemporaryDirectory = "/var/lib/clamav/tmp";
         # Quarantine using clamonacc's native --move option below. Keep
         # synchronous prevention off so scans do not stall desktop I/O.
         OnAccessPrevention = false;
-        OnAccessExtraScanning = true;
         OnAccessExcludeUname = "clamav";
+        OnAccessMaxThreads = 1;
+        OnAccessMaxFileSize = "100M";
         ExcludePath = "^/var/lib/clamav/quarantine(/|$)";
         MaxThreads = 2;
       };
@@ -46,7 +50,7 @@
   systemd.services.clamav-clamonacc.serviceConfig.ExecStart =
     lib.mkForce "${pkgs.clamav}/bin/clamonacc -F --fdpass --move=/var/lib/clamav/quarantine";
   systemd.services.clamdscan.serviceConfig.ExecStart =
-    lib.mkForce "${pkgs.clamav}/bin/clamdscan --fdpass --infected --allmatch --move=/var/lib/clamav/quarantine /home /var/lib /tmp /etc /var/tmp";
+    lib.mkForce "${pkgs.clamav}/bin/clamdscan --fdpass --infected --move=/var/lib/clamav/quarantine /home /var/lib /tmp /etc /var/tmp";
   systemd.slices.system-clamav.sliceConfig = {
     CPUQuota = "100%";
     IOWeight = 10;
