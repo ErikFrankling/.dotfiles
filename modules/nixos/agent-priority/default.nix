@@ -257,6 +257,10 @@ in
         systemd.user.tmpfiles.rules = [
           "e %h/projects/*/.claude/worktrees/*/target - - - 6h"
           "e %h/.t3/worktrees/*/*/target - - - 6h"
+          # wasm-box builds now write to /mnt/data/wbox-target/<worktree>
+          # (2026-11-10, to keep / free); idle for 3 days goes, active builds
+          # keep their files fresh. DiskAlmostFull/DiskFillingUp cover /mnt/data.
+          "e /mnt/data/wbox-target - - - 3d"
         ];
 
         systemd.user.slices.app-t3code = {
