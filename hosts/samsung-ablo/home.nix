@@ -1,8 +1,24 @@
 {
   inputs,
+  lib,
   ...
 }:
-
+let
+  # Hyprland's disconnect fallback is the first remaining monitor, which can
+  # be AGENT-1. Kanshi configures outputs but cannot relocate workspaces: use
+  # its native exec hook and Hyprland's Lua API, leaving agent workspaces alone.
+  moveWorkspaces =
+    monitor:
+    "hyprctl -i 0 eval "
+    + lib.escapeShellArg ''
+      for _, workspace in ipairs(hl.get_workspaces()) do
+        if workspace.name ~= "agent" and workspace.name ~= "agent-park" then
+          hl.dsp.workspace.move({ workspace = workspace.addressable_name, monitor = ${builtins.toJSON monitor} })()
+        end
+      end
+      hl.dsp.focus({ monitor = ${builtins.toJSON monitor} })()
+    '';
+in
 {
   imports = [
     ../../modules/home-manager
@@ -40,16 +56,45 @@
     systemdTarget = "hyprland-session.target";
     settings = [
       {
+        profile.name = "office";
+        profile.exec = [ (moveWorkspaces "desc:Dell Inc. DELL U2724DE") ];
+        profile.outputs = [
+          {
+            criteria = "eDP-1";
+            status = "disable";
+          }
+          {
+            criteria = "Dell Inc. DELL U2724DE *";
+            status = "enable";
+            mode = "2560x1440@120Hz";
+            scale = 1.0;
+            position = "0,0";
+          }
+          {
+            criteria = "AGENT-1";
+            status = "enable";
+            position = "10000,0";
+          }
+        ];
+      }
+      {
         profile.name = "undocked";
+        profile.exec = [ (moveWorkspaces "eDP-1") ];
         profile.outputs = [
           {
             criteria = "eDP-1";
             status = "enable";
           }
+          {
+            criteria = "AGENT-1";
+            status = "enable";
+            position = "10000,0";
+          }
         ];
       }
       {
         profile.name = "docked";
+        profile.exec = [ (moveWorkspaces "desc:Samsung Electric Company U28E590") ];
         profile.outputs = [
           {
             criteria = "eDP-1";
@@ -62,6 +107,11 @@
           {
             criteria = "Samsung Electric Company U28D590 *";
             status = "enable";
+          }
+          {
+            criteria = "AGENT-1";
+            status = "enable";
+            position = "10000,0";
           }
         ];
       }
@@ -82,6 +132,15 @@
       }
     ];
     monitors = [
+      {
+        name = "desc:Dell Inc. DELL U2724DE";
+        width = 2560;
+        height = 1440;
+        refreshRate = 120;
+        scale = "1";
+        x = 0;
+        y = 0;
+      }
       {
         name = "eDP-1";
         width = 2880;
