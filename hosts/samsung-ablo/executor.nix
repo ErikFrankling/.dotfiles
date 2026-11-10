@@ -44,13 +44,12 @@ in
     wantedBy = [ "multi-user.target" ];
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
-    # The native runtime stores app source through Git subprocesses, including
-    # installation of its bundled management app during startup.
-    path = [ pkgs.git ];
     environment = {
       EXECUTOR_DATA_DIR = "/var/lib/executor-work-local";
       EXECUTOR_PORT = "4788";
       DO_NOT_TRACK = "1";
+      # Bundled workerd defaults to /etc/ssl/cert.pem, absent on NixOS.
+      SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
     };
     serviceConfig = {
       ExecStart = "${executor}/bin/executor serve";
