@@ -1,0 +1,1 @@
+{"name":"@ablo/gmail-readonly","private":true,"type":"module","executor":{"title":"Gmail (read-only)"},"dependencies":{"apps":"0.0.1-beta.95"}}
