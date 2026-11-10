@@ -76,7 +76,9 @@ in
     SCCACHE_BASEDIRS = "/home/erikf/projects";
 
     # The default is 10G, which a few Rust workspaces evict straight through.
-    SCCACHE_CACHE_SIZE = "50G";
+    # 50G -> 20G (2026-11-10): / fell to 5% free twice in two days and the
+    # cache sat at 28G and climbing toward its cap; agent builds refill it fast.
+    SCCACHE_CACHE_SIZE = "20G";
   };
 
   systemd.user.services.cargo-sweep = {
