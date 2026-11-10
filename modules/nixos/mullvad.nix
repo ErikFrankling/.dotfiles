@@ -49,6 +49,14 @@ in
       RestartSec = 10;
     };
     script = ''
+      # nix-update-doctor: 2026-11-10. A switch restarts the daemon and starts
+      # this unit before the RPC socket exists; the first failure alone made
+      # switch-to-configuration exit 4 (auto-update-switch failed at 06:12)
+      # although Restart= succeeded 10 s later. Wait for the socket instead.
+      for _ in $(seq 60); do
+        mullvad status > /dev/null 2>&1 && break
+        sleep 1
+      done
       # "Device name" is printed only for a device the account still accepts;
       # a revoked one still prints the account number.
       if mullvad account get | grep -q '^Device name'; then
@@ -82,6 +90,11 @@ in
       RestartSec = 5;
     };
     script = ''
+      # Same socket race as mullvad-login above.
+      for _ in $(seq 60); do
+        mullvad status > /dev/null 2>&1 && break
+        sleep 1
+      done
       mullvad lan set allow
     '';
   };
