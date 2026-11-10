@@ -3,3 +3,6 @@ noct4/
 
 # Agent scratch dirs — never commit (AGENTS.md)
 .claude/
+
+# Company evidence belongs in private work storage, never this public repository.
+/hosts/samsung-ablo/evidence/
