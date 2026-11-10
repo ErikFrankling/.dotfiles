@@ -86,10 +86,8 @@
         x = 0;
         y = 0;
       }
-      # Same layout as on the pc. 30 Hz: the KVM's single 2-lane DisplayPort
-      # link cannot carry two 4K screens at 60 Hz, and with no rule here
-      # Hyprland finds no mode for the second one and crashes on a config
-      # reload (2026-11-10).
+      # The KVM cannot carry both screens at 4K/60. These are the modes
+      # verified together on the laptop; the U28D590 has no 4K/30 mode.
       {
         name = "desc:Samsung Electric Company U28E590";
         width = 3840;
@@ -101,10 +99,10 @@
       }
       {
         name = "desc:Samsung Electric Company U28D590";
-        width = 3840;
-        height = 2160;
-        refreshRate = 30;
-        scale = "2";
+        width = 2560;
+        height = 1440;
+        refreshRate = 60;
+        scale = "1.333333";
         x = 1920;
         y = 0;
       }
