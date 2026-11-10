@@ -55,6 +55,9 @@
 
   # The upstream module exposes no scanner argument option. Use the tools'
   # own quarantine support, without a custom detection/removal script.
+  # fanotify holds one descriptor per queued event; leave headroom for
+  # scanner sockets during startup bursts (the default soft limit is 1024).
+  systemd.services.clamav-clamonacc.serviceConfig.LimitNOFILE = 16384;
   systemd.services.clamav-clamonacc.serviceConfig.ExecStart =
     lib.mkForce "${pkgs.clamav}/bin/clamonacc -F --fdpass --move=/var/lib/clamav/quarantine";
   # Let activation finish when the scan starts, not when the full scan ends.
