@@ -1,9 +1,10 @@
-# Anti-malware: ClamAV with hourly update checks, mount-wide on-access
+# Anti-malware: ClamAV with hourly update checks, recursive on-access
 # scanning and a weekly scan. Detections go to the journal,
 # which Alloy ships to the homelab (modules/nixos/observability), and pop up
 # as a desktop notification. ClamTk is the GUI (scans, history, quarantine).
 {
   pkgs,
+  otherPkgs,
   username,
   lib,
   ...
@@ -14,13 +15,24 @@
     daemon = {
       enable = true;
       settings = {
-        # ClamAV 1.5.4's directory walker only installed watches on the two
-        # include roots on this host, silently missing existing subfolders.
-        # Its native fanotify mount watch covers the root filesystem instead.
-        # /nix/store is a separate read-only bind mount; /run, /proc etc. are
-        # separate mounts too. No per-directory watcher/helper is needed.
-        OnAccessMountPath = "/";
-        OnAccessDisableDDD = true;
+        OnAccessIncludePath = [
+          "/home/${username}"
+          "/tmp"
+        ];
+        # Hot application databases/caches are covered by scheduled scans.
+        # Keep ordinary dotfiles, projects, downloads and documents watched.
+        OnAccessExcludePath = [
+          "/home/${username}/.cache"
+          "/home/${username}/.codex"
+          "/home/${username}/.t3"
+          "/home/${username}/.mozilla"
+          "/home/${username}/.config/mozilla"
+          "/home/${username}/.config/1Password"
+          "/home/${username}/.config/chromium"
+          "/home/${username}/.config/google-chrome"
+          "/home/${username}/.config/BraveSoftware"
+        ];
+        OnAccessExtraScanning = true;
         # clamonacc refuses to watch the directory clamd keeps its own temp
         # files in, which is /tmp by default.
         TemporaryDirectory = "/var/lib/clamav/tmp";
@@ -58,8 +70,12 @@
   # fanotify holds one descriptor per queued event; leave headroom for
   # scanner sockets during startup bursts (the default soft limit is 1024).
   systemd.services.clamav-clamonacc.serviceConfig.LimitNOFILE = 16384;
+  # The 1.5.4 client with this system's libc silently watches only the root
+  # of a three-directory test tree. The cached stable 1.4.3 client watches
+  # all three and speaks fd-passing to the current 1.5.4 daemon successfully.
+  # Keep the current scanning engine/signatures; only use the working client.
   systemd.services.clamav-clamonacc.serviceConfig.ExecStart =
-    lib.mkForce "${pkgs.clamav}/bin/clamonacc -F --fdpass --move=/var/lib/clamav/quarantine";
+    lib.mkForce "${otherPkgs.pkgsStable.clamav}/bin/clamonacc -F --fdpass --move=/var/lib/clamav/quarantine";
   # Let activation finish when the scan starts, not when the full scan ends.
   # The timer cannot start another instance while this one is running.
   systemd.services.clamdscan.serviceConfig.Type = lib.mkForce "exec";
