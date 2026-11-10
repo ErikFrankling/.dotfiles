@@ -426,7 +426,9 @@ in
             ".agents/skills"
             ".claude/skills"
             ".codex/skills"
-            ".codex-t3/skills"
+            # Not ".codex-t3/skills": on the pc it is a symlink to the codex
+            # skills dir (hosts/pc/home.nix), so installing into it fails
+            # with "outside $HOME" and breaks the whole home-manager build.
           ];
           skill = [
             "computer-use"
