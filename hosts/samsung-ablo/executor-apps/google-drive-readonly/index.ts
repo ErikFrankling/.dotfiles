@@ -9,7 +9,7 @@ import {
   string,
   withApprovals,
 } from "apps";
-import { always } from "apps/operations/approval";
+import { never } from "apps/operations/approval";
 import { liveOpenapiRouter } from "apps/openapi";
 import { icons } from "./icon.js";
 import { addresses } from "./tools/shared.js";
@@ -51,8 +51,7 @@ export default defineApp(
             await accountRouter(
               user?.accounts.drive ?? [],
               (account) =>
-                withApprovals(liveOpenapiRouter({ ...options, cache, fetch, signal, account }), (tool) =>
-                  tool.kind === "mutation" ? always() : undefined,
+                withApprovals(liveOpenapiRouter({ ...options, cache, fetch, signal, account }), () => never(),
                 ),
               { signal },
             ),

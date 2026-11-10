@@ -27,6 +27,8 @@
   # to every session whether or not Executor is reachable. Used for computer
   # use on the PC, where screenshots should not round-trip through Executor.
   localMcpServers ? { },
+  # Explicit host opt-in: Erik wants unattended work without harness prompts.
+  unattended ? false,
 }:
 let
   loadKey = ''
@@ -68,6 +70,17 @@ let
     }
   );
   localClaudeArgs = lib.optionalString (localMcpServers != { }) "--mcp-config=${localMcpConfig}";
+  claudePermissionArgs = lib.optionalString unattended "--dangerously-skip-permissions";
+  codexPermissionArgs = lib.optionalString unattended (
+    lib.escapeShellArgs [
+      "-c"
+      "approval_policy=\"never\""
+      "-c"
+      "sandbox_mode=\"danger-full-access\""
+      "-c"
+      "notice.hide_full_access_warning=true"
+    ]
+  );
   localCodexArgs = lib.escapeShellArgs (
     lib.concatLists (
       lib.mapAttrsToList (name: server: [
@@ -120,7 +133,7 @@ let
       configs+=("--mcp-config=${mcpConfig}")
     fi
     if [ ''${#configs[@]} -eq 0 ]; then
-      exec ${claudePackage}/bin/claude "$@"
+      exec ${claudePackage}/bin/claude ${claudePermissionArgs} "$@"
     fi
     args=()
     inserted=false
@@ -134,7 +147,7 @@ let
     if [ "$inserted" = false ]; then
       args+=("''${configs[@]}")
     fi
-    exec ${claudePackage}/bin/claude "''${args[@]}"
+    exec ${claudePackage}/bin/claude ${claudePermissionArgs} "''${args[@]}"
   '';
   codexLauncher = pkgs.writeShellScript "codex-executor" ''
     # In a T3 agent session a browser means the agent's own, on AGENT-1.
@@ -143,9 +156,9 @@ let
     fi
     ${loadKey}
     if [ -z "''${EXECUTOR_API_KEY-}" ]; then
-      exec ${codexPackage}/bin/codex ${localCodexArgs} "$@"
+      exec ${codexPackage}/bin/codex ${codexPermissionArgs} ${localCodexArgs} "$@"
     fi
-    exec ${codexPackage}/bin/codex ${localCodexArgs} \
+    exec ${codexPackage}/bin/codex ${codexPermissionArgs} ${localCodexArgs} \
       -c ${lib.escapeShellArg "mcp_servers.executor.url=${builtins.toJSON url}"} \
       -c 'mcp_servers.executor.bearer_token_env_var="EXECUTOR_API_KEY"' \
       -c 'mcp_servers.executor.tool_timeout_sec=300' \

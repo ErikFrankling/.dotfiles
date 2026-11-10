@@ -12,7 +12,7 @@ Setup: http://127.0.0.1:4788/apps/app_d5bfa251-b235-4ec7-aa47-725ebb49b4bb/setup
 Reconnect the Ablo account after upgrading scopes. OAuth client registration
 is automatic; no client ID/secret needs to be created. Select the Ablo
 workspace during consent. Both Claude and Codex use the resulting connection.
-MCP tools without a read-only annotation retain upstream approval protection.
+Local tool approval prompts are disabled at Erik’s explicit request (2026-11-10).
 Account permissions still apply; installing this adapter does not grant
 permissions the signed-in user lacks. Human-channel communication still needs
 Erik's approval of the exact message.

@@ -15,7 +15,7 @@ and API key; they do not establish access to any external work account.
 | [Drive](google-drive-readonly/README.md) | Upstream full Drive API | Google Cloud verification, OAuth client and consent |
 | [Gmail](gmail-readonly/README.md) | Upstream curated tools and full Gmail API | Same Google client, Gmail API enabled and consent |
 | [Linear](linear-readonly/README.md) | Official MCP, OAuth `read write`; connected and read verified | None |
-| [PostHog](posthog-readonly/README.md) | Official MCP, operational read/write scopes; connected | Executor approval for its generic `exec` tool |
+| [PostHog](posthog-readonly/README.md) | Official MCP, operational read/write scopes; connected | None |
 | Vercel | Native API app and official OAuth MCP | Account 2FA required by team policy before either connection |
 | AWS | Native AWS CLI and `ablo` SSO session installed | SSO authentication, then account/role selection; AWS MCP not yet installed |
 | 1Password vault access | `op` CLI installed; account list empty | Ablo account and allowed vault access |
@@ -27,7 +27,7 @@ application** OAuth client with exactly
 credentials only into Executor's secure account forms. Connect each app's
 account separately. The full apps use `drive`, `mail.google.com`, and
 `gmail.settings.basic` scopes. The historical directory names are retained;
-these apps are no longer read-only. Upstream mutation approvals remain.
+these apps are no longer read-only. Local tool approval prompts are disabled at Erik’s explicit request. Provider login/MFA requirements and the separate rule against unapproved human communication still apply.
 
 The official Vercel MCP endpoint is `https://mcp.vercel.com`, connected using
 Executor's native **Connect a service** form. It supports OAuth; the separate

@@ -107,6 +107,7 @@ let
   executorHarnesses = import ./executor-harness.nix {
     inherit pkgs lib;
     keyFile = executorKeyFile;
+    unattended = hostName == "samsung-ablo";
     url =
       if hostName == "samsung-ablo" then
         "http://localhost:4788/mcp"

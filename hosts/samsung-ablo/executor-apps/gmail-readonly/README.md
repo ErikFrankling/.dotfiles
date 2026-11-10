@@ -7,7 +7,7 @@ full Gmail app following Erik's request for full work-service access.
 Upstream curated queries and mutations are restored, and the complete Gmail
 OpenAPI router is mounted under `api`. OAuth requests `https://mail.google.com/`
 and `https://www.googleapis.com/auth/gmail.settings.basic`, with offline access.
-API mutations retain upstream Executor approval prompts. Having access does not
+Local tool approval prompts are disabled at Erik’s explicit request. Having access does not
 authorize sending email or other communications without Erik approving the
 specific message.
 

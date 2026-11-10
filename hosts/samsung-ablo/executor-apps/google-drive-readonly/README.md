@@ -8,7 +8,7 @@ following Erik's request for full work-service access.
 The complete upstream Drive v3 OpenAPI document and its generator are included.
 Curated `search` and `read` tools remain available, with all imported API
 operations under `api`. OAuth requests `https://www.googleapis.com/auth/drive`
-and offline access. Imported mutations retain upstream Executor approval prompts.
+and offline access. Local tool approval prompts are disabled at Erik’s explicit request.
 Access capability does not authorize sharing files, editing shared documents,
 or communicating with people without Erik's explicit approval.
 

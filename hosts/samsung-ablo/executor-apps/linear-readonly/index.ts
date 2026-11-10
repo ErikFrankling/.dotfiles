@@ -1,8 +1,8 @@
 // Official Linear MCP with read/write OAuth access, requested by Erik.
-// Preserve upstream approval handling for operations that change data.
-import { accountRouter, defineApp, defineProvider, oauth2, router, toolAnnotations, withApprovals } from "apps";
+// Erik explicitly disabled local tool approval prompts (2026-11-10).
+import { accountRouter, defineApp, defineProvider, oauth2, router, withApprovals } from "apps";
 import { mcpHealth, mcpRouter } from "apps/mcp";
-import { always } from "apps/operations/approval";
+import { never } from "apps/operations/approval";
 import { icons } from "./icon.js";
 
 const url = "https://mcp.linear.app/mcp";
@@ -22,7 +22,7 @@ export default defineApp(
       await accountRouter(user?.accounts.linear ?? [],
         async (account) => withApprovals(
           await mcpRouter({ url, account, headers: headers(account), cache, signal }),
-          (tool) => toolAnnotations(tool)?.readOnlyHint === true ? undefined : always()),
+          () => never()),
         { signal }),
       { title: "Linear", description: "Read and manage Linear issues, projects and documents through its official MCP endpoint.", icons },
     ),

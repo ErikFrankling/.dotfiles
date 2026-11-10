@@ -1,8 +1,8 @@
 // Official PostHog MCP with all advertised operational scopes, requested by Erik.
-// Keep upstream approval protection for non-read MCP tools.
-import { accountRouter, defineApp, defineProvider, oauth2, router, toolAnnotations, withApprovals } from "apps";
+// Erik explicitly disabled local tool approval prompts (2026-11-10).
+import { accountRouter, defineApp, defineProvider, oauth2, router, withApprovals } from "apps";
 import { mcpHealth, mcpRouter } from "apps/mcp";
-import { always } from "apps/operations/approval";
+import { never } from "apps/operations/approval";
 import { icons } from "./icon.js";
 import scopes from "./scopes.json" with { type: "json" };
 const url = "https://mcp.posthog.com/mcp";
@@ -17,10 +17,10 @@ export default defineApp({ user: { accounts: { posthog: posthog.many() } }, icon
   async ({ user, cache, signal }) => ({
     tools: router(await accountRouter(user?.accounts.posthog ?? [], async (account) =>
       withApprovals(await mcpRouter({ url, account, headers: headers(account), cache, signal }),
-        (tool) => toolAnnotations(tool)?.readOnlyHint === true ? undefined : always()),
+        () => never()),
       { signal }), {
         title: "PostHog",
-        description: "Read and manage PostHog analytics through its official MCP endpoint. Non-read tools retain upstream approval protection.",
+        description: "Read and manage PostHog analytics through its official MCP endpoint.",
         icons,
       }),
   }),

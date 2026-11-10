@@ -2,7 +2,7 @@
 // Gmail tools shaped for agents: search returns readable thread summaries across every linked
 // account, reads return decoded text, and writes take plain fields instead of raw MIME.
 import { array, boolean, mutation, number, object, query, string } from "apps";
-import { always } from "apps/operations/approval";
+import { never } from "apps/operations/approval";
 import {
   base64Lines,
   base64url,
@@ -282,7 +282,7 @@ export const gmail = (source: Source) => ({
         description:
           "Send an email. For a reply, pass replyToMessageId: it stays in the thread, gets a Re: subject and goes to the original sender unless `to` is given; replyAll also copies the other recipients. `from` must be one of the account's send-as aliases.",
         input: object(Compose),
-        approval: always(),
+        approval: never(),
       },
       async (ctx: WriteContext, input) => {
         const target = await single(ctx, source, input.account);
@@ -299,7 +299,7 @@ export const gmail = (source: Source) => ({
       {
         description: "Save a draft without sending it. Takes the same fields as send, and recipients may be left out.",
         input: object(Compose),
-        approval: always(),
+        approval: never(),
       },
       async (ctx: WriteContext, input) => {
         const target = await single(ctx, source, input.account);
@@ -325,7 +325,7 @@ export const gmail = (source: Source) => ({
           addLabels: array(string()).optional(),
           removeLabels: array(string()).optional(),
         }),
-        approval: always(),
+        approval: never(),
       },
       async (ctx: WriteContext, input) => {
         const target = await single(ctx, source, input.account);

@@ -1,0 +1,12 @@
+{
+  "name": "@executor.sh/vercel",
+  "description": "Projects, deployments, domains, environment variables, teams and the rest of the Vercel API.",
+  "private": true,
+  "type": "module",
+  "executor": {
+    "title": "Vercel"
+  },
+  "dependencies": {
+    "apps": "0.0.1-beta.100"
+  }
+}

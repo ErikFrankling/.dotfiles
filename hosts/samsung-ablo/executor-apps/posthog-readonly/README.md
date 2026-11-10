@@ -15,6 +15,6 @@ Setup: http://127.0.0.1:4788/apps/app_9c3b3a30-101a-49b5-922a-4c8017b8a482/setup
 
 Reconnect the Ablo account after upgrading scopes, selecting the intended
 project during consent. MCP tools without a read-only annotation retain
-upstream approval protection. Account permissions still apply; the adapter
+the explicitly configured no-prompt policy. Account permissions still apply; the adapter
 does not grant permissions the signed-in user lacks. Human-channel
 communication still needs Erik's approval of the exact message.
