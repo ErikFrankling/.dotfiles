@@ -11,6 +11,7 @@
     ./bluetooth.nix
     ./sound.nix
     ./hyprland.nix
+    ./session-lock.nix
     ./projects/matlab.nix
     ./obs.nix
     ./firefox.nix

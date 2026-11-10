@@ -267,6 +267,8 @@
             [
               # "SUPER + O": hyprctl switchxkblayout at-translated-set-2-keyboard next
               (bindExec "SUPER + Return" "Open a terminal" terminal)
+              (bindExec "SUPER + L" "Lock the screen" "loginctl lock-session")
+              (bind "SUPER + Right" "Focus the window right" ''hl.dsp.focus({ direction = "right" })'')
               # SUPER + D is the shell's launcher now, see below.
               # (bindExec "SUPER + D" menu)
               (bind "SUPER + Q" "Close the window" "hl.dsp.window.close()")
@@ -339,7 +341,7 @@
                 key: direction:
                 bind "SUPER + ${key}" "Focus the window ${direction}"
                   ''hl.dsp.focus({ direction = "${direction}" })''
-              ) directions)
+              ) (builtins.removeAttrs directions [ "l" ]))
             ++
 
               # resize window
