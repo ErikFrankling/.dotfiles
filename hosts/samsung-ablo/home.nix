@@ -28,6 +28,7 @@ let
 in
 {
   imports = [
+    ./aws.nix
     ../../modules/home-manager
     ../../modules/home-manager/desktop.nix
     ../../modules/home-manager/computer-use
