@@ -45,6 +45,17 @@ in
   # MCP servers from ai.nix; work desktop control stays on this laptop.
   programs.agent-desktop.enable = true;
 
+  # Native AWS CLI SSO; authenticate with `aws sso login --sso-session ablo`.
+  # Account/role profiles are added only after Identity Center lists access.
+  programs.awscli = {
+    enable = true;
+    settings."sso-session ablo" = {
+      sso_start_url = "https://d-c36766d895.awsapps.com/start";
+      sso_region = "eu-north-1";
+      sso_registration_scopes = "sso:account:access";
+    };
+  };
+
   # Time v2: screen, input, lid, lock, battery and Wi-Fi each minute, to the
   # local Alloy (queued on disk while away from home).
   services.time-agent-v2 = {
