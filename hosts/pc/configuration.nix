@@ -11,6 +11,17 @@
 {
   services.local-stt.enable = true;
 
+  # The PC stays outside the tailnet for Mullvad. Reuse the Samsung SSH
+  # host's Proxmox jump route; only this PC can reach the forwarded port.
+  # T3 still requires a real pairing credential (stored by its desktop UI).
+  services.autossh.sessions = [
+    {
+      name = "samsung-t3code";
+      user = username;
+      extraArguments = "-N -T -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ConnectTimeout=10 -L 127.0.0.1:3774:127.0.0.1:3773 samsung-ablo";
+    }
+  ];
+
   # Logs and metrics to the homelab (modules/nixos/observability).
   observability = {
     enable = true;
