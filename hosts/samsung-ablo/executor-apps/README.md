@@ -17,7 +17,7 @@ and API key; they do not establish access to any external work account.
 | [Linear](linear-readonly/README.md) | Official MCP, OAuth `read write`; connected and read verified | None |
 | [PostHog](posthog-readonly/README.md) | Official MCP, operational read/write scopes; connected | None |
 | Vercel | Official OAuth MCP connected; Ablo project read verified | None for MCP; separate API-token app remains unlinked |
-| AWS | Native AWS CLI and `ablo` SSO session installed | SSO authentication, then account/role selection; AWS MCP not yet installed |
+| AWS | Native AWS CLI SSO authenticated; default/erik/ablo developer profiles and ablo-readonly verified | Renew SSO when it expires; AWS MCP not installed |
 | 1Password vault access | `op` CLI working; native desktop Environments MCP configured in both harnesses | Desktop unlock/authorization when requested |
 
 For Google, use an Ablo-owned Cloud project, enable **Google Drive API** and
@@ -57,5 +57,9 @@ desktop MCP manages 1Password Environments; use `op` for vault items.
 
 After each account is linked, verify a real read through Executor. Retrieve the
 company security policy from Drive before drawing policy compliance conclusions.
-Google and Vercel setup are complete. AWS SSO authentication remains on the
-Needs-you list; no AWS credential was found in the accessible work vaults.
+Google, Vercel and AWS CLI setup are complete. All local user-run harnesses
+share the native AWS SSO cache: `aws` or `aws --profile erik` selects
+AbloDeveloper; `aws --profile ablo-readonly` selects AbloReadOnly. Both roles
+were verified using STS in account 867344471746 on 2026-11-10. Renew with
+`aws sso login --profile erik` when required. AWS's portal username is `erik`,
+not the work email address. No permanent access keys are stored in this config.
