@@ -37,7 +37,16 @@
       settings = {
         general.hide_cursor = true;
         background = [ { color = "rgb(000000)"; } ]; # OLED
-        input-field = [ { } ];
+        input-field = [
+          {
+            # Empty monitor matches every output, including newly docked
+            # screens. Keep the prompt visible: hyprlock otherwise fades
+            # an empty field after two seconds, leaving a black screen.
+            monitor = "";
+            fade_on_empty = false;
+            placeholder_text = "Password";
+          }
+        ];
       };
     };
   };
