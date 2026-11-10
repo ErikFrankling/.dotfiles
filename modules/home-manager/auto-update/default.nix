@@ -728,10 +728,18 @@ let
             || echo "a nightly build is STILL RUNNING"
           echo "nightly clone: $(git -C ${clone} log -1 --format='%h %s' 2>/dev/null), $(git -C ${clone} status --porcelain 2>/dev/null | wc -l) uncommitted files"
 
+          # nix-remote only copies plain local paths to the builder; a
+          # git+file:// URL was evaluated there and failed with "path does not
+          # exist" (2026-11-10). So evaluate a detached worktree of origin/main.
+          evalTree=${checkDir}/main-worktree
+          git -C $dot worktree prune
+          [ -e $evalTree ] || git -C $dot worktree add --quiet --detach $evalTree "$main" 2>&1 | quiet
+          git -C $evalTree checkout --quiet --detach "$main" 2>&1 | quiet
+
           for host in ${lib.concatStringsSep " " hosts}; do
             section "$host"
             expected=$(timeout 300 nix-remote eval --raw \
-              "git+file://$dot?rev=$main#nixosConfigurations.$host.config.system.build.toplevel.outPath" \
+              "$evalTree#nixosConfigurations.$host.config.system.build.toplevel.outPath" \
               2> ${checkDir}/eval-$host.log) \
               || expected="EVAL FAILED: $(grep -m 1 -A 3 '^error' ${checkDir}/eval-$host.log | xargs)"
             echo "main's system: $expected"
