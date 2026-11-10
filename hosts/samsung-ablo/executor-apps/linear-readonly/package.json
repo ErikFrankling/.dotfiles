@@ -1,0 +1,8 @@
+{
+  "name": "@ablo/linear-readonly",
+  "description": "Linear's official read-only MCP endpoint with OAuth.",
+  "private": true,
+  "type": "module",
+  "executor": { "title": "Linear (read-only)" },
+  "dependencies": { "apps": "0.0.1-beta.95", "@modelcontextprotocol/sdk": "1.32.1" }
+}
