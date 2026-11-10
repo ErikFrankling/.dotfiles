@@ -1,15 +1,24 @@
-# Gmail (read-only)
+# Gmail
 
-Adapted from https://catalog.executor.sh/apps/gmail.json on 2026-11-10. Exposes
-only search, readThread, readMessage, labels and attachment queries; send,
-draft and modify tools are removed. Scope is `gmail.readonly` only.
+Official Executor catalog app from https://catalog.executor.sh/apps/gmail.json,
+refreshed 2026-11-10. The historical directory name is retained; this is now the
+full Gmail app following Erik's request for full work-service access.
 
-Deployed app: `app_3f14b67d-055b-42b0-b48f-8db13e02a205`.
+Upstream curated queries and mutations are restored, and the complete Gmail
+OpenAPI router is mounted under `api`. OAuth requests `https://mail.google.com/`
+and `https://www.googleapis.com/auth/gmail.settings.basic`, with offline access.
+API mutations retain upstream Executor approval prompts. Having access does not
+authorize sending email or other communications without Erik approving the
+specific message.
+
+Framework `apps` is pinned to the installed host's 0.0.1-beta.95. Source passes a
+strict TypeScript check. Google API access remains unverified until OAuth is
+completed; no account is connected by these files alone.
+
+App ID remains `app_3f14b67d-055b-42b0-b48f-8db13e02a205`.
 Setup: http://127.0.0.1:4788/apps/app_3f14b67d-055b-42b0-b48f-8db13e02a205/setup
 
-Use the same Ablo-owned Google Cloud Web application OAuth client as Drive.
-Enable **Gmail API** in addition to Drive API. Authorized redirect URI:
-`http://127.0.0.1:4788/api/oauth/callback`. Connect the Gmail account separately
-and consent to `https://www.googleapis.com/auth/gmail.readonly`. Client details
-belong in Executor's secure form, never source or chat. Authentication remains
-pending user consent; deployment alone does not give mailbox access.
+Enable Gmail API in the Ablo Google Cloud project. Use the same Web application
+OAuth client as Drive and the exact redirect URI
+`http://127.0.0.1:4788/api/oauth/callback`. Connect the Gmail requirement separately
+using Executor's secure form. Never put client secrets or tokens in source.

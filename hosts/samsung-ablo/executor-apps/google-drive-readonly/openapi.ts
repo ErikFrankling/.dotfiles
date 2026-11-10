@@ -17,4 +17,3 @@ export const options = {
   },
   oauth: [],
 } satisfies OpenapiToolNamesOptions;
-

@@ -1,10 +1,10 @@
 {
-  "name": "@ablo/google-drive-readonly",
-  "description": "Read, search, list and export Google Drive files; no mutation tools.",
+  "name": "@ablo/google-drive",
+  "description": "Files, folders, shared drives, permissions, comments, revisions and changes in Google Drive.",
   "private": true,
   "type": "module",
   "executor": {
-    "title": "Google Drive (read-only)"
+    "title": "Google Drive"
   },
   "dependencies": {
     "apps": "0.0.1-beta.95"

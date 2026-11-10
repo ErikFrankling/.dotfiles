@@ -1,17 +1,18 @@
-// Adapted from the official Executor Linear app. Only Linear's read-only MCP
-// is exposed; the full GraphQL API and API-key alternative are omitted.
-import { accountRouter, defineApp, defineProvider, oauth2, router } from "apps";
+// Official Linear MCP with read/write OAuth access, requested by Erik.
+// Preserve upstream approval handling for operations that change data.
+import { accountRouter, defineApp, defineProvider, oauth2, router, toolAnnotations, withApprovals } from "apps";
 import { mcpHealth, mcpRouter } from "apps/mcp";
+import { always } from "apps/operations/approval";
 import { icons } from "./icon.js";
 
-const url = "https://mcp.linear.app/mcp/readonly";
+const url = "https://mcp.linear.app/mcp";
 const headers = (account: { fields: { access_token: string } }) => ({
   Authorization: `Bearer ${account.fields.access_token}`,
 });
 const linear = defineProvider({
-  name: "Linear (read-only)",
+  name: "Linear",
   hosts: ["mcp.linear.app"],
-  auth: { oauth: oauth2({ discover: url, scopes: ["read"] }) },
+  auth: { oauth: oauth2({ discover: url, scopes: ["read", "write"] }) },
   health: (check) => mcpHealth(check, { url, headers: headers(check.account) }),
 });
 export default defineApp(
@@ -19,9 +20,11 @@ export default defineApp(
   async ({ user, cache, signal }) => ({
     tools: router(
       await accountRouter(user?.accounts.linear ?? [],
-        (account) => mcpRouter({ url, account, headers: headers(account), cache, signal }),
+        async (account) => withApprovals(
+          await mcpRouter({ url, account, headers: headers(account), cache, signal }),
+          (tool) => toolAnnotations(tool)?.readOnlyHint === true ? undefined : always()),
         { signal }),
-      { title: "Linear (read-only)", description: "Read Linear issues, projects and documents through its official read-only MCP endpoint.", icons },
+      { title: "Linear", description: "Read and manage Linear issues, projects and documents through its official MCP endpoint.", icons },
     ),
   }),
 );

@@ -1,1 +1,12 @@
-{"name":"@ablo/gmail-readonly","private":true,"type":"module","executor":{"title":"Gmail (read-only)"},"dependencies":{"apps":"0.0.1-beta.95"}}
+{
+  "name": "@ablo/gmail",
+  "description": "Read, search, send and organize Gmail messages, threads, drafts, labels, filters and settings through the Gmail API.",
+  "private": true,
+  "type": "module",
+  "executor": {
+    "title": "Gmail"
+  },
+  "dependencies": {
+    "apps": "0.0.1-beta.95"
+  }
+}

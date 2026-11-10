@@ -7,7 +7,9 @@ import {
   object,
   router,
   string,
+  withApprovals,
 } from "apps";
+import { always } from "apps/operations/approval";
 import { liveOpenapiRouter } from "apps/openapi";
 import { icons } from "./icon.js";
 import { addresses } from "./tools/shared.js";
@@ -22,7 +24,7 @@ const drive = defineProvider({
   auth: {
     oauth: oauth2({
       discover: "https://accounts.google.com",
-      scopes: ["https://www.googleapis.com/auth/drive.readonly"],
+      scopes: ["https://www.googleapis.com/auth/drive"],
       // Google issues refresh tokens only when asked for offline access.
       authorizationParams: { access_type: "offline", prompt: "consent" },
     }),
@@ -49,18 +51,20 @@ export default defineApp(
             await accountRouter(
               user?.accounts.drive ?? [],
               (account) =>
-                liveOpenapiRouter({ ...options, cache, fetch, signal, account }),
+                withApprovals(liveOpenapiRouter({ ...options, cache, fetch, signal, account }), (tool) =>
+                  tool.kind === "mutation" ? always() : undefined,
+                ),
               { signal },
             ),
             {
               title: "Google Drive API",
-              description: "The read-only Google Drive API, per account: every tool takes accountId and the API's own input.",
+              description: "The complete Google Drive API, per account: every tool takes accountId and the API's own input.",
             },
           ),
         },
         {
           instructions: curated.meta.instructions,
-          title: "Google Drive (read-only)",
+          title: "Google Drive",
           description:
             "Files, folders, shared drives, permissions, comments, revisions and changes in Google Drive.",
           icons,
@@ -69,4 +73,3 @@ export default defineApp(
     };
   },
 );
-

@@ -7,4 +7,3 @@ export const icons: readonly AppIcon[] = [
     "mimeType": "image/svg+xml"
   }
 ];
-

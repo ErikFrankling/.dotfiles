@@ -1,17 +1,18 @@
-# Linear (read-only)
+# Linear
 
-Adapted from https://catalog.executor.sh/apps/linear.json on 2026-11-10.
-Uses Linear's official https://mcp.linear.app/mcp/readonly endpoint and explicitly
-requests only OAuth scope `read`. The full GraphQL API and API-key alternative
-are omitted. Reference: https://linear.app/docs/mcp.
+Adapted from https://catalog.executor.sh/apps/linear.json.
+Upgraded on 2026-11-10 at Erik's request for full service access.
+Uses Linear's official https://mcp.linear.app/mcp endpoint with OAuth scopes
+`read` and `write`, as advertised by its authorization server. Reference:
+https://linear.app/docs/mcp. The historical source-directory name is retained.
 
-Deployed on this laptop's native Executor beta24 / framework beta95:
-`app_d5bfa251-b235-4ec7-aa47-725ebb49b4bb`.
+Existing app ID: `app_d5bfa251-b235-4ec7-aa47-725ebb49b4bb`.
+Setup: http://127.0.0.1:4788/apps/app_d5bfa251-b235-4ec7-aa47-725ebb49b4bb/setup
 
-Open http://127.0.0.1:4788/apps/app_d5bfa251-b235-4ec7-aa47-725ebb49b4bb/setup
-and connect your Ablo Linear account. OAuth client registration is automatic;
-no client ID/secret needs to be created. Select the Ablo workspace during
-consent. Both Claude and Codex use the resulting local account connection.
-
-Deployment and OAuth discovery passed; account consent and authenticated
-Linear reads still require the user's sign-in.
+Reconnect the Ablo account after upgrading scopes. OAuth client registration
+is automatic; no client ID/secret needs to be created. Select the Ablo
+workspace during consent. Both Claude and Codex use the resulting connection.
+MCP tools without a read-only annotation retain upstream approval protection.
+Account permissions still apply; installing this adapter does not grant
+permissions the signed-in user lacks. Human-channel communication still needs
+Erik's approval of the exact message.

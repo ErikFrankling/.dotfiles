@@ -1,1 +1,13 @@
-{"name":"@ablo/posthog-readonly","private":true,"type":"module","executor":{"title":"PostHog (read scopes)"},"dependencies":{"apps":"0.0.1-beta.95","@modelcontextprotocol/sdk":"1.32.1"}}
+{
+  "name": "@ablo/posthog",
+  "private": true,
+  "type": "module",
+  "executor": {
+    "title": "PostHog"
+  },
+  "dependencies": {
+    "apps": "0.0.1-beta.95",
+    "@modelcontextprotocol/sdk": "1.32.1"
+  },
+  "description": "PostHog official MCP with OAuth read/write access."
+}

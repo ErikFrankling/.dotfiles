@@ -1,17 +1,20 @@
-# PostHog (read scopes)
+# PostHog
 
-Adapted from https://catalog.executor.sh/apps/posthog.json on 2026-11-10.
-The committed scopes are exactly the `:read` scopes advertised by
-https://mcp.posthog.com/.well-known/oauth-protected-resource on that date.
+Adapted from https://catalog.executor.sh/apps/posthog.json.
+Upgraded on 2026-11-10 at Erik's request for full service access. `scopes.json`
+contains the current scopes advertised by
+https://mcp.posthog.com/.well-known/oauth-protected-resource, excluding the
+server's `introspection` scope: 82 read, 71 write and three identity scopes.
+The historical source-directory name is retained.
+
 OAuth is DCR/PKCE at https://mcp.posthog.com/mcp (US/EU accounts route
 automatically). No client secret or personal key is required.
 
-App: `app_9c3b3a30-101a-49b5-922a-4c8017b8a482`.
+Existing app ID: `app_9c3b3a30-101a-49b5-922a-4c8017b8a482`.
 Setup: http://127.0.0.1:4788/apps/app_9c3b3a30-101a-49b5-922a-4c8017b8a482/setup
 
-Connect the Ablo account and choose the intended project during consent.
-Read-only OAuth scopes restrict provider access; the MCP server may still list
-write tools. Upstream approval protection for all tools without readOnlyHint
-is retained. A listed tool is not evidence that its operation is authorized.
-The server must enforce the granted OAuth scopes; verify useful read tools
-after sign-in. No account is connected by deployment alone.
+Reconnect the Ablo account after upgrading scopes, selecting the intended
+project during consent. MCP tools without a read-only annotation retain
+upstream approval protection. Account permissions still apply; the adapter
+does not grant permissions the signed-in user lacks. Human-channel
+communication still needs Erik's approval of the exact message.

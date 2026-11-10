@@ -283,4 +283,3 @@ export const calendarZone = async (ctx: Base, target: Target) =>
       return (await decodeJson(response, TimeZone)).value;
     },
   });
-

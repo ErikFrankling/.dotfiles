@@ -12,11 +12,12 @@ and API key; they do not establish access to any external work account.
 
 | Integration | Installed | Remaining user step |
 | --- | --- | --- |
-| [Drive](google-drive-readonly/README.md) | Read-only app; GET-only API schema | Ablo Google OAuth client and Drive consent |
-| [Gmail](gmail-readonly/README.md) | Read-only search/message/thread/attachment/labels queries | Same Google client, Gmail API enabled, Gmail consent |
-| [Linear](linear-readonly/README.md) | Official read-only endpoint, OAuth `read` | Sign in and consent to Ablo workspace |
-| [PostHog](posthog-readonly/README.md) | Official MCP, advertised read scopes only | Sign in and select Ablo project |
-| AWS | Not installed/authenticated | Ablo SSO start URL, SSO region, account/role, workload region |
+| [Drive](google-drive-readonly/README.md) | Upstream full Drive API | Google Cloud verification, OAuth client and consent |
+| [Gmail](gmail-readonly/README.md) | Upstream curated tools and full Gmail API | Same Google client, Gmail API enabled and consent |
+| [Linear](linear-readonly/README.md) | Official MCP, OAuth `read write`; connected and read verified | None |
+| [PostHog](posthog-readonly/README.md) | Official MCP, operational read/write scopes; connected | Executor approval for its generic `exec` tool |
+| Vercel | Native API app and official OAuth MCP | Account 2FA required by team policy before either connection |
+| AWS | Native AWS CLI and `ablo` SSO session installed | SSO authentication, then account/role selection; AWS MCP not yet installed |
 | 1Password vault access | `op` CLI installed; account list empty | Ablo account and allowed vault access |
 
 For Google, use an Ablo-owned Cloud project, enable **Google Drive API** and
@@ -24,7 +25,18 @@ For Google, use an Ablo-owned Cloud project, enable **Google Drive API** and
 application** OAuth client with exactly
 `http://127.0.0.1:4788/api/oauth/callback` as an authorized redirect. Enter client
 credentials only into Executor's secure account forms. Connect each app's
-account separately. Scopes are `drive.readonly` and `gmail.readonly`.
+account separately. The full apps use `drive`, `mail.google.com`, and
+`gmail.settings.basic` scopes. The historical directory names are retained;
+these apps are no longer read-only. Upstream mutation approvals remain.
+
+The official Vercel MCP endpoint is `https://mcp.vercel.com`, connected using
+Executor's native **Connect a service** form. It supports OAuth; the separate
+Vercel API app requires a team-scoped token. Both enforce the team's 2FA
+requirement. Do not substitute a personal team when work access is blocked.
+
+Keep only one or two Executor dashboard tabs open. Each uses streaming
+connections; enough tabs can exhaust Chromium's HTTP/1 per-origin connection
+limit and make new pages stall while the server itself remains healthy.
 
 AWS's official [AWS API MCP server](https://github.com/awslabs/mcp/tree/main/src/aws-api-mcp-server)
 supports native `AWS_API_MCP_TRANSPORT=streamable-http`, loopback host/port,
@@ -43,5 +55,5 @@ No vault contents were read for this setup.
 
 After each account is linked, verify a real read through Executor. Retrieve the
 company security policy from Drive before drawing policy compliance conclusions.
-The Needs-you list contains `ablo-google-drive-oauth`, `ablo-linear-oauth`,
-`ablo-posthog-oauth`, and `ablo-aws-1password-access` for the remaining actions.
+The Needs-you list tracks Google verification, Vercel 2FA, and AWS/1Password
+authentication. Linear and PostHog consent items have been completed.
