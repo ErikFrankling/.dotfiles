@@ -67,6 +67,15 @@ in
     package = null;
 
     settings.build.rustc-wrapper = "${pkgs.sccache}/bin/sccache";
+
+    # The T3 server (and so every agent session) was started with
+    # SCCACHE_CACHE_SIZE=50G and cannot be restarted by agents, so the session
+    # variable below never reaches them. Cargo's [env] with force reaches the
+    # sccache server that cargo itself starts, whatever the parent exported.
+    settings.env.SCCACHE_CACHE_SIZE = {
+      value = "20G";
+      force = true;
+    };
   };
 
   home.sessionVariables = {
