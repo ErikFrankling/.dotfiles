@@ -9,6 +9,7 @@
     ./disk-encryption.nix
     ./screen-lock.nix
     ./fingerprint.nix
+    ./keyring.nix
     ./antivirus.nix
     ./vanta.nix
     ../../modules/nixos/1password.nix # password manager

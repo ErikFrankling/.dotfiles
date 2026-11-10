@@ -41,7 +41,6 @@ in
     environment = {
       EXECUTOR_DATA_DIR = "/var/lib/executor-work-local";
       EXECUTOR_PORT = "4788";
-      EXECUTOR_KEY_STORAGE = "file";
       DO_NOT_TRACK = "1";
     };
     serviceConfig = {
