@@ -86,6 +86,10 @@
           Fingerprinting = true;
         };
         ExtensionSettings = mkExtensionSettings {
+          "{d634138d-c276-4fc8-924b-40a0ea21d284}" = mkExtensionEntry {
+            id = "1password-x-password-manager";
+            pinned = true;
+          };
           "wappalyzer@crunchlabz.com" = mkExtensionEntry {
             id = "wappalyzer";
             # pinned = true;

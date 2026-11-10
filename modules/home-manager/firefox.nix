@@ -7,6 +7,10 @@
   # reinstall or a new machine comes back with it already there. Same mechanism
   # zen.nix uses for its extension list.
   programs.firefox.policies.ExtensionSettings = {
+    "{d634138d-c276-4fc8-924b-40a0ea21d284}" = {
+      install_url = "https://addons.mozilla.org/firefox/downloads/latest/1password-x-password-manager/latest.xpi";
+      installation_mode = "force_installed";
+    };
     # Reports the focused tab to the time agent on this machine. It is the only
     # way to get a domain at all: no window title carries one, and the
     # screenshot cannot be relied on either -- Zen hides its toolbar, and a
