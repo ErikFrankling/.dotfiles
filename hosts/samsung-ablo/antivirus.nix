@@ -29,6 +29,10 @@
           "/home/${username}/.config/mozilla"
           "/home/${username}/.config/1Password"
           "/home/${username}/.config/chromium"
+          # The 1.4 client matches exclusion child names by prefix: remove
+          # longer sibling names first so the parent retains the right links.
+          "/home/${username}/.config/google-chrome-beta"
+          "/home/${username}/.config/google-chrome-unstable"
           "/home/${username}/.config/google-chrome"
           "/home/${username}/.config/BraveSoftware"
         ];
