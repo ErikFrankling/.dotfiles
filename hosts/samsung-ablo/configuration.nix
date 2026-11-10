@@ -21,6 +21,7 @@
     # inputs.disko.nixosModules.disko
     # ./disko.nix # whole-disk layout that would wipe Windows
     ./soc2.nix
+    ./shim.nix # factory-trusted boot chain, staged without changing BootOrder
     ../../modules/nixos
     ../../modules/nixos/secure-boot.nix
     ../../modules/nixos/tailscale.nix

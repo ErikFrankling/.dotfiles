@@ -89,18 +89,11 @@ session on the pc.
    Tailscale accepts the home subnet route; IPv6 link-local does. The desk's
    USB Ethernet adapter sits behind the KVM, so the laptop loses it whenever
    the KVM switches to the pc: use Wi-Fi.
-7. **Secure Boot** (lanzaboote already signs the boot files). Windows asks for
-   the BitLocker recovery key once after this.
-   - **Erik**: BIOS > Secure Boot: clear the keys / Setup Mode (not found in
-     the Boot tile; maybe Security > Enhanced Security Configuration), boot
-     NixOS.
-   - **Agent**: `sudo sbctl enroll-keys --microsoft` (keeps Windows and
-     firmware option ROMs booting).
-   - **Erik**: BIOS > Secure Boot Control **On**, boot. `bootctl status` shows
-     `Secure Boot: enabled (user)`.
-
-   If this BIOS has no way to clear the keys, Secure Boot stays off; LUKS
-   still covers the disk-encryption control.
+7. **Secure Boot**: factory keys are retained. The verified shim route and
+   physical enrollment steps are in [secure-boot-shim.md](secure-boot-shim.md).
+   Do not clear TPM or firmware keys. The alternative entry is staged without
+   changing the current default; physical enrollment and boot verification
+   are still required before Secure Boot is complete.
 8. **Vanta**: put the key from https://app.vanta.com/computers?tab=unmonitored
    into sops (`sops hosts/samsung-ablo/secrets/secrets.yaml`, key `vanta-key`), add
    `sops.secrets.vanta-key = { };` to `vanta.nix`, check `ownerEmail` there,
