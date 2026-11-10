@@ -119,7 +119,16 @@ let
     claudePackage = claudeCliUpstream;
     # Computer use on this host: agent browser (Playwright), Cua Driver and
     # the agent seat. Local stdio, so screenshots reach the model directly.
-    localMcpServers = lib.optionalAttrs agentDesktopEnabled config.programs.agent-desktop.mcpServers;
+    localMcpServers =
+      lib.optionalAttrs agentDesktopEnabled config.programs.agent-desktop.mcpServers
+      // lib.optionalAttrs (hostName == "samsung-ablo") {
+        # Native desktop MCP manages Environments; saved login items use `op`.
+        onepassword = {
+          command = "${osConfig.programs._1password-gui.package}/share/1password/1password-mcp";
+          args = [ ];
+          env = { };
+        };
+      };
   };
   codexCli = executorHarnesses.codex;
   claudeCli = executorHarnesses.claude;
