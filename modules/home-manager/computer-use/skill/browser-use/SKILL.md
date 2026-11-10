@@ -1,9 +1,26 @@
 ---
 name: browser-use
-description: Browser use on Erik's PC. Load whenever a task involves a website or web app: "browser use", "computer use" on a site, logging in to anything (GitHub, Gmail/Google, Microsoft/Teams/Outlook, Basecamp, cloud consoles, the apps Erik is building), testing/QA of a web UI, filling forms, downloading from a site. You drive the agent's own Chromium (logged in wherever Erik is in Firefox, plus LastPass) with the `browser` Playwright MCP.
+description: "Browser use on Erik's PC. Load whenever a task involves a website or web app: \"browser use\", \"computer use\" on a site, logging in to anything (GitHub, Gmail/Google, Microsoft/Teams/Outlook, Basecamp, cloud consoles, the apps Erik is building), testing/QA of a web UI, filling forms, downloading from a site. You drive the agent's own Chromium (logged in wherever Erik is in Firefox, plus LastPass) with the `browser` Playwright MCP. Authentication always uses real agent Chromium; never T3 built-in preview."
 ---
 
 # Browser use on Erik's PC
+
+## Hard rule: authentication never uses T3's built-in preview
+
+**NEVER use `preview_*` for login, OAuth/SSO, account linking, consent,
+MFA/passkeys, password managers, or any page requiring an existing login.**
+Go directly to the real agent Chromium through the `browser` MCP described
+below; use `computer-use` for native dialogs. Do not probe preview first.
+T3's isolated preview profile has no synced Firefox logins: its sign-in page
+is not evidence that Erik is logged out. Never ask him to log into that empty
+profile instead of using the configured real browser.
+
+Run `agent-cookie-sync` before declaring a login missing. If it reports no
+profile, fix discovery: current Firefox uses `~/.config/mozilla/firefox`, with
+`~/.mozilla/firefox` as the legacy fallback. A genuine Google/other-provider
+reauthentication challenge in the real browser may still require Erik; name
+that exact challenge. This rule applies on all laptops and the PC, for both
+harnesses and their subagents. Public, unauthenticated previews are separate.
 
 **Never contact other people.** Never send, post, reply, react, comment, invite, share or connect with anyone else on Erik's behalf (Discord, LinkedIn, X, email, Teams, SMS, GitHub comments, connect invites, shared docs), unless Erik approved that exact message in this conversation. Drafts for Erik to send himself are fine. Notifications to Erik himself are fine.
 

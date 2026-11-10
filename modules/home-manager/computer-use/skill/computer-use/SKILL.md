@@ -1,9 +1,21 @@
 ---
 name: computer-use
-description: Computer use on Erik's PC. Load whenever Erik says "computer use", "use the computer", "click through", "QA this", "test the UI", "open the app", "take a screenshot", or asks for anything done through a GUI: desktop apps, windows, keyboard/mouse input, screenshots, or screen recordings. For websites also load browser-use; for videos/demos also load screen-recording.
+description: "Computer use on Erik's PC. Load whenever Erik says \"computer use\", \"use the computer\", \"click through\", \"QA this\", \"test the UI\", \"open the app\", \"take a screenshot\", or asks for anything done through a GUI: desktop apps, windows, keyboard/mouse input, screenshots, or screen recordings. For websites also load browser-use; for videos/demos also load screen-recording. Authentication always uses real agent Chromium; never T3 built-in preview."
 ---
 
 # Computer use on Erik's PC
+
+## Hard rule: authentication uses the real browser and computer tools
+
+**Never use T3 Code's built-in `preview_*` browser for authentication-related
+work.** Login, OAuth/SSO, account linking, consent, MFA/passkeys, password
+managers and already-signed-in websites belong in the real agent Chromium
+(`browser` MCP), with this skill's computer-use tools for native dialogs.
+Load `browser-use` and run `agent-cookie-sync`; repair sync if it finds no
+Firefox profile. Do not probe T3 preview first or ask Erik to sign into its
+empty profile. It lacks the real browser's logins. Keep genuine MFA/physical
+approval requirements separate from this tooling mistake. This applies to
+Claude, Codex and subagents on every machine.
 
 **Never contact other people.** Never send, post, reply, react, comment, invite, share or connect with anyone else on Erik's behalf (Discord, LinkedIn, X, email, Teams, SMS, GitHub comments, connect invites, shared docs), unless Erik approved that exact message in this conversation. Drafts for Erik to send himself are fine. Notifications to Erik himself are fine.
 

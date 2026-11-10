@@ -419,19 +419,26 @@ in
     };
     home.sessionVariables = cuaEnv;
 
-    home.file = lib.mergeAttrsList (
-      lib.mapCartesianProduct ({ dir, skill }: { "${dir}/${skill}".source = ./skill + "/${skill}"; }) {
-        dir = [
-          ".agents/skills"
-          ".claude/skills"
-          ".codex/skills"
-        ];
-        skill = [
-          "computer-use"
-          "browser-use"
-          "screen-recording"
-        ];
-      }
-    );
+    home.file =
+      (lib.mergeAttrsList (
+        lib.mapCartesianProduct ({ dir, skill }: { "${dir}/${skill}".source = ./skill + "/${skill}"; }) {
+          dir = [
+            ".agents/skills"
+            ".claude/skills"
+            ".codex/skills"
+            ".codex-t3/skills"
+          ];
+          skill = [
+            "computer-use"
+            "browser-use"
+            "screen-recording"
+          ];
+        }
+      ))
+      // {
+        ".codex/AGENTS.md".text = lib.mkBefore (builtins.readFile ./auth-browser-instructions.md);
+        ".codex-t3/AGENTS.md".text = lib.mkBefore (builtins.readFile ./auth-browser-instructions.md);
+        ".claude/CLAUDE.md".text = lib.mkBefore (builtins.readFile ./auth-browser-instructions.md);
+      };
   };
 }

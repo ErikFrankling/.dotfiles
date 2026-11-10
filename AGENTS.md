@@ -1,5 +1,20 @@
 # AGENTS.md - Guidelines for NixOS Configuration
 
+## Hard rule: never use T3's built-in browser for authentication
+
+Erik (2026-11-10): "never ever ever use the built in browser for anything auth related ... that is why we have setup real computer use and browser use ... the t3code browser never has any logins".
+
+For login, OAuth/SSO, account linking, consent, MFA/passkeys, password managers,
+or pages requiring existing account sessions, load **browser-use** and
+**computer-use**, and use the real agent Chromium/browser MCP. **Never probe
+T3 `preview_*` first for authentication.** Its isolated profile being logged
+out does not mean Erik is logged out. Do not send Erik to sign into that empty
+profile. Run `agent-cookie-sync` and repair it if necessary before asking for
+login help. Use configured computer-use tools for native dialogs. This applies
+to both harnesses and subagents, on every machine. Public/unauthenticated UI
+previews may still use T3 preview. Full maintained rule:
+`modules/home-manager/computer-use/auth-browser-instructions.md`.
+
 ## Hard rule: no communication with people without Erik's approval
 
 Erik (2026-10-23): "Agents should not be doing communications in human channels. Ever. If they don't get my express approval."
