@@ -1,0 +1,166 @@
+Captured local security evidence
+2026-11-10T18:08:48+01:00
+samsung-ablo
+26.11.20261107.f4a03c0 (Zokor)
+Encryption
+/dev/mapper/cryptroot is active and is in use.
+  type:    LUKS2
+  cipher:  aes-xts-plain64
+  keysize: 512 [bits]
+  key location: keyring
+  device:  /dev/nvme0n1p5
+  sector size:  512 [bytes]
+  offset:  32768 [512-byte units] (16777216 [bytes])
+  size:    1728229376 [512-byte units] (884853440512 [bytes])
+  mode:    read/write
+  flags:   discards 
+Root and immutable store mounts
+/dev/mapper/cryptroot ext4 rw,relatime
+/dev/mapper/cryptroot[/nix/store] ext4 ro,nosuid,nodev,relatime
+Swap
+NAME       TYPE      SIZE USED PRIO
+/dev/zram0 partition  23G 4.6G    5
+Boot state
+System:
+      Firmware: UEFI 2.100 (American Megatrends 5.39)
+ Firmware Arch: x64
+   Secure Boot: enabled (user)
+  TPM2 Support: yes
+  Measured UKI: yes
+   Measured OS: yes
+  Boot into FW: supported
+ Platform Lang: en_US.UTF-8
+
+Current Boot Loader:
+        Product: systemd-boot 262
+       Features: ✓ Boot counting
+                 ✓ Menu timeout control
+                 ✓ One-shot menu timeout control
+                 ✓ Default entry control
+                 ✓ One-shot entry control
+                 ✓ Support for XBOOTLDR partition
+                 ✓ Support for passing random seed to OS
+                 ✓ Load drop-in drivers
+                 ✓ Support Type #1 sort-key field
+                 ✓ Support @saved pseudo-entry
+                 ✓ Support Type #1 devicetree field
+                 ✓ Enroll SecureBoot keys
+System services
+Id=firewall.service
+ActiveState=active
+
+Id=clamav-daemon.service
+ActiveState=active
+
+Id=clamav-clamonacc.service
+ActiveState=active
+User idle-lock service
+Id=hypridle.service
+ActiveState=active
+Signature update
+Nov 10 18:00:00 samsung-ablo systemd[1]: Starting ClamAV virus database updater (freshclam)...
+Nov 10 18:00:00 samsung-ablo freshclam[1221340]: ClamAV update process started at Tue Nov 10 18:00:00 2026
+Nov 10 18:00:00 samsung-ablo freshclam[1221340]: daily.cld database is up-to-date (version: 28179, sigs: 355854, f-level: 90, builder: svc.clamav-publisher)
+Nov 10 18:00:00 samsung-ablo freshclam[1221340]: main.cvd database is up-to-date (version: 63, sigs: 3287027, f-level: 90, builder: tomjudge)
+Nov 10 18:00:00 samsung-ablo freshclam[1221340]: bytecode.cvd database is up-to-date (version: 339, sigs: 80, f-level: 90, builder: nrandolp)
+Nov 10 18:00:00 samsung-ablo systemd[1]: clamav-freshclam.service: Deactivated successfully.
+Nov 10 18:00:00 samsung-ablo systemd[1]: Finished ClamAV virus database updater (freshclam).
+Nov 10 18:00:00 samsung-ablo systemd[1]: clamav-freshclam.service: Consumed 21ms CPU time over 57ms wall clock time, 5.3M memory peak, 2M read from disk, 132B incoming IP traffic, 79B outgoing IP traffic.
+Initial EICAR test (old directory watch; errors prompted mount-watch repair)
+Nov 10 18:00:22 samsung-ablo clamonacc[1207446]: /home/erikf/eicar-root-evidence-20261110.txt: Eicar-Test-Signature FOUND
+Nov 10 18:00:22 samsung-ablo clamonacc[1207446]: /home/erikf/eicar-root-evidence-20261110.txt: moved to '/var/lib/clamav/quarantine/eicar-root-evidence-20261110.txt'
+Nov 10 18:00:22 samsung-ablo clamonacc[1207446]: ERROR: ClamInotif: watch descriptor issue when adding watch for /home/erikf/.clamav-unlink-1207446-13895999-0
+Nov 10 18:00:22 samsung-ablo clamonacc[1207446]: /home/erikf/eicar-root-evidence-20261110.txt: Eicar-Test-Signature FOUND
+Nov 10 18:00:22 samsung-ablo clamonacc[1207446]: traverse_to: Failed open .clamav-unlink-1207446-13895999-0
+Nov 10 18:00:22 samsung-ablo clamonacc[1207446]: ERROR: Can't unlink '/home/erikf/eicar-root-evidence-20261110.txt' (real path: '/home/erikf/.clamav-unlink-1207446-13895999-0/eicar-root-evidence-20261110.txt (deleted)') after copy: No such file or directory
+Harmless test artifact cleanup
+2026-11-10T18:09:24+01:00
+Original and quarantined EICAR test files removed after verification; both quarantine copies SHA256=275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f
+Vanta dedicated encryption query
+2026-11-10T18:11:16+01:00
+[{"device_alias":"","encrypted":"1","name":"/dev/dm-0","osqueryTable":"disk_encryption","path":"","type":"aes-xts-plain64"},{"device_alias":"","encrypted":"0","name":"/dev/loop0","osqueryTable":"disk_encryption","path":"","type":""},{"device_alias":"","encrypted":"0","name":"/dev/loop1","osqueryTable":"disk_encryption","path":"","type":""},{"device_alias":"","encrypted":"0","name":"/dev/loop2","osqueryTable":"disk_encryption","path":"","type":""},{"device_alias":"","encrypted":"0","name":"/dev/loop3","osqueryTable":"disk_encryption","path":"","type":""},{"device_alias":"","encrypted":"0","name":"/dev/loop4","osqueryTable":"disk_encryption","path":"","type":""},{"device_alias":"","encrypted":"0","name":"/dev/loop5","osqueryTable":"disk_encryption","path":"","type":""},{"device_alias":"","encrypted":"0","name":"/dev/loop6","osqueryTable":"disk_encryption","path":"","type":""},{"device_alias":"","encrypted":"0","name":"/dev/loop7","osqueryTable":"disk_encryption","path":"","type":""},{"device_alias":"/dev/dm-0","encrypted":"","name":"/dev/mapper/cryptroot","osqueryTable":"mounts","path":"/","type":"ext4"},{"device_alias":"/dev/dm-0","encrypted":"","name":"/dev/mapper/cryptroot","osqueryTable":"mounts","path":"/nix/store","type":"ext4"},{"device_alias":"","encrypted":"","name":"/dev/nvme0n1","osqueryTable":"disk_encryption","path":"","type":""},{"device_alias":"","encrypted":"","name":"/dev/nvme0n1p1","osqueryTable":"disk_encryption","path":"","type":""},{"device_alias":"/dev/nvme0n1p1","encrypted":"","name":"/dev/nvme0n1p1","osqueryTable":"mounts","path":"/boot","type":"vfat"},{"device_alias":"","encrypted":"","name":"/dev/nvme0n1p2","osqueryTable":"disk_encryption","path":"","type":""},{"device_alias":"","encrypted":"","name":"/dev/nvme0n1p3","osqueryTable":"disk_encryption","path":"","type":""},{"device_alias":"","encrypted":"","name":"/dev/nvme0n1p4","osqueryTable":"disk_encryption","path":"","type":""},{"device_alias":"","encrypted":"","name":"/dev/nvme0n1p5","osqueryTable":"disk_encryption","path":"","type":""},{"device_alias":"","encrypted":"0","name":"/dev/zram0","osqueryTable":"disk_encryption","path":"","type":""},{"device_alias":"bpf","encrypted":"","name":"bpf","osqueryTable":"mounts","path":"/sys/fs/bpf","type":"bpf"},{"device_alias":"cgroup2","encrypted":"","name":"cgroup2","osqueryTable":"mounts","path":"/sys/fs/cgroup","type":"cgroup2"},{"device_alias":"configfs","encrypted":"","name":"configfs","osqueryTable":"mounts","path":"/sys/kernel/config","type":"configfs"},{"device_alias":"debugfs","encrypted":"","name":"debugfs","osqueryTable":"mounts","path":"/sys/kernel/debug","type":"debugfs"},{"device_alias":"devpts","encrypted":"","name":"devpts","osqueryTable":"mounts","path":"/dev/pts","type":"devpts"},{"device_alias":"devtmpfs","encrypted":"","name":"devtmpfs","osqueryTable":"mounts","path":"/dev","type":"devtmpfs"},{"device_alias":"efivarfs","encrypted":"","name":"efivarfs","osqueryTable":"mounts","path":"/sys/firmware/efi/efivars","type":"efivarfs"},{"device_alias":"fusectl","encrypted":"","name":"fusectl","osqueryTable":"mounts","path":"/sys/fs/fuse/connections","type":"fusectl"},{"device_alias":"hugetlbfs","encrypted":"","name":"hugetlbfs","osqueryTable":"mounts","path":"/dev/hugepages","type":"hugetlbfs"},{"device_alias":"mqueue","encrypted":"","name":"mqueue","osqueryTable":"mounts","path":"/dev/mqueue","type":"mqueue"},{"device_alias":"none","encrypted":"","name":"none","osqueryTable":"mounts","path":"/sys/fs/pstore","type":"pstore"},{"device_alias":"none","encrypted":"","name":"none","osqueryTable":"mounts","path":"/run/secrets.d","type":"ramfs"},{"device_alias":"none","encrypted":"","name":"none","osqueryTable":"mounts","path":"/run/credentials/getty@tty1.service","type":"tmpfs"},{"device_alias":"none","encrypted":"","name":"none","osqueryTable":"mounts","path":"/run/credentials/systemd-journald.service","type":"tmpfs"},{"device_alias":"none","encrypted":"","name":"none","osqueryTable":"mounts","path":"/run/credentials/systemd-resolved.service","type":"tmpfs"},{"device_alias":"proc","encrypted":"","name":"proc","osqueryTable":"mounts","path":"/proc","type":"proc"},{"device_alias":"ramfs","encrypted":"","name":"ramfs","osqueryTable":"mounts","path":"/run/keys","type":"ramfs"},{"device_alias":"securityfs","encrypted":"","name":"securityfs","osqueryTable":"mounts","path":"/sys/kernel/security","type":"securityfs"},{"device_alias":"sysfs","encrypted":"","name":"sysfs","osqueryTable":"mounts","path":"/sys","type":"sysfs"},{"device_alias":"tmpfs","encrypted":"","name":"tmpfs","osqueryTable":"mounts","path":"/dev/shm","type":"tmpfs"},{"device_alias":"tmpfs","encrypted":"","name":"tmpfs","osqueryTable":"mounts","path":"/run","type":"tmpfs"},{"device_alias":"tmpfs","encrypted":"","name":"tmpfs","osqueryTable":"mounts","path":"/run/user/1000","type":"tmpfs"},{"device_alias":"tmpfs","encrypted":"","name":"tmpfs","osqueryTable":"mounts","path":"/run/wrappers","type":"tmpfs"},{"device_alias":"tracefs","encrypted":"","name":"tracefs","osqueryTable":"mounts","path":"/sys/kernel/debug/tracing","type":"tracefs"},{"device_alias":"tracefs","encrypted":"","name":"tracefs","osqueryTable":"mounts","path":"/sys/kernel/tracing","type":"tracefs"}]
+Nov 10 17:55:30 samsung-ablo hypridle[1209800]: DEBUG ]: fprint: handling status verify-match
+Nov 10 17:55:31 samsung-ablo hypridle[1209800]: DEBUG ]: Unlocking session
+Nov 10 17:55:36 samsung-ablo hypridle[1210359]: DEBUG ]: fprint: handling status verify-match
+Nov 10 17:55:37 samsung-ablo hypridle[1210359]: DEBUG ]: Unlocking session
+Nov 10 17:55:43 samsung-ablo hypridle[1210797]: DEBUG ]: fprint: handling status verify-match
+Nov 10 17:55:44 samsung-ablo hypridle[1210797]: DEBUG ]: Unlocking session
+18:15 CET isolated DDD regression: fresh 3-level empty directory tree; ClamAV1.5.4 logged recursive watching, but /proc fdinfo showed only ONE inode fanotify and ONE inotify watch at the root. Supports using native mount monitoring rather than trusting recursive DDD message.
+18:12 CET mount regression under database load: EICAR remained pending; clamonacc soft FD1024 exhausted, 1006 held /var/lib/executor-work-local database files. Executor UID isolation and UID event exclusion prepared to remove that workload.
+Nested EICAR mount-watch regression
+Harmless68-byte test created and opened18:18:22 CET; detected and moved18:19:18 CET (56seconds asynchronous delay during startup load).
+Nov 10 18:19:18 samsung-ablo clamonacc[1265581]: /home/erikf/Downloads/av-evidence-nested-20261110/eicar-mount-test.txt: Eicar-Test-Signature FOUND
+Nov 10 18:19:18 samsung-ablo clamonacc[1265581]: /home/erikf/Downloads/av-evidence-nested-20261110/eicar-mount-test.txt: moved to '/var/lib/clamav/quarantine/eicar-mount-test.txt.001'
+Baseline interrupted by daemon reconfiguration; NOT a completed clean scan
+Nov 10 18:17:42 samsung-ablo clamdscan[1245485]: /home/erikf/.config/mozilla/firefox/opxgj2ng.default/extensions/{d634138d-c276-4fc8-924b-40a0ea21d284}.xpi: no reply from clamd
+Nov 10 18:17:42 samsung-ablo clamdscan[1245485]: LibClamAV Error: File tree walk aborted.
+Nov 10 18:17:42 samsung-ablo clamdscan[1245485]: LibClamAV Error: File tree walk aborted.
+Nov 10 18:17:42 samsung-ablo clamdscan[1245485]: LibClamAV Error: File tree walk aborted.
+Nov 10 18:17:42 samsung-ablo clamdscan[1245485]: LibClamAV Error: File tree walk aborted.
+Nov 10 18:17:42 samsung-ablo clamdscan[1245485]: LibClamAV Error: File tree walk aborted.
+Nov 10 18:17:42 samsung-ablo clamdscan[1245485]: LibClamAV Error: File tree walk aborted.
+Nov 10 18:17:42 samsung-ablo clamdscan[1245485]: LibClamAV Error: File tree walk aborted.
+Nov 10 18:17:43 samsung-ablo clamdscan[1245485]: ERROR: Communication error
+Nov 10 18:17:43 samsung-ablo clamdscan[1245485]: LibClamAV Error: File tree walk aborted.
+Nov 10 18:17:43 samsung-ablo clamdscan[1245485]: WARNING: /tmp/Syncthing Tray-Martchus-1000: Not supported file type
+Nov 10 18:17:43 samsung-ablo clamdscan[1245485]: ERROR: Could not connect to clamd on LocalSocket /run/clamav/clamd.ctl: No such file or directory
+Nov 10 18:17:43 samsung-ablo clamdscan[1245485]: LibClamAV Error: File tree walk aborted.
+Nov 10 18:17:43 samsung-ablo clamdscan[1245485]: ERROR: Could not connect to clamd on LocalSocket /run/clamav/clamd.ctl: No such file or directory
+Nov 10 18:17:43 samsung-ablo clamdscan[1245485]: LibClamAV Error: File tree walk aborted.
+Nov 10 18:17:43 samsung-ablo clamdscan[1245485]: ERROR: Could not connect to clamd on LocalSocket /run/clamav/clamd.ctl: No such file or directory
+Nov 10 18:17:43 samsung-ablo clamdscan[1245485]: LibClamAV Error: File tree walk aborted.
+Nov 10 18:17:43 samsung-ablo clamdscan[1245485]: ----------- SCAN SUMMARY -----------
+Nov 10 18:17:43 samsung-ablo clamdscan[1245485]: Infected files: 0
+Nov 10 18:17:43 samsung-ablo clamdscan[1245485]: Total errors: 7
+Nov 10 18:17:43 samsung-ablo clamdscan[1245485]: Time: 379.725 sec (6 m 19 s)
+Nov 10 18:17:43 samsung-ablo clamdscan[1245485]: Start Date: 2026:11:10 18:11:23
+Nov 10 18:17:43 samsung-ablo clamdscan[1245485]: End Date:   2026:11:10 18:17:43
+Nov 10 18:17:43 samsung-ablo systemd[1]: clamdscan.service: Main process exited, code=exited, status=2/INVALIDARGUMENT
+Nov 10 18:17:43 samsung-ablo systemd[1]: clamdscan.service: Failed with result 'exit-code'.
+Nov 10 18:17:43 samsung-ablo systemd[1]: clamdscan.service: Consumed 1.333s CPU time over 6min 19.746s wall clock time, 14.4M memory peak, 21.2M read from disk.
+Both nested test quarantine copies were hash-verified before cleanup at18:19: SHA256275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f. Copies no longer present at evidence append.
+Nonmalicious compatibility test18:26 CET
+Cached stable ClamAV1.4.3 clamonacc registered3 fanotify and3 inotify inode watches for a pre-existing three-level empty tree; current1.5.4 client registered only1+1 for the same tree.
+Stable client verbose log showed scanning nested clean.txt. Stable clamdscan --fdpass sent benign text file to active1.5.4 daemon: OK,0 infected,0.003sec18:26:51.
+No further malware-signature tests after user requested test notification cleanup; all EICAR originals, quarantine artifacts and queued named FDs confirmed absent.
+Final recursive directory monitoring validation
+2026-11-10T18:34:07+01:00
+ActiveState=active
+ExecMainStartTimestamp=Tue 2026-11-10 18:32:57 CET
+MemoryCurrent=369233920
+LimitNOFILESoft=16384
+descriptors=5
+inotify_watches=77847
+fanotify_marks=77847
+Inode-matched fanotify watches verified: /home/erikf/Downloads, /home/erikf/.dotfiles, newly created Downloads/av-watch-check and its nested child. Benign file only. No ERROR/WARNING since18:32:57.
+Kernel inotify quota
+524288
+Final on-access settings
+OnAccessExcludePath /home/erikf/.cache
+OnAccessExcludePath /home/erikf/.codex
+OnAccessExcludePath /home/erikf/.t3
+OnAccessExcludePath /home/erikf/.mozilla
+OnAccessExcludePath /home/erikf/.config/mozilla
+OnAccessExcludePath /home/erikf/.config/1Password
+OnAccessExcludePath /home/erikf/.config/chromium
+OnAccessExcludePath /home/erikf/.config/google-chrome-beta
+OnAccessExcludePath /home/erikf/.config/google-chrome-unstable
+OnAccessExcludePath /home/erikf/.config/google-chrome
+OnAccessExcludePath /home/erikf/.config/BraveSoftware
+OnAccessExcludeRootUID true
+OnAccessExcludeUname clamav
+OnAccessExcludeUname executor-work
+OnAccessExtraScanning true
+OnAccessIncludePath /home/erikf
+OnAccessIncludePath /tmp
+OnAccessMaxFileSize 100M
+OnAccessMaxThreads 1
+OnAccessPrevention false
+Final client command
+ExecStart={ path=/nix/store/my91nscmwcv2mgfnixh3xznz4dvn2qi4-clamav-1.4.3/bin/clamonacc ; argv[]=/nix/store/my91nscmwcv2mgfnixh3xznz4dvn2qi4-clamav-1.4.3/bin/clamonacc -F --fdpass --move=/var/lib/clamav/quarantine ; ignore_errors=no ; start_time=[Tue 2026-11-10 18:32:57 CET] ; stop_time=[n/a] ; pid=1298120 ; code=(null) ; status=0/0 }
+Scheduled baseline state
+ActiveState=inactive
+SubState=dead
+ExecMainStartTimestamp=Tue 2026-11-10 18:30:20 CET
+Steady-state follow-up18:34:31 CET: clamonacc still5 open descriptors, no ERROR/WARNING since18:32:57. Harmless dynamic-watch test directory cleaned.
+SSH auth observed18:34 CET: PasswordAuthentication no; KbdInteractiveAuthentication yes; PermitRootLogin prohibit-password. No universal key-only claim.
