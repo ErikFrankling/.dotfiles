@@ -1,5 +1,5 @@
 # Anti-malware: ClamAV with hourly update checks, recursive on-access
-# scanning and a weekly scan. Detections go to the journal,
+# scanning of the home folder and a weekly scan. Detections go to the journal,
 # which Alloy ships to the homelab (modules/nixos/observability), and pop up
 # as a desktop notification. ClamTk is the GUI (scans, history, quarantine).
 {
@@ -15,9 +15,13 @@
     daemon = {
       enable = true;
       settings = {
+        # /tmp is not watched (2026-11-11): agent sessions create and delete
+        # thousands of throwaway git repos there, the watcher's queue jammed at
+        # its file-descriptor limit and nothing was scanned on access any
+        # more. The weekly scan below still covers /tmp.
         OnAccessIncludePath = [
           "/home/${username}"
-          "/tmp"
+          # "/tmp"
         ];
         # Hot application databases/caches are covered by scheduled scans.
         # Keep ordinary dotfiles, projects, downloads and documents watched.
@@ -52,7 +56,8 @@
         # User-origin accesses stay monitored; root-only accesses rely on
         # the explicit scheduled scan rather than on-access detection.
         OnAccessExcludeRootUID = true;
-        OnAccessMaxThreads = 1;
+        # ClamAV's default; 1 could not keep up with the event queue.
+        OnAccessMaxThreads = 5;
         OnAccessMaxFileSize = "100M";
         ExcludePath = "^/var/lib/clamav/quarantine(/|$)";
         MaxThreads = 2;
