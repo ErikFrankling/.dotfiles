@@ -15,15 +15,22 @@
 #     AGENT_MEM_FULL) while the disk stalls (over AGENT_IO_FULL) for
 #     AGENT_SUSTAIN samples, its biggest job.
 #
-# Max mode (`agent-max on`, Erik away) pauses the CPU and emulator checks;
-# the pressure and thrash checks stay on.
+# Max mode (`agent-max on`, Erik away) pauses the CPU and emulator checks,
+# and the pressure and thrash checks only act on a real hang: memory over
+# MAX_MEM_FULL or disk IO over MAX_IO_FULL, sustained MAX_SUSTAIN samples.
+# Why (2026-11-11): max mode gives the agents 22-25 of the 30 GB, so Erik's
+# idle desktop is swapped out (session 7 GB in swap, zram full, spilling to the
+# NVMe swap). Its swap-in reads showed as 20-40 % IO full in his cgroups and
+# the normal thresholds killed ~30 wasm-box rustc processes in 30 minutes, so
+# no release build finished. Nobody is at the desktop then; when Erik is back,
+# agent-max-watch restores the normal caps and the normal thresholds return.
 #
 # A killed process gets the reason on its stderr (the agent's tool output),
 # telling the agent to re-run it on the homelab with `heavy`. Erik gets one
 # notification per NOTIFY_EVERY seconds.
 #
 # Environment: INTERVAL, CPU_CORES, CPU_WINDOW, EMU_MAX, IO_FULL, MEM_FULL,
-# SUSTAIN, NOTIFY_EVERY, ERIK_UID, DRY_RUN=1.
+# SUSTAIN, MAX_IO_FULL, MAX_MEM_FULL, MAX_SUSTAIN, NOTIFY_EVERY, ERIK_UID, DRY_RUN=1.
 
 # A watchdog must not die on a failed test or a vanished pid.
 set +o errexit +o pipefail
@@ -38,6 +45,9 @@ AGENT_MEM_FULL=${AGENT_MEM_FULL:-20}
 AGENT_SUSTAIN=${AGENT_SUSTAIN:-15}
 AGENT_IO_FULL=${AGENT_IO_FULL:-10}
 SUSTAIN=${SUSTAIN:-5}
+MAX_IO_FULL=${MAX_IO_FULL:-80}
+MAX_MEM_FULL=${MAX_MEM_FULL:-50}
+MAX_SUSTAIN=${MAX_SUSTAIN:-30}
 NOTIFY_EVERY=${NOTIFY_EVERY:-900}
 ERIK_UID=${ERIK_UID:-1000}
 DRY_RUN=${DRY_RUN:-0}
@@ -149,16 +159,16 @@ full() { # io|memory -> highest "full" avg10 across Erik's cgroups
 }
 
 streak=0
-check_pressure() {
+check_pressure() { # io_limit mem_limit sustain
   local io mem pid uid rss best=0 best_pid="" reason
   io=$(full io)
   mem=$(full memory)
-  if [ "${io:-0}" -gt "$IO_FULL" ] || [ "${mem:-0}" -gt "$MEM_FULL" ]; then
+  if [ "${io:-0}" -gt "$1" ] || [ "${mem:-0}" -gt "$2" ]; then
     streak=$((streak + 1))
   else
     streak=0
   fi
-  [ "$streak" -ge "$SUSTAIN" ] || return 0
+  [ "$streak" -ge "$3" ] || return 0
   streak=0
   reason="the pc was stalling (disk IO ${io}% / memory ${mem}% full)"
   # Local Nix builds (build users are not root).
@@ -188,16 +198,16 @@ check_pressure() {
 # A slice stalled only on its memory cap while swapping into zram is harmless
 # (measured: 20-28 % memory stall, 0 % IO), so that alone is left alone.
 agent_streak=0
-check_agent_thrash() {
+check_agent_thrash() { # io_limit sustain
   local mem io pid rss best=0 best_pid=""
   mem=$(awk '/^full/ { for (i = 1; i <= NF; i++) if ($i ~ /^avg10=/) { sub("avg10=", "", $i); printf "%d", $i } }' "$agents/memory.pressure" 2>/dev/null)
   io=$(awk '/^full/ { for (i = 1; i <= NF; i++) if ($i ~ /^avg10=/) { sub("avg10=", "", $i); printf "%d", $i } }' /proc/pressure/io)
-  if [ "${mem:-0}" -gt "$AGENT_MEM_FULL" ] && [ "${io:-0}" -gt "$AGENT_IO_FULL" ]; then
+  if [ "${mem:-0}" -gt "$AGENT_MEM_FULL" ] && [ "${io:-0}" -gt "$1" ]; then
     agent_streak=$((agent_streak + 1))
   else
     agent_streak=0
   fi
-  [ "$agent_streak" -ge "$AGENT_SUSTAIN" ] || return 0
+  [ "$agent_streak" -ge "$2" ] || return 0
   agent_streak=0
   for pid in $(agent_pids); do
     [[ $(cat "/proc/$pid/comm" 2>/dev/null) =~ $providers ]] && continue
@@ -229,8 +239,8 @@ flush_notify() {
 }
 
 # Max mode (`agent-max on`, Erik is away): long agent builds, test runs and
-# emulators are allowed, so the CPU and emulator limits pause. The stall
-# checks below still act if the desktop really stalls.
+# emulators are allowed, so the CPU and emulator limits pause, and the stall
+# checks act only on a real hang (see the header).
 max_until=/run/user/$ERIK_UID/agent-max/until
 max_mode() {
   local until
@@ -238,21 +248,23 @@ max_mode() {
   [ "${until:-0}" -gt "$(date +%s)" ]
 }
 
-echo "lag-guard: agents=$agents cpu>=$CPU_CORES cores/${CPU_WINDOW}s io>$IO_FULL% mem>$MEM_FULL%"
+echo "lag-guard: agents=$agents cpu>=$CPU_CORES cores/${CPU_WINDOW}s io>$IO_FULL% mem>$MEM_FULL% (max mode: io>$MAX_IO_FULL% mem>$MAX_MEM_FULL% for $((MAX_SUSTAIN * INTERVAL))s)"
 was_max=0
 while true; do
   if max_mode; then
-    [ "$was_max" = 1 ] || echo "max mode on: CPU and emulator limits paused"
+    [ "$was_max" = 1 ] || { echo "max mode on: CPU and emulator limits paused, stall checks only for a real hang"; streak=0; agent_streak=0; }
     was_max=1
     usage_then="" # start a fresh CPU window once max mode ends
+    check_pressure "$MAX_IO_FULL" "$MAX_MEM_FULL" "$MAX_SUSTAIN"
+    check_agent_thrash "$MAX_IO_FULL" "$MAX_SUSTAIN"
   else
-    [ "$was_max" = 0 ] || echo "max mode off: CPU and emulator limits back"
+    [ "$was_max" = 0 ] || echo "max mode off: CPU and emulator limits and normal stall checks back"
     was_max=0
     check_emulators
     check_cpu
+    check_pressure "$IO_FULL" "$MEM_FULL" "$SUSTAIN"
+    check_agent_thrash "$AGENT_IO_FULL" "$AGENT_SUSTAIN"
   fi
-  check_pressure
-  check_agent_thrash
   flush_notify
   sleep "$INTERVAL"
 done

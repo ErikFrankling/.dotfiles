@@ -21,9 +21,11 @@
 #   activates (`--remote`: on the builder). The nix daemon builds at idle
 #   priority with disk caps, and anything not cached is built on the homelab.
 # - Docker containers get per-container caps.
-# - No disk swap: only zram, so a runaway is killed instead of thrashing.
+# - Swap: zram first, then a disk partition as overflow (see swapDevices).
 # - `agent-max on` (max mode, only while Erik is away) raises the agent caps
-#   to 14 CPUs and 22/25 GB and lifts lag-guard's CPU and emulator limits; it
+#   to 14 CPUs and 22/25 GB, lifts lag-guard's CPU and emulator limits and
+#   leaves its stall checks only for a real hang (memory 50% / IO 80% full
+#   for a minute; swap-in from the idle desktop is not one); it
 #   turns off when Erik touches a keyboard or mouse, or after 12 hours.
 # - lag-guard kills agent jobs that stay at the CPU budget for 5+ minutes,
 #   emulators over 15 minutes, and the biggest job when Erik's desktop
