@@ -194,6 +194,16 @@
   };
 
   networking.hostName = "${hostName}"; # Define your hostname.
+  # eno1 and wlp11s0 sit on the same 192.168.50.0/24. Linux answers ARP for any
+  # local address on any interface, so the homelab VM resolved the wired
+  # 192.168.50.232 to the Wi-Fi MAC; its traffic arrived on wlp11s0 and the
+  # eno1-only firewall rules (dev preview :3999, T3 :3773) dropped it
+  # (2026-11-11: phone/x-graph and t3code checks timed out). Answer ARP only
+  # for the address on the interface that received the request.
+  boot.kernel.sysctl = {
+    "net.ipv4.conf.all.arp_ignore" = 1;
+    "net.ipv4.conf.all.arp_announce" = 2;
+  };
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   boot.loader.systemd-boot.enable = true;
