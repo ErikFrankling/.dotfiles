@@ -22,6 +22,9 @@
 #   priority with disk caps, and anything not cached is built on the homelab.
 # - Docker containers get per-container caps.
 # - No disk swap: only zram, so a runaway is killed instead of thrashing.
+# - `agent-max on` (max mode, only while Erik is away) raises the agent caps
+#   to 14 CPUs and 22/25 GB and lifts lag-guard's CPU and emulator limits; it
+#   turns off when Erik touches a keyboard or mouse, or after 12 hours.
 # - lag-guard kills agent jobs that stay at the CPU budget for 5+ minutes,
 #   emulators over 15 minutes, and the biggest job when Erik's desktop
 #   stalls, telling the agent to re-run it with `heavy`.
@@ -189,6 +192,41 @@ let
     text = builtins.readFile ./lag-guard.sh;
   };
 
+  # Max mode (agent-max.sh): Erik away, agents may use most of the pc.
+  agentMax = pkgs.writeShellApplication {
+    name = "agent-max";
+    runtimeInputs = [
+      pkgs.coreutils
+      config.systemd.package
+      "/run/current-system/sw" # notify-erik
+    ];
+    text =
+      builtins.replaceStrings
+        [
+          "@defaultHours@"
+          "@maxCpu@"
+          "@maxMemoryHigh@"
+          "@maxMemoryMax@"
+          "@cpu@"
+          "@memoryHigh@"
+          "@memoryMax@"
+        ]
+        [
+          (toString cfg.maxMode.hours)
+          cfg.maxMode.cpuQuota
+          cfg.maxMode.memoryHigh
+          cfg.maxMode.memoryMax
+          cfg.cpuQuota
+          cfg.memoryHigh
+          cfg.memoryMax
+        ]
+        (builtins.readFile ./agent-max.sh);
+  };
+  agentMaxWatch = pkgs.writers.writePython3 "agent-max-watch" {
+    libraries = [ pkgs.python3Packages.evdev ];
+    flakeIgnore = [ "E501" ];
+  } (builtins.readFile ./agent-max-watch.py);
+
   # The system disk. io.max needs the whole device, not a partition.
   systemDisk = "/dev/disk/by-id/nvme-KINGSTON_SNV3S2000G_50026B7384466B3F";
   ioCaps = read: write: {
@@ -199,6 +237,33 @@ in
 {
   options.agentPriority = {
     enable = lib.mkEnableOption "keeping agent work and Nix builds behind the desktop";
+    cpuQuota = lib.mkOption {
+      type = lib.types.str;
+      default = "400%";
+      description = "All agents together never use more CPU than this (400% = 4 of the 16 threads).";
+    };
+    maxMode = {
+      cpuQuota = lib.mkOption {
+        type = lib.types.str;
+        default = "1400%";
+        description = "Agent CPU cap in max mode (`agent-max on`): 14 of 16 threads, 2 left for the desktop and T3 Code.";
+      };
+      memoryHigh = lib.mkOption {
+        type = lib.types.str;
+        default = "22G";
+        description = "Agent MemoryHigh in max mode.";
+      };
+      memoryMax = lib.mkOption {
+        type = lib.types.str;
+        default = "25G";
+        description = "Agent MemoryMax in max mode.";
+      };
+      hours = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 12;
+        description = "Max mode turns itself off after this many hours.";
+      };
+    };
     memoryHigh = lib.mkOption {
       type = lib.types.str;
       default = "9G";
@@ -233,7 +298,20 @@ in
           nixRemote
           nixosRemoteSwitch
           agentJob
+          agentMax
         ];
+
+        # Turns max mode off when Erik is back (physical keyboard or mouse) or
+        # its time is up. Started by `agent-max on`, not at login.
+        systemd.user.services.agent-max-watch = {
+          description = "Turn agent max mode off when Erik is back at the pc";
+          path = [ agentMax ];
+          serviceConfig = {
+            ExecStart = agentMaxWatch;
+            Restart = "on-failure";
+            RestartSec = 5;
+          };
+        };
 
         # The user manager gets the io controller too, so the agent slice's
         # disk caps apply (the default delegates only cpu, memory and pids).
@@ -270,7 +348,9 @@ in
             # input always preempts them.
             CPUWeight = "idle";
             # And never more than 4 of the 16 threads, whatever is idle.
-            CPUQuota = "400%";
+            # `agent-max on` raises this, MemoryHigh and MemoryMax at runtime
+            # while Erik is away (systemctl --user set-property --runtime).
+            CPUQuota = cfg.cpuQuota;
             MemoryHigh = cfg.memoryHigh;
             MemoryMax = cfg.memoryMax;
             # Room to swap idle memory into zram (the first swap tier, in RAM).

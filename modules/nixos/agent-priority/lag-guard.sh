@@ -15,6 +15,9 @@
 #     AGENT_MEM_FULL) while the disk stalls (over AGENT_IO_FULL) for
 #     AGENT_SUSTAIN samples, its biggest job.
 #
+# Max mode (`agent-max on`, Erik away) pauses the CPU and emulator checks;
+# the pressure and thrash checks stay on.
+#
 # A killed process gets the reason on its stderr (the agent's tool output),
 # telling the agent to re-run it on the homelab with `heavy`. Erik gets one
 # notification per NOTIFY_EVERY seconds.
@@ -225,10 +228,29 @@ flush_notify() {
     "Stopped agent work on the pc: ${list%; }. It belongs on the homelab." || true
 }
 
+# Max mode (`agent-max on`, Erik is away): long agent builds, test runs and
+# emulators are allowed, so the CPU and emulator limits pause. The stall
+# checks below still act if the desktop really stalls.
+max_until=/run/user/$ERIK_UID/agent-max/until
+max_mode() {
+  local until
+  until=$(cat "$max_until" 2>/dev/null) || return 1
+  [ "${until:-0}" -gt "$(date +%s)" ]
+}
+
 echo "lag-guard: agents=$agents cpu>=$CPU_CORES cores/${CPU_WINDOW}s io>$IO_FULL% mem>$MEM_FULL%"
+was_max=0
 while true; do
-  check_emulators
-  check_cpu
+  if max_mode; then
+    [ "$was_max" = 1 ] || echo "max mode on: CPU and emulator limits paused"
+    was_max=1
+    usage_then="" # start a fresh CPU window once max mode ends
+  else
+    [ "$was_max" = 0 ] || echo "max mode off: CPU and emulator limits back"
+    was_max=0
+    check_emulators
+    check_cpu
+  fi
   check_pressure
   check_agent_thrash
   flush_notify

@@ -85,7 +85,8 @@ session, these run as their own user unit, `agent-job-NAME.service` in
 
 - Agent sessions run in `app-t3code.slice`: idle CPU priority, at most 4 of
   the 16 threads, 9/11 GB RAM, 8 GB swap (zram first), 150/60 MB/s disk. Short builds fit
-  fine; never escape the slice with `--slice=`, Docker, sudo or system units.
+  fine; never escape the slice with `--slice=`, Docker, sudo or system units
+  (max mode below is the one exception, and it lifts the caps in place).
 - `nix` and `rebuild` evaluate here. Whole-system evaluations (3-4 GB, ~2
   minutes) wait for each other under one lock; uncached builds go to the
   homelab builder by themselves. `rebuild` refuses a checkout behind
@@ -94,6 +95,33 @@ session, these run as their own user unit, `agent-job-NAME.service` in
   minutes, emulators running over 15 minutes, and the biggest job when
   Erik's desktop stalls. The killed process gets the reason on its stderr:
   re-run that job with `heavy`, do not retry it on the pc.
+
+### Max mode: the whole pc while Erik is away (`agent-max`)
+
+Erik (2026-11-11): "you can build on the entire pc max it out i am not on
+the pc". When he says he is away, turn max mode on; it is the only allowed
+way past the caps above (never `--slice=`, Docker, sudo, system units, or
+your own `systemctl set-property`).
+
+```bash
+agent-max status     # exit 0 = on, 1 = off; prints the live slice limits
+agent-max on [HOURS] # only when Erik said he is away; default 12 h
+agent-max off        # back to normal caps
+```
+
+- On: `app-t3code.slice` gets 14 of 16 CPUs (`CPUQuota=1400%`), MemoryHigh
+  22 GB, MemoryMax 25 GB. CPU priority stays idle and the disk caps stay,
+  so anything Erik does still wins. lag-guard stops killing long jobs and
+  emulators; it still kills the biggest job if his desktop really stalls
+  (disk or memory pressure) or the agents thrash.
+- Off by itself: the first physical key, button or mouse movement (60 s
+  grace after `on`; agent-seat and ydotool input do not count), or the
+  timeout. A reboot also resets it. Erik gets a low-priority notification.
+- Check `agent-max status` before starting long local work; it can switch off
+  under you. Off means back to the rules above: long jobs go to `heavy`, and
+  a running local build may now be killed by lag-guard after 5 minutes.
+- Runtime only (`systemctl --user set-property --runtime`), nothing
+  restarts. Watcher: `journalctl --user -u agent-max-watch`.
 
 This has happened: on 2026-10-16 an agent started about 28 `codex exec` image
 jobs at once (20 backgrounded with `&`, 8 more through `xargs -P 8`). They
