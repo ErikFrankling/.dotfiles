@@ -341,14 +341,20 @@ in
           # 3d -> 1d (2026-11-11): the dir grew 21G -> 53G in 15 h while only
           # idle for less than 3d, so 3d bounded nothing; cargo output is
           # rebuildable and sccache-backed.
-          "e /mnt/data/wbox-target - - - 1d"
+          # 1d -> 14d (2026-11-11), Erik: "do not get rid of any caching of
+          # build artifacts to appease the disk limits; it is fine that we go
+          # closer to 97%; if you need space use it all". The cargo/Go caches
+          # stay warm; only worktrees abandoned for two weeks go. The /mnt/data
+          # alerts now fire at 95% used / a 97% exhaustion forecast (homelab
+          # prometheus rules), not 80%.
+          "e /mnt/data/wbox-target - - - 14d"
           # 2026-11-11 14:00: after the 12:16 cleanup /mnt/data lost 70G in 2 h,
           # 26G of it Go build caches under wbox-src/T6/cache (regrown by the
-          # lanes). Regenerable; idle 2d goes. Not gomodcache: Go makes it
-          # read-only, tmpfiles (user) cannot unlink inside it; the owner sets
-          # GOFLAGS=-modcacherw and one shared modcache.
-          "e /mnt/data/wbox-src/*/cache/gocache - - - 2d"
-          "e /mnt/data/wbox-src/*/gocache - - - 2d"
+          # lanes). Not gomodcache: Go makes it read-only, tmpfiles (user)
+          # cannot unlink inside it; the owner sets GOFLAGS=-modcacherw and one
+          # shared modcache. 2d -> 14d the same day, per Erik above.
+          "e /mnt/data/wbox-src/*/cache/gocache - - - 14d"
+          "e /mnt/data/wbox-src/*/gocache - - - 14d"
         ];
 
         systemd.user.slices.app-t3code = {
