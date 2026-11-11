@@ -342,6 +342,13 @@ in
           # idle for less than 3d, so 3d bounded nothing; cargo output is
           # rebuildable and sccache-backed.
           "e /mnt/data/wbox-target - - - 1d"
+          # 2026-11-11 14:00: after the 12:16 cleanup /mnt/data lost 70G in 2 h,
+          # 26G of it Go build caches under wbox-src/T6/cache (regrown by the
+          # lanes). Regenerable; idle 2d goes. Not gomodcache: Go makes it
+          # read-only, tmpfiles (user) cannot unlink inside it; the owner sets
+          # GOFLAGS=-modcacherw and one shared modcache.
+          "e /mnt/data/wbox-src/*/cache/gocache - - - 2d"
+          "e /mnt/data/wbox-src/*/gocache - - - 2d"
         ];
 
         systemd.user.slices.app-t3code = {
