@@ -86,9 +86,14 @@
   # OpenCode Go API key (modules/home-manager/ai.nix merges it into opencode auth.json).
   sops.secrets.opencode-go-key.owner = username;
 
-  users.users."${username}".openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJXhLc3vVBQPQLGlf4kMJ/WHXPlsXWzuustUwzFj/AaX erikf@arch-erik-pc"
-  ];
+  # No remote access into the work laptop (Erik, 2026-11-11): Ablo's
+  # Information Security Policy allows only company-provided remote access
+  # tools. The pc used to reach it over SSH (install, agents, a T3 tunnel).
+  services.openssh.enable = lib.mkForce false;
+  programs.mosh.enable = lib.mkForce false;
+  # users.users."${username}".openssh.authorizedKeys.keys = [
+  #   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJXhLc3vVBQPQLGlf4kMJ/WHXPlsXWzuustUwzFj/AaX erikf@arch-erik-pc"
+  # ];
 
   # Same as the framework: keep the real MAC on wired links, a stable
   # per-network one on Wi-Fi.

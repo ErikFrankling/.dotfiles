@@ -84,8 +84,9 @@ session on the pc.
    Hyprland did not start. Fix: `sudo chown erikf:users ~/.config && sudo
    systemctl restart home-manager-erikf getty@tty1`.
 6. **Agent** over SSH: clone `~/.dotfiles`, check Tailscale came up (the OAuth
-   key in sops joins it as `tag:client`). Reach it with `ssh samsung-ablo`
-   (tailnet IP through proxmox). Its LAN IPv4 does not answer the pc once
+   key in sops joins it as `tag:client`). During install it was reached with
+   `ssh samsung-ablo` (tailnet IP through proxmox); since 2026-11-11 sshd is
+   off on the laptop and nothing has remote access into it. Its LAN IPv4 does not answer the pc once
    Tailscale accepts the home subnet route; IPv6 link-local does. The desk's
    USB Ethernet adapter sits behind the KVM, so the laptop loses it whenever
    the KVM switches to the pc: use Wi-Fi.
