@@ -25,6 +25,18 @@ let
         ''
       )
     );
+
+  kanshictl = lib.getExe' pkgs.kanshi "kanshictl";
+  lidBind = state: description: profile: {
+    _args = [
+      "switch:${state}:Lid Switch"
+      (lib.generators.mkLuaInline "hl.dsp.exec_cmd(${builtins.toJSON "${kanshictl} switch ${profile}"})")
+      {
+        inherit description;
+        locked = true;
+      }
+    ];
+  };
 in
 {
   imports = [
@@ -79,11 +91,40 @@ in
     settings = [
       {
         profile.name = "office";
-        profile.exec = [ (moveWorkspaces "desc:Dell Inc. DELL U2724DE") ];
+        profile.exec = [
+          (moveWorkspaces "desc:Dell Inc. DELL U2724DE")
+          "grep -q open /proc/acpi/button/lid/*/state && ${kanshictl} switch office-lid-open"
+        ];
         profile.outputs = [
           {
             criteria = "eDP-1";
             status = "disable";
+          }
+          {
+            criteria = "Dell Inc. DELL U2724DE *";
+            status = "enable";
+            mode = "2560x1440@120Hz";
+            scale = 1.333333;
+            position = "0,0";
+          }
+          {
+            criteria = "AGENT-1";
+            status = "enable";
+            position = "10000,0";
+          }
+        ];
+      }
+      # Lid open at the office (a call that needs the webcam): the built-in
+      # screen joins, below the Dell. Same outputs as "office", so kanshi picks
+      # "office" on hotplug and its exec switches here when the lid is open;
+      # the lid binds below switch between the two.
+      {
+        profile.name = "office-lid-open";
+        profile.outputs = [
+          {
+            criteria = "eDP-1";
+            status = "enable";
+            position = "240,1080";
           }
           {
             criteria = "Dell Inc. DELL U2724DE *";
@@ -139,6 +180,13 @@ in
       }
     ];
   };
+
+  # At the office dock the built-in screen follows the lid. Away from the
+  # office dock the "office" profiles do not match and kanshictl just fails.
+  wayland.windowManager.hyprland.settings.bind = [
+    (lidBind "off" "Lid opened: built-in screen on at the office" "office-lid-open")
+    (lidBind "on" "Lid closed: built-in screen off at the office" "office")
+  ];
 
   hyprland = {
     keyboards = [
