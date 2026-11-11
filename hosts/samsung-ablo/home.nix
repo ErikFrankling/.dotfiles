@@ -89,6 +89,13 @@ in
     enable = true;
     systemdTarget = "hyprland-session.target";
     settings = [
+      # Positions come from the shell's displays window (erikshell
+      # DisplaysWindow.qml), which writes `output "<criteria>" position X,Y`
+      # defaults here and runs `kanshictl reload`. kanshi applies a default
+      # only where a profile uses the identical criteria string, so profiles
+      # name outputs the way the window does: eDP-1, or "<make> <model> *".
+      # Profiles set no position for those outputs, or the default is ignored.
+      { include = "$HOME/.local/state/kanshi/positions"; }
       {
         profile.name = "office";
         profile.exec = [
@@ -105,7 +112,6 @@ in
             status = "enable";
             mode = "2560x1440@120Hz";
             scale = 1.333333;
-            position = "0,0";
           }
           {
             criteria = "AGENT-1";
@@ -124,14 +130,12 @@ in
           {
             criteria = "eDP-1";
             status = "enable";
-            position = "240,1080";
           }
           {
             criteria = "Dell Inc. DELL U2724DE *";
             status = "enable";
             mode = "2560x1440@120Hz";
             scale = 1.333333;
-            position = "0,0";
           }
           {
             criteria = "AGENT-1";
@@ -180,6 +184,17 @@ in
       }
     ];
   };
+
+  # kanshi refuses its whole config when an include is missing. Seeded with
+  # the office layout (built-in screen centred below the Dell); the displays
+  # window owns the file afterwards.
+  home.activation.kanshiPositions = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    f="$HOME/.local/state/kanshi/positions"
+    if [ ! -e "$f" ]; then
+      run mkdir -p "$(dirname "$f")"
+      printf '%s\n' 'output "eDP-1" position 240,1080' 'output "Dell Inc. DELL U2724DE *" position 0,0' > "$f"
+    fi
+  '';
 
   # At the office dock the built-in screen follows the lid. Away from the
   # office dock the "office" profiles do not match and kanshictl just fails.

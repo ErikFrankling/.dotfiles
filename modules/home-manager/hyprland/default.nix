@@ -400,6 +400,9 @@
                 ''hl.dsp.global("quickshell:looks")''
               )
               (bind "SUPER + B" "Toggle the keyboard and keybind sheet" ''hl.dsp.global("quickshell:keys")'')
+              (bind "SUPER + SHIFT + D" "Toggle the screen arrangement overlay"
+                ''hl.dsp.global("quickshell:displays")''
+              )
 
               (bindWith "SUPER + mouse:272" "Move the window with the mouse" "hl.dsp.window.drag()" {
                 mouse = true;
