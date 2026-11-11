@@ -348,7 +348,8 @@ in
           # keep their files fresh. DiskAlmostFull/DiskFillingUp cover /mnt/data.
           # 3d -> 1d (2026-11-11): the dir grew 21G -> 53G in 15 h while only
           # idle for less than 3d, so 3d bounded nothing; cargo output is
-          # rebuildable and sccache-backed.
+          # rebuildable and sccache-backed (sccache is off since 2026-11-11,
+          # modules/home-manager/rust.nix; these dirs are the only cache now).
           # 1d -> 14d (2026-11-11), Erik: "do not get rid of any caching of
           # build artifacts to appease the disk limits; it is fine that we go
           # closer to 97%; if you need space use it all". The cargo/Go caches

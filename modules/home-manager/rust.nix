@@ -50,45 +50,64 @@ let
   };
 in
 {
-  # Shared Rust compilation cache.
+  # Shared Rust compilation cache (sccache): DISABLED 2026-11-11.
   #
-  # sccache caches individual compilation units by content hash, so a crate
-  # built in one project or git worktree is reused everywhere else. This is
-  # preferred over a shared CARGO_TARGET_DIR: Cargo takes a lock on the target
-  # directory, so a single shared one serialises concurrent builds across
-  # projects, and `cargo clean` in one wipes them all.
-  home.packages = [ pkgs.sccache ];
+  # The idea was that a crate built in one project or git worktree is reused
+  # everywhere else. With a dozen agents building at once it was pure overhead
+  # and stalled or failed their builds (wasm-box, cars and fleet sessions all
+  # ended up running `RUSTC_WRAPPER= cargo ...`):
+  #
+  # - sccache is one server per user, started by whichever cargo runs first,
+  #   and the server is what runs every rustc. So every agent's compiles ran
+  #   inside the systemd scope of the one agent thread that happened to start
+  #   it, not in their own: one thread's share of the capped
+  #   app-t3code.slice for all of them, accounted to the wrong thread, and
+  #   gone for everybody when that thread ends or lag-guard stops its rustc.
+  #   Measured: a cargo build got 31 s of CPU in 26 minutes. Running the
+  #   server outside the agent slice would move every agent compile out of
+  #   the caps, so there is no right place for a shared server.
+  # - It hardly hit: Rust 5 hits / 454 misses (1.09%), 20G cache full.
+  #   Workspace crates build incrementally in the dev profile (not cacheable)
+  #   and bins/proc-macros never are; dependency crates miss because agents
+  #   build in ~/.t3/worktrees and with CARGO_TARGET_DIR=/mnt/data/..., both
+  #   outside SCCACHE_BASEDIRS, and path dependencies (vendored wasmtime)
+  #   carry the worktree path.
+  #
+  # Each worktree's own target dir (kept 14 days, see agent-priority and the
+  # sweep below) is the cache now. Re-enable only with a server per agent
+  # scope or per project, never one per user.
+  # home.packages = [ pkgs.sccache ];
 
-  programs.cargo = {
-    enable = true;
+  # programs.cargo = {
+  #   enable = true;
+  #
+  #   # Only manage ~/.cargo/config.toml. Toolchains come from per-project Nix
+  #   # dev shells, so installing a global cargo here would shadow them.
+  #   package = null;
+  #
+  #   settings.build.rustc-wrapper = "${pkgs.sccache}/bin/sccache";
+  #
+  #   # The T3 server (and so every agent session) was started with
+  #   # SCCACHE_CACHE_SIZE=50G and cannot be restarted by agents, so the session
+  #   # variable below never reaches them. Cargo's [env] with force reaches the
+  #   # sccache server that cargo itself starts, whatever the parent exported.
+  #   settings.env.SCCACHE_CACHE_SIZE = {
+  #     value = "20G";
+  #     force = true;
+  #   };
+  # };
 
-    # Only manage ~/.cargo/config.toml. Toolchains come from per-project Nix
-    # dev shells, so installing a global cargo here would shadow them.
-    package = null;
-
-    settings.build.rustc-wrapper = "${pkgs.sccache}/bin/sccache";
-
-    # The T3 server (and so every agent session) was started with
-    # SCCACHE_CACHE_SIZE=50G and cannot be restarted by agents, so the session
-    # variable below never reaches them. Cargo's [env] with force reaches the
-    # sccache server that cargo itself starts, whatever the parent exported.
-    settings.env.SCCACHE_CACHE_SIZE = {
-      value = "20G";
-      force = true;
-    };
-  };
-
-  home.sessionVariables = {
-    # sccache hashes absolute paths, so the same crate in two worktrees would
-    # otherwise miss. Stripping these prefixes is what makes worktrees share a
-    # cache. Absolute paths only; colon-separated.
-    SCCACHE_BASEDIRS = "/home/erikf/projects";
-
-    # The default is 10G, which a few Rust workspaces evict straight through.
-    # 50G -> 20G (2026-11-10): / fell to 5% free twice in two days and the
-    # cache sat at 28G and climbing toward its cap; agent builds refill it fast.
-    SCCACHE_CACHE_SIZE = "20G";
-  };
+  # home.sessionVariables = {
+  #   # sccache hashes absolute paths, so the same crate in two worktrees would
+  #   # otherwise miss. Stripping these prefixes is what makes worktrees share a
+  #   # cache. Absolute paths only; colon-separated.
+  #   SCCACHE_BASEDIRS = "/home/erikf/projects";
+  #
+  #   # The default is 10G, which a few Rust workspaces evict straight through.
+  #   # 50G -> 20G (2026-11-10): / fell to 5% free twice in two days and the
+  #   # cache sat at 28G and climbing toward its cap; agent builds refill it fast.
+  #   SCCACHE_CACHE_SIZE = "20G";
+  # };
 
   systemd.user.services.cargo-sweep = {
     Unit.Description = "Delete Cargo build artifacts not used in 14 days";
