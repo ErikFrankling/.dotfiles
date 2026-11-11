@@ -335,8 +335,14 @@ in
         # nothing removes it once the run is done: 18 Claude workflow
         # worktrees in wasm-box held 88G. Build output idle for 2 days goes.
         systemd.user.tmpfiles.rules = [
-          "e %h/projects/*/.claude/worktrees/*/target - - - 6h"
-          "e %h/.t3/worktrees/*/*/target - - - 6h"
+          # Disabled 2026-11-11: wasm-box lanes now make `target` a symlink to
+          # /mnt/data/wbox-target/<lane>, and systemd-tmpfiles aborts with
+          # "unsafe path transition ... -> /" (exit 73) on such a symlink, which
+          # failed systemd-tmpfiles-setup and nixos-activation (user) at boot.
+          # The data is covered by the /mnt/data rules below, and Erik wants
+          # build caches kept anyway.
+          # "e %h/projects/*/.claude/worktrees/*/target - - - 6h"
+          # "e %h/.t3/worktrees/*/*/target - - - 6h"
           # wasm-box builds now write to /mnt/data/wbox-target/<worktree>
           # (2026-11-10, to keep / free); idle for 3 days goes, active builds
           # keep their files fresh. DiskAlmostFull/DiskFillingUp cover /mnt/data.
