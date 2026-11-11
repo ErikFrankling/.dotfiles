@@ -329,6 +329,11 @@ in
         # cleaner runs hourly (system and user); active files stay (age counts
         # from last use).
         systemd.tmpfiles.rules = [ "q /tmp 1777 root root 1d" ];
+        # Agent sandbox tests (wasm-box `wbox` debug builds) SIGSEGV on purpose
+        # with multi-GB mappings; systemd-coredump then read/wrote 4 GB per crash,
+        # hit its 5 min limit and failed (SystemdUnitFailed on systemd-coredump@*,
+        # 2026-11-11). Processes over 1 GB are skipped instead of dumped.
+        systemd.coredump.extraConfig = "ProcessSizeMax=1G";
         systemd.timers.systemd-tmpfiles-clean.timerConfig.OnUnitActiveSec = lib.mkForce "1h";
         systemd.user.timers.systemd-tmpfiles-clean.timerConfig.OnUnitActiveSec = lib.mkForce "1h";
         # Every agent worktree builds its own cargo target/ (4-7G each) and
