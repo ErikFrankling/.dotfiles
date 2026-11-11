@@ -42,6 +42,9 @@ in
     ./t3code.nix # work agents run here, not on the pc
   ];
 
+  # Ablo marketing 3D work (Blender scenes, MCP for Blender add-on).
+  home.packages = [ pkgs.blender ];
+
   # Local browser, agent monitor and input seat. Harnesses get these local
   # MCP servers from ai.nix; work desktop control stays on this laptop.
   programs.agent-desktop.enable = true;
