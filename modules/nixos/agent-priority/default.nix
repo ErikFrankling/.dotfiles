@@ -338,7 +338,10 @@ in
           # wasm-box builds now write to /mnt/data/wbox-target/<worktree>
           # (2026-11-10, to keep / free); idle for 3 days goes, active builds
           # keep their files fresh. DiskAlmostFull/DiskFillingUp cover /mnt/data.
-          "e /mnt/data/wbox-target - - - 3d"
+          # 3d -> 1d (2026-11-11): the dir grew 21G -> 53G in 15 h while only
+          # idle for less than 3d, so 3d bounded nothing; cargo output is
+          # rebuildable and sccache-backed.
+          "e /mnt/data/wbox-target - - - 1d"
         ];
 
         systemd.user.slices.app-t3code = {
