@@ -12,8 +12,10 @@
 # skill). That checkout is then ahead of what the homelab built, so the
 # rebuild is skipped for the day and tomorrow's build picks the changes up.
 #
-# It never reboots. When the new system has a different kernel it leaves a
-# journal record saying so.
+# It does not reboot unless autoUpdate.rebootForKernel is set (the work
+# laptop): then a new kernel or initrd schedules a restart five minutes later,
+# with a desktop notification; `sudo shutdown -c` cancels it. Otherwise it
+# leaves a journal record saying the new kernel is not running yet.
 #
 # The nightly job that updates flake.lock and drives the build is PC-only and
 # lives in ../home-manager/auto-update.
@@ -150,6 +152,8 @@ let
       config.nix.package
       config.systemd.package
       pkgs.coreutils
+      pkgs.util-linux
+      pkgs.libnotify
     ];
     text = ''
       system=$1
@@ -165,7 +169,21 @@ let
 
       if [ "$(readlink -f /run/booted-system/kernel)" != "$(readlink -f /run/current-system/kernel)" ] \
         || [ "$(readlink -f /run/booted-system/initrd)" != "$(readlink -f /run/current-system/initrd)" ]; then
-        notify critical "Updated to $rev. Restart when convenient: the new kernel is not running yet."
+        ${
+          if cfg.rebootForKernel then
+            ''
+              notify critical "Updated to $rev with a new kernel. Restarting in 5 minutes; 'sudo shutdown -c' cancels."
+              shutdown -r +5 "Automatic update: restarting for the new kernel"
+              uid=$(id -u ${username})
+              runuser -u ${username} -- env "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus" \
+                notify-send --urgency=critical --app-name="System update" \
+                "Restarting in 5 minutes" "A new kernel was installed. Cancel with: sudo shutdown -c" || true
+            ''
+          else
+            ''
+              notify critical "Updated to $rev. Restart when convenient: the new kernel is not running yet."
+            ''
+        }
       else
         notify low "Updated to $rev."
       fi
@@ -188,6 +206,11 @@ in
       type = lib.types.str;
       default = "192.168.50.";
       description = "IPv4 prefix that identifies the home LAN.";
+    };
+    rebootForKernel = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Restart five minutes after an update that installed a new kernel or initrd.";
     };
     time = lib.mkOption {
       type = lib.types.str;
