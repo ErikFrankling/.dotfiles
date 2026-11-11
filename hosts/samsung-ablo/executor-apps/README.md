@@ -17,6 +17,7 @@ and API key; they do not establish access to any external work account.
 | [Linear](linear-readonly/README.md) | Official MCP, OAuth `read write`; connected and read verified | None |
 | [PostHog](posthog-readonly/README.md) | Official MCP, operational read/write scopes; connected | None |
 | Vercel | Official OAuth MCP connected; Ablo project read verified | None for MCP; separate API-token app remains unlinked |
+| Vanta | Official hosted MCP, EU (`https://mcp.eu.vanta.com/mcp`), OAuth as erik@abloatai.com; frameworks, policies and computers read verified 2026-11-11 | None. The server has no read-only mode: it can do what Erik's Vanta role allows |
 | AWS | Native AWS CLI SSO authenticated; default/erik/ablo developer profiles and ablo-readonly verified | Renew SSO when it expires; AWS MCP not installed |
 | 1Password vault access | `op` CLI working; native desktop Environments MCP configured in both harnesses | Desktop unlock/authorization when requested |
 
