@@ -111,10 +111,11 @@
           # the only way to get a domain: no window title carries one, and Zen
           # hides the toolbar so the screenshot has none either.
           "{ef87d84c-2127-493f-b952-5b4e744245bc}" = "aw-watcher-web";
-          # LastPass:
+          # LastPass: replaced by 1Password (2026-11-12). "blocked" uninstalls
+          # it from existing profiles too.
+          # "support@lastpass.com" = mkExtensionEntry { id = "lastpass-password-manager"; pinned = true; };
           "support@lastpass.com" = {
-            id = "lastpass-password-manager";
-            pinned = true;
+            installation_mode = "blocked";
           };
           # "support@lastpass.com" = "lastpass-password-manager";
           # LanguageTool:

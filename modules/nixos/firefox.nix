@@ -117,10 +117,12 @@ in
             # installation_mode = "force_installed";
             installation_mode = "blocked";
           };
-          # LastPass:
+          # LastPass: replaced by 1Password (2026-11-12). "blocked" uninstalls
+          # it from existing profiles too.
           "support@lastpass.com" = {
-            install_url = "https://addons.mozilla.org/firefox/downloads/latest/lastpass-password-manager/latest.xpi";
-            installation_mode = "force_installed";
+            # install_url = "https://addons.mozilla.org/firefox/downloads/latest/lastpass-password-manager/latest.xpi";
+            # installation_mode = "force_installed";
+            installation_mode = "blocked";
           };
           # LanguageTool:
           "languagetool-webextension@languagetool.org" = {

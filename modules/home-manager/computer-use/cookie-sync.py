@@ -15,7 +15,7 @@ Rules, per site (registrable domain):
   keeps thousands of stale session cookies, and Chromium holds ~3300 cookies in
   total, evicting non-secure ones first when it is over;
 - partitioned (third-party) and container cookies are skipped, as are the
-  excluded sites (the agent's own LastPass session).
+  excluded sites (LinkedIn, which the agent logs in to itself).
 
 Firefox stores cookies unencrypted, and the agent Chromium encrypts its store
 itself (CDP takes plain values), so no keyring is involved. The working copy of

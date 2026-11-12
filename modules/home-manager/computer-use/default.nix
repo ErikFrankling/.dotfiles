@@ -74,7 +74,7 @@ let
   profile = "${config.xdg.dataHome}/agent-desktop/firefox";
 
   # The agent's own browser: a separate Chromium process on AGENT-1 with the
-  # agent seat, a permanent profile (LastPass stays logged in) and a loopback
+  # agent seat, a permanent profile (logins and 1Password stay) and a loopback
   # DevTools port for Playwright. --hyprland-agent-seat is the opt-in marker
   # the seat plugin and supervisor read from the command line, because
   # Chromium overwrites its environment block at startup.
@@ -97,21 +97,21 @@ let
       "--force-renderer-accessibility"
     ]
   );
-  # For the rare manual login (LastPass re-login, passkeys, phone approval):
+  # For the rare manual login (1Password unlock, passkeys, phone approval):
   # the same profile as a normal window on Erik's monitor with his own input.
   browserLogin = pkgs.writeShellScriptBin "agent-browser-login" ''
     set -u
     systemctl --user stop agent-chromium.service
     ${pkgs.chromium}/bin/chromium ${
       lib.escapeShellArgs (chromiumFlags ++ [ "--class=agent-chromium-login" ])
-    } "''${1:-chrome-extension://hdokiejnpimakedhajhdlcegeplioahd/vault.html}"
+    } "$@"
     systemctl --user start agent-chromium.service
     echo "Agent browser is back on AGENT-1."
   '';
   browserLoginDesktop = pkgs.makeDesktopItem {
     name = "agent-browser-login";
     desktopName = "Agent Browser Login";
-    comment = "Open the agent's Chromium on this screen to log in (LastPass etc.)";
+    comment = "Open the agent's Chromium on this screen to log in";
     exec = "${browserLogin}/bin/agent-browser-login";
     icon = "chromium";
   };
@@ -136,7 +136,7 @@ in
           "--cdp-endpoint"
           "http://127.0.0.1:${toString cdpPort}"
           # Coordinate mouse tools, for canvas pages and iframes such as
-          # LastPass's autofill dropdown.
+          # 1Password's autofill menu.
           "--caps"
           "vision"
           "--output-dir"
@@ -144,7 +144,7 @@ in
         ];
         # The nixpkgs wrapper exports PLAYWRIGHT_MCP_ISOLATED=1 unless this is
         # set, which puts every page in a fresh incognito-like context: no
-        # cookies, no LastPass. With it set, pages open in the real profile.
+        # cookies, no 1Password. With it set, pages open in the real profile.
         env.PLAYWRIGHT_MCP_USER_DATA_DIR = chromiumProfile;
       };
       # Cua Driver: windows, accessibility trees, captures, element actions.
@@ -361,7 +361,7 @@ in
 
     # Replaced by agent-chromium below: Chromium has the widest site
     # compatibility, Playwright drives it over DevTools, and its permanent
-    # profile keeps LastPass logged in.
+    # profile keeps its logins.
     # systemd.user.services.agent-firefox = {
     #   Unit = sessionUnit // {
     #     Description = "Persistent Firefox for the agent workspace";

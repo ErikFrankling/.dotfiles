@@ -30,7 +30,7 @@ task (deleting data, payments). Contacting other people is never allowed without
 off a sign-in prompt on Erik's phone (Authenticator, Google, LinkedIn, SMS)
 without warning him first**. See "The phone rule" in **browser-use**.
 
-Related skills: **browser-use** (websites, logins, LastPass) and
+Related skills: **browser-use** (websites, logins, 1Password) and
 **screen-recording** (videos, demos with captions). Load them when relevant.
 
 ## The setup in one picture

@@ -1,6 +1,6 @@
 ---
 name: browser-use
-description: "Browser use on Erik's PC. Load whenever a task involves a website or web app: \"browser use\", \"computer use\" on a site, logging in to anything (GitHub, Gmail/Google, Microsoft/Teams/Outlook, Basecamp, cloud consoles, the apps Erik is building), testing/QA of a web UI, filling forms, downloading from a site. You drive the agent's own Chromium (logged in wherever Erik is in Firefox, plus LastPass) with the `browser` Playwright MCP. Authentication always uses real agent Chromium; never T3 built-in preview."
+description: "Browser use on Erik's PC. Load whenever a task involves a website or web app: \"browser use\", \"computer use\" on a site, logging in to anything (GitHub, Gmail/Google, Microsoft/Teams/Outlook, Basecamp, cloud consoles, the apps Erik is building), testing/QA of a web UI, filling forms, downloading from a site. You drive the agent's own Chromium (logged in wherever Erik is in Firefox, plus 1Password) with the `browser` Playwright MCP. Authentication always uses real agent Chromium; never T3 built-in preview."
 ---
 
 # Browser use on Erik's PC
@@ -27,8 +27,8 @@ harnesses and their subagents. Public, unauthenticated previews are separate.
 You have your own browser: **the agent Chromium**, a permanent Chromium running
 on your monitor AGENT-1 (workspace `agent`), separate from Erik's Firefox.
 **It is logged in wherever Erik is logged in in Firefox**: `agent-cookie-sync`
-copies his Firefox cookies into it every 5 minutes. It also has **LastPass
-installed and logged in to Erik's vault**. **You are allowed to use Erik's
+copies his Firefox cookies into it every 5 minutes. It also has the **1Password
+extension**, which unlocks together with the 1Password desktop app on the PC. **You are allowed to use Erik's
 accounts.** Don't ask permission to use them. But read "Logins" below before you
 submit any login form: **a login must never set off a prompt on Erik's phone
 unless you warned him first.**
@@ -114,15 +114,14 @@ already logged in, as Erik, with no sign-in and no phone prompt. Verified
   never deletes your cookies, so logins on sites Firefox has no cookies for
   stay.
 - **Excluded sites** (`syncExcluded` in
-  `modules/home-manager/computer-use/logins.nix`): `lastpass.com` (your
-  LastPass has its own session) and **`linkedin.com`**: LinkedIn revokes a
+  `modules/home-manager/computer-use/logins.nix`): **`linkedin.com`**: LinkedIn revokes a
   session the moment it is used from a second browser, which logged Erik out
   of LinkedIn in Firefox on 2026-10-21. The agent browser keeps its own
   LinkedIn login; logging in again needs approval in Erik's LinkedIn app, so
   the phone rule applies. If any other site logs out (in either browser)
   right after a sync, add it to `syncExcluded`, rebuild and tell Erik.
 - **KTH webmail** (`webmail.kth.se`, Outlook Web App forms login) needs no
-  phone: LastPass fills `erikfran` and the password, click Sign in. Its
+  phone: 1Password fills `erikfran` and the password, click Sign in. Its
   session is a session cookie, so it is gone after the agent browser restarts.
 - Don't restart `agent-chromium` without reason: session-cookie logins the
   agent made itself are lost (the Firefox ones come back with the sync).
@@ -183,27 +182,29 @@ If it lands on `teams.microsoft.com/v2/#id_token=...`, go ahead. If it lands
 on an `error=` (`login_required`, `interaction_required`), the session has
 expired: the phone rule applies, so ask Erik before logging in.
 
-### 3. Logging in yourself with LastPass
+### 3. Logging in yourself with 1Password
 
-Only when 1 and 2 don't cover it. When a login form appears (tested on GitHub):
+Erik's password manager is **1Password** (personal account; LastPass was
+retired on 2026-11-12, never use or reinstall it). Only when 1 and 2 don't
+cover it. The 1Password extension is force-installed in the agent Chromium and
+is unlocked whenever the 1Password desktop app on the PC is unlocked.
 
-1. `browser_click` the username/email field. LastPass autofills it and opens
-   its account picker ("Multiple accounts? Type to filter") right under the
-   field. The picker is an iframe, so it is **not** in `browser_snapshot`.
-2. `browser_take_screenshot`, find the right account in the picker, and click
-   it with `browser_mouse_click_xy` (screenshot pixels = page coordinates).
-   Username and password are then filled.
+1. `browser_click` the username/email field. 1Password shows its inline menu
+   of matching logins under the field. The menu is extension UI, so it may
+   **not** be in `browser_snapshot`.
+2. `browser_take_screenshot`, find the right login, and click it with
+   `browser_mouse_click_xy` (screenshot pixels = page coordinates). Username
+   and password are then filled. (Keyboard alternative: `Ctrl+Shift+L` fills
+   the best match.)
 3. **Before you submit, apply the phone rule below.** Then submit and verify
    you're in.
 4. "Sign in with Google/Microsoft" flows work the same way on their pages.
 
-You never need to read or type a password yourself. To look something up in
-the vault (a note, a username), open it through the DevTools endpoint
-(Playwright refuses extension URLs), then find it with `browser_tabs`:
-
-```sh
-curl -s -X PUT "http://127.0.0.1:9222/json/new?chrome-extension://hdokiejnpimakedhajhdlcegeplioahd/vault.html"
-```
+You never need to read or type a password yourself, and never print one
+(snapshots of a filled form can show it; check `passwordFilled`-style booleans
+with `browser_evaluate` instead). This flow was written before its first live
+run: if 1Password behaves differently (for example its "Agentic Mode" refuses
+an automated browser), fix this section with what actually works.
 
 ### The phone rule (Erik, 2026-10-21)
 
@@ -227,8 +228,10 @@ page. Every attempt is another prompt.
 
 **When you need Erik** (only these cases):
 
-- LastPass itself is logged out (the picker doesn't appear and the vault asks
-  for the master password), or
+- 1Password is locked or signed out (no inline menu, the extension asks to
+  unlock): Erik unlocks the 1Password desktop app on the PC. File it with
+  `attention_item_upsert` (id `1password-locked`); never ask for his
+  1Password password, Secret Key or a vault value in chat, or
 - the site wants a second factor you can't provide (see the phone rule),
   including security keys/passkeys (GitHub's `two-factor/webauthn` page).
 
@@ -237,8 +240,9 @@ you and it stays useful for every later agent. Alternatively: *"Please run
 `agent-browser-login` (also in the app launcher) and log in to SITE; close the
 window when done."* It opens this same browser profile as a normal window on
 his screen with his keyboard; when he closes it the browser returns to AGENT-1
-with the session saved. His master password never passes through you. For a
+with the session saved. His 1Password password never passes through you. For a
 one-off code (SMS/authenticator), you can instead ask him for the code in chat.
+
 ## Email codes and confirmation links (Thunderbird)
 
 **Executor mail tools first.** Erik's personal Gmail (`ef.pro454@gmail.com`) is an

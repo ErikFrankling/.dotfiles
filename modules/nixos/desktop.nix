@@ -31,13 +31,15 @@
   programs.chromium = {
     enable = true;
     extraOpts.BlockThirdPartyCookies = false;
-    # LastPass, always present in the agent's Chromium (and thereby Helium,
-    # which reads the same policy directory). The agent's permanent profile
-    # keeps it logged in; see modules/home-manager/computer-use.
+    # 1Password in every profile, the agent's Chromium included (and thereby
+    # Helium, which reads the same policy directory). It unlocks together
+    # with the 1Password desktop app; see modules/home-manager/computer-use.
     extensions = [
-      "hdokiejnpimakedhajhdlcegeplioahd" # LastPass
+      # "hdokiejnpimakedhajhdlcegeplioahd" # LastPass, replaced by 1Password 2026-11-12
       "aeblfdkhhhdcdjpifhhbdiojplfjncoa" # 1Password, required in every profile
     ];
+    # Uninstall LastPass from profiles that still have it.
+    extraOpts.ExtensionInstallBlocklist = [ "hdokiejnpimakedhajhdlcegeplioahd" ];
     # Earlier, narrower attempt: allow only Microsoft's domains.
     # extraOpts.CookiesAllowedForUrls = [
     # "[*.]microsoftonline.com"

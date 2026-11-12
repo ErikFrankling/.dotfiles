@@ -21,12 +21,10 @@
 let
   cdpPort = 9222;
   # Sites never copied from Firefox:
-  # - lastpass.com: the agent's LastPass extension has its own session.
   # - linkedin.com: LinkedIn revokes a session (li_at) as soon as it is used
   #   from a second browser, logging out Firefox and the agent alike
   #   (2026-10-21). The agent keeps its own LinkedIn login.
   syncExcluded = [
-    "lastpass.com"
     "linkedin.com"
   ];
   python = pkgs.python3.withPackages (p: [
