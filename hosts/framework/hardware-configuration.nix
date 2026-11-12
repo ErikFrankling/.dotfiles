@@ -23,8 +23,16 @@
   # boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
 
+  # Not generated: root encrypted in place with `cryptsetup reencrypt
+  # --encrypt` (hosts/framework/disk-encryption-plan.md). The partition is
+  # labelled "framework-luks" with sgdisk during that step.
+  # fileSystems."/".device = "/dev/disk/by-uuid/26b10d70-1758-43e3-bde9-c81069b159df"; # before LUKS
+  boot.initrd.luks.devices.cryptroot = {
+    device = "/dev/disk/by-partlabel/framework-luks";
+    allowDiscards = true;
+  };
   fileSystems."/" = {
-    device = "/dev/disk/by-uuid/26b10d70-1758-43e3-bde9-c81069b159df";
+    device = "/dev/mapper/cryptroot";
     fsType = "ext4";
   };
 
