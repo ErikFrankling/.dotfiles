@@ -414,25 +414,28 @@ in
         # stalled disk. Its one event loop then could not answer a new Claude
         # session's MCP registration within T3's 90 s, and 26 turns of other
         # threads failed with "Claude timed out while registering its MCP
-        # tools". memory.low only counts when every parent cgroup has it too.
+        # tools". memory.min only counts when every parent cgroup has it too.
+        # memory.low (tried first, 3G) is best effort and did not hold: global
+        # reclaim broke it 263000 times in 5 minutes and the server kept
+        # major-faulting at 900/s. memory.min is never reclaimed.
         # A drop-in, so t3code.service's own unit file (hosts/pc/home.nix)
         # does not change and no restart is queued.
         systemd.user.services.t3code = {
           overrideStrategy = "asDropin";
-          serviceConfig.MemoryLow = "3G";
+          serviceConfig.MemoryMin = "2G";
         };
         systemd.user.slices.app = {
           overrideStrategy = "asDropin";
-          sliceConfig.MemoryLow = "3G";
+          sliceConfig.MemoryMin = "2G";
         };
-        systemd.services."user@".serviceConfig.MemoryLow = "3G";
+        systemd.services."user@".serviceConfig.MemoryMin = "2G";
         systemd.slices."user-" = {
           overrideStrategy = "asDropin";
-          sliceConfig.MemoryLow = "3G";
+          sliceConfig.MemoryMin = "2G";
         };
         systemd.slices.user = {
           overrideStrategy = "asDropin";
-          sliceConfig.MemoryLow = "3G";
+          sliceConfig.MemoryMin = "2G";
         };
 
         # Builds wait for idle CPU and disk, and stay small. `cores` is per job.
