@@ -5,7 +5,31 @@
   username,
   ...
 }:
+let
+  # pam_fprintd holds back the password prompt until a finger is read or
+  # it times out, and the reader can't be reached with the lid shut (Erik,
+  # 2026-11-12, 1Password unlock on samsung-ablo). PAM has no lid option, so
+  # this check stands in for one: with the lid closed it succeeds and
+  # `success=1` skips the fprintd rule, so pam_unix asks for the password
+  # straight away. With the lid open the fingerprint comes first as before.
+  lidClosed = pkgs.writeShellScript "lid-closed" ''
+    exec ${pkgs.gnugrep}/bin/grep -qs closed /proc/acpi/button/lid/*/state
+  '';
+in
 {
+  security.pam.services = lib.mkIf config.services.fprintd.enable (
+    lib.genAttrs [ "polkit-1" "sudo" ] (_: {
+      rules.auth.lid-closed-skip-fprintd = {
+        order = config.security.pam.services.polkit-1.rules.auth.fprintd.order - 1;
+        control = "[success=1 default=ignore]";
+        modulePath = "${config.security.pam.package}/lib/security/pam_exec.so";
+        args = [
+          "quiet"
+          "${lidClosed}"
+        ];
+      };
+    })
+  );
 
   environment.systemPackages = with pkgs; [
     # pkgs.wpa_supplicant_gui
