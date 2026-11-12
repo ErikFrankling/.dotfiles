@@ -24,7 +24,7 @@
     ../../modules/nixos/desktop.nix
     ../../modules/nixos/1password.nix
     # Same endpoint protection as samsung-ablo (Erik, 2026-11-12). Disk
-    # encryption is still missing: it needs a reinstall onto LUKS.
+    # encryption and Secure Boot: disk-encryption-plan.md (in-place LUKS2).
     ../../modules/nixos/screen-lock.nix
     ../../modules/nixos/fingerprint.nix
     ../../modules/nixos/antivirus.nix
