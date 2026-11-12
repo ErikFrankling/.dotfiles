@@ -406,6 +406,35 @@ in
         # slices T3 Code stops when its server restarts.
         systemd.user.slices.app-t3code-jobs.description = "Agent jobs that outlive their session";
 
+        # The T3 Code server stays in RAM when the machine runs out of memory.
+        # It had no protection, so on 2026-11-12 (11 agent Rust builds, the
+        # agent slice at its caps, zram full, 0.7 GB available) the kernel
+        # paged it out like anything else: its major faults went from 5/s to
+        # 1000/s and it re-read 107 GB of its own evicted pages from the
+        # stalled disk. Its one event loop then could not answer a new Claude
+        # session's MCP registration within T3's 90 s, and 26 turns of other
+        # threads failed with "Claude timed out while registering its MCP
+        # tools". memory.low only counts when every parent cgroup has it too.
+        # A drop-in, so t3code.service's own unit file (hosts/pc/home.nix)
+        # does not change and no restart is queued.
+        systemd.user.services.t3code = {
+          overrideStrategy = "asDropin";
+          serviceConfig.MemoryLow = "3G";
+        };
+        systemd.user.slices.app = {
+          overrideStrategy = "asDropin";
+          sliceConfig.MemoryLow = "3G";
+        };
+        systemd.services."user@".serviceConfig.MemoryLow = "3G";
+        systemd.slices."user-" = {
+          overrideStrategy = "asDropin";
+          sliceConfig.MemoryLow = "3G";
+        };
+        systemd.slices.user = {
+          overrideStrategy = "asDropin";
+          sliceConfig.MemoryLow = "3G";
+        };
+
         # Builds wait for idle CPU and disk, and stay small. `cores` is per job.
         nix.daemonCPUSchedPolicy = "idle";
         nix.daemonIOSchedClass = "idle";
