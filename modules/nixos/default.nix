@@ -40,6 +40,16 @@
     "vm.page-cluster" = 0;
     "vm.watermark_boost_factor" = 0;
     "vm.watermark_scale_factor" = 125;
+    # The kernel default, kept on purpose (2026-11-12): any user, agents
+    # included, may profile their own processes in user space, but not the
+    # kernel. Kernel addresses in samples and call chains defeat KASLR. Since
+    # 6.18.x stable, a sampled call chain that includes kernel frames counts
+    # as kernel profiling, so `perf record -g` fails with "Failure to open any
+    # events" while `perf stat` and `perf record` without -g work. The agent
+    # slice does not block perf (no seccomp, no capability drop); profile with
+    # `perf record -g --user-callchains` (or `--call-graph dwarf
+    # --user-callchains`). Do not lower this to 1 for that.
+    "kernel.perf_event_paranoid" = 2;
   };
 
   # Compressed swap in RAM, used first: much faster than disk swap.
