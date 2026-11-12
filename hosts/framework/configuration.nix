@@ -28,6 +28,10 @@
     ../../modules/nixos/screen-lock.nix
     ../../modules/nixos/fingerprint.nix
     ../../modules/nixos/antivirus.nix
+    # Secure Boot (lanzaboote, keys in /var/lib/sbctl) and TPM disk unlock:
+    # disk-encryption-plan.md steps 5 and 6.
+    ../../modules/nixos/secure-boot.nix
+    ./disk-encryption.nix
     # ../../modules/nixos/keyring.nix -- disabled: the default keyring on disk
     # was Default_Keyring, not login.keyring, so PAM never unlocked it and
     # every Secret Service request prompted for a password nobody knew.
@@ -302,8 +306,10 @@
   # enables updating firmware without booting to bios
   services.fwupd.enable = true;
 
-  boot.loader.systemd-boot.enable = true;
+  boot.loader.systemd-boot.enable = true; # forced off by secure-boot.nix
   boot.loader.efi.canTouchEfiVariables = true;
+  # /boot is a 536 MB ESP; each signed generation is ~70 MB.
+  boot.lanzaboote.configurationLimit = 5;
 
   # fix for amdgpu kernel bug https://gitlab.freedesktop.org/drm/amd/-/issues/3388
   boot.kernelParams = [ "amdgpu.dcdebugmask=0x10" ];
