@@ -50,7 +50,7 @@ let
 
     # Clean up after yourself
 
-    Every worktree, clone or scratch checkout you create, you remove once its work is merged or pushed and no longer needed (`git worktree remove`, delete the merged branch, and its per-worktree build output with it). Abandoned worktrees with their own `target/` and `node_modules` filled both of Erik's drives in 2026-11. Leave only unfinished work, and say where it is. Scheduled sessions also sweep what earlier runs left: the `housekeeping` skill.
+    Every worktree, clone or scratch checkout you create, you remove once its work is merged (`git worktree remove`, delete the merged branch, and its per-worktree build output with it). Abandoned worktrees with their own `target/` and `node_modules` filled both of Erik's drives in 2026-11. Leave only unfinished work, and say where it is. Scheduled sessions also sweep what earlier runs left: the `housekeeping` skill.
 
     # Never end a turn while waiting
 

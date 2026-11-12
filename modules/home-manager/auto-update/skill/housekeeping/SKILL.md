@@ -25,9 +25,12 @@ leftover `t3code-rebase*` worktrees from the fork job).
   folder (`codex exec --json` JSONL, `prompt.txt`, `stdout.log`/`stderr.log`,
   `outcome.json`, run logs). Do not delete, truncate, prune or rewrite them.
   When a folder that holds traces must go, copy the traces out first (below).
-- **Unfinished work.** A worktree or clone with uncommitted changes, or with
-  commits that are on no remote branch and in no merged PR. Report it; do not
-  delete it.
+- **Unfinished work.** A worktree or clone with uncommitted changes, with
+  commits that are not merged (by the checks in step 2), or with ignored files
+  that are not build output (`.env`, data, results). Report it; do not delete
+  it. Keeping the branch does not make an unmerged checkout disposable: it can
+  hold untracked state and traces. Only Erik can say an unmerged checkout may
+  go, for that exact path.
 - **Work in progress right now.** Anything a live process has open or uses as
   its working directory, or that changed in the last 24 hours.
 - **Erik's own checkouts** (`~/.dotfiles`, `~/projects/<repo>` main
@@ -59,16 +62,29 @@ the sweep never blocks the real job.
      file in it changed in the last 24 hours
      (`find "$wt" -maxdepth 2 -newermt '-24 hours' -print -quit`, outside
      `node_modules`/`target`). Leave it.
-   - unfinished: `git -C "$wt" status --porcelain` is not empty, or its HEAD
-     is on no remote branch (`git -C "$wt" branch -r --contains HEAD` empty)
-     and not merged. Leave it and list it in your report with path, branch,
-     last commit date and why.
+   - unfinished: `git -C "$wt" status --porcelain` is not empty, or it is not
+     merged by the checks below. Leave it and list it in your report with
+     path, branch, last commit date and why.
    - merged: clean, and its work reached the default branch:
-     `git -C "$wt" merge-base --is-ancestor HEAD origin/<default>`, or for
-     squash/rebase merges `gh pr list -R <owner/repo> --head <branch> --state merged`
-     is not empty, or the branch tip is on the remote and the remote branch
-     itself is merged. A worktree whose branch was deleted on the remote after
-     a merged PR counts as merged.
+     `git -C "$wt" merge-base --is-ancestor HEAD origin/<default>`, or
+     `git -C "$wt" cherry origin/<default> HEAD` prints no `+` line (every
+     commit landed by cherry-pick or rebase under another SHA; the t3code
+     fork's `erik/main` works this way), or for squash merges
+     `gh pr list -R <owner/repo> --head <branch> --state merged` is not empty.
+     `gh` cannot see the `neptune-software` org (naiaclaw); an empty answer
+     there means "unknown", not "no PR". A worktree whose `.git` link is gone
+     (git commands fail) is never "merged": every check above silently passes
+     on it. List it instead.
+   - Even when merged, look at `git status --porcelain --ignored`: if it shows
+     ignored files other than plain build output (`node_modules`, `target`,
+     `dist`, `.direnv`, caches), such as `.env`, data or results, keep the
+     worktree and list those files. A `build/` folder can hold results (the
+     wasm-box lanes keep benchmark and trajectory output there): look inside
+     before calling it build output. On 2026-11-12 a sweep that skipped this
+     check removed 120 merged worktrees with everything ignored in them,
+     including the 9 GB `build/` of `~/projects/wasm-box-traj`, unseen.
+   - T3 thread worktrees (`~/.t3/worktrees`) that are not merged are left to
+     T3's own cleanup (`storageCleanup.worktreeOnMerge`).
 3. Remove each merged worktree:
 
    ```bash
@@ -83,6 +99,13 @@ the sweep never blocks the real job.
    git -C <main checkout> worktree remove --force "$wt"   # --force only after the checks above
    git -C <main checkout> branch -D <branch>              # only when merged
    ```
+
+   Never edit a script while a loop of yours is still running it: bash reads
+   the file as it goes, so the running copy can execute shifted bytes once the
+   loop ends. Write a new file instead. Run removals with
+   `nice -n19 ionice -c3`; with 350 worktrees the inventory alone took over an
+   hour on a loaded PC (2026-11-12), so batch it and start the removals before
+   the slow checks finish.
 
    For a T3 worktree (`~/.t3/worktrees/<project>/t3-...`), check first that its
    thread is not running (`t3_thread_list`/`t3_thread_read`); a finished
@@ -104,7 +127,7 @@ with the steps above.
 ## End of run: remove what you made
 
 Before your final report, remove every worktree, clone and scratch folder this
-run created whose work is merged or pushed and no longer needed: the same
+run created whose work is merged: the same
 step 3 as above. A worktree a follow-up session will continue (an unfinished
 handover) stays, and the handover message names its path so the next run can
 remove it. "Done" includes this step; a finished job that leaves its worktree

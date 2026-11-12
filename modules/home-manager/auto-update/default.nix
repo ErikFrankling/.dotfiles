@@ -430,9 +430,9 @@ let
   housekeepingOrder = ''
     HOUSEKEEPING, Erik's standing order for every scheduled run (not optional):
     1. FIRST, before your task: load the housekeeping skill and do its "Start of run" sweep. Remove the worktrees, clones and scratch that earlier runs left behind once their work is merged, plus their build output (target/, node_modules, result links). Report what you removed and what you left, with the reason, under "Housekeeping:".
-    2. LAST, before your final report: remove every worktree, clone and scratch folder THIS run created whose work is merged or pushed ("End of run" in the skill). A job that leaves its worktree behind is not finished.
+    2. LAST, before your final report: remove every worktree, clone and scratch folder THIS run created whose work is merged ("End of run" in the skill). A job that leaves its worktree behind is not finished.
     3. NEVER delete, truncate or prune agent traces (transcripts, session logs, codex JSONL, prompts, run logs and evidence) anywhere. If something that holds traces must go, copy the traces to ~/agent-traces/<project>/ first and verify the copy.
-    4. Never delete unfinished work: uncommitted changes, or commits that are on no remote and in no merged PR. List it in the report instead.
+    4. Never delete unfinished work: uncommitted changes, unmerged commits (even if the branch is kept), or ignored files that are not build output. List it in the report instead.
   '';
 
   # Starts a session through the T3 Code server's API, the same
