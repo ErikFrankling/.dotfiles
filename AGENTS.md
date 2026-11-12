@@ -690,9 +690,18 @@ All tested and working at 192k context:
 | Model               | Quant               | Size   | VRAM @ 192k | Notes            |
 | ------------------- | ------------------- | ------ | ----------- | ---------------- |
 | Qwen3.5-27B         | IQ4_NL (Unsloth)    | 14.6GB | 19.6GB      | Base model       |
-| Qwen3.5-27B Opus    | IQ4_XS (imatrix)    | 14.7GB | 19.7GB      | Claude distilled |
+| Qwen3.5-27B Opus    | IQ4_XS (imatrix)    | 14.7GB | 19.7GB      | Claude distilled; file deleted, llama-swap serves the heretic-v2 Q4_K_S (15.6GB) |
 | Qwen3.5-35B-A3B MoE | UD-IQ4_NL (Unsloth) | 17.8GB | 19.0GB      | 3B active params |
-| Qwen3.8-27B vision  | IQ4_XS (Unsloth)    | 15.7GB | see note    | + mmproj-F16 0.9GB |
+| Qwen3.8-27B vision  | IQ4_XS (Unsloth)    | 15.7GB | see note    | + mmproj-F16 0.9GB; file deleted, llama-swap serves UD-Q3_K_XL (13.4GB) |
+
+**On disk (2026-11-12):** only the model files `modules/nixos/llama-swap.nix`
+references are kept in `/mnt/data/ai-models/llama-cpp/models`. Erik had every
+model that nothing referenced deleted (GLM-4.7-Flash, Magistry, magnum,
+gemma-4-26B, Qwen3-Coder-30B, the spare quants and mmproj files, the Ollama
+and vLLM caches, one-off TTS benchmark caches). Keep it that way: a model you
+download for a test and do not wire into the config, delete when the test is
+done. Download again from Hugging Face when needed; the table above is test
+history.
 
 **Qwen3.8-27B (tested 2026-08-15):** weights + mmproj = 16.6GB, which is over
 the usual budget, so it runs with **60 of 65 layers on GPU** (5 on CPU) at

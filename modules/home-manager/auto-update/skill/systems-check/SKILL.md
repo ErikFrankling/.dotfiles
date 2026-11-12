@@ -32,6 +32,11 @@ repair all three systems, within the limits below.
 
 ## The run
 
+0. Housekeeping first: load the `housekeeping` skill and do its "Start of
+   run" sweep across all agent worktrees, clones and scratch (every project,
+   not only the scheduled jobs' own), never touching agent traces or
+   unfinished work. Its `Housekeeping:` lines go into the report. Before the
+   final report, remove what this run created ("End of run").
 1. `systems-check audit`, then `systems-check status`. It prints facts for the nightly build, each host
    and the homelab; anything in capitals (`NO`, `UNREACHABLE`, `FAILED`,
    `NEW KERNEL`, `STILL RUNNING`) deserves a look. It takes a few minutes

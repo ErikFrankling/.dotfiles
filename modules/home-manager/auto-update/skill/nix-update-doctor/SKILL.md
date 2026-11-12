@@ -76,6 +76,11 @@ Then go on with the run; the summary (step 7) repeats the finding.
 
 ## The run
 
+**Housekeeping comes first and last.** Before step 1, load the `housekeeping`
+skill and do its "Start of run" sweep (leftover worktrees, clones and scratch
+from earlier runs, never agent traces). Before your final report, remove what
+this run created ("End of run"). Both are part of the job, not extras.
+
 You start in a dedicated clone, clean and at `origin/main`. Never touch
 `~/.dotfiles`; that is Erik's working tree.
 
@@ -298,6 +303,16 @@ first, as in step 7 of the run.
    repair: push nothing, keep the fork pushed, and report it.
 10. Publish the phone update with `t3-android-release` (it decides between a
     JS OTA and an APK from the native fingerprint).
+11. Clean up (required; the job is not done without it). Once `erik/main` is
+    force-pushed and the dotfiles commit is on `main`: copy anything the run
+    wrote outside git that is a trace or evidence (logs, screenshots,
+    `fork-rebase-<date>` notes) to `~/agent-traces/t3code-fork/<date>/`, then
+    `git -C ~/.local/state/nix-nightly/t3code worktree remove --force ../t3code-rebase`,
+    `git branch -D rebase/<date>`, `git worktree prune`, and delete any
+    `t3code-rebase-*`, `t3code-proof-*` or `fork-rebase-*` folders of earlier
+    runs whose branch is merged or abandoned (the housekeeping skill's rules).
+    Only a handed-over, unfinished rebase keeps its worktree, and the handover
+    names it.
 
 ## What may compile
 

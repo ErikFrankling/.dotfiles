@@ -394,6 +394,25 @@ in
     fi
   '';
 
+  # Agent traces are never deleted (Erik, 2026-11-12). Claude Code deletes
+  # transcripts in projects/ older than `cleanupPeriodDays`, 30 by default.
+  # settings.json is Claude's own mutable file (it writes /config choices to
+  # it), so only this one key is set and the rest is kept.
+  home.activation.claudeKeepTranscripts = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    for dir in "$HOME/.claude" "$HOME/.claude_2"; do
+      [ -d "$dir" ] || continue
+      file="$dir/settings.json"
+      current='{}'
+      if [ -e "$file" ]; then
+        current=$(${pkgs.jq}/bin/jq -e . "$file" 2>/dev/null) || { echo "claude: cannot parse $file, leaving it alone" >&2; continue; }
+      fi
+      if [ "$(${pkgs.jq}/bin/jq '.cleanupPeriodDays // 0' <<<"$current")" -lt 36500 ]; then
+        run ${pkgs.jq}/bin/jq '.cleanupPeriodDays = 36500' <<<"$current" >"$file.tmp"
+        run mv "$file.tmp" "$file"
+      fi
+    done
+  '';
+
   dconf.settings."org/gnome/desktop/interface".toolkit-accessibility = true;
 
   programs.codexDesktopLinux = {

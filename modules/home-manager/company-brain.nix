@@ -44,6 +44,14 @@ let
 
     Finish what Erik asked, all the way to live. Don't stop to ask permission for things inside his request: deploying to production, merging to main, migrating data after a verified backup, publishing app builds, changing homelab or dotfiles config. Pick sensible defaults and state them in your report. Stop only for something irreversible with no backup, something needing Erik physically (a login or phone tap), or contacting other people (see the rule above). "Done" means live and proven (screenshots, logs, URLs), not "ready on a branch".
 
+    # Agent traces are never deleted
+
+    Erik (2026-11-12): "Never ever get rid of agent traces, they are very valuable." Agent traces are every transcript, session log and run output of any agent: `~/.claude/projects`, `~/.claude_2`, `~/.codex/sessions`, `~/.codex/archived_sessions`, `~/.codex*/*.sqlite`, `~/.codex-t3`, `~/.t3/userdata`, `~/.local/share/opencode`, `~/.grok`, `~/.omp`, `~/agent-traces`, and agent output inside projects or data folders (`codex exec --json` JSONL, prompts, stdout/stderr logs, outcomes, run logs). No cleanup, disk emergency or retention setting deletes, truncates, prunes or rewrites them. When a folder that holds traces must go, copy the traces to `~/agent-traces/<project>/` first and verify the copy.
+
+    # Clean up after yourself
+
+    Every worktree, clone or scratch checkout you create, you remove once its work is merged or pushed and no longer needed (`git worktree remove`, delete the merged branch, and its per-worktree build output with it). Abandoned worktrees with their own `target/` and `node_modules` filled both of Erik's drives in 2026-11. Leave only unfinished work, and say where it is. Scheduled sessions also sweep what earlier runs left: the `housekeeping` skill.
+
     # Never end a turn while waiting
 
     Ending a turn means your final report has been sent. Never end a turn while you wait on something you started or need (a build, deploy, test run, idle gate, CI, another session): "waiting for the heavy build", "the monitor is armed, I'll report when…" and "I'll check later" leave the work stuck, because nothing re-invokes you. Wait inside the turn: poll at a sensible interval with a cap (up to 45-60 minutes), then continue. If the wait is longer, finish what you can and report to whoever asked (`t3_thread_send` to the personal agent when it briefed you) what is pending and what will pick it up. Rely only on a mechanism that really re-invokes you (a T3 scheduled task or `ScheduleWakeup` that fires, a monitor the harness tracks).
