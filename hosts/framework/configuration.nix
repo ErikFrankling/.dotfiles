@@ -23,6 +23,11 @@
     ../../modules/nixos/auto-update.nix
     ../../modules/nixos/desktop.nix
     ../../modules/nixos/1password.nix
+    # Same endpoint protection as samsung-ablo (Erik, 2026-11-12). Disk
+    # encryption is still missing: it needs a reinstall onto LUKS.
+    ../../modules/nixos/screen-lock.nix
+    ../../modules/nixos/fingerprint.nix
+    ../../modules/nixos/antivirus.nix
     # ../../modules/nixos/keyring.nix -- disabled: the default keyring on disk
     # was Default_Keyring, not login.keyring, so PAM never unlocked it and
     # every Secret Service request prompted for a password nobody knew.

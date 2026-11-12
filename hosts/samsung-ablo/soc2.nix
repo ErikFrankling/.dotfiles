@@ -7,10 +7,10 @@
 {
   imports = [
     ./disk-encryption.nix
-    ./screen-lock.nix
-    ./fingerprint.nix
+    ../../modules/nixos/screen-lock.nix
+    ../../modules/nixos/fingerprint.nix
     ./keyring.nix
-    ./antivirus.nix
+    ../../modules/nixos/antivirus.nix
     ./vanta.nix
     ../../modules/nixos/1password.nix # password manager
   ];

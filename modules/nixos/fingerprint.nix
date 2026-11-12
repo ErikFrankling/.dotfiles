@@ -1,5 +1,6 @@
-# Fingerprint reader: Goodix 27c6:6984, supported by libfprint (goodixmoc).
-# Enroll a finger once with `fprintd-enroll`. Unlocks hyprlock.
+# Fingerprint reader, unlocking hyprlock (and 1Password/polkit through PAM).
+# samsung-ablo: Goodix 27c6:6984. Framework: its Goodix reader (goodixmoc).
+# Both are supported by libfprint. Enroll a finger once with `fprintd-enroll`.
 { username, ... }:
 {
   services.fprintd.enable = true;

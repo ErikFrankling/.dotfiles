@@ -74,7 +74,7 @@
     enable = true;
     homeNetworkOnly = false;
     # Erik, 2026-11-11: kernel updates take effect by themselves. The disk
-    # unlocks through the TPM and Hyprland starts locked (screen-lock.nix).
+    # unlocks through the TPM and Hyprland starts locked (modules/nixos/screen-lock.nix).
     rebootForKernel = true;
   };
 
