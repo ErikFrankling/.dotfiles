@@ -22,14 +22,13 @@
 #   priority with disk caps, and anything not cached is built on the homelab.
 # - Docker containers get per-container caps.
 # - Swap: zram first, then a disk partition as overflow (see swapDevices).
-# - `agent-max on` (max mode, only while Erik is away) raises the agent caps
-#   to 14 CPUs and 22/25 GB, lifts lag-guard's CPU and emulator limits and
-#   leaves its stall checks only for a real hang (memory 50% / IO 80% full
-#   for a minute; swap-in from the idle desktop is not one); it
-#   turns off when Erik touches a keyboard or mouse, or after 12 hours.
-# - lag-guard kills agent jobs that stay at the CPU budget for 5+ minutes,
-#   emulators over 15 minutes, and the biggest job when Erik's desktop
-#   stalls, telling the agent to re-run it with `heavy`.
+# - lag-guard kills the biggest agent job when Erik's desktop stalls on disk
+#   or memory, or the agents thrash, telling the agent to re-run it with
+#   `heavy`. It has no CPU-time or run-time limit.
+# - One set of caps, the same whether Erik is at the pc or not. "Max mode"
+#   (`agent-max`, 2026-11-11: 4 cores normally, 14 while he was away) is gone
+#   since 2026-11-12, Erik: "now it's really in the way when I need agents to
+#   do large scale workloads".
 # - Long jobs go to the homelab worker with `heavy` (../../home-manager/heavy).
 #
 # Rules for agents: modules/home-manager/machines/skill/machines/SKILL.md.
@@ -194,41 +193,6 @@ let
     text = builtins.readFile ./lag-guard.sh;
   };
 
-  # Max mode (agent-max.sh): Erik away, agents may use most of the pc.
-  agentMax = pkgs.writeShellApplication {
-    name = "agent-max";
-    runtimeInputs = [
-      pkgs.coreutils
-      config.systemd.package
-      "/run/current-system/sw" # notify-erik
-    ];
-    text =
-      builtins.replaceStrings
-        [
-          "@defaultHours@"
-          "@maxCpu@"
-          "@maxMemoryHigh@"
-          "@maxMemoryMax@"
-          "@cpu@"
-          "@memoryHigh@"
-          "@memoryMax@"
-        ]
-        [
-          (toString cfg.maxMode.hours)
-          cfg.maxMode.cpuQuota
-          cfg.maxMode.memoryHigh
-          cfg.maxMode.memoryMax
-          cfg.cpuQuota
-          cfg.memoryHigh
-          cfg.memoryMax
-        ]
-        (builtins.readFile ./agent-max.sh);
-  };
-  agentMaxWatch = pkgs.writers.writePython3 "agent-max-watch" {
-    libraries = [ pkgs.python3Packages.evdev ];
-    flakeIgnore = [ "E501" ];
-  } (builtins.readFile ./agent-max-watch.py);
-
   # The system disk. io.max needs the whole device, not a partition.
   systemDisk = "/dev/disk/by-id/nvme-KINGSTON_SNV3S2000G_50026B7384466B3F";
   ioCaps = read: write: {
@@ -241,39 +205,17 @@ in
     enable = lib.mkEnableOption "keeping agent work and Nix builds behind the desktop";
     cpuQuota = lib.mkOption {
       type = lib.types.str;
-      default = "400%";
-      description = "All agents together never use more CPU than this (400% = 4 of the 16 threads).";
-    };
-    maxMode = {
-      cpuQuota = lib.mkOption {
-        type = lib.types.str;
-        default = "1400%";
-        description = "Agent CPU cap in max mode (`agent-max on`): 14 of 16 threads, 2 left for the desktop and T3 Code.";
-      };
-      memoryHigh = lib.mkOption {
-        type = lib.types.str;
-        default = "22G";
-        description = "Agent MemoryHigh in max mode.";
-      };
-      memoryMax = lib.mkOption {
-        type = lib.types.str;
-        default = "25G";
-        description = "Agent MemoryMax in max mode.";
-      };
-      hours = lib.mkOption {
-        type = lib.types.ints.positive;
-        default = 12;
-        description = "Max mode turns itself off after this many hours.";
-      };
+      default = "1400%";
+      description = "All agents together never use more CPU than this (1400% = 14 of the 16 threads; 2 stay free for the desktop and T3 Code).";
     };
     memoryHigh = lib.mkOption {
       type = lib.types.str;
-      default = "9G";
-      description = "All agents together are throttled above this. Heavy work goes to the homelab.";
+      default = "14G";
+      description = "All agents together are throttled above this (of 30 GB; the desktop, T3 Code, Docker and zram need the rest). Bigger work goes to the homelab.";
     };
     memoryMax = lib.mkOption {
       type = lib.types.str;
-      default = "11G";
+      default = "16G";
       description = "All agents together never use more RAM than this; the kernel kills one first.";
     };
     remoteBuilder.sshKey = lib.mkOption {
@@ -300,20 +242,7 @@ in
           nixRemote
           nixosRemoteSwitch
           agentJob
-          agentMax
         ];
-
-        # Turns max mode off when Erik is back (physical keyboard or mouse) or
-        # its time is up. Started by `agent-max on`, not at login.
-        systemd.user.services.agent-max-watch = {
-          description = "Turn agent max mode off when Erik is back at the pc";
-          path = [ agentMax ];
-          serviceConfig = {
-            ExecStart = agentMaxWatch;
-            Restart = "on-failure";
-            RestartSec = 5;
-          };
-        };
 
         # The user manager gets the io controller too, so the agent slice's
         # disk caps apply (the default delegates only cpu, memory and pids).
@@ -377,9 +306,11 @@ in
             # cpu.idle: agents get the CPU Erik's apps leave unused, and his
             # input always preempts them.
             CPUWeight = "idle";
-            # And never more than 4 of the 16 threads, whatever is idle.
-            # `agent-max on` raises this, MemoryHigh and MemoryMax at runtime
-            # while Erik is away (systemctl --user set-property --runtime).
+            # And never more than 14 of the 16 threads, whatever is idle.
+            # (4 until 2026-11-12, with a "max mode" for when Erik was away.)
+            # The running T3 Code server sets CPUWeight=10 on this slice at
+            # runtime (fork, agentScope.ts AGENTS_PARENT_PROPERTIES), which
+            # wins over "idle" here while it runs.
             CPUQuota = cfg.cpuQuota;
             MemoryHigh = cfg.memoryHigh;
             MemoryMax = cfg.memoryMax;
@@ -389,7 +320,10 @@ in
             # re-read from disk (2026-10-23: tsc, rustc, nix major-faulting,
             # system IO 35-75 % for 20 minutes). lag-guard kills the biggest job
             # when the slice still stalls on memory.
-            MemorySwapMax = "8G";
+            # 8G -> 12G with the 14G/16G caps (2026-11-12): with its swap full
+            # the slice's anonymous memory cannot be reclaimed, so the squeeze
+            # lands on program code (15k refaults/s that day).
+            MemorySwapMax = "12G";
             # Sustained thrashing inside the agents (30 s above the limit)
             # kills the agent scope that reclaims the most.
             ManagedOOMMemoryPressure = "kill";
@@ -477,7 +411,7 @@ in
         # froze the desktop when it filled: no OOM kill, just thrashing
         # (2026-10-23 01:35). Slow disk swap beats a frozen desktop; earlyoom
         # (../default.nix) and the agent caps keep it from getting that far.
-        # Agents can use at most 8 GB of swap, which zram takes first.
+        # Agents can use at most 12 GB of swap, which zram takes first.
         swapDevices = lib.mkForce [
           {
             device = "/dev/disk/by-uuid/ee5834a1-13be-4ef6-997d-9fb38216e4c9";

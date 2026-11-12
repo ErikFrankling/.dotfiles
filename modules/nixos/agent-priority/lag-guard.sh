@@ -1,62 +1,52 @@
-# lag-guard: a safety net against LONG heavy agent work on the pc. Short
-# compiles, builds, typechecks and tests are fine here (fast CPU, and the
-# agent slice caps keep the desktop smooth); what Erik minds is something
-# hogging the pc for minutes. Runs as root every INTERVAL seconds over every
-# process in the agent slice (app-t3code.slice, except Erik's T3 terminals):
+# lag-guard: stops agent work when it actually stalls Erik's desktop. It
+# measures the stall, not the work: there is no CPU-time or run-time limit, so
+# long builds, test suites and emulators run on the pc for as long as the
+# desktop stays smooth (the agent slice caps in default.nix do most of that).
+# Runs as root every INTERVAL seconds over every process in the agent slice
+# (app-t3code.slice, except Erik's T3 terminals):
 #
-#   - Sustained CPU: when the agents together averaged CPU_CORES+ cores (the
-#     slice quota is 4) over the last CPU_WINDOW seconds, the biggest
-#     consumers are killed until what is left is under CPU_CORES - 1.
-#   - Long emulators: an Android emulator running longer than EMU_MAX.
 #   - Pressure: when Erik's own cgroups stall on disk IO or memory (avg10 over
-#     IO_FULL / MEM_FULL for SUSTAIN samples), local Nix builds and the
-#     biggest agent job are stopped.
+#     IO_FULL / MEM_FULL for SUSTAIN samples in a row), local Nix builds and
+#     the biggest agent job are stopped.
 #   - Agent thrash: when the agent slice stalls on memory (full avg10 over
-#     AGENT_MEM_FULL) while the disk stalls (over AGENT_IO_FULL) for
-#     AGENT_SUSTAIN samples, its biggest job.
+#     AGENT_MEM_FULL) while the disk stalls (over AGENT_IO_FULL), its biggest
+#     job. A sample over both limits counts up, any other sample counts down,
+#     and it acts at AGENT_SUSTAIN. (It used to need AGENT_SUSTAIN samples in
+#     a row; on 2026-11-12 the slice thrashed for 3 hours at avg300 25 % /
+#     30 % and never fired, because avg10 dips kept resetting the count.)
 #
-# Max mode (`agent-max on`, Erik away) pauses the CPU and emulator checks,
-# and the pressure and thrash checks only act on a real hang: memory over
-# MAX_MEM_FULL or disk IO over MAX_IO_FULL, sustained MAX_SUSTAIN samples.
-# Why (2026-11-11): max mode gives the agents 22-25 of the 30 GB, so Erik's
-# idle desktop is swapped out (session 7 GB in swap, zram full, spilling to the
-# NVMe swap). Its swap-in reads showed as 20-40 % IO full in his cgroups and
-# the normal thresholds killed ~30 wasm-box rustc processes in 30 minutes, so
-# no release build finished. Nobody is at the desktop then; when Erik is back,
-# agent-max-watch restores the normal caps and the normal thresholds return.
+# Until 2026-11-12 it also killed whatever kept the agents at 3+ cores for 5
+# minutes and any emulator older than 15 minutes, with a "max mode"
+# (`agent-max on`, only while Erik was away) that lifted those and the 4-core
+# cap. Erik had it removed: "now it's really in the way when I need agents to
+# do large scale workloads". One set of caps now, the same whether he is at
+# the pc or not.
 #
 # A killed process gets the reason on its stderr (the agent's tool output),
 # telling the agent to re-run it on the homelab with `heavy`. Erik gets one
 # notification per NOTIFY_EVERY seconds.
 #
-# Environment: INTERVAL, CPU_CORES, CPU_WINDOW, EMU_MAX, IO_FULL, MEM_FULL,
-# SUSTAIN, MAX_IO_FULL, MAX_MEM_FULL, MAX_SUSTAIN, NOTIFY_EVERY, ERIK_UID, DRY_RUN=1.
+# Environment: INTERVAL, IO_FULL, MEM_FULL, SUSTAIN, AGENT_MEM_FULL,
+# AGENT_IO_FULL, AGENT_SUSTAIN, NOTIFY_EVERY, ERIK_UID, DRY_RUN=1.
 
 # A watchdog must not die on a failed test or a vanished pid.
 set +o errexit +o pipefail
 
 INTERVAL=${INTERVAL:-2}
-CPU_CORES=${CPU_CORES:-3}
-CPU_WINDOW=${CPU_WINDOW:-300}
-EMU_MAX=${EMU_MAX:-900}
 IO_FULL=${IO_FULL:-20}
 MEM_FULL=${MEM_FULL:-10}
 AGENT_MEM_FULL=${AGENT_MEM_FULL:-20}
 AGENT_SUSTAIN=${AGENT_SUSTAIN:-15}
 AGENT_IO_FULL=${AGENT_IO_FULL:-10}
 SUSTAIN=${SUSTAIN:-5}
-MAX_IO_FULL=${MAX_IO_FULL:-80}
-MAX_MEM_FULL=${MAX_MEM_FULL:-50}
-MAX_SUSTAIN=${MAX_SUSTAIN:-30}
 NOTIFY_EVERY=${NOTIFY_EVERY:-900}
 ERIK_UID=${ERIK_UID:-1000}
 DRY_RUN=${DRY_RUN:-0}
 
 agents=/sys/fs/cgroup/user.slice/user-$ERIK_UID.slice/user@$ERIK_UID.service/app.slice/app-t3code.slice
 nixd=/sys/fs/cgroup/system.slice/nix-daemon.service
-hz=$(getconf CLK_TCK)
 providers='^(\.?claude(-wrapped)?|\.?codex.*|\.?opencode.*|\.?cursor-agent.*|\.?grok.*)$'
-homelab_hint="That was a long job for Erik's pc: re-run it on the homelab with heavy -- <cmd> (emulator: heavy emulator start; Nix: nix-remote or rebuild --remote). Short builds and tests are fine on the pc."
+homelab_hint="It was too much for Erik's pc right now: re-run it on the homelab with heavy -- <cmd> (emulator: heavy emulator start; Nix: nix-remote or rebuild --remote), or with fewer parallel jobs."
 
 # All agent pids, minus Erik's T3 terminals.
 agent_pids() {
@@ -64,7 +54,6 @@ agent_pids() {
 }
 
 rss_of() { awk '/^VmRSS/ { print $2; exit }' "/proc/$1/status" 2>/dev/null; }
-ticks_of() { awk '{ sub(/^.*\) /, ""); print $12 + $13 }' "/proc/$1/stat" 2>/dev/null; }
 
 pending=()
 stop() { # pid reason
@@ -86,59 +75,21 @@ stop() { # pid reason
   ) &
 }
 
-check_emulators() {
-  local pid age
+# The biggest agent process that is not an agent itself (over 0.5 GB).
+stop_biggest() { # reason
+  local pid rss best=0 best_pid=""
   for pid in $(agent_pids); do
-    case $(cat "/proc/$pid/comm" 2>/dev/null) in qemu-system* | emulator*) ;; *) continue ;; esac
-    age=$(ps -o etimes= -p "$pid" 2>/dev/null)
-    [ "${age:-0}" -gt "$EMU_MAX" ] && stop "$pid" "an emulator ran over $((EMU_MAX / 60)) minutes on the pc"
-  done
-  return 0
-}
-
-declare -A ticks_then=()
-usage_then=""
-window_start=$SECONDS
-check_cpu() {
-  local usage pid comm t cores span
-  usage=$(awk '/^usage_usec/ { print $2 }' "$agents/cpu.stat" 2>/dev/null)
-  span=$((SECONDS - window_start))
-  if [ -n "$usage_then" ] && [ "$span" -ge "$CPU_WINDOW" ]; then
-    cores=$(awk -v u=$((usage - usage_then)) -v s="$span" 'BEGIN { printf "%.1f", u / s / 1000000 }')
-    if awk -v c="$cores" -v l="$CPU_CORES" 'BEGIN { exit !(c >= l) }'; then
-      echo "agents used $cores cores over ${span}s"
-      # Kill the biggest consumers until what is left is under CPU_CORES - 1
-      # cores. Many small workers (make -j16, stress) count together.
-      local list=() total=0 left keep
-      for pid in $(agent_pids); do
-            comm=$(cat "/proc/$pid/comm" 2>/dev/null) || continue
-        [[ $comm =~ $providers ]] && continue
-        t=$(ticks_of "$pid")
-        [ -n "$t" ] || continue
-        t=$((t - ${ticks_then[$pid]:-0}))
-        [ "$t" -gt 0 ] || continue
-        list+=("$t $pid")
-        total=$((total + t))
-      done
-      left=$total
-      keep=$(((CPU_CORES - 1) * span * hz))
-      while read -r t pid; do
-        [ "$left" -gt "$keep" ] || break
-        stop "$pid" "agents averaged $cores cores for $((span / 60)) minutes"
-        left=$((left - t))
-      done < <(printf "%s\n" "${list[@]}" | sort -rn)
+    [[ $(cat "/proc/$pid/comm" 2>/dev/null) =~ $providers ]] && continue
+    # MCP servers are the agents' tools; killing one breaks a session.
+    { tr '\0' ' ' <"/proc/$pid/cmdline"; } 2>/dev/null | grep -Eq 'mcp|channel' && continue
+    rss=$(rss_of "$pid")
+    if [ "${rss:-0}" -gt "$best" ]; then
+      best=$rss
+      best_pid=$pid
     fi
-    usage_then=""
-  fi
-  if [ -z "$usage_then" ]; then
-    usage_then=$usage
-    window_start=$SECONDS
-    ticks_then=()
-    for pid in $(agent_pids); do
-      t=$(ticks_of "$pid")
-      [ -n "$t" ] && ticks_then[$pid]=$t
-    done
-  fi
+  done
+  [ -n "$best_pid" ] && [ "$best" -gt 500000 ] && stop "$best_pid" "$1"
+  return 0
 }
 
 # Erik's side only: his session (Hyprland, browsers) and his own apps, not
@@ -159,16 +110,16 @@ full() { # io|memory -> highest "full" avg10 across Erik's cgroups
 }
 
 streak=0
-check_pressure() { # io_limit mem_limit sustain
-  local io mem pid uid rss best=0 best_pid="" reason
+check_pressure() {
+  local io mem pid uid reason
   io=$(full io)
   mem=$(full memory)
-  if [ "${io:-0}" -gt "$1" ] || [ "${mem:-0}" -gt "$2" ]; then
+  if [ "${io:-0}" -gt "$IO_FULL" ] || [ "${mem:-0}" -gt "$MEM_FULL" ]; then
     streak=$((streak + 1))
   else
     streak=0
   fi
-  [ "$streak" -ge "$3" ] || return 0
+  [ "$streak" -ge "$SUSTAIN" ] || return 0
   streak=0
   reason="the pc was stalling (disk IO ${io}% / memory ${mem}% full)"
   # Local Nix builds (build users are not root).
@@ -178,19 +129,7 @@ check_pressure() { # io_limit mem_limit sustain
     uid=$(awk '/^Uid:/ { print $2 }' "/proc/$pid/status" 2>/dev/null)
     [ "${uid:-0}" != 0 ] && stop "$pid" "$reason"
   done
-  # The biggest agent process that is not an agent itself.
-  for pid in $(agent_pids); do
-    [[ $(cat "/proc/$pid/comm" 2>/dev/null) =~ $providers ]] && continue
-    # MCP servers are the agents' tools; killing one breaks a session.
-    { tr '\0' ' ' <"/proc/$pid/cmdline"; } 2>/dev/null | grep -Eq 'mcp|channel' && continue
-    rss=$(rss_of "$pid")
-    if [ "${rss:-0}" -gt "$best" ]; then
-      best=$rss
-      best_pid=$pid
-    fi
-  done
-  [ -n "$best_pid" ] && [ "$best" -gt 500000 ] && stop "$best_pid" "$reason"
-  return 0
+  stop_biggest "$reason"
 }
 
 # The agents themselves thrashing: their slice stalls on memory AND the disk
@@ -198,28 +137,18 @@ check_pressure() { # io_limit mem_limit sustain
 # A slice stalled only on its memory cap while swapping into zram is harmless
 # (measured: 20-28 % memory stall, 0 % IO), so that alone is left alone.
 agent_streak=0
-check_agent_thrash() { # io_limit sustain
-  local mem io pid rss best=0 best_pid=""
+check_agent_thrash() {
+  local mem io
   mem=$(awk '/^full/ { for (i = 1; i <= NF; i++) if ($i ~ /^avg10=/) { sub("avg10=", "", $i); printf "%d", $i } }' "$agents/memory.pressure" 2>/dev/null)
   io=$(awk '/^full/ { for (i = 1; i <= NF; i++) if ($i ~ /^avg10=/) { sub("avg10=", "", $i); printf "%d", $i } }' /proc/pressure/io)
-  if [ "${mem:-0}" -gt "$AGENT_MEM_FULL" ] && [ "${io:-0}" -gt "$1" ]; then
+  if [ "${mem:-0}" -gt "$AGENT_MEM_FULL" ] && [ "${io:-0}" -gt "$AGENT_IO_FULL" ]; then
     agent_streak=$((agent_streak + 1))
-  else
-    agent_streak=0
+  elif [ "$agent_streak" -gt 0 ]; then
+    agent_streak=$((agent_streak - 1))
   fi
-  [ "$agent_streak" -ge "$2" ] || return 0
+  [ "$agent_streak" -ge "$AGENT_SUSTAIN" ] || return 0
   agent_streak=0
-  for pid in $(agent_pids); do
-    [[ $(cat "/proc/$pid/comm" 2>/dev/null) =~ $providers ]] && continue
-    { tr '\0' ' ' <"/proc/$pid/cmdline"; } 2>/dev/null | grep -Eq 'mcp|channel' && continue
-    rss=$(rss_of "$pid")
-    if [ "${rss:-0}" -gt "$best" ]; then
-      best=$rss
-      best_pid=$pid
-    fi
-  done
-  [ -n "$best_pid" ] && [ "$best" -gt 500000 ] && stop "$best_pid" "the agents were thrashing the disk (memory ${mem}% / disk IO ${io}% full-stalled); too big for the agent memory budget"
-  return 0
+  stop_biggest "the agents were thrashing the disk (memory ${mem}% / disk IO ${io}% full-stalled); too big for the agent memory budget"
 }
 
 last_notify=-100000
@@ -235,36 +164,13 @@ flush_notify() {
     return 0
   fi
   notify-erik --priority normal --title "PC lag guard" --tags warning \
-    "Stopped agent work on the pc: ${list%; }. It belongs on the homelab." || true
+    "Stopped agent work that was stalling the pc: ${list%; }." || true
 }
 
-# Max mode (`agent-max on`, Erik is away): long agent builds, test runs and
-# emulators are allowed, so the CPU and emulator limits pause, and the stall
-# checks act only on a real hang (see the header).
-max_until=/run/user/$ERIK_UID/agent-max/until
-max_mode() {
-  local until
-  until=$(cat "$max_until" 2>/dev/null) || return 1
-  [ "${until:-0}" -gt "$(date +%s)" ]
-}
-
-echo "lag-guard: agents=$agents cpu>=$CPU_CORES cores/${CPU_WINDOW}s io>$IO_FULL% mem>$MEM_FULL% (max mode: io>$MAX_IO_FULL% mem>$MAX_MEM_FULL% for $((MAX_SUSTAIN * INTERVAL))s)"
-was_max=0
+echo "lag-guard: agents=$agents io>$IO_FULL% mem>$MEM_FULL% for $((SUSTAIN * INTERVAL))s, agent thrash mem>$AGENT_MEM_FULL% io>$AGENT_IO_FULL% for $((AGENT_SUSTAIN * INTERVAL))s"
 while true; do
-  if max_mode; then
-    [ "$was_max" = 1 ] || { echo "max mode on: CPU and emulator limits paused, stall checks only for a real hang"; streak=0; agent_streak=0; }
-    was_max=1
-    usage_then="" # start a fresh CPU window once max mode ends
-    check_pressure "$MAX_IO_FULL" "$MAX_MEM_FULL" "$MAX_SUSTAIN"
-    check_agent_thrash "$MAX_IO_FULL" "$MAX_SUSTAIN"
-  else
-    [ "$was_max" = 0 ] || echo "max mode off: CPU and emulator limits and normal stall checks back"
-    was_max=0
-    check_emulators
-    check_cpu
-    check_pressure "$IO_FULL" "$MEM_FULL" "$SUSTAIN"
-    check_agent_thrash "$AGENT_IO_FULL" "$AGENT_SUSTAIN"
-  fi
+  check_pressure
+  check_agent_thrash
   flush_notify
   sleep "$INTERVAL"
 done
