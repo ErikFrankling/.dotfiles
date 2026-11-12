@@ -74,6 +74,12 @@ in
       # wins over this one.
       ip netns exec home sysctl -qw net.ipv4.ip_forward=1
       ip netns exec home iptables -t nat -A POSTROUTING -s ${hostAddr} -o tailscale0 -j MASQUERADE
+      # tailscale0 carries 1280-byte packets, the veth 1500: without this the
+      # host's full-size TCP segments to the home LAN are lost (TLS hangs).
+      ip netns exec home iptables -t mangle -A FORWARD -o tailscale0 -p tcp \
+        --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+      ip netns exec home iptables -t mangle -A FORWARD -i tailscale0 -p tcp \
+        --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1240
       ip route add ${homeLan} via ${nsAddr} metric 5000
     '';
     preStop = ''
