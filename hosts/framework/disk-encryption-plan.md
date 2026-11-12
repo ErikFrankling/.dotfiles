@@ -17,8 +17,8 @@ Full `system.build.toplevel` builds, all on the homelab and in its cache:
 | Commit | What | Output |
 |---|---|---|
 | `0ae53b2f` (main) | screen lock, fingerprint, ClamAV | `/nix/store/xbvq7rlwhiccla5szarshdp27yfvnrgk-nixos-system-framework-26.11.20261107.f4a03c0`; narinfo returns 200 from nix-cache |
-| `08d4837b` (branch, commit 1) | + LUKS root | `/nix/store/vm72sdq7llqwx3ckjl9kh244cifbpxhk-nixos-system-framework-26.11.20261107.f4a03c0` |
-| `dc8eb3cd` (branch, commit 2) | + lanzaboote and TPM unlock | `/nix/store/dkg4l680nnx5swigbry3d68sv6vpsrdv-nixos-system-framework-26.11.20261107.f4a03c0` |
+| `c3c66f41` (branch, commit 1; built as `08d4837b` before a comment-only rebase) | + LUKS root | `/nix/store/vm72sdq7llqwx3ckjl9kh244cifbpxhk-nixos-system-framework-26.11.20261107.f4a03c0` |
+| `573a52cb` (branch, commit 2; built as `dc8eb3cd`, out path re-evaluated identical after the rebase) | + lanzaboote and TPM unlock | `/nix/store/dkg4l680nnx5swigbry3d68sv6vpsrdv-nixos-system-framework-26.11.20261107.f4a03c0` |
 
 Building only proves the configs evaluate and build. Whether they boot,
 unlock and lock the screen on this hardware has not been tested.
