@@ -1,4 +1,4 @@
-{ username, ... }:
+{ config, username, ... }:
 
 # 1Password desktop app and CLI, using the upstream NixOS modules
 # (https://wiki.nixos.org/wiki/1Password). The GUI module sets up the polkit
@@ -9,6 +9,19 @@
   programs._1password-gui = {
     enable = true;
     polkitPolicyOwners = [ username ];
+  };
+
+  # Under /nix/store the app looks for its helper binaries in
+  # /run/wrappers/bin. The module only wraps 1Password-BrowserSupport, so
+  # "Import from LastPass" failed with "Failed to find
+  # `1Password-LastPass-Exporter`". Upstream installs it as a plain
+  # executable, so this wrapper has no setuid/setgid.
+  security.wrappers."1Password-LastPass-Exporter" = {
+    source = "${config.programs._1password-gui.package}/share/1password/1Password-LastPass-Exporter";
+    owner = "root";
+    group = "root";
+    setuid = false;
+    setgid = false;
   };
 
   # Firefox and Chrome are allowed by default; other browsers must be listed
