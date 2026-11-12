@@ -119,6 +119,13 @@
           };
         }
         {
+          # Ablo work repos: Vercel and the team see the work identity, not frankling.se
+          condition = "gitdir:~/projects/ablo/**";
+          contents = {
+            user.email = "erik@abloatai.com";
+          };
+        }
+        {
           condition = "gitdir:~/kth/**";
           contents = {
             user.email = "erikfran@kth.se";
