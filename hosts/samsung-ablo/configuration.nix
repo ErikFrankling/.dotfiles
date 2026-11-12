@@ -26,6 +26,7 @@
     ../../modules/nixos
     ../../modules/nixos/secure-boot.nix
     ../../modules/nixos/tailscale.nix
+    ./tailnets.nix # Ablo tailnet on the host, home tailnet in a namespace
     ../../modules/nixos/laptop.nix
     ../../modules/nixos/auto-update.nix
     ../../modules/nixos/desktop.nix
@@ -37,23 +38,19 @@
 
   networking.hostName = "samsung-ablo";
 
-  # The NixOS Tailscale module has no Serve option. Run its foreground
-  # command directly: expose the authenticated local T3 server only on the
-  # tailnet, without restarting T3 or listening on office Wi-Fi.
-  systemd.services.t3code-tailnet = {
-    description = "T3 Code access over Tailscale";
-    wantedBy = [ "multi-user.target" ];
-    after = [
-      "tailscaled.service"
-      "tailscaled-autoconnect.service"
-    ];
-    requires = [ "tailscaled.service" ];
-    serviceConfig = {
-      ExecStart = "${config.services.tailscale.package}/bin/tailscale serve --tcp=3773 tcp://127.0.0.1:3773";
-      Restart = "on-failure";
-      RestartSec = 5;
-    };
-  };
+  # T3 Code for the phone is served over the home tailnet: tailnets.nix.
+  # Until 2026-11-12 the laptop was in the home tailnet only:
+  # systemd.services.t3code-tailnet = {
+  #   description = "T3 Code access over Tailscale";
+  #   wantedBy = [ "multi-user.target" ];
+  #   after = [ "tailscaled.service" "tailscaled-autoconnect.service" ];
+  #   requires = [ "tailscaled.service" ];
+  #   serviceConfig = {
+  #     ExecStart = "${config.services.tailscale.package}/bin/tailscale serve --tcp=3773 tcp://127.0.0.1:3773";
+  #     Restart = "on-failure";
+  #     RestartSec = 5;
+  #   };
+  # };
 
   # Panther Lake (Xe3 graphics, BE211 Wi-Fi, SoundWire audio) wants a new
   # kernel; the LTS one is too old for parts of it.
