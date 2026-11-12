@@ -1061,7 +1061,10 @@ let
           if [ -n "$unit" ] \
             && [ "$(systemctl --user show "$unit.service" -p ActiveState --value 2> /dev/null)" = active ]; then
             since=$(date -d "$(systemctl --user show "$unit.service" -p ActiveEnterTimestamp --value)" +%s 2> /dev/null || echo "$now")
-            [ $((now - since)) -ge 300 ] && echo "$line"
+            # "|| true": a unit restarted <5 min ago makes this test false,
+            # the loop (and the $(...) under errexit) would return 1 and kill
+            # health-watch itself (2026-11-12, alert SystemdUnitFailed/pc/health-watch).
+            if [ $((now - since)) -ge 300 ]; then echo "$line"; fi
           fi
         done <<< "$failing_alerts"
       )
