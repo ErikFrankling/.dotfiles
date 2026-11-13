@@ -24,6 +24,19 @@
   #   }
   # ];
 
+  # The work laptop's T3 Code server for the T3 app here (Erik, 2026-11-13).
+  # No SSH into the laptop: the tunnel ends on proxmox, which reaches the
+  # laptop's T3 port on the home tailnet (node samsung-ablo-home, served by
+  # hosts/samsung-ablo/tailnets.nix). The app connects to
+  # http://localhost:3774 and needs a pairing credential from the laptop.
+  services.autossh.sessions = [
+    {
+      name = "samsung-t3code";
+      user = username;
+      extraArguments = "-N -T -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ConnectTimeout=10 -L 127.0.0.1:3774:100.117.112.105:3773 proxmox";
+    }
+  ];
+
   # Logs and metrics to the homelab (modules/nixos/observability).
   observability = {
     enable = true;
