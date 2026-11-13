@@ -3,6 +3,7 @@
 # which Alloy ships to the homelab (modules/nixos/observability), and pop up
 # as a desktop notification. ClamTk is the GUI (scans, history, quarantine).
 {
+  config,
   pkgs,
   otherPkgs,
   username,
@@ -64,7 +65,13 @@
         # ClamAV's default; 1 could not keep up with the event queue.
         OnAccessMaxThreads = 5;
         OnAccessMaxFileSize = "100M";
-        ExcludePath = "^/var/lib/clamav/quarantine(/|$)";
+        ExcludePath = [
+          "^/var/lib/clamav/quarantine(/|$)"
+          # Kernel and runtime views, not files on disk: the usual baseline
+          # exclusions for a full-disk scan. Only matters where the scan
+          # covers / (samsung-ablo, soc2.nix).
+          "^/(proc|sys|dev|run)(/|$)"
+        ];
         MaxThreads = 2;
       };
     };
@@ -94,7 +101,7 @@
   # The timer cannot start another instance while this one is running.
   systemd.services.clamdscan.serviceConfig.Type = lib.mkForce "exec";
   systemd.services.clamdscan.serviceConfig.ExecStart =
-    lib.mkForce "${pkgs.clamav}/bin/clamdscan --fdpass --infected --move=/var/lib/clamav/quarantine /home /var/lib /tmp /etc /var/tmp";
+    lib.mkForce "${pkgs.clamav}/bin/clamdscan --fdpass --infected --move=/var/lib/clamav/quarantine ${lib.concatStringsSep " " config.services.clamav.scanner.scanDirectories}";
   systemd.slices.system-clamav.sliceConfig = {
     CPUQuota = "100%";
     IOWeight = 10;
