@@ -433,6 +433,10 @@ let
     2. LAST, before your final report: remove every worktree, clone and scratch folder THIS run created whose work is merged ("End of run" in the skill). A job that leaves its worktree behind is not finished.
     3. NEVER delete, truncate or prune agent traces (transcripts, session logs, codex JSONL, prompts, run logs and evidence) anywhere. If something that holds traces must go, copy the traces to ~/agent-traces/<project>/ first and verify the copy.
     4. Never delete unfinished work: uncommitted changes, unmerged commits (even if the branch is kept), or ignored files that are not build output. List it in the report instead.
+
+    SETTLE YOUR THREAD (Erik, 2026-11-13: scheduled runs must not pile up in his T3 inbox):
+    5. As the very last tool call of your final turn, if nothing needs Erik, settle this thread: load `t3_thread_organize` with ToolSearch and call it with action "settle" and no threadId. It takes effect when the turn ends. "Nothing needs Erik" means the job is finished or handed to a follow-up session you started, and you filed no attention item and asked him nothing. That covers almost every run, including repairs you made yourself.
+    6. Leave the thread active (do not settle) only if Erik has to act: a decision, a login, a failure you could not fix. File that with attention_item_upsert. A follow-up session you start gets this same order in its prompt. A headless run without T3 tools skips this.
   '';
 
   # Starts a session through the T3 Code server's API, the same
