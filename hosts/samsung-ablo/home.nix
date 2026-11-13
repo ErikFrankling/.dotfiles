@@ -52,6 +52,7 @@ in
     ../../modules/home-manager/speak # `speak` tool: refuses here (PC speakers only)
     inputs.time.homeManagerModules.agent-v2
     ./t3code.nix # work agents run here, not on the pc
+    ../../modules/home-manager/t3code-connect.nix # T3 Connect: remote access, webhook URLs
   ];
 
   # Ablo marketing 3D work (Blender scenes, MCP for Blender add-on).
