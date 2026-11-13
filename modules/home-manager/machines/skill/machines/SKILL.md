@@ -104,8 +104,9 @@ session, these run as their own user unit, `agent-job-NAME.service` in
   dumps, task output) go to `/mnt/data`, not `/tmp` or `~`: the system disk is
   the one Erik's apps wait on. A shared job many sessions wait on sets
   `AGENT_JOB_PRIO=1` in its environment: it is passed over as a victim while
-  any other candidate exists (never for a session's own work), and queues
-  first on the homelab with `heavy --priority`. Nothing is killed for running
+  any other candidate exists (never for a session's own work), and gets a
+  30-minute head start in the homelab queue with `heavy --priority` (it
+  never passes a job that has waited longer than that). Nothing is killed for running
   long or for using CPU. The
   killed process gets the reason on its stderr: re-run that job with `heavy`
   or with fewer parallel jobs, do not retry it unchanged on the pc.

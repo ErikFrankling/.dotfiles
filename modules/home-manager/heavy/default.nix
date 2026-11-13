@@ -75,9 +75,10 @@ let
                            script it names, mentions gradle/expo/emulator/...).
                            Pass --small for typechecks, lint and unit tests,
                            so they do not wait behind APK builds
-            --priority     go to the head of the queue for its slot (after other
-                           --priority jobs); a running job is never
-                           interrupted. Only for a shared job that many
+            --priority     a 30-minute head start in the queue for its slot:
+                           passes ordinary jobs that joined less than 30 min
+                           before it, never one that waited longer; a running
+                           job is never interrupted. Only for a shared job that many
                            sessions wait on (one project's builder or test
                            job), never for a session's own work
             --shell NAME   run inside the flake's devShell NAME (`android` or
