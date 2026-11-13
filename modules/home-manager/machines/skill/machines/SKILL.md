@@ -87,17 +87,34 @@ session, these run as their own user unit, `agent-job-NAME.service` in
 ### The safety net on the pc (`modules/nixos/agent-priority`)
 
 - Agent sessions run in `app-t3code.slice`: low CPU priority behind Erik's
-  apps, at most 14 of the 16 threads, 14/16 GB RAM (throttled / killed),
-  12 GB swap (zram first), 150/60 MB/s disk. The same caps whether Erik is
-  at the pc or not. Never escape the slice with `--slice=`, Docker, sudo,
-  system units or your own `systemctl set-property`.
+  apps on all 16 threads, 20/22 GB RAM (throttled / killed), 12 GB swap
+  (zram first), 150/60 MB/s disk (Erik, 2026-11-13: "just use my full pc").
+  The same caps whether Erik is at the pc or not. Never escape the slice
+  with `--slice=`, Docker, sudo, system units or your own `systemctl
+  set-property`.
+- 20 GB is a ceiling, not what is there. Erik's apps are protected with
+  `memory.low` (9.5 GB) and usually take about 14 GB of RAM with what they
+  hold compressed in zram, so on a normal day the agents together get about
+  14 GB before the machine itself is full. Then the kernel swaps the agents
+  first, and lag-guard stops the biggest job when Erik's apps stall.
+- To pace builds, read these, not `/proc/pressure/io` or
+  `/proc/pressure/memory` (system-wide, and the io figure counts agents
+  waiting on their own disk cap: 83 % with idle disks on 2026-11-13). With
+  `A=/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/app-t3code.slice`:
+  `$A/memory.pressure` (the agents' own stall; hold back above ~10 % `full
+  avg10`), `$A/memory.current` against `$A/memory.high`, `MemAvailable` in
+  `/proc/meminfo` (start nothing new under ~3 GB), and for disk `$A/io.max`
+  (a line with `rbps=20000000` or lower means lag-guard has the agents
+  capped; `ls /run/lag-guard/base-*` lists the capped disks).
 - `nix` and `rebuild` evaluate here. Whole-system evaluations (3-4 GB, ~2
   minutes) wait for each other under one lock; uncached builds go to the
   homelab builder by themselves. `rebuild` refuses a checkout behind
   origin/main (it would revert others' deploys).
-- lag-guard acts when Erik's desktop stalls. On memory, or when the agents
-  thrash (their slice stalled on memory while the disk stalls), it kills the
-  biggest agent job by RSS. On disk IO it first cuts the agents' bandwidth
+- lag-guard acts when Erik's desktop stalls. On memory, when the kernel
+  starts reclaiming his protected memory, or when the agents thrash (their
+  slice stalled on memory while his apps stall on disk), it kills the
+  biggest agent job by RSS. On disk IO, and only when the stalled device is
+  over 50 % busy, it first cuts the agents' bandwidth
   on the stalled disk in three steps (down to 20 MB/s read, 5 MB/s write;
   given back when the desktop is calm), and only if the stall goes on kills
   the job doing the most IO on that disk. So big scratch files (disk images,
@@ -110,7 +127,7 @@ session, these run as their own user unit, `agent-job-NAME.service` in
   long or for using CPU. The
   killed process gets the reason on its stderr: re-run that job with `heavy`
   or with fewer parallel jobs, do not retry it unchanged on the pc.
-- Memory is what runs out, not CPU: 14 threads of rustc or a dozen parallel
+- Memory is what runs out, not CPU: 16 threads of rustc or a dozen parallel
   builds do not fit in 14 GB. Size `-j` and the number of parallel jobs to
   the memory, and send what does not fit to `heavy`.
 

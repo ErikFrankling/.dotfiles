@@ -11,8 +11,10 @@
 #   cursor) in a scope under app-t3code-agents.slice (fork,
 #   apps/server/src/process/agentScope.ts). It sets loose memory limits on that
 #   slice at runtime, so the real limits go on its parent, app-t3code.slice,
-#   which T3 never touches: idle CPU, small memory and swap caps, hard disk
+#   which T3 never touches: idle CPU, memory and swap caps, hard disk
 #   bandwidth caps, and systemd-oomd.
+# - Erik's own apps have memory.low, so the kernel takes memory from the
+#   agents before it swaps his desktop out.
 # - `systemd-run --user` from an agent stays in the agent slice (wrapper).
 # - `xdg-open` from an agent opens the agent's Chromium (wrapper).
 # - `systemctl` from an agent cannot stop or restart t3code.service (wrapper).
@@ -23,10 +25,10 @@
 # - Docker containers get per-container caps.
 # - Swap: zram first, then a disk partition as overflow (see swapDevices).
 # - lag-guard kills the biggest agent job when Erik's desktop stalls on
-#   memory or the agents thrash, telling the agent to re-run it with `heavy`.
-#   On a disk stall it cuts the agents' io.max on the stalled disk first and
-#   kills the top IO user only if that does not help. It has no CPU-time or
-#   run-time limit.
+#   memory, his memory.low is breached or the agents thrash, telling the
+#   agent to re-run it with `heavy`. On a disk stall with the device busy it
+#   cuts the agents' io.max on the stalled disk first and kills the top IO
+#   user only if that does not help. It has no CPU-time or run-time limit.
 # - One set of caps, the same whether Erik is at the pc or not. "Max mode"
 #   (`agent-max`, 2026-11-11: 4 cores normally, 14 while he was away) is gone
 #   since 2026-11-12, Erik: "now it's really in the way when I need agents to
@@ -67,6 +69,22 @@ let
       # A scope runs this process; a service is forked by the user manager.
       { echo 1000 >/proc/self/oom_score_adj; } 2>/dev/null
       if [ "$scope" = 1 ]; then
+        # The caller's own slice: the innermost one of its cgroup path.
+        # --slice-inherit alone did that from a session's scope, but from a
+        # service of the jobs slice (agent-job) the new scope landed in
+        # app.slice: outside the agents' caps, and lag-guard took it for one
+        # of Erik's apps (2026-11-13: a wasm-box build as
+        # supply-r3f-scope.scope; its disk stall had the agents capped and a
+        # process stopped every 30 s for two hours).
+        cg=$(cat /proc/self/cgroup 2>/dev/null)
+        slice=""
+        IFS=/ read -r -a parts <<<"''${cg##*0::}"
+        for part in "''${parts[@]}"; do
+          case "$part" in *.slice) slice=$part ;; esac
+        done
+        if [ -n "$slice" ]; then
+          exec ${realSystemdRun} --slice="$slice" --nice=10 "$@"
+        fi
         exec ${realSystemdRun} --slice-inherit --nice=10 "$@"
       fi
       # Services go to app-t3code-jobs.slice, not the agent's own slice: T3
@@ -207,17 +225,17 @@ in
     enable = lib.mkEnableOption "keeping agent work and Nix builds behind the desktop";
     cpuQuota = lib.mkOption {
       type = lib.types.str;
-      default = "1400%";
-      description = "All agents together never use more CPU than this (1400% = 14 of the 16 threads; 2 stay free for the desktop and T3 Code).";
+      default = "1600%";
+      description = "All agents together never use more CPU than this (1600% = all 16 threads; their low CPU weight is what keeps them behind the desktop and T3 Code).";
     };
     memoryHigh = lib.mkOption {
       type = lib.types.str;
-      default = "14G";
-      description = "All agents together are throttled above this (of 30 GB; the desktop, T3 Code, Docker and zram need the rest). Bigger work goes to the homelab.";
+      default = "20G";
+      description = "All agents together are throttled above this (of 30 GB). Above what the desktop leaves free; Erik's apps are protected by memory.low, not by this.";
     };
     memoryMax = lib.mkOption {
       type = lib.types.str;
-      default = "16G";
+      default = "22G";
       description = "All agents together never use more RAM than this; the kernel kills one first.";
     };
     remoteBuilder.sshKey = lib.mkOption {
@@ -308,14 +326,27 @@ in
             # cpu.idle: agents get the CPU Erik's apps leave unused, and his
             # input always preempts them.
             CPUWeight = "idle";
-            # And never more than 14 of the 16 threads, whatever is idle.
-            # (4 until 2026-11-12, with a "max mode" for when Erik was away.)
+            # All 16 threads (4 until 2026-11-12, with a "max mode" for when
+            # Erik was away; 14 until 2026-11-13, Erik: "just use my full
+            # pc"). The quota was hit in 17 % of the periods that morning.
             # The running T3 Code server sets CPUWeight=10 on this slice at
             # runtime (fork, agentScope.ts AGENTS_PARENT_PROPERTIES), which
             # wins over "idle" here while it runs.
             CPUQuota = cfg.cpuQuota;
+            # 14G/16G -> 20G/22G (2026-11-13, Erik: "no, you are not getting
+            # more build speed any time soon, just use my full pc"). The old
+            # caps bound while 4-9 GB was available (that night; a third of
+            # the slice's 14 GB was page cache of the builds). They are not a
+            # promise of 20 GB: that morning Erik's apps took 14 GB of RAM
+            # (7.5 resident and 17 in zram at 2.7x), so about 14 GB was
+            # there for the agents, and it is the memory itself that runs
+            # out first. What keeps the desktop in RAM now is the memory.low
+            # of his apps below, with lag-guard stopping the biggest job when
+            # his apps stall on memory or that protection is breached.
             MemoryHigh = cfg.memoryHigh;
             MemoryMax = cfg.memoryMax;
+            # No share of the protection below, whatever else changes.
+            MemoryLow = 0;
             # Room to swap idle memory into zram (the first swap tier, in RAM).
             # With 2 GB the slice sat at MemoryHigh with its swap full and the
             # kernel evicted the agents' program code instead, which they
@@ -326,10 +357,16 @@ in
             # the slice's anonymous memory cannot be reclaimed, so the squeeze
             # lands on program code (15k refaults/s that day).
             MemorySwapMax = "12G";
-            # Sustained thrashing inside the agents (30 s above the limit)
-            # kills the agent scope that reclaims the most.
+            # The last resort: the slice all but stopped on memory for a
+            # minute. systemd-oomd kills a whole agent scope, the session
+            # with its work, where lag-guard stops one job, so lag-guard
+            # (agent thrash: 20 % for 30 s with Erik's disk stalling) goes
+            # first. 50 % for 30 s until 2026-11-13: the throttle at
+            # MemoryHigh alone reads as that much stall, and four sessions
+            # were killed that night (54-92 %).
             ManagedOOMMemoryPressure = "kill";
-            ManagedOOMMemoryPressureLimit = "50%";
+            ManagedOOMMemoryPressureLimit = "80%";
+            ManagedOOMMemoryPressureDurationSec = "1min";
             # Hard disk caps: the NV3 stalls every reader once something
             # writes flat out. IOWeight only matters under BFQ/iocost.
             IOWeight = 10;
@@ -356,22 +393,85 @@ in
         # major-faulting at 900/s. memory.min is never reclaimed.
         # A drop-in, so t3code.service's own unit file (hosts/pc/home.nix)
         # does not change and no restart is queued.
+        #
+        # Erik's desktop stays in RAM too: memory.low (2026-11-13). Nothing
+        # protected it, and the kernel swaps out whoever it can: the agents
+        # stop being reclaimable at their swap cap, his apps never do. That
+        # morning his session (Hyprland, Firefox, Spotify, kitty) had 1.1 GB
+        # resident and 4.3 GB in swap, the shell's cgroup (Zen, Slack) 2.5 and
+        # 5.4, and all his apps together 17 of the 22 GB in swap: every window
+        # he came back to was read back from swap. With memory.low the kernel
+        # takes from unprotected memory first (the agents', and what his apps
+        # hold above these numbers) and goes below it only when nothing else
+        # is left, which lag-guard then answers by stopping the biggest agent
+        # job (memory.events "low"). Best effort is right here: memory.min for
+        # 9 GB would turn a full machine into the kernel's OOM killer.
+        #   session scope (Hyprland and what it starts)   3 GB
+        #   app.slice: the shell's cgroup, launcher apps,
+        #     T3 Code server (within the 6 GB together)   6 GB
+        #   session.slice (pipewire, wireplumber, dbus)   0.5 GB
+        # 9.5 GB at most, about 2 GB over what they held that morning. Only
+        # his own units claim it: agent services in app.slice (agent-chromium,
+        # computer use) set nothing, and the agent slice sets 0. The children
+        # of app.slice claim more than its 6 GB on purpose; the kernel then
+        # shares the 6 GB among them by use. Like memory.min, memory.low only
+        # counts when every parent has it.
         systemd.user.services.t3code = {
           overrideStrategy = "asDropin";
-          serviceConfig.MemoryMin = "2G";
+          serviceConfig = {
+            MemoryMin = "2G";
+            MemoryLow = "3G";
+          };
+        };
+        systemd.user.services.erikshell = {
+          overrideStrategy = "asDropin";
+          serviceConfig.MemoryLow = "4G";
+        };
+        # Every app-NAME-ID.scope the launcher starts (Cursor, the T3 Code
+        # window, Obsidian, WebCord, Chromium, 1Password).
+        systemd.user.units."app-.scope" = {
+          overrideStrategy = "asDropin";
+          text = ''
+            [Scope]
+            MemoryLow=2G
+          '';
         };
         systemd.user.slices.app = {
           overrideStrategy = "asDropin";
-          sliceConfig.MemoryMin = "2G";
+          sliceConfig = {
+            MemoryMin = "2G";
+            MemoryLow = "6G";
+          };
         };
-        systemd.services."user@".serviceConfig.MemoryMin = "2G";
+        systemd.user.slices.session = {
+          overrideStrategy = "asDropin";
+          sliceConfig.MemoryLow = "512M";
+        };
+        # Every login session's scope (session-N.scope, made by logind).
+        systemd.units."session-.scope" = {
+          overrideStrategy = "asDropin";
+          text = ''
+            [Scope]
+            MemoryLow=3G
+          '';
+        };
+        systemd.services."user@".serviceConfig = {
+          MemoryMin = "2G";
+          MemoryLow = "6656M";
+        };
         systemd.slices."user-" = {
           overrideStrategy = "asDropin";
-          sliceConfig.MemoryMin = "2G";
+          sliceConfig = {
+            MemoryMin = "2G";
+            MemoryLow = "9728M";
+          };
         };
         systemd.slices.user = {
           overrideStrategy = "asDropin";
-          sliceConfig.MemoryMin = "2G";
+          sliceConfig = {
+            MemoryMin = "2G";
+            MemoryLow = "9728M";
+          };
         };
 
         # Builds wait for idle CPU and disk, and stay small. `cores` is per job.
