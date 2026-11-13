@@ -22,9 +22,11 @@
 #   priority with disk caps, and anything not cached is built on the homelab.
 # - Docker containers get per-container caps.
 # - Swap: zram first, then a disk partition as overflow (see swapDevices).
-# - lag-guard kills the biggest agent job when Erik's desktop stalls on disk
-#   or memory, or the agents thrash, telling the agent to re-run it with
-#   `heavy`. It has no CPU-time or run-time limit.
+# - lag-guard kills the biggest agent job when Erik's desktop stalls on
+#   memory or the agents thrash, telling the agent to re-run it with `heavy`.
+#   On a disk stall it cuts the agents' io.max on the stalled disk first and
+#   kills the top IO user only if that does not help. It has no CPU-time or
+#   run-time limit.
 # - One set of caps, the same whether Erik is at the pc or not. "Max mode"
 #   (`agent-max`, 2026-11-11: 4 cores normally, 14 while he was away) is gone
 #   since 2026-11-12, Erik: "now it's really in the way when I need agents to

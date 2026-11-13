@@ -46,7 +46,7 @@ running out of memory.**
 `heavy` in short (`heavy --help` for all of it):
 
 ```
-heavy [--big|--small] [--shell .#android] [-e VAR] -- CMD   run in a synced copy on the worker
+heavy [--big|--small] [--priority] [--shell|--small] [--shell .#android] [-e VAR] -- CMD   run in a synced copy on the worker
 heavy pull PATH...                       copy results back (nothing else comes back)
 heavy bg NAME -- CMD | heavy logs NAME -f | heavy stop NAME   background jobs and servers
 heavy emulator start|stop|status         the one shared emulator; heavy adb ARGS from the pc
@@ -95,9 +95,18 @@ session, these run as their own user unit, `agent-job-NAME.service` in
   minutes) wait for each other under one lock; uncached builds go to the
   homelab builder by themselves. `rebuild` refuses a checkout behind
   origin/main (it would revert others' deploys).
-- lag-guard kills the biggest agent job when Erik's desktop stalls on disk
-  or memory, or when the agents thrash (their slice stalled on memory while
-  the disk stalls). Nothing is killed for running long or for using CPU. The
+- lag-guard acts when Erik's desktop stalls. On memory, or when the agents
+  thrash (their slice stalled on memory while the disk stalls), it kills the
+  biggest agent job by RSS. On disk IO it first cuts the agents' bandwidth
+  on the stalled disk in three steps (down to 20 MB/s read, 5 MB/s write;
+  given back when the desktop is calm), and only if the stall goes on kills
+  the job doing the most IO on that disk. So big scratch files (disk images,
+  dumps, task output) go to `/mnt/data`, not `/tmp` or `~`: the system disk is
+  the one Erik's apps wait on. A shared job many sessions wait on sets
+  `AGENT_JOB_PRIO=1` in its environment: it is passed over as a victim while
+  any other candidate exists (never for a session's own work), and queues
+  first on the homelab with `heavy --priority`. Nothing is killed for running
+  long or for using CPU. The
   killed process gets the reason on its stderr: re-run that job with `heavy`
   or with fewer parallel jobs, do not retry it unchanged on the pc.
 - Memory is what runs out, not CPU: 14 threads of rustc or a dozen parallel

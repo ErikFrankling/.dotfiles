@@ -75,6 +75,11 @@ let
                            script it names, mentions gradle/expo/emulator/...).
                            Pass --small for typechecks, lint and unit tests,
                            so they do not wait behind APK builds
+            --priority     go to the head of the queue for its slot (after other
+                           --priority jobs); a running job is never
+                           interrupted. Only for a shared job that many
+                           sessions wait on (one project's builder or test
+                           job), never for a session's own work
             --shell NAME   run inside the flake's devShell NAME (`android` or
                            `.#android`); default: the default devShell when
                            flake.nix has one
@@ -193,12 +198,13 @@ let
       # Shared by `heavy CMD` and `heavy bg`: options, then the command,
       # prefixed with `env` for -e variables.
       parse_run() {
-        sync=1 develop=auto envs=() class=auto
+        sync=1 develop=auto envs=() class=auto priority=0
         while [ $# -gt 0 ]; do
           case "$1" in
             --no-sync) sync=0; shift ;;
             --big) class=big; shift ;;
             --small) class=small; shift ;;
+            --priority) priority=1; shift ;;
             --no-develop) develop=no; shift ;;
             --shell) [ $# -ge 2 ] || die "--shell needs a name"; develop=''${2#.#}; shift 2 ;;
             -e)
@@ -295,7 +301,7 @@ let
           [ "$class" != auto ] || class=service
           [ "$sync" = 0 ] || sync_up
           send_envs
-          exec ssh "''${ssh_opts[@]}" "$target" "HEAVY_ENVFILE=$envfile HEAVY_CLASS=$class $(q bash /config/heavy-bg.sh start "$ws" "$rel" "$develop" "$name" "''${cmd[@]}")"
+          exec ssh "''${ssh_opts[@]}" "$target" "HEAVY_ENVFILE=$envfile HEAVY_CLASS=$class HEAVY_PRIORITY=$priority $(q bash /config/heavy-bg.sh start "$ws" "$rel" "$develop" "$name" "''${cmd[@]}")"
           ;;
         pull)
           shift
@@ -322,7 +328,7 @@ let
 
       # The remote job lives as long as this SSH channel's stdin stays open:
       # feed it from a process that never writes, and close it to kill the job.
-      ssh "''${ssh_opts[@]}" "$target" "HEAVY_ENVFILE=$envfile HEAVY_CLASS=$class $(q bash /config/heavy-run.sh "$ws" "$rel" "$develop" "''${cmd[@]}")" \
+      ssh "''${ssh_opts[@]}" "$target" "HEAVY_ENVFILE=$envfile HEAVY_CLASS=$class HEAVY_PRIORITY=$priority $(q bash /config/heavy-run.sh "$ws" "$rel" "$develop" "''${cmd[@]}")" \
         < <(exec sleep 2147483647) &
       ssh_pid=$!
       keep=$(pgrep -P $$ -x sleep | head -1 || true)
