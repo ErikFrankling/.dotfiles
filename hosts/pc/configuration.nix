@@ -37,6 +37,25 @@
     }
   ];
 
+  # The work laptop's T3 Code server, linked into this one (2026-11-13). The
+  # laptop serves it on its home-tailnet node samsung-ablo-home
+  # (hosts/samsung-ablo/tailnets.nix). The pc is not a tailnet node, so it
+  # reaches that node through proxmox, the tailnet's LAN router, and knows
+  # its MagicDNS name from here. Tailnet addresses are fixed per node.
+  networking.hosts."100.117.112.105" = [
+    "samsung-ablo-home.tail017bd6.ts.net"
+    "samsung-ablo-home"
+  ];
+  networking.networkmanager.dispatcherScripts = [
+    {
+      source = pkgs.writeShellScript "route-samsung-ablo-home" ''
+        if [ "$2" = up ] || [ "$2" = dhcp4-change ]; then
+          ${pkgs.iproute2}/bin/ip route replace 100.117.112.105/32 via 192.168.50.10 || true
+        fi
+      '';
+    }
+  ];
+
   # Logs and metrics to the homelab (modules/nixos/observability).
   observability = {
     enable = true;

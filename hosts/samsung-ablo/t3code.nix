@@ -2,7 +2,7 @@
 # pc (SOC 2). Home Manager's own module runs `t3 serve` as a user service on
 # 127.0.0.1:3773 with the same state as the desktop app (~/.t3). The app also
 # lists the pc's server (modules/home-manager/t3code-connection.nix), for
-# dotfiles and homelab work.
+# dotfiles and homelab work, and the pc's server links to this one.
 #
 # One-time, in the app: Settings > Environments > turn off "Local
 # environment" (the app's built-in server, which dies with the window), then
@@ -26,9 +26,12 @@
   programs.t3code = {
     enable = true;
     server.enable = true;
-    # No server-to-server links with the pc, and new threads never land there
-    # on their own.
-    userSettings.linkedEnvironmentsEnabled = false;
+    # The pc's server links to this one (Erik, 2026-11-13) at
+    # http://samsung-ablo-home.tail017bd6.ts.net:3773 (tailnets.nix,
+    # hosts/pc/configuration.nix). New threads still never land on another
+    # machine on their own.
+    # Until 2026-11-13: userSettings.linkedEnvironmentsEnabled = false;
+    userSettings.linkedEnvironmentsEnabled = true;
     clientSettings.loadBalancingEnabled = false;
   };
 
