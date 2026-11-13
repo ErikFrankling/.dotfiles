@@ -18,7 +18,7 @@
   # The weekly malware scan covers the whole disk (Erik, 2026-11-13), not the
   # NixOS module's default list (/home /var/lib /tmp /etc /var/tmp), which
   # missed /root, /var/log, /var/vanta, /boot and /nix/store. /proc, /sys,
-  # /dev and /run are left out in antivirus.nix (ExcludePath).
+  # /dev, /run and /nix/store are left out in antivirus.nix (ExcludePath).
   services.clamav.scanner.scanDirectories = [ "/" ];
 
   # Firewall: the NixOS default (on). Patching: the daily auto-update

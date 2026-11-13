@@ -71,6 +71,10 @@
           # exclusions for a full-disk scan. Only matters where the scan
           # covers / (samsung-ablo, soc2.nix).
           "^/(proc|sys|dev|run)(/|$)"
+          # Read-only and hash-checked by Nix. Scanning it took hours at a
+          # full core and flagged 1Password's own CLI (op 2.42.0) as
+          # Unix.Tool.LocalXpose on 2026-11-13, a false positive.
+          "^/nix/store(/|$)"
         ];
         MaxThreads = 2;
       };
@@ -103,7 +107,7 @@
   systemd.services.clamdscan.serviceConfig.ExecStart =
     lib.mkForce "${pkgs.clamav}/bin/clamdscan --fdpass --infected --move=/var/lib/clamav/quarantine ${lib.concatStringsSep " " config.services.clamav.scanner.scanDirectories}";
   systemd.slices.system-clamav.sliceConfig = {
-    CPUQuota = "100%";
+    CPUQuota = "25%";
     IOWeight = 10;
   };
 
