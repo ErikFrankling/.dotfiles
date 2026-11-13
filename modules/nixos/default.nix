@@ -12,7 +12,8 @@
     ./main-user.nix
     ./fonts.nix
     ./zig.nix
-    # ./yubikey-gpg.nix
+    # ./yubikey-gpg.nix # old GPG/SSH on the key; replaced by ./yubikey.nix (logins only)
+    ./yubikey.nix
     ./qmk.nix
     ./secrets.nix
     ./ca-distrust.nix # roots distrusted before nixpkgs catches up (emSign G3)
