@@ -78,4 +78,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (OSError, RuntimeError) as error:
+        # The broker went away (restart, activation, load). Restart=always
+        # reconnects; a clean exit keeps the unit out of "failed", which the
+        # journal-based SystemdUnitFailed alert reads.
+        print(f"computer-use broker unavailable, restarting: {error}", flush=True)
