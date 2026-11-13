@@ -21,11 +21,14 @@
 #     need AGENT_SUSTAIN samples in a row; on 2026-11-12 the slice thrashed
 #     for 3 hours at avg300 25 % / 30 % and never fired, because avg10 dips
 #     kept resetting the count.)
-#   - Protection breached: Erik's apps have memory.low (default.nix). The
-#     kernel reclaims below it only when nothing else is left to reclaim, and
-#     counts each time in memory.events "low". When that count rises for
-#     SUSTAIN samples in a row the pc is really out of memory: the biggest
-#     agent job is stopped.
+#
+# Not a trigger: memory.events "low" of Erik's cgroups. For 90 s on
+# 2026-11-13 a rule stopped the biggest job whenever that count rose 10 s in
+# a row, as a sign that the kernel had nothing else left to reclaim. It rose
+# all the time with 8.5 GB available (the multi-gen LRU reclaims a cgroup
+# under memory.low whenever its turn comes round) and four jobs were stopped
+# for nothing. His apps have memory.min now (default.nix), which has no such
+# count; his cgroups' own memory stall is the sign.
 #
 # What counts as a disk stall (2026-11-13): only a stall on a busy device.
 # From 08:54 to 10:45 that day lag-guard held the agents at the lowest cap on
@@ -33,7 +36,7 @@
 # 0-2 MB/s) for a "stall" of 34-84 % with nvme0n1 8 % busy. Two causes:
 #   - The stalled cgroup was not Erik's: supply-r3f-scope.scope, a wasm-box
 #     build an agent job had started with `systemd-run --user --scope`, sat in
-#     app.slice (the wrapper's bug, fixed in default.nix) and was read as one
+#     app.slice (agent-job's PATH bug, fixed in agent-job.sh) and was read as one
 #     of his apps. A cgroup whose first process carries T3CODE_THREAD_ID is
 #     agent work, wherever it runs, and is not measured.
 #   - PSI "io" counts every wait for a page from disk, also a swap-in of
@@ -447,27 +450,6 @@ check_agent_thrash() {
   stop_biggest "the agents were thrashing the disk (agents' memory ${mem}% / Erik's disk IO ${io}% full-stalled); too big for the agent memory budget"
 }
 
-# Erik's memory.low protection breached (see the header): the sum of the
-# "low" counts of his cgroups, rising SUSTAIN samples in a row.
-low_prev="" low_streak=0
-check_low() {
-  local f k v total=0
-  for f in "${erik[@]}"; do
-    while read -r k v; do
-      [ "$k" = low ] && total=$((total + v))
-    done 2>/dev/null <"$f/memory.events"
-  done
-  if [ -n "$low_prev" ] && [ "$total" -gt "$low_prev" ]; then
-    low_streak=$((low_streak + 1))
-  else
-    low_streak=0
-  fi
-  low_prev=$total
-  [ "$low_streak" -ge "$SUSTAIN" ] || return 0
-  low_streak=0
-  stop_biggest "the pc was out of memory (the kernel was reclaiming the memory reserved for Erik's apps)"
-}
-
 last_notify=-100000
 flush_notify() {
   [ ${#pending[@]} -gt 0 ] || return 0
@@ -485,12 +467,11 @@ flush_notify() {
 }
 
 restore_caps
-echo "lag-guard: agents=$agents io>$IO_FULL% mem>$MEM_FULL% for $((SUSTAIN * INTERVAL))s (disk: only when the device is over $DEV_BUSY% busy; cap steps $THROTTLE_STEPS, back a step per $((RELAX * INTERVAL))s calm), agent thrash mem>$AGENT_MEM_FULL% io>$AGENT_IO_FULL% for $((AGENT_SUSTAIN * INTERVAL))s, memory.low breached for $((SUSTAIN * INTERVAL))s"
+echo "lag-guard: agents=$agents io>$IO_FULL% mem>$MEM_FULL% for $((SUSTAIN * INTERVAL))s (disk: only when the device is over $DEV_BUSY% busy; cap steps $THROTTLE_STEPS, back a step per $((RELAX * INTERVAL))s calm), agent thrash mem>$AGENT_MEM_FULL% io>$AGENT_IO_FULL% for $((AGENT_SUSTAIN * INTERVAL))s"
 while true; do
   refresh_erik
   check_pressure
   check_agent_thrash
-  check_low
   flush_notify
   sleep "$INTERVAL"
 done

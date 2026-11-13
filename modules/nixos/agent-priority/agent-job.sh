@@ -76,8 +76,15 @@ start() {
   fi
   rm -f "$state/$name.status"
   : >"$state/$name.log"
-  # The unit starts with the user manager's environment; give it this one.
-  (umask 077 && env -0 >"$state/$name.env")
+  # The unit starts with the user manager's environment; give it this one,
+  # minus this script's own tools at the front of PATH. With them, a job's
+  # `systemd-run` and `systemctl` were systemd's own, not the agents' wrappers
+  # (default.nix): `systemd-run --user --scope` in a job made its scope in
+  # app.slice, outside the agents' caps, where lag-guard took it for one of
+  # Erik's apps (2026-11-13: wasm-box's supply-r3f-scope.scope; its disk
+  # stall had the agents capped and a process stopped every 30 s for two
+  # hours), and the guard on `systemctl restart t3code` did not apply.
+  (umask 077 && env -0 | sed -z 's|^PATH=@binPath@:|PATH=|' >"$state/$name.env")
   printf '%s\0' "$PWD" "$@" >"$state/$name.cmd"
   local slice=()
   if is_agent; then

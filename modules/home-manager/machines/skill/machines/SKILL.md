@@ -93,7 +93,7 @@ session, these run as their own user unit, `agent-job-NAME.service` in
   with `--slice=`, Docker, sudo, system units or your own `systemctl
   set-property`.
 - 20 GB is a ceiling, not what is there. Erik's apps are protected with
-  `memory.low` (9.5 GB) and usually take about 14 GB of RAM with what they
+  `memory.min` (9.5 GB the kernel never swaps out) and usually take about 14 GB of RAM with what they
   hold compressed in zram, so on a normal day the agents together get about
   14 GB before the machine itself is full. Then the kernel swaps the agents
   first, and lag-guard stops the biggest job when Erik's apps stall.
@@ -110,8 +110,8 @@ session, these run as their own user unit, `agent-job-NAME.service` in
   minutes) wait for each other under one lock; uncached builds go to the
   homelab builder by themselves. `rebuild` refuses a checkout behind
   origin/main (it would revert others' deploys).
-- lag-guard acts when Erik's desktop stalls. On memory, when the kernel
-  starts reclaiming his protected memory, or when the agents thrash (their
+- lag-guard acts when Erik's desktop stalls. On memory, or when the
+  agents thrash (their
   slice stalled on memory while his apps stall on disk), it kills the
   biggest agent job by RSS. On disk IO, and only when the stalled device is
   over 50 % busy, it first cuts the agents' bandwidth
