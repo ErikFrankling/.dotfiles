@@ -39,6 +39,11 @@
           "/home/${username}/.config/google-chrome-unstable"
           "/home/${username}/.config/google-chrome"
           "/home/${username}/.config/BraveSoftware"
+          # Obsidian (Electron) makes and removes blob_storage/<uuid> at
+          # login; when the watch setup at boot hits a vanished one, clamonacc
+          # drops the watch on the whole home folder (boots of 2026-11-10 and
+          # 2026-11-13). The notes themselves are in the vault, still watched.
+          "/home/${username}/.config/obsidian"
         ];
         OnAccessExtraScanning = true;
         # clamonacc refuses to watch the directory clamd keeps its own temp
