@@ -75,6 +75,18 @@ let
                            script it names, mentions gradle/expo/emulator/...).
                            Pass --small for typechecks, lint and unit tests,
                            so they do not wait behind APK builds
+            --cpus N       exclusive cores for latency-sensitive benchmarks:
+                           the job runs on the fixed top N vCPUs of the
+                           worker (N=1: 7, N=2: 6-7, ... up to 4: 4-7), and
+                           for its whole run nothing else on the node may
+                           use them (other jobs, pods, the emulator, k3s,
+                           movable IRQs). One --cpus job at a time; others
+                           wait. Still takes its big/small slot as usual.
+                           Fails (exit 96) rather than run unpinned. Every
+                           job sees HEAVY_CPUS (its CPU list at start) and
+                           HEAVY_CPUS_EXCLUSIVE (1 if pinned), and
+                           taskset -p $$ shows the same; vCPUs float over
+                           the host's threads (homelab docs/agent-worker.md)
             --priority     a 30-minute head start in the queue for its slot:
                            passes ordinary jobs that joined less than 30 min
                            before it, never one that waited longer; a running
@@ -199,13 +211,16 @@ let
       # Shared by `heavy CMD` and `heavy bg`: options, then the command,
       # prefixed with `env` for -e variables.
       parse_run() {
-        sync=1 develop=auto envs=() class=auto priority=0
+        sync=1 develop=auto envs=() class=auto priority=0 cpus=""
         while [ $# -gt 0 ]; do
           case "$1" in
             --no-sync) sync=0; shift ;;
             --big) class=big; shift ;;
             --small) class=small; shift ;;
             --priority) priority=1; shift ;;
+            --cpus)
+              [[ ''${2-} =~ ^[1-9][0-9]*$ ]] || die "--cpus needs a number of cores (1-4)"
+              cpus=$2; shift 2 ;;
             --no-develop) develop=no; shift ;;
             --shell) [ $# -ge 2 ] || die "--shell needs a name"; develop=''${2#.#}; shift 2 ;;
             -e)
@@ -300,6 +315,7 @@ let
           parse_run "$@"
           # A background job is a service unless --big/--small asks for a slot.
           [ "$class" != auto ] || class=service
+          [ -z "$cpus" ] || die "--cpus is for jobs (heavy -- CMD), not background jobs"
           [ "$sync" = 0 ] || sync_up
           send_envs
           exec ssh "''${ssh_opts[@]}" "$target" "HEAVY_ENVFILE=$envfile HEAVY_CLASS=$class HEAVY_PRIORITY=$priority $(q bash /config/heavy-bg.sh start "$ws" "$rel" "$develop" "$name" "''${cmd[@]}")"
@@ -329,7 +345,7 @@ let
 
       # The remote job lives as long as this SSH channel's stdin stays open:
       # feed it from a process that never writes, and close it to kill the job.
-      ssh "''${ssh_opts[@]}" "$target" "HEAVY_ENVFILE=$envfile HEAVY_CLASS=$class HEAVY_PRIORITY=$priority $(q bash /config/heavy-run.sh "$ws" "$rel" "$develop" "''${cmd[@]}")" \
+      ssh "''${ssh_opts[@]}" "$target" "HEAVY_ENVFILE=$envfile HEAVY_CLASS=$class HEAVY_PRIORITY=$priority HEAVY_CPUS_WANT=$cpus $(q bash /config/heavy-run.sh "$ws" "$rel" "$develop" "''${cmd[@]}")" \
         < <(exec sleep 2147483647) &
       ssh_pid=$!
       keep=$(pgrep -P $$ -x sleep | head -1 || true)

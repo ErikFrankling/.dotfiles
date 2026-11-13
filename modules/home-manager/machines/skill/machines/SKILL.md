@@ -46,7 +46,7 @@ running out of memory.**
 `heavy` in short (`heavy --help` for all of it):
 
 ```
-heavy [--big|--small] [--priority] [--shell|--small] [--shell .#android] [-e VAR] -- CMD   run in a synced copy on the worker
+heavy [--big|--small] [--priority] [--cpus N] [--shell|--small] [--shell .#android] [-e VAR] -- CMD   run in a synced copy on the worker
 heavy pull PATH...                       copy results back (nothing else comes back)
 heavy bg NAME -- CMD | heavy logs NAME -f | heavy stop NAME   background jobs and servers
 heavy emulator start|stop|status         the one shared emulator; heavy adb ARGS from the pc
@@ -55,6 +55,10 @@ heavy status | heavy queue               what runs and what waits
 
 One big job (up to 10 GB) and one small job (up to 3 GB) run at once on the
 worker; the rest queue, and a job that runs out of memory is killed alone.
+Latency-sensitive benchmarks (VM restore, round trips, start-up timings) use
+`heavy --cpus N`: the job alone on the worker's fixed top N vCPUs (2 = 6-7,
+at most 4) for its whole run, nothing else on the node on them; one such job
+at a time. Record `$HEAVY_CPUS` / `$HEAVY_CPUS_EXCLUSIVE` in the results.
 ### Long jobs survive your session and T3 restarts (`agent-job`)
 
 When T3 Code's server restarts, it stops every agent's scope and slice. So does
