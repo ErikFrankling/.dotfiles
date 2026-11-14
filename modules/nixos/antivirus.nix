@@ -121,8 +121,20 @@
   # Let activation finish when the scan starts, not when the full scan ends.
   # The timer cannot start another instance while this one is running.
   systemd.services.clamdscan.serviceConfig.Type = lib.mkForce "exec";
-  systemd.services.clamdscan.serviceConfig.ExecStart =
-    lib.mkForce "${pkgs.clamav}/bin/clamdscan --fdpass --infected --move=/var/lib/clamav/quarantine ${lib.concatStringsSep " " config.services.clamav.scanner.scanDirectories}";
+  # find lists the regular files and streams them to clamdscan's own
+  # --file-list (it reads the list as it scans, so a file is scanned seconds
+  # after it is listed). Given folders, clamdscan reports every socket, pipe
+  # and Docker whiteout as an error: 234 of them made the 13 Nov scan exit 2.
+  # -xdev keeps /proc, /sys, /dev and /run out; /boot is listed on its own.
+  systemd.services.clamdscan.serviceConfig.ExecStart = lib.mkForce (
+    pkgs.writeShellScript "clamdscan-files" ''
+      ${pkgs.findutils}/bin/find ${lib.concatStringsSep " " config.services.clamav.scanner.scanDirectories} -xdev \
+          \( -path /nix/store -o -path /var/lib/clamav/quarantine \) -prune \
+          -o -type f -print 2>/dev/null \
+        | exec ${pkgs.clamav}/bin/clamdscan --fdpass --infected \
+            --move=/var/lib/clamav/quarantine --file-list=/dev/stdin
+    ''
+  );
   systemd.slices.system-clamav.sliceConfig = {
     CPUQuota = "25%";
     IOWeight = 10;

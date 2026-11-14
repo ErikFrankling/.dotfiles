@@ -19,7 +19,10 @@
   # NixOS module's default list (/home /var/lib /tmp /etc /var/tmp), which
   # missed /root, /var/log, /var/vanta, /boot and /nix/store. /proc, /sys,
   # /dev, /run and /nix/store are left out in antivirus.nix (ExcludePath).
-  services.clamav.scanner.scanDirectories = [ "/" ];
+  services.clamav.scanner.scanDirectories = [
+    "/"
+    "/boot"
+  ];
 
   # Firewall: the NixOS default (on). Patching: the daily auto-update
   # (configuration.nix). Secure Boot: modules/nixos/secure-boot.nix.
