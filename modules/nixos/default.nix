@@ -64,14 +64,19 @@
   };
 
   # When memory really runs out, kill the right process instead of letting the
-  # desktop thrash: below 5 % available RAM with under 60 % of swap free. The
-  # victim is the highest oom_score, which already favours agents (adj 800)
-  # and browser content processes (133-300) over the desktop (0); --prefer
-  # and --avoid sharpen that. Notifications go to the desktop.
+  # desktop thrash: below 5 % available RAM. The victim is the highest
+  # oom_score, which already favours agents (adj 800) and browser content
+  # processes (133-300) over the desktop (0); --prefer and --avoid sharpen
+  # that. Notifications go to the desktop.
+  # Free swap is no longer a condition (it was "under 60 % free" until
+  # 2026-11-14). Swap here never fills: the agents stop at their 12 GB swap
+  # cap and Erik's apps sit under memory.min, which cannot be swapped out. On
+  # 2026-11-14 the kernel's OOM killer fired at 09:04, 10:47 and 17:53-17:57
+  # with 70 of 91 GB swap free, and earlyoom never acted.
   services.earlyoom = {
     enable = true;
     freeMemThreshold = 5;
-    freeSwapThreshold = 60;
+    freeSwapThreshold = 100;
     enableNotifications = true;
     extraArgs = [
       "--prefer"

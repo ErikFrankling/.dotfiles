@@ -111,9 +111,16 @@ session, these run as their own user unit, `agent-job-NAME.service` in
   (a line with `rbps=20000000` or lower means lag-guard has the agents
   capped; `ls /run/lag-guard/base-*` lists the capped disks).
 - `nix` and `rebuild` evaluate here. Whole-system evaluations (3-4 GB, ~2
-  minutes) wait for each other under one lock; uncached builds go to the
-  homelab builder by themselves. `rebuild` refuses a checkout behind
-  origin/main (it would revert others' deploys).
+  minutes) wait for each other under one lock, and only start with 5 GB
+  available: an agent's `nix ... nixosConfigurations...` waits for it (20
+  minutes at most, then use `nix-remote`), `rebuild` evaluates on the
+  homelab instead. Uncached builds go to the homelab builder by themselves.
+  `rebuild` refuses a checkout behind origin/main (it would revert others'
+  deploys).
+- Everything an agent starts has the same OOM score (`oom_score_adj` 800,
+  jobs included), so when the whole pc runs out the biggest process goes
+  first. A big new consumer of your own (Gradle/Kotlin daemon, `-j` build,
+  a JVM) checks `MemAvailable` first, as below: nothing else gates it.
 - lag-guard acts when Erik's desktop stalls. On memory, or when the
   agents thrash (their
   slice stalled on memory while his apps stall on disk), it kills the

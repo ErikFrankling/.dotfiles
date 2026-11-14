@@ -14,13 +14,40 @@ attr="nixosConfigurations.$HOST.config.system.build.toplevel"
 remote=${NIXOS_SWITCH_REMOTE:-0}
 evallock=${XDG_RUNTIME_DIR:-/tmp}/nixos-eval.lock
 
-# One system evaluation at a time on this machine (3-4 GB each).
+avail_mb() {
+  local k v _
+  while read -r k v _; do
+    if [ "$k" = MemAvailable: ]; then
+      echo $((v / 1024))
+      return
+    fi
+  done </proc/meminfo
+}
+
+# One system evaluation at a time on this machine (3-4 GB each), and only
+# with room for it: once the lock is ours, under 5 GB available it evaluates
+# on the homelab instead (2026-11-14 17:53: an agent's rebuild evaluated to
+# 2.9 GB with 3.5 GB available beside other projects' Gradle and cargo
+# builds, and the kernel OOM killer fired machine-wide).
 build_system() {
   if [ "$remote" = 1 ]; then
     nix-remote build "$@"
-  else
-    flock "$evallock" nix build "$@"
+    return
   fi
+  exec 7>"$evallock"
+  flock 7
+  local avail
+  avail=$(avail_mb)
+  if [ "$avail" -lt "${NIXOS_SWITCH_MIN_AVAIL_MB:-5120}" ]; then
+    echo "== only $avail MB of memory available here; evaluating on the homelab builder instead" >&2
+    exec 7>&-
+    nix-remote build "$@"
+    return
+  fi
+  nix build "$@"
+  local status=$?
+  exec 7>&-
+  return "$status"
 }
 
 case $action in

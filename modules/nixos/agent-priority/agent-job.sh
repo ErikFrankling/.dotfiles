@@ -111,7 +111,7 @@ start() {
   if is_agent; then
     # Inside the agents' caps, outside what T3 stops; same niceness and OOM
     # preference as the agents' own systemd-run (agent-priority).
-    slice=(--slice=app-t3code-jobs.slice --nice=10 --property=OOMScoreAdjust=1000)
+    slice=(--slice=app-t3code-jobs.slice --nice=10 --property=OOMScoreAdjust=800)
   fi
   systemctl --user reset-failed "$(unit "$name")" 2>/dev/null || true
   @systemdRun@ --user --quiet --collect --unit="$(unit "$name")" \

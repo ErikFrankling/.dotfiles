@@ -67,14 +67,20 @@ let
         exec ${realSystemdRun} "$@"
       fi
       # A scope runs this process; a service is forked by the user manager.
-      { echo 1000 >/proc/self/oom_score_adj; } 2>/dev/null
+      # 800, the same as T3 gives agent sessions. It was 1000 until 2026-11-14:
+      # adj 1000 adds all of RAM+swap to the score, so every process of a job
+      # ranked above any agent process, however small. That evening the
+      # kernel OOM killer took 25 of wasm-box's 4 MB ssh homelab clients one
+      # by one, freeing nothing, while a 2 GB cargo build and a 3 GB Gradle
+      # daemon (both at 800) kept running. With one value the biggest goes.
+      { echo 800 >/proc/self/oom_score_adj; } 2>/dev/null
       if [ "$scope" = 1 ]; then
         exec ${realSystemdRun} --slice-inherit --nice=10 "$@"
       fi
       # Services go to app-t3code-jobs.slice, not the agent's own slice: T3
       # Code stops that one when its server restarts, which killed the
       # nightly's build on 2026-10-23. Same caps (app-t3code.slice).
-      exec ${realSystemdRun} --slice=app-t3code-jobs.slice --nice=10 --property=OOMScoreAdjust=1000 "$@"
+      exec ${realSystemdRun} --slice=app-t3code-jobs.slice --nice=10 --property=OOMScoreAdjust=800 "$@"
     ''
   );
 
@@ -370,7 +376,7 @@ in
         # agent-job.sh): declared, so agent-daemons.service can bring them
         # back after the user manager dies, which loses transient units
         # (2026-11-14: every wasm-box infra unit). Same slice and caps as
-        # jobs; OOM preference below agents (800) and jobs (1000).
+        # jobs; OOM preference below agents and jobs (800).
         systemd.user.services."agent-daemon@" = {
           description = "Agent daemon %i";
           unitConfig.StartLimitIntervalSec = 0;
@@ -444,7 +450,7 @@ in
         # kernel then shares the 6 GB among them by use. When the agents fill
         # the rest and cannot be swapped any further, the kernel's OOM killer
         # takes the process with the highest score: an agent job
-        # (OOMScoreAdjust 800-1000), not the desktop.
+        # (OOMScoreAdjust 800), not the desktop.
         systemd.user.services.t3code = {
           overrideStrategy = "asDropin";
           serviceConfig.MemoryMin = "2G";
