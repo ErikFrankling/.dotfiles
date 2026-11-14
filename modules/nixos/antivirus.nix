@@ -45,17 +45,17 @@
           # drops the watch on the whole home folder (boots of 2026-11-10 and
           # 2026-11-13). The notes themselves are in the vault, still watched.
           "/home/${username}/.config/obsidian"
-          # Same failure from T3 Code's blob_storage on 2026-11-13: every
-          # Electron app has one, so leave each of them out.
-          "/home/${username}/.config/t3code-v2/blob_storage"
-          "/home/${username}/.config/Claude/blob_storage"
-          "/home/${username}/.config/Codex/Default/blob_storage"
-          "/home/${username}/.config/Cursor/blob_storage"
-          "/home/${username}/.config/Slack/blob_storage"
-          "/home/${username}/.config/WebCord/blob_storage"
-          "/home/${username}/.config/Lobby/blob_storage"
-          "/home/${username}/.config/ss2/blob_storage"
-          "/home/${username}/.config/ai.opencode.desktop/blob_storage"
+          # Same failure from T3 Code (2026-11-14, a blob_storage under
+          # Partitions/): leave every Electron app's profile out, like the browsers.
+          "/home/${username}/.config/t3code-v2"
+          "/home/${username}/.config/Claude"
+          "/home/${username}/.config/Codex"
+          "/home/${username}/.config/Cursor"
+          "/home/${username}/.config/Slack"
+          "/home/${username}/.config/WebCord"
+          "/home/${username}/.config/Lobby"
+          "/home/${username}/.config/ss2"
+          "/home/${username}/.config/ai.opencode.desktop"
         ];
         OnAccessExtraScanning = true;
         # clamonacc refuses to watch the directory clamd keeps its own temp
