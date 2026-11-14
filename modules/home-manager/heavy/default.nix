@@ -93,6 +93,14 @@ let
                            job is never interrupted. Only for a shared job that many
                            sessions wait on (one project's builder or test
                            job), never for a session's own work
+            --long         opt out of the 2-hour wall cap of a big job (it gets
+                           SIGTERM, then SIGKILL 60 s later, and exits 124,
+                           with "heavy: wall cap 2h; rerun with --long if this
+                           is expected"). For a job meant to run long: a
+                           project's tests job, a V8 build. Same as
+                           -e HEAVY_LONG=1. heavy status shows each running
+                           job's wall time, how long it has been silent, and
+                           its cap
             --shell NAME   run inside the flake's devShell NAME (`android` or
                            `.#android`); default: the default devShell when
                            flake.nix has one
@@ -218,6 +226,7 @@ let
             --big) class=big; shift ;;
             --small) class=small; shift ;;
             --priority) priority=1; shift ;;
+            --long) envs+=("HEAVY_LONG=1"); shift ;;
             --cpus)
               [[ ''${2-} =~ ^[1-9][0-9]*$ ]] || die "--cpus needs a number of cores (1-4)"
               cpus=$2; shift 2 ;;
