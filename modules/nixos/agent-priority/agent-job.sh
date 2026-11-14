@@ -95,7 +95,7 @@ start() {
     echo "agent-job: $name is already running; attaching instead of starting it again" >&2
     follow "$name" 40
   fi
-  rm -f "$state/$name.status"
+  rm -f "$state/$name.status" "$state/$name.stopped"
   : >"$state/$name.log"
   # The unit starts with the user manager's environment; give it this one,
   # minus this script's own tools at the front of PATH. With them, a job's
@@ -110,8 +110,15 @@ start() {
   local slice=()
   if is_agent; then
     # Inside the agents' caps, outside what T3 stops; same niceness and OOM
-    # preference as the agents' own systemd-run (agent-priority).
-    slice=(--slice=app-t3code-jobs.slice --nice=10 --property=OOMScoreAdjust=800)
+    # preference as the agents' own systemd-run (agent-priority). A caller that
+    # knows its job holds almost no memory passes AGENT_JOB_OOM (0 to 1000):
+    # `heavy`'s client, a few MB of ssh and bash that waits for a worker, passes
+    # 500, like the infra daemons, so a memory spike on the PC takes a build
+    # first (2026-11-14 17:53: the kernel killed every waiting client and each
+    # lost its place in the homelab's queue).
+    local oom=800
+    if [[ ${AGENT_JOB_OOM:-} =~ ^[0-9]{1,4}$ ]] && [ "$AGENT_JOB_OOM" -le 1000 ]; then oom=$AGENT_JOB_OOM; fi
+    slice=(--slice=app-t3code-jobs.slice --nice=10 --property=OOMScoreAdjust="$oom")
   fi
   systemctl --user reset-failed "$(unit "$name")" 2>/dev/null || true
   @systemdRun@ --user --quiet --collect --unit="$(unit "$name")" \
@@ -147,6 +154,19 @@ case "${1:-}" in
     name=${2:?usage: agent-job attach NAME}
     valid "$name"
     [ -e "$state/$name.log" ] || die "no job named $name"
+    # A heavy client the OOM killer (or anything but `agent-job stop`) took:
+    # its job is still on the worker with its queue place, so start the client
+    # again from the recorded directory and command; it re-attaches (the
+    # worker finds the job by the same key). Not after a stop, which cancelled
+    # the job, and not when it finished.
+    if ! running "$name" && [ ! -s "$state/$name.status" ] && [ ! -e "$state/$name.stopped" ] && [ -s "$state/$name.cmd" ]; then
+      mapfile -d '' -t recorded <"$state/$name.cmd"
+      if [ "$(basename "${recorded[1]:-}")" = heavy ] && [ -d "${recorded[0]}" ]; then
+        echo "agent-job: $name ended without an exit status (killed?); starting its heavy client again: it re-attaches to the job on the worker, place kept" >&2
+        cd "${recorded[0]}" || exit 1
+        AGENT_JOB_OOM=500 start "$name" "${recorded[@]:1}"
+      fi
+    fi
     follow "$name" 40
     ;;
   status)
@@ -169,6 +189,7 @@ case "${1:-}" in
     ;;
   stop)
     valid "${2:?usage: agent-job stop NAME}"
+    touch "$state/$2.stopped"
     exec systemctl --user stop "$(unit "$2")"
     ;;
   __exec)

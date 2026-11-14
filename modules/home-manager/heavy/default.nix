@@ -157,6 +157,17 @@ let
                                 (or export ADB_SERVER_SOCKET=tcp:127.0.0.1:15037
                                 after `heavy emulator start`)
 
+      A job does not depend on this client (since 2026-11-14): the worker runs it
+      on its own and `heavy` only follows it. If the client dies (the OOM
+      killer, a closed terminal that was killed, a lost connection), the job
+      keeps its place in the queue and runs on; run the same command from the
+      same directory again (or `agent-job attach NAME`) and it re-attaches,
+      printing the output from the start and exiting with the job's status.
+      A job that finished while no client was there gives its result to the
+      next call once. Ctrl-C, SIGTERM and `agent-job stop` cancel the job as
+      before. A job nobody attends for 2 hours is cancelled.
+      HEAVY_DETACH=0 runs a job the old way, tied to this connection.
+
       Covered on the worker: Gradle/APK builds, test suites, typechecks
       (small by default), Python/uv, bun and ML batch jobs, and `nix build`
       (in the worker's own store, from the homelab cache). Caches for
@@ -345,27 +356,99 @@ let
       # From a session the client runs as an agent-job, so the job outlives
       # the tool call, the session and a T3 Code restart; the same command
       # from the same directory attaches to it again.
+      # AGENT_JOB_OOM: this client is a few MB of ssh and bash waiting for the
+      # worker, so it runs at OOM score 500 (like the infra daemons), not the
+      # 800 of an agent's builds: in a memory spike on the PC the kernel takes
+      # a build first. Its job does not depend on it any more (below), but a
+      # killed client is still a client to start again.
       if [ -z "''${AGENT_JOB:-}" ] && command -v agent-job > /dev/null; then
-        exec agent-job wrap "heavy-$(printf '%s\0' "$PWD" "$@" | sha256sum | cut -c1-12)" -- "$0" "$@"
+        exec env AGENT_JOB_OOM=500 agent-job wrap "heavy-$(printf '%s\0' "$PWD" "$@" | sha256sum | cut -c1-12)" -- "$0" "$@"
       fi
       parse_run "$@"
       [ "$sync" = 0 ] || sync_up
       send_envs
 
-      # The remote job lives as long as this SSH channel's stdin stays open:
-      # feed it from a process that never writes, and close it to kill the job.
-      ssh "''${ssh_opts[@]}" "$target" "HEAVY_ENVFILE=$envfile HEAVY_CLASS=$class HEAVY_PRIORITY=$priority HEAVY_CPUS_WANT=$cpus $(q bash /config/heavy-run.sh "$ws" "$rel" "$develop" "''${cmd[@]}")" \
-        < <(exec sleep 2147483647) &
-      ssh_pid=$!
-      keep=$(pgrep -P $$ -x sleep | head -1 || true)
-      trap 'kill "$ssh_pid" $keep 2> /dev/null; wait "$ssh_pid"; exit 130' INT TERM HUP
-      rc=0
-      wait "$ssh_pid" || rc=$?
-      [ -z "$keep" ] || kill "$keep" 2> /dev/null || true
-      # ssh says nothing at LogLevel=ERROR when a connection goes away.
-      if [ "$rc" = 255 ]; then
-        echo "heavy: status 255: the SSH connection to the worker was lost, which also stops the job there (or the command itself exited 255). Nothing else is known to be wrong; run it again." >&2
+      # The job does not live on this SSH channel (worker: scripts/heavy-detach.sh,
+      # homelab docs/agent-worker.md): the worker starts it on its own and this
+      # client only follows it. KEY is a hash of the workspace, the options and
+      # the command, so the same command from the same directory finds the same
+      # job again: while it is queued or running (its queue place kept), and
+      # when it finished with no client there to take the result. A client
+      # killed by SIGKILL or the OOM killer leaves the job alone; one that is
+      # interrupted (Ctrl-C, SIGTERM, SIGHUP, agent-job stop) cancels it, as
+      # before. HEAVY_DETACH=0 runs it the old way, tied to this connection.
+      key=$({
+        printf '%s\0' "$ws" "$rel" "$develop" "$class" "$priority" "$cpus"
+        [ ''${#envs[@]} -eq 0 ] || printf '%s\0' "''${envs[@]}"
+        printf '%s\0' -- "''${cmd[@]}"
+      } | sha256sum | cut -c1-24)
+      detach=1
+      [ "''${HEAVY_DETACH:-1}" = 1 ] || detach=0
+      if [ "$detach" = 1 ] && ! remote test -f /scripts/heavy-detach.sh; then detach=0; fi
+
+      if [ "$detach" = 0 ]; then
+        # The old way: the remote job lives as long as this SSH channel's stdin
+        # stays open: feed it from a process that never writes, and close it to
+        # kill the job.
+        ssh "''${ssh_opts[@]}" "$target" "HEAVY_ENVFILE=$envfile HEAVY_CLASS=$class HEAVY_PRIORITY=$priority HEAVY_CPUS_WANT=$cpus $(q bash /config/heavy-run.sh "$ws" "$rel" "$develop" "''${cmd[@]}")" \
+          < <(exec sleep 2147483647) &
+        ssh_pid=$!
+        keep=$(pgrep -P $$ -x sleep | head -1 || true)
+        trap 'kill "$ssh_pid" $keep 2> /dev/null; wait "$ssh_pid"; exit 130' INT TERM HUP
+        rc=0
+        wait "$ssh_pid" || rc=$?
+        [ -z "$keep" ] || kill "$keep" 2> /dev/null || true
+        # ssh says nothing at LogLevel=ERROR when a connection goes away.
+        if [ "$rc" = 255 ]; then
+          echo "heavy: status 255: the SSH connection to the worker was lost, which also stops the job there (or the command itself exited 255). Nothing else is known to be wrong; run it again." >&2
+        fi
+        exit "$rc"
       fi
+
+      ssh_pid=""
+      # shellcheck disable=SC2329 # run by the trap below
+      cancel_remote() {
+        trap - INT TERM HUP
+        [ -z "$ssh_pid" ] || kill "$ssh_pid" 2> /dev/null || true
+        timeout 15 ssh "''${ssh_opts[@]}" "$target" "$(q bash /scripts/heavy-detach.sh cancel "$key")" < /dev/null 2> /dev/null || true
+        exit 130
+      }
+      trap cancel_remote INT TERM HUP
+      mode=run
+      lost=0
+      rc=0
+      while :; do
+        if [ "$mode" = run ]; then
+          remote_cmd="HEAVY_ENVFILE=$envfile HEAVY_CLASS=$class HEAVY_PRIORITY=$priority HEAVY_CPUS_WANT=$cpus $(q bash /scripts/heavy-detach.sh run "$key" "$ws" "$rel" "$develop" "''${cmd[@]}")"
+        else
+          remote_cmd=$(q bash /scripts/heavy-detach.sh attach "$key")
+        fi
+        ssh "''${ssh_opts[@]}" "$target" "$remote_cmd" < /dev/null &
+        ssh_pid=$!
+        rc=0
+        wait "$ssh_pid" || rc=$?
+        ssh_pid=""
+        # A status of 128 or more may be ssh's (255: the connection went away;
+        # 137, 143: ssh itself was killed) or the job's own (an OOM-killed job
+        # exits 137). Ask the worker which: while the job is running, or its
+        # result was not delivered, follow it again from the start of its
+        # output (replayed); a delivered result is the answer.
+        if [ "$rc" -ge 128 ] && [ "$lost" -lt 120 ]; then
+          state=$(timeout 20 ssh "''${ssh_opts[@]}" "$target" "$(q bash /scripts/heavy-detach.sh status "$key")" < /dev/null 2> /dev/null || echo unknown)
+          case "$state" in
+            "done "*" collected") rc=''${state#done }; rc=''${rc%% *}; break ;;
+            gone) echo "heavy: the job is gone from the worker (it restarted?); run the command again" >&2; rc=253; break ;;
+            *)
+              lost=$((lost + 1))
+              echo "heavy: lost the link to the job ($state, ssh status $rc); the job on the worker is not affected; re-attaching in 5 s ($lost/120), its output so far is replayed" >&2
+              mode=attach
+              sleep 5
+              continue
+              ;;
+          esac
+        fi
+        break
+      done
       exit "$rc"
     '';
   };
