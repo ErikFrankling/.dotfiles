@@ -1,5 +1,5 @@
-# Anti-malware: ClamAV with hourly update checks, recursive on-access
-# scanning of the home folder and a weekly scan. Detections go to the journal,
+# Anti-malware: ClamAV with hourly update checks, on-access scanning of
+# ~/Downloads and a weekly scan. Detections go to the journal,
 # which Alloy ships to the homelab (modules/nixos/observability), and pop up
 # as a desktop notification. ClamTk is the GUI (scans, history, quarantine).
 {
@@ -20,8 +20,14 @@
         # thousands of throwaway git repos there, the watcher's queue jammed at
         # its file-descriptor limit and nothing was scanned on access any
         # more. The weekly scan below still covers /tmp.
+        # Only Downloads is watched (2026-11-14): with the whole home folder,
+        # any file or folder an app removes while clamonacc sets up its watches
+        # (Obsidian, T3 Code, Claude Code lock files) dropped the watch on all
+        # of it, so nothing was scanned on access. Downloads is where outside
+        # files arrive; the weekly scan covers the rest of the disk.
         OnAccessIncludePath = [
-          "/home/${username}"
+          "/home/${username}/Downloads"
+          # "/home/${username}"
           # "/tmp"
         ];
         # Hot application databases/caches are covered by scheduled scans.
