@@ -297,6 +297,8 @@ beyond the short rev, no log excerpts; the thread has the details.
 
 ## Incident log
 
+- 2026-11-14 20:55 (health-watch) — `alert/SystemdUnitFailed/pc/wbox-infra-tests` (firing since 19:41Z = 20:41): the wasm-box user service `wasm-box infra: tests` (owned by the wasm-box thread) was stopped at 20:40 by its owner (restart); the stop hung on an `ssh` child, final-sigterm timed out and systemd logged `Failed with result 'timeout'`. Unit gone, `systemctl --user --failed` empty. The agent's own job, not a machine fault; left alone.
+
 - 2026-11-14 18:20 (health-watch) — `alert/SystemdUnitFailed/pc/wbox-infra-p1-chain3-wait` (firing since 17:00Z): a wasm-box user service (`wasm-box infra: p1-chain3-wait`, owned by the wasm-box thread) exited 1 at 18:00 ("chain stopped: V8 piece ended with neither rc 0 nor a timebox"), restarted itself, and was stopped at 18:16 (by its owner). Unit gone, `systemctl --user --failed` empty. The agent's own job failing, not a machine fault; left alone.
 
 - 2026-11-14 15:20 (health-watch) — `alert/SystemdUnitFailed/pc/{user@1000,syncthing,local-stt,autossh-samsung-t3code}` (firing since 14:04Z = 15:04 local): the whole login session was torn down at 15:04:44 (logind removed session 1, `user@1000` SIGKILLed with its children, polkit auth failure just before; Erik logged in again on tty1 at 15:04:47). Every unit died of SIGKILL together, so the journal alert read them as failures. After the relogin `syncthing` and `local-stt` are active, `systemctl --user --failed` empty; `autossh-samsung-t3code` is not a unit in the dotfiles any more (transient, gone). Nothing to repair.
