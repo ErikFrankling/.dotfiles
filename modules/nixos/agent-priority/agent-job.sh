@@ -19,6 +19,27 @@
 #   agent-job logs NAME             its whole log
 #   agent-job stop NAME             stop it
 #
+#   agent-job daemon start NAME [--notify-thread ID] -- CMD...
+#                                   run CMD for good as agent-daemon@NAME.service
+#                                   (restarts an existing one with the new CMD)
+#   agent-job daemon stop NAME      stop it and forget it
+#   agent-job daemon list           registered daemons and their state
+#   agent-job daemon logs NAME      its journal
+#
+# A daemon is for small infra processes that must stay up (a build scheduler,
+# a disk gate, a status page). Unlike a job it is a declared unit,
+# agent-daemon@.service (default.nix): same slice and caps, OOMScoreAdjust
+# 500 (below agents and jobs, so the OOM killer takes a big rustc first),
+# OOMPolicy=continue, Restart=on-failure. Its command and environment are kept
+# in ~/.local/state/agent-job/daemons/, and agent-daemons.service starts every
+# registered daemon that is not running at login, after the user manager was
+# killed, and after each T3 Code server start; it then tells Erik and each
+# daemon's --notify-thread which ones it had to bring back. Transient units
+# (systemd-run, `run`) are lost when the user manager dies: on 2026-11-14 an
+# agent's `ps -e --ppid X | xargs kill -KILL` (-e selects everything) killed
+# every process of Erik's, user manager included, and all wasm-box infra
+# units with it.
+#
 # `run` and `attach` exit with the command's exit status. Interrupting or
 # killing them only detaches: the job keeps running. AGENT_JOB=off in the
 # environment makes `wrap` run the command in the caller instead.
@@ -165,6 +186,101 @@ case "${1:-}" in
     "${cmd[@]:1}" || status=$?
     echo "$status" >"$state/$name.status.tmp" && mv "$state/$name.status.tmp" "$state/$name.status"
     exit "$status"
+    ;;
+  daemon)
+    ddir=$state/daemons
+    mkdir -p "$ddir"
+    dunit() { echo "agent-daemon@$1.service"; }
+    case "${2:-}" in
+      start)
+        shift 2
+        name=${1:?usage: agent-job daemon start NAME [--notify-thread ID] -- CMD...}
+        valid "$name"
+        shift
+        thread=""
+        while [ $# -gt 0 ]; do
+          case "$1" in
+            --notify-thread) thread=${2:?--notify-thread needs a thread id}; shift 2 ;;
+            --) shift; break ;;
+            *) break ;;
+          esac
+        done
+        [ $# -gt 0 ] || die "usage: agent-job daemon start NAME [--notify-thread ID] -- CMD..."
+        (umask 077 && env -0 | sed -z 's|^PATH=@binPath@:|PATH=|' >"$ddir/$name.env.tmp")
+        printf '%s\0' "$PWD" "$@" >"$ddir/$name.cmd.tmp"
+        printf '%s' "$thread" >"$ddir/$name.thread.tmp"
+        for f in env cmd thread; do mv "$ddir/$name.$f.tmp" "$ddir/$name.$f"; done
+        systemctl --user reset-failed "$(dunit "$name")" 2>/dev/null || true
+        systemctl --user restart "$(dunit "$name")" || die "could not start $(dunit "$name")"
+        echo "agent-job: $(dunit "$name") started; logs: agent-job daemon logs $name" >&2
+        ;;
+      stop)
+        name=${3:?usage: agent-job daemon stop NAME}
+        valid "$name"
+        rm -f "$ddir/$name.env" "$ddir/$name.cmd" "$ddir/$name.thread"
+        exec systemctl --user stop "$(dunit "$name")"
+        ;;
+      list)
+        for f in "$ddir"/*.cmd; do
+          [ -e "$f" ] || continue
+          n=$(basename "$f" .cmd)
+          printf '%-30s %s\n' "$n" "$(systemctl --user is-active "$(dunit "$n")")"
+        done
+        ;;
+      logs)
+        valid "${3:?usage: agent-job daemon logs NAME}"
+        exec journalctl --user --no-pager -u "$(dunit "$3")"
+        ;;
+      restore)
+        # agent-daemons.service: bring back every registered daemon that is
+        # down, then say which ones were.
+        down=()
+        for f in "$ddir"/*.cmd; do
+          [ -e "$f" ] || continue
+          n=$(basename "$f" .cmd)
+          systemctl --user is-active --quiet "$(dunit "$n")" && continue
+          down+=("$n")
+          systemctl --user reset-failed "$(dunit "$n")" 2>/dev/null || true
+          systemctl --user start --no-block "$(dunit "$n")"
+        done
+        [ ${#down[@]} -gt 0 ] || { echo "all registered daemons are running"; exit 0; }
+        sleep 15
+        report=""
+        for n in "${down[@]}"; do
+          report+="$n: was down, now $(systemctl --user is-active "$(dunit "$n")")"$'\n'
+        done
+        echo "$report"
+        msg="agent-daemons on $(uname -n) restarted daemons that were down (after a login, a user-manager restart or a T3 Code start):"$'\n'"$report"
+        notify-erik -t "Agent daemons restarted" "$msg" || true
+        # Each daemon's owner thread hears about its own; the T3 server may
+        # still be starting.
+        declare -A threads=()
+        for n in "${down[@]}"; do
+          t=$(cat "$ddir/$n.thread" 2>/dev/null || true)
+          [ -n "$t" ] && threads[$t]+="$n: now $(systemctl --user is-active "$(dunit "$n")")"$'\n'
+        done
+        for t in "${!threads[@]}"; do
+          for _ in $(seq 1 24); do
+            t3 thread send "$t" "Automated (agent-daemons.service): these agent daemons of yours were down and have been restarted. The user manager or the machine restarted; check their state with \`agent-job daemon list\`."$'\n'"${threads[$t]}" >/dev/null 2>&1 && break
+            sleep 5
+          done
+        done
+        ;;
+      *) die "usage: agent-job daemon start|stop|list|logs|restore ..." ;;
+    esac
+    ;;
+  __daemon)
+    name=$2
+    ddir=$state/daemons
+    [ -e "$ddir/$name.cmd" ] || { echo "agent-job: daemon $name is not registered (agent-job daemon start)" >&2; exit 0; }
+    while IFS= read -r -d '' kv; do
+      # shellcheck disable=SC2163 # the variable named by kv
+      export "$kv" 2>/dev/null || true
+    done <"$ddir/$name.env"
+    mapfile -d '' -t cmd <"$ddir/$name.cmd"
+    export AGENT_JOB=daemon-$name
+    cd "${cmd[0]}" || exit 1
+    exec "${cmd[@]:1}" </dev/null
     ;;
   *)
     sed -n '/^#   agent-job/,/^# environment/p' "$0" | sed 's/^# \{0,1\}//' >&2

@@ -366,6 +366,46 @@ in
         # slices T3 Code stops when its server restarts.
         systemd.user.slices.app-t3code-jobs.description = "Agent jobs that outlive their session";
 
+        # Agents' long-lived infra daemons (`agent-job daemon start`, see
+        # agent-job.sh): declared, so agent-daemons.service can bring them
+        # back after the user manager dies, which loses transient units
+        # (2026-11-14: every wasm-box infra unit). Same slice and caps as
+        # jobs; OOM preference below agents (800) and jobs (1000).
+        systemd.user.services."agent-daemon@" = {
+          description = "Agent daemon %i";
+          unitConfig.StartLimitIntervalSec = 0;
+          serviceConfig = {
+            ExecStart = "${agentJob}/bin/agent-job __daemon %i";
+            Slice = "app-t3code-jobs.slice";
+            Nice = 10;
+            OOMScoreAdjust = 500;
+            OOMPolicy = "continue";
+            Restart = "on-failure";
+            RestartSec = 10;
+          };
+        };
+        # Starts every registered daemon that is down and reports which ones
+        # were: at login (a new user manager) and after each T3 Code start.
+        systemd.user.services.agent-daemons = {
+          description = "Bring back agents' registered daemons";
+          wantedBy = [
+            "default.target"
+            "t3code.service"
+          ];
+          after = [ "t3code.service" ];
+          environment.PATH = lib.mkForce "${
+            lib.makeBinPath [
+              agentJob
+              pkgs.coreutils
+              config.systemd.package
+            ]
+          }:%h/.nix-profile/bin:/etc/profiles/per-user/%u/bin:/run/current-system/sw/bin";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${agentJob}/bin/agent-job daemon restore";
+          };
+        };
+
         # The T3 Code server stays in RAM when the machine runs out of memory.
         # It had no protection, so on 2026-11-12 (11 agent Rust builds, the
         # agent slice at its caps, zram full, 0.7 GB available) the kernel
