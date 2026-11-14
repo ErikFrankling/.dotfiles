@@ -132,7 +132,16 @@ let
         heavy pull PATH...      copy PATHs (relative to here) back from the worker
         heavy shell             interactive shell in the workspace
         heavy status | queue    worker load, memory, running and waiting jobs,
-                                emulator, disk
+                                emulator, disk. A job started since 2026-11-14
+                                shows its key in brackets
+        heavy cancel [KEY... | --here]
+                                cancel jobs on the worker without attaching:
+                                a queued job leaves the queue, a running one is
+                                killed. KEY is the bracketed key from heavy
+                                status (6+ characters); --here: every job of
+                                this directory; no argument: list the jobs.
+                                Only for jobs started by a client from 2026-11-14
+                                on (older ones die with their client)
         heavy emulator start    boot the one shared emulator on the worker
                                 (pixel_7, API 36 google_apis x86_64). `adb` in
                                 heavy commands sees it as the only device; it
@@ -314,6 +323,20 @@ let
           echo "worker:$1 -> 127.0.0.1:''${2:-$1} (stop: heavy forward stop $1)"
           exit 0
           ;;
+        cancel)
+          # Cancel jobs on the worker without attaching to them: a queued job
+          # leaves the queue, a running one is killed. KEY is what `heavy status`
+          # shows in brackets (6 or more characters of it); `heavy cancel
+          # --here` takes every job of this directory's workspace; with no
+          # argument it lists the jobs and their keys.
+          shift
+          case "''${1:-}" in
+            "") exec ssh "''${ssh_opts[@]}" "$target" bash /scripts/heavy-detach.sh list ;;
+            --here) exec ssh "''${ssh_opts[@]}" "$target" "$(q bash /scripts/heavy-detach.sh cancel-ws "$(basename "$ws")")" ;;
+            -*) die "usage: heavy cancel [KEY... | --here]" ;;
+            *) exec ssh "''${ssh_opts[@]}" "$target" "$(q bash /scripts/heavy-detach.sh cancel "$@")" ;;
+          esac
+          ;;
         shell) sync_up; exec ssh -t "''${ssh_opts[@]}" "$target" "cd $(q "$ws/$rel") && exec bash -l" ;;
         jobs) exec ssh "''${ssh_opts[@]}" "$target" bash /config/heavy-bg.sh list ;;
         stop) exec ssh "''${ssh_opts[@]}" "$target" "$(q bash /config/heavy-bg.sh stop "$ws" "''${2:?name}")" ;;
@@ -408,9 +431,19 @@ let
       ssh_pid=""
       # shellcheck disable=SC2329 # run by the trap below
       cancel_remote() {
-        trap - INT TERM HUP
+        # IGNORE further signals, do not reset them (2026-11-14: `agent-job stop`
+        # did not cancel). systemd sends SIGTERM to the whole unit; the unit's
+        # main process dies at once, and systemd then sends SIGTERM again to
+        # everything left: with the trap reset, that second one killed this
+        # script in the middle of its cancel, and the job stayed on the worker.
+        # An ignored signal stays ignored in the ssh started below.
+        trap "" INT TERM HUP
         [ -z "$ssh_pid" ] || kill "$ssh_pid" 2> /dev/null || true
-        timeout 15 ssh "''${ssh_opts[@]}" "$target" "$(q bash /scripts/heavy-detach.sh cancel "$key")" < /dev/null 2> /dev/null || true
+        # No shared mux connection: the unit's own master was just signalled,
+        # and a new persistent one would keep the unit from stopping. The first
+        # value of an ssh option wins, so these go before ssh_opts.
+        ssh -o ControlMaster=no -o ControlPath=none -o ControlPersist=no "''${ssh_opts[@]}" "$target" \
+          "$(q bash /scripts/heavy-detach.sh cancel "$key")" < /dev/null > /dev/null 2>&1 || true
         exit 130
       }
       trap cancel_remote INT TERM HUP
