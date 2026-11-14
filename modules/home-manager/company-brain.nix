@@ -75,6 +75,10 @@ let
     # Shopping
 
     For shopping research, load the brain skill `shopping`.
+
+    # Agent Wiki
+
+    Knowledge and research about subjects Erik follows (facts, papers, posts he sends, what we understand) go in his Obsidian vault at `~/obsidian/Agent Wiki/`, not the brain. Load the brain skill `agent-wiki` before reading or writing it.
   '';
   # Skills that ship with this module, installed for every harness.
   skills = {
