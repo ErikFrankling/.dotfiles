@@ -141,14 +141,27 @@ lock_scan() { # sets LK_HOLD and LK_WAIT: " pid pid ... "
     else LK_HOLD="$LK_HOLD$(awk '{print $5}' <<<"$l") "; fi
   done < <(grep -E ":(${ino#|}) " /proc/locks 2>/dev/null)
 }
+gate_holds() {
+  local ledger=$1 log=$2 state
+  [ -r "$ledger" ] && [ -r "$log" ] || return 0
+  [ -s "$ledger" ] && return 0
+  # A gate can freeze when there are no matching processes, leaving an empty
+  # ledger. Its last transition still owns the hysteresis band. Unknown or
+  # partially written state fails closed until the next scheduler pass.
+  state=$(tail -n 1 "$log") || return 0
+  case "$state" in
+    *' RESUME at '* | *'gate started:'*'state run '*) return 1 ;;
+    *) return 0 ;;
+  esac
+}
 disk_low() {
   # The ledgers are owned by disk-gate.sh. Only that gate clears them after
   # its HIGH watermark (root 320 GiB, data 32 GiB); never clear or thaw here.
   # Checking LOW alone would admit builds in the hysteresis band, or before
   # the gate has performed its natural resume. Stale entries fail closed.
   local root_free data_free
-  [ -s "${ROOT_GATE_STOPPED:-/mnt/data/wbox-archive/disk-gate-root.stopped}" ] && return 0
-  [ -s "${DATA_GATE_STOPPED:-/mnt/data/wbox-archive/disk-gate.stopped}" ] && return 0
+  gate_holds "${ROOT_GATE_STOPPED:-/mnt/data/wbox-archive/disk-gate-root.stopped}" "${ROOT_GATE_LOG:-/mnt/data/wbox-archive/disk-gate-root.log}" && return 0
+  gate_holds "${DATA_GATE_STOPPED:-/mnt/data/wbox-archive/disk-gate.stopped}" "${DATA_GATE_LOG:-/mnt/data/wbox-archive/disk-gate.log}" && return 0
   root_free=$(df --output=avail -BG / 2>/dev/null | tail -1 | tr -dc 0-9)
   data_free=$(df --output=avail -BG /mnt/data 2>/dev/null | tail -1 | tr -dc 0-9)
   # Missing/unreadable filesystem measurements cannot grant admission.
