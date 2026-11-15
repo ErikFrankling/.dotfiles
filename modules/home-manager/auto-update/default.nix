@@ -598,10 +598,18 @@ let
               runtimeMode: "full-access", interactionMode: "default",
               workspaceStrategy: {type: "root"},
               initialMessage: {text: $text, attachments: []}}}')
-        answer=$( { printf '%s\n' "$request"; sleep 60; } \
-          | timeout 60 websocat --text "ws://127.0.0.1:3773/ws?orchestrationProtocol=$protocol" \
-          | jq -c --unbuffered 'select(._tag == "Exit" and .requestId == "1")' \
-          | head -n 1) || true
+        # 2026-11-15: at 03:00 T3 had 12 to 13 runs active and its event loop
+        # stalled, so the one 60 s attempt got no answer and the night's
+        # session never started. Retry up to 3 times with the same request
+        # (same thread and command ids, so a late success is not duplicated).
+        answer=
+        for attempt in 1 2 3; do
+          answer=$( { printf '%s\n' "$request"; sleep 150; } \
+            | timeout 150 websocat --text "ws://127.0.0.1:3773/ws?orchestrationProtocol=$protocol" \
+            | jq -c --unbuffered 'select(._tag == "Exit" and .requestId == "1")' \
+            | head -n 1) || true
+          [ "$(jq -r '.exit._tag // empty' <<< "$answer")" = "Success" ] && break
+        done
         if [ "$(jq -r '.exit._tag // empty' <<< "$answer")" != "Success" ]; then
           # A lost response does not prove launch failed. Let the next poll
           # check ownership instead of creating a duplicate headless repair.
