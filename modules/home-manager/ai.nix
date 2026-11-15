@@ -265,6 +265,14 @@ in
 
   nixpkgs.config.allowBroken = true;
 
+  # Erik removed these obsolete/broken Codex MCP connections (2026-11-15).
+  # Use Codex's own config editor; the rest of its mutable config stays intact.
+  home.activation.removeRetiredCodexMcp = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    for server in node_repl cloudflare-api agent-seat neptune-dxp naia-bot; do
+      ${codexCliUpstream}/bin/codex mcp remove "$server"
+    done
+  '';
+
   # home.file.".codex/config.toml" = {
   #   force = true;
   #   text = ''

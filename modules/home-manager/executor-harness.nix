@@ -96,7 +96,7 @@ let
         }"
         "-c"
         "mcp_servers.${name}.tool_timeout_sec=300"
-      ]) localMcpServers
+      ]) (builtins.removeAttrs localMcpServers [ "agent-seat" ])
     )
   );
   # Claude's --mcp-config takes variadic arguments. Put it after the user's
