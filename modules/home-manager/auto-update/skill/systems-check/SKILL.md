@@ -297,6 +297,8 @@ beyond the short rev, no log excerpts; the thread has the details.
 
 ## Incident log
 
+- 2026-11-15 05:10 (health-watch) — `alert/SystemdUnitFailed/pc/systemd` again (firing since 03:56Z): same cause as 02:40, the wasm-box sandbox `run-p*-i*.scope` units (8 in `systemctl --user --failed`, system manager clean) whose payload exited non-zero; wasm-box's own runs, left alone. Separate: `nix-nightly.service` failed at 03:02 ("T3 launch not confirmed (no answer)"), so the 03:00 update session may not have started; the 07:00 systems-check owns it.
+
 - 2026-11-15 04:10 (health-watch) — `alert/SystemdUnitFailed/pc/llama-swap` (firing since 02:47Z): `llama-swap.service` was OOM-killed 9 times between 03:47 and 04:06 (peak 98M, a 15.8G read from disk each time = model preload), restarting each time (`Restart=on-failure`). Cause: PC memory exhausted by concurrent agent work (30G total, 26G used, 4G available at check); the cgroup OOM killer picked llama-swap. Last restart (04:06) is active and serving `/v1/models`. No config fault; left alone. If it recurs, look at what else ran (`system-history`) rather than the unit.
 
 - 2026-11-15 02:40 (health-watch) — `alert/SystemdUnitFailed/pc/systemd` (firing since 01:22Z): the user manager journal logs failed transient `run-p*-i*.scope` units, the wasm-box sandbox wrappers (`[systemd-run] .../session-check/native-env/bin/python3 -I -c ...` with bwrap/hostjail) whose payload exited non-zero. Eight such scopes sit in `systemctl --user --failed`; the system manager has none. The wasm-box thread's own sandbox runs, not a machine fault; left alone (`reset-failed` would only hide them).
