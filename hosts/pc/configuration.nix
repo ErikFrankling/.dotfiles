@@ -248,6 +248,9 @@
 
   systemd.tmpfiles.rules = [
     "d /mnt/data 0750 ${username} users -"
+    # Keep the existing daemon/restart entrypoint, but version its scheduler.
+    # It must respect both disk gates, including their hysteresis ledgers.
+    "L+ /mnt/data/wbox-archive/build-sched.sh - - - - ${./wbox-build-sched.sh}"
   ];
 
   time.hardwareClockInLocalTime = true;
