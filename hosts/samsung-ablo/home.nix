@@ -84,7 +84,7 @@ in
   programs.erikshell.metrics.gpu = false;
 
   # At the desk the KVM gives the laptop the pc's two screens; the built-in
-  # one turns off, as on the framework. Matched by model, not connector: the
+  # screen follows the lid. Matched by model, not connector: the
   # KVM's DP-n names change each time it switches.
   services.kanshi = {
     enable = true;
@@ -162,11 +162,37 @@ in
       }
       {
         profile.name = "docked";
-        profile.exec = [ (moveWorkspaces "desc:Samsung Electric Company U28E590") ];
+        profile.exec = [
+          (moveWorkspaces "desc:Samsung Electric Company U28E590")
+          "grep -q open /proc/acpi/button/lid/*/state && ${kanshictl} switch docked-lid-open"
+        ];
         profile.outputs = [
           {
             criteria = "eDP-1";
             status = "disable";
+          }
+          {
+            criteria = "Samsung Electric Company U28E590 *";
+            status = "enable";
+          }
+          {
+            criteria = "Samsung Electric Company U28D590 *";
+            status = "enable";
+          }
+          {
+            criteria = "AGENT-1";
+            status = "enable";
+            position = "10000,0";
+          }
+        ];
+      }
+      {
+        profile.name = "docked-lid-open";
+        profile.exec = [ (moveWorkspaces "desc:Samsung Electric Company U28E590") ];
+        profile.outputs = [
+          {
+            criteria = "eDP-1";
+            status = "enable";
           }
           {
             criteria = "Samsung Electric Company U28E590 *";
@@ -197,11 +223,13 @@ in
     fi
   '';
 
-  # At the office dock the built-in screen follows the lid. Away from the
-  # office dock the "office" profiles do not match and kanshictl just fails.
+  # At either dock the built-in screen follows the lid. Profiles for the
+  # other dock do not match, so those switch requests harmlessly fail.
   wayland.windowManager.hyprland.settings.bind = [
     (lidBind "off" "Lid opened: built-in screen on at the office" "office-lid-open")
     (lidBind "on" "Lid closed: built-in screen off at the office" "office")
+    (lidBind "off" "Lid opened: built-in screen on at home" "docked-lid-open")
+    (lidBind "on" "Lid closed: built-in screen off at home" "docked")
   ];
 
   hyprland = {
