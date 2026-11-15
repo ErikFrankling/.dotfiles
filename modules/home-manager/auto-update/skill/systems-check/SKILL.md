@@ -297,6 +297,8 @@ beyond the short rev, no log excerpts; the thread has the details.
 
 ## Incident log
 
+- 2026-11-15 04:10 (health-watch) — `alert/SystemdUnitFailed/pc/llama-swap` (firing since 02:47Z): `llama-swap.service` was OOM-killed 9 times between 03:47 and 04:06 (peak 98M, a 15.8G read from disk each time = model preload), restarting each time (`Restart=on-failure`). Cause: PC memory exhausted by concurrent agent work (30G total, 26G used, 4G available at check); the cgroup OOM killer picked llama-swap. Last restart (04:06) is active and serving `/v1/models`. No config fault; left alone. If it recurs, look at what else ran (`system-history`) rather than the unit.
+
 - 2026-11-15 02:40 (health-watch) — `alert/SystemdUnitFailed/pc/systemd` (firing since 01:22Z): the user manager journal logs failed transient `run-p*-i*.scope` units, the wasm-box sandbox wrappers (`[systemd-run] .../session-check/native-env/bin/python3 -I -c ...` with bwrap/hostjail) whose payload exited non-zero. Eight such scopes sit in `systemctl --user --failed`; the system manager has none. The wasm-box thread's own sandbox runs, not a machine fault; left alone (`reset-failed` would only hide them).
 
 - 2026-11-14 20:55 (health-watch) — `alert/SystemdUnitFailed/pc/wbox-infra-tests` (firing since 19:41Z = 20:41): the wasm-box user service `wasm-box infra: tests` (owned by the wasm-box thread) was stopped at 20:40 by its owner (restart); the stop hung on an `ssh` child, final-sigterm timed out and systemd logged `Failed with result 'timeout'`. Unit gone, `systemctl --user --failed` empty. The agent's own job, not a machine fault; left alone.
