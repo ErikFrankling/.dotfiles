@@ -297,6 +297,8 @@ beyond the short rev, no log excerpts; the thread has the details.
 
 ## Incident log
 
+- 2026-11-15 02:40 (health-watch) — `alert/SystemdUnitFailed/pc/systemd` (firing since 01:22Z): the user manager journal logs failed transient `run-p*-i*.scope` units, the wasm-box sandbox wrappers (`[systemd-run] .../session-check/native-env/bin/python3 -I -c ...` with bwrap/hostjail) whose payload exited non-zero. Eight such scopes sit in `systemctl --user --failed`; the system manager has none. The wasm-box thread's own sandbox runs, not a machine fault; left alone (`reset-failed` would only hide them).
+
 - 2026-11-14 20:55 (health-watch) — `alert/SystemdUnitFailed/pc/wbox-infra-tests` (firing since 19:41Z = 20:41): the wasm-box user service `wasm-box infra: tests` (owned by the wasm-box thread) was stopped at 20:40 by its owner (restart); the stop hung on an `ssh` child, final-sigterm timed out and systemd logged `Failed with result 'timeout'`. Unit gone, `systemctl --user --failed` empty. The agent's own job, not a machine fault; left alone.
 
 - 2026-11-14 18:20 (health-watch) — `alert/SystemdUnitFailed/pc/wbox-infra-p1-chain3-wait` (firing since 17:00Z): a wasm-box user service (`wasm-box infra: p1-chain3-wait`, owned by the wasm-box thread) exited 1 at 18:00 ("chain stopped: V8 piece ended with neither rc 0 nor a timebox"), restarted itself, and was stopped at 18:16 (by its owner). Unit gone, `systemctl --user --failed` empty. The agent's own job failing, not a machine fault; left alone.
