@@ -609,6 +609,7 @@ let
             | jq -c --unbuffered 'select(._tag == "Exit" and .requestId == "1")' \
             | head -n 1) || true
           [ "$(jq -r '.exit._tag // empty' <<< "$answer")" = "Success" ] && break
+          echo "T3 launch attempt $attempt of 3 got no success answer" >&2
         done
         if [ "$(jq -r '.exit._tag // empty' <<< "$answer")" != "Success" ]; then
           # A lost response does not prove launch failed. Let the next poll
