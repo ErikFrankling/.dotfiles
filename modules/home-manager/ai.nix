@@ -271,6 +271,9 @@ in
     for server in node_repl cloudflare-api agent-seat neptune-dxp naia-bot; do
       ${codexCliUpstream}/bin/codex mcp remove "$server"
     done
+    if ${pkgs.gnugrep}/bin/grep -Fq '[plugins."neptune-dxp@neptune-dxp-marketplace"]' "$HOME/.codex/config.toml"; then
+      ${codexCliUpstream}/bin/codex plugin remove neptune-dxp@neptune-dxp-marketplace
+    fi
   '';
 
   # home.file.".codex/config.toml" = {
