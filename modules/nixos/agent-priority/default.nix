@@ -451,13 +451,24 @@ in
         # the rest and cannot be swapped any further, the kernel's OOM killer
         # takes the process with the highest score: an agent job
         # (OOMScoreAdjust 800), not the desktop.
-        systemd.user.services.t3code = {
+        # Plain-text drop-ins, not `systemd.user.services.X.serviceConfig`:
+        # a NixOS service always gets Environment=PATH=coreutils,findutils,
+        # grep,sed,systemd, and as a drop-in that replaced the manager's PATH
+        # (2026-11-15: the shell's launcher found neither `sh` nor
+        # t3code-desktop, so no app it started ran).
+        systemd.user.units."t3code.service" = {
           overrideStrategy = "asDropin";
-          serviceConfig.MemoryMin = "2G";
+          text = ''
+            [Service]
+            MemoryMin=2G
+          '';
         };
-        systemd.user.services.erikshell = {
+        systemd.user.units."erikshell.service" = {
           overrideStrategy = "asDropin";
-          serviceConfig.MemoryMin = "4G";
+          text = ''
+            [Service]
+            MemoryMin=4G
+          '';
         };
         # Every app-NAME-ID.scope the launcher starts (Cursor, the T3 Code
         # window, Obsidian, WebCord, Chromium, 1Password).
