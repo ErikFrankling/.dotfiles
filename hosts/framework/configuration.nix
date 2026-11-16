@@ -218,7 +218,7 @@
   hardware.fw-fanctrl.enable = true;
 
   # Add a custom config
-  hardware.fw-fanctrl.config = {
+  hardware.fw-fanctrl.settings = {
     defaultStrategy = "slow";
     strategies = {
       "slow" = {
