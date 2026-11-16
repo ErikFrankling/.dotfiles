@@ -54,7 +54,25 @@ die() {
   exit 2
 }
 unit() { echo "agent-job-$1.service"; }
-running() { systemctl --user is-active --quiet "$(unit "$1")"; }
+# A manager reexec briefly closes its private bus. A failed query is unknown,
+# not evidence that a job stopped (which could replay a live heavy client).
+running() {
+  local active attempt
+  for ((attempt = 0; attempt < 30; attempt++)); do
+    if active=$(systemctl --user show --property=ActiveState --value "$(unit "$1")"); then
+      case "$active" in
+        active|activating|reloading|deactivating|refreshing) return 0 ;;
+        inactive|failed) return 1 ;;
+      esac
+    fi
+    if [ "$attempt" -eq 0 ]; then
+      echo "agent-job: cannot determine $1 state; waiting for the user manager (no job will be started)" >&2
+    fi
+    sleep 2
+  done
+  echo "agent-job: $1 state is unknown; detached without changing the job; retry agent-job attach $1" >&2
+  exit 75
+}
 valid() { [[ $1 =~ ^[A-Za-z0-9_.-]{1,100}$ ]] || die "bad job name '$1' (letters, digits, . _ -)"; }
 
 is_agent() {
@@ -71,12 +89,13 @@ follow() {
   echo "agent-job: following $(unit "$name") (log: $log; reattach: agent-job attach $name)" >&2
   tail -n "$lines" -F "$log" 2>/dev/null &
   local tailpid=$!
+  trap 'kill $tailpid 2>/dev/null || true' EXIT
   trap 'kill $tailpid 2>/dev/null; echo "agent-job: detached; $name keeps running (agent-job attach $name)" >&2; exit 130' INT TERM HUP
   while running "$name"; do sleep 2; done
   sleep 1
   kill "$tailpid" 2>/dev/null || true
   wait "$tailpid" 2>/dev/null || true
-  trap - INT TERM HUP
+  trap - INT TERM HUP EXIT
   if [ -s "$state/$name.status" ]; then
     local status
     status=$(cat "$state/$name.status")
