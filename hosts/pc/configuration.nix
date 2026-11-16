@@ -9,6 +9,8 @@
 }:
 
 {
+  imports = [ ./wbox-proof-reservation.nix ];
+
   services.local-stt.enable = true;
 
   # Removed 2026-11-11: the pc no longer has remote access to the work laptop
