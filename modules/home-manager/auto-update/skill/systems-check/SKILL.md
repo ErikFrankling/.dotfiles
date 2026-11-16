@@ -297,6 +297,8 @@ beyond the short rev, no log excerpts; the thread has the details.
 
 ## Incident log
 
+- 2026-11-16 14:35 (health-watch) — `alert/SystemdUnitFailed/pc/agent-daemon@econ500-a09-v2-offload` (firing since 13:13Z = 14:13): a wasm-box agent daemon (`offload-k8s.sh`, `$1: unbound variable`, restart counter 3 in 30 s, then a `CAP_REACHED` run) failed at 14:12-14:13, was restarted by its owner and stopped cleanly at 14:19. Unit inactive, `systemctl --user --failed` empty. The agent's own script, not a machine fault; left alone.
+
 - 2026-11-16 13:40 (health-watch) — `alert/DiskFillingUp/data97//mnt/data` (firing since 12:20Z): `/mnt/data` 95% used, 46G free of 916G. wasm-box owns the growth (`wbox-archive` 197G, `wbox-r3` 39G, `wbox-bin` 35G, `wbox-research`/`wbox-bench` 14G each). Report only, nothing deleted per the 2026-11-12 policy; not a machine fault.
 
 - 2026-11-15 08:35 (health-watch) — `alert/DiskFillingUp//dev/nvme0n1p4/ext4/pc` (firing since 06:11Z): `/` at 83% used, 290G free (~16%), warning only. No runaway writer found; `~/projects` 320G (`personal` 189G is cars-data, Erik's data), `~/.cache` 103G (Erik's caches), `~/.t3` 40G, `/tmp` only 670M (3d tmpfiles rule works), `/mnt/data` 162G free. 183 agent worktrees exist (mostly wasm-box T3 worktrees, left to T3's own cleanup; none unmerged deleted). Nothing deleted per policy (wasm-box caches and datasets are never removed by repair sessions); not a machine fault.
