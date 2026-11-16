@@ -49,6 +49,7 @@ in
     ../../modules/home-manager/machines
     ../../modules/home-manager/notify # phone notifications skill
     ../../modules/home-manager/bro
+    ../../modules/home-manager/ponytail # smallest-complete-change skills for every harness
     ../../modules/home-manager/speak # `speak` tool: refuses here (PC speakers only)
     inputs.time.homeManagerModules.agent-v2
     ./t3code.nix # work agents run here, not on the pc

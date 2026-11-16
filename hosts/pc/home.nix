@@ -205,6 +205,7 @@ in
     ../../modules/home-manager/heavy # `heavy`: heavy agent work on the homelab worker
     ../../modules/home-manager/t3-android-release # Android release of the T3 fork without GitHub Actions
     ../../modules/home-manager/bro
+    ../../modules/home-manager/ponytail # smallest-complete-change skills for every harness
     ../../modules/home-manager/todo-nudge # wake the personal agent while its to-do list has actionable items
     ../../modules/home-manager/speak # the personal agent may talk out loud on the PC speakers
     ../../modules/home-manager/calendar # calendar-next + meeting reminders spoken on the PC speakers
