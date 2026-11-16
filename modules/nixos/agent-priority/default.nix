@@ -379,6 +379,9 @@ in
         # jobs; OOM preference below agents and jobs (800).
         systemd.user.services."agent-daemon@" = {
           description = "Agent daemon %i";
+          # Updating the client must not restart live gates or schedulers.
+          # The new launcher is used when the daemon next starts naturally.
+          restartIfChanged = false;
           unitConfig.StartLimitIntervalSec = 0;
           serviceConfig = {
             ExecStart = "${agentJob}/bin/agent-job __daemon %i";
