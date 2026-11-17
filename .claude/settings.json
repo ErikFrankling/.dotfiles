@@ -1,0 +1,7 @@
+{
+  "skillOverrides": {
+    "systems-check": "on",
+    "nix-update-doctor": "on",
+    "dotfiles-sync": "on"
+  }
+}

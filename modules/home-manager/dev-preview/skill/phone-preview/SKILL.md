@@ -1,6 +1,6 @@
 ---
 name: phone-preview
-description: Phone-reachable links for dev servers on Erik's PC. Load whenever you start a dev/preview server or give Erik a localhost / 127.0.0.1 / 0.0.0.0 URL (Vite, Next, Astro, Storybook, a static server, an API). Erik usually reads you from his phone over the VPN, where localhost links do not work; this explains the https://pc-<port>.erikfrankling.duckdns.org address that does.
+description: "Phone-reachable https://pc-<port> links for dev servers. Load whenever you give Erik a localhost URL."
 ---
 
 # Phone previews of dev servers

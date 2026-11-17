@@ -18,6 +18,15 @@ in
     home.file.".t3/personal/.mcp.json".text = builtins.toJSON { mcpServers = servers; };
     home.file.".t3/personal/.claude/settings.json".text = builtins.toJSON {
       enabledMcpjsonServers = lib.attrNames servers;
+      # Erik's front door: the domain skills that every other session lists
+      # only in their own projects (ai.nix, claudeManagedSettings).
+      skillOverrides = lib.genAttrs [
+        "systems-check"
+        "nix-update-doctor"
+        "dotfiles-sync"
+        "math-video"
+        "basecamp"
+      ] (_: "on");
     };
   };
 }

@@ -25,68 +25,25 @@ let
     # "${home}/projects/new/husk/husk-agent-pack/skills" # retired Husk imports
   ];
   # Global instructions for every Claude Code and Codex session (T3 Code's Codex
-  # uses its own CODEX_HOME, ~/.codex-t3).
+  # uses its own CODEX_HOME, ~/.codex-t3). Every session pays for every token
+  # here (Erik, 2026-11-17: 100k+ tool calls a day), so this holds only the
+  # rules that must hold everywhere, one line each, and points to the skill
+  # with the details. Procedures belong in skills, which load only when needed.
   instructions = ''
-    # Company brain
+    # Rules on Erik's machines
 
-    Erik's agents share a company brain: workflows, skills and session reports about how things are done on his machines and in his company (home lab, NixOS, X/Twitter, explainer videos, creative work, deploys). It is the Executor app `brain`: tools `tools.brain.search`, `read`, `publish`, `feedback` and `recent` (call them through the executor MCP server), and every saved skill is readable with Executor's `skills` tool (`{"app": "brain"}`).
-
-    - Before a task that touches this environment, or that someone here has probably done before, search the brain with the task in a few words, read the best match and follow it unless the user says otherwise.
-    - After following an entry, call `feedback` with worked, failed or outdated and a one-line note.
-    - After solving something non-obvious, `publish` it (or update the entry you followed by passing its id): kind `workflow` for a repeatable way of doing something, `session` for what you did and how you solved it. Exact commands, paths and pitfalls; never secrets.
-    - Pass `agent` (your product name, e.g. "Claude Code") on every brain call.
-
-    # Never contact other people
-
-    Never send, post, reply, react, comment, invite, share or connect with any other person on Erik's behalf (Discord, LinkedIn, X, email, Teams, SMS, GitHub comments, connect.husksecurity.dev invites, shared docs, links), unless Erik approved that exact message in this conversation. Drafts for Erik to send himself are fine. Notifications to Erik himself are fine. Erik: "I don't want anyone to receive any AI slop from me."
-
-    # Finish what Erik asked
-
-    Finish what Erik asked, all the way to live. Don't stop to ask permission for things inside his request: deploying to production, merging to main, migrating data after a verified backup, publishing app builds, changing homelab or dotfiles config. Pick sensible defaults and state them in your report. Stop only for something irreversible with no backup, something needing Erik physically (a login or phone tap), or contacting other people (see the rule above). "Done" means live and proven (screenshots, logs, URLs), not "ready on a branch".
-
-    # Agent traces are never deleted
-
-    Erik (2026-11-12): "Never ever get rid of agent traces, they are very valuable." Agent traces are every transcript, session log and run output of any agent: `~/.claude/projects`, `~/.claude_2`, `~/.codex/sessions`, `~/.codex/archived_sessions`, `~/.codex*/*.sqlite`, `~/.codex-t3`, `~/.t3/userdata`, `~/.local/share/opencode`, `~/.grok`, `~/.omp`, `~/agent-traces`, and agent output inside projects or data folders (`codex exec --json` JSONL, prompts, stdout/stderr logs, outcomes, run logs). No cleanup, disk emergency or retention setting deletes, truncates, prunes or rewrites them. When a folder that holds traces must go, copy the traces to `~/agent-traces/<project>/` first and verify the copy.
-
-    # Clean up after yourself
-
-    Every worktree, clone or scratch checkout you create, you remove once its work is merged (`git worktree remove`, delete the merged branch, and its per-worktree build output with it). Abandoned worktrees with their own `target/` and `node_modules` filled both of Erik's drives in 2026-11. Leave only unfinished work, and say where it is. Scheduled sessions also sweep what earlier runs left: the `housekeeping` skill.
-
-    # Never end a turn while waiting
-
-    Ending a turn means your final report has been sent. Never end a turn while you wait on something you started or need (a build, deploy, test run, idle gate, CI, another session): "waiting for the heavy build", "the monitor is armed, I'll report when…" and "I'll check later" leave the work stuck, because nothing re-invokes you. Wait inside the turn: poll at a sensible interval with a cap (up to 45-60 minutes), then continue. If the wait is longer, finish what you can and report to whoever asked (`t3_thread_send` to the personal agent when it briefed you) what is pending and what will pick it up. Rely only on a mechanism that really re-invokes you (a T3 scheduled task or `ScheduleWakeup` that fires, a monitor the harness tracks).
-
-    # When the environment is broken
-
-    If something on Erik's machines that your task needs is missing or broken (an MCP server or tool, computer use, a service, a package, a login, a skill), do not just report it and stop. Start a repair session in the `.dotfiles` T3 Code project (workspace root `/home/erikf/.dotfiles`, project id `d16c5128-fa5d-4f7e-bf79-9b395f60962b`) with `t3_thread_launch`. Its message says what you tried, the exact error, what you need it for, and: "find the root cause, fix it in the dotfiles following AGENTS.md, rebuild, commit and push, and report back". Link the thread to Erik (`[title](t3-thread://v1/<threadId>)`), then carry on with whatever does not depend on it, or wait for it with `t3_thread_wait` when it blocks the task. Without the T3 Code tools, tell Erik exactly what is broken.
-
-    # Long jobs go to the homelab
-
-    Erik's PC has a fast CPU: compile, build, typecheck and test on it as usual. What he minds is something hogging it for minutes (Erik: "of course you can compile things locally, I have a very fast CPU, let's use it; just if this takes 10 min, consider offloading"). So anything expected to take ~10+ minutes, or that turns out to, runs on the homelab: `heavy -- <cmd>` (big Gradle/APK release builds, long test suites, embedding and ML batches, data processing), `heavy emulator start` for an emulator you need for long, `nix-remote` or `rebuild --remote` for long Nix builds. Agent sessions run in a capped slice (`app-t3code.slice`: all 16 CPUs behind Erik's apps, 20/22 GB RAM of which about 14 GB is usually free, disk caps), the same whether Erik is at the PC or not; never escape it with `--slice=`, Docker, sudo or system units. Nothing kills a job for running long or using CPU. A watchdog kills the biggest agent job only when Erik's desktop stalls on disk or memory or the agents thrash, and tells you to re-run it with `heavy`; memory is the limit, so count what runs in parallel. There is no max mode any more (`agent-max` was removed 2026-11-12). Details: the `machines` skill.
-
-    # Small before big
-
-    Erik (2026-11-17): before an expensive run, make yourself confident it will succeed with smaller tests that do not wait in a queue. Never spend hours to find a bug a few minutes would have found. Before any long or costly job (a big build, a long test suite or campaign, a batch over many items, anything holding a scarce slot), check the identities it will use (source commit, binaries, inputs), then run the same chain at the smallest scale that still passes through every stage: the same launcher, config and pins, a handful of items, one of each kind. That small run starts directly, without waiting behind big jobs, and takes minutes. The big job starts only after it passes, the small run is repeated after any pin change, and the big job reports per item as it goes so a failure shows early.
-
-    # Model tiers
-
-    Claude is the default for everything, including trivial, bulk and sub-agent work; Erik has a very big Claude token budget. Opus 5.5 (`claude-opus-5-5`) for real engineering and anything hard; Sonnet 5.5 (`claude-sonnet-5-5`) or Haiku 5.5 (`claude-haiku-5-5`) for simple or mechanical work and for automated runs where they are enough. For a second opinion or a separate perspective, use Fable (`claude-fable-5-1`). Erik has small plans on the other providers, each used for one job and not for general work: OpenCode for sensitive work such as cyber security (Chinese models are good at it), Grok for looking at Twitter/X, Codex for image generation. Cursor is also a small plan; use it only if he picks it. A model Erik picks himself always wins. Details and exact targets: the `model-tiers` skill.
-
-    # Writing as Erik
-
-    Before writing text Erik will hand in or send, load the brain skill `erik-writing-style`.
-
-    # Shopping
-
-    For shopping research, load the brain skill `shopping`.
-
-    # Agent Wiki
-
-    Knowledge and research about subjects Erik follows (facts, papers, posts he sends, what we understand) go in his Obsidian vault at `~/obsidian/Agent Wiki/`, not the brain. Load the brain skill `agent-wiki` before reading or writing it.
+    - Never contact other people: send, post, reply, react, comment, invite or share nothing to anyone but Erik (Discord, X, LinkedIn, email, Teams, SMS, GitHub issues/PRs/comments, shared docs, links) unless Erik approved that exact message in this conversation. Drafts for him and notifications to him are fine.
+    - Never delete, truncate, prune or rewrite agent traces (transcripts, session logs, run output: `~/.claude/projects`, `~/.codex*`, `~/.t3/userdata`, `~/agent-traces`, ...). Full list, and how to move them when a folder must go: `housekeeping` skill.
+    - Authentication (sign-in, OAuth/SSO, MFA, passkeys, existing logins) only in the real agent Chromium (`browser` MCP, `browser-use` skill), never T3's built-in `preview_*`; run `agent-cookie-sync` before asking Erik to log in.
+    - Claude is the default model for everything, sub-agents included; a model Erik picks wins. Which model or provider for what: `model-tiers` skill.
+    - Finish what Erik asked all the way to live and proven, without asking for steps inside the request. Never end a turn while waiting on something you started; wait inside the turn. Details, long jobs (`heavy`), "small before big" and what to do when something on the machines is broken: `machines` skill.
+    - Remove worktrees and clones you created once merged (`housekeeping` skill).
+    - Company brain (search before a task here, publish after), Erik's writing style, shopping, Agent Wiki, and skills this session does not list: `company-brain` skill.
   '';
   # Skills that ship with this module, installed for every harness.
   skills = {
     model-tiers = ./model-tiers;
+    company-brain = ./company-brain-skill;
   };
 
   sync = pkgs.writeShellApplication {

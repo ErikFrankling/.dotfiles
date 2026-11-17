@@ -1,6 +1,6 @@
 ---
 name: machines
-description: Erik's machines, how they connect, and how much load each can take. Load before anything resource-heavy (running several agents, codex/claude sessions or jobs in parallel, batch generation, builds, test suites, local models, big downloads, anything with `&`, `xargs -P` or a worker pool), and whenever a task needs another machine (ssh, the homelab, the build server, the laptop).
+description: "Erik's machines and how to reach them, load limits, `heavy` for long jobs, and the full working rules (finish to live, never end a turn waiting, broken environment, small before big). Load before heavy or parallel work, ssh or another machine."
 ---
 
 # Erik's machines
@@ -22,7 +22,29 @@ description: Erik's machines, how they connect, and how much load each can take.
   build goes first.
 - Do not start VM 100 on proxmox (its address collides with the k3s VIP). Never reboot or power off any machine.
 
+## Working rules on Erik's machines
+
+The global instructions carry these as one line each; this is the full text.
+
+### Finish what Erik asked
+
+Finish what Erik asked, all the way to live. Don't stop to ask permission for things inside his request: deploying to production, merging to main, migrating data after a verified backup, publishing app builds, changing homelab or dotfiles config. Pick sensible defaults and state them in your report. Stop only for something irreversible with no backup, something needing Erik physically (a login or phone tap), or contacting other people. "Done" means live and proven (screenshots, logs, URLs), not "ready on a branch".
+
+### Never end a turn while waiting
+
+Ending a turn means your final report has been sent. Never end a turn while you wait on something you started or need (a build, deploy, test run, idle gate, CI, another session): "waiting for the heavy build", "the monitor is armed, I'll report when…" and "I'll check later" leave the work stuck, because nothing re-invokes you. Wait inside the turn: poll at a sensible interval with a cap (up to 45-60 minutes), then continue. If the wait is longer, finish what you can and report to whoever asked (`t3_thread_send` to the personal agent when it briefed you) what is pending and what will pick it up. Rely only on a mechanism that really re-invokes you (a T3 scheduled task or `ScheduleWakeup` that fires, a monitor the harness tracks).
+
+### When the environment is broken
+
+If something on Erik's machines that your task needs is missing or broken (an MCP server or tool, computer use, a service, a package, a login, a skill), do not just report it and stop. Start a repair session in the `.dotfiles` T3 Code project (workspace root `/home/erikf/.dotfiles`, project id `d16c5128-fa5d-4f7e-bf79-9b395f60962b`) with `t3_thread_launch`. Its message says what you tried, the exact error, what you need it for, and: "find the root cause, fix it in the dotfiles following AGENTS.md, rebuild, commit and push, and report back". Link the thread to Erik (`[title](t3-thread://v1/<threadId>)`), then carry on with whatever does not depend on it, or wait for it with `t3_thread_wait` when it blocks the task. Without the T3 Code tools, tell Erik exactly what is broken.
+
+### Small before big
+
+Erik (2026-11-17): before an expensive run, make yourself confident it will succeed with smaller tests that do not wait in a queue. Never spend hours to find a bug a few minutes would have found. Before any long or costly job (a big build, a long test suite or campaign, a batch over many items, anything holding a scarce slot), check the identities it will use (source commit, binaries, inputs), then run the same chain at the smallest scale that still passes through every stage: the same launcher, config and pins, a handful of items, one of each kind. That small run starts directly, without waiting behind big jobs, and takes minutes. The big job starts only after it passes, the small run is repeated after any pin change, and the big job reports per item as it goes so a failure shows early.
+
 ## Do not overload the pc
+
+In short (Erik): "of course you can compile things locally, I have a very fast CPU, let's use it; just if this takes 10 min, consider offloading". Agent sessions run in a capped slice (`app-t3code.slice`: all 16 CPUs behind Erik's apps, 20/22 GB RAM of which about 14 GB is usually free, disk caps); memory is the limit, so count what runs in parallel.
 
 The pc is the machine Erik is sitting at. When it runs out of memory it does
 not crash, it swaps. The desktop freezes and T3 Code stops answering. That

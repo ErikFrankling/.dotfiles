@@ -119,16 +119,78 @@ let
     claudePackage = claudeCliUpstream;
     # Computer use on this host: agent browser (Playwright), Cua Driver and
     # the agent seat. Local stdio, so screenshots reach the model directly.
-    localMcpServers =
-      lib.optionalAttrs agentDesktopEnabled config.programs.agent-desktop.mcpServers
-      // lib.optionalAttrs (hostName == "samsung-ablo") {
-        # Native desktop MCP manages Environments; saved login items use `op`.
-        onepassword = {
-          command = "${osConfig.programs._1password-gui.package}/share/1password/1password-mcp";
-          args = [ ];
-          env = { };
-        };
+    inherit localMcpServers;
+    # Claude Code: only `browser` (the authentication path) at launch; cua and
+    # agent-seat come with the computer-use subagent (computer-use/default.nix).
+    claudeLocalMcpServers = builtins.removeAttrs localMcpServers [
+      "cua"
+      "agent-seat"
+    ];
+  };
+  localMcpServers =
+    lib.optionalAttrs agentDesktopEnabled config.programs.agent-desktop.mcpServers
+    // lib.optionalAttrs (hostName == "samsung-ablo") {
+      # Native desktop MCP manages Environments; saved login items use `op`.
+      onepassword = {
+        command = "${osConfig.programs._1password-gui.package}/share/1password/1password-mcp";
+        args = [ ];
+        env = { };
       };
+    };
+  # Claude Code settings this config owns, merged into each account's mutable
+  # settings.json (Claude writes its own /config choices there too). Each one
+  # cuts every session's starting context (measured 2026-11-17, first-call
+  # input tokens of a fresh session; see the commit):
+  # - enableArtifact: the Artifact tool is ~8.8k tokens and was called in 4 of
+  #   ~1900 sessions in two weeks; T3's html_preview/html_render show pages.
+  #   User-level off cannot be turned back on by a project.
+  # - enableWorkflows: the Workflow tool is ~2.1k tokens (3 sessions in two
+  #   weeks). A project turns it back on with `"enableWorkflows": true` in its
+  #   .claude/settings.json.
+  # - plugins: frontend-design and claude-md-management (unused or not wanted
+  #   in every session), basecamp (duplicates the basecamp user skill).
+  # - skillOverrides: "name-only" lists a skill without its description,
+  #   "user-invocable-only" keeps /name for Erik only, "off" hides it; a
+  #   project's .claude/settings.json can set "on" again (that is how
+  #   systems-check etc. stay on in ~/.dotfiles and its clones, and in the
+  #   personal agent).
+  claudeManagedSettings = {
+    cleanupPeriodDays = 36500;
+    enableArtifact = false;
+    enableWorkflows = false;
+    enabledPlugins = {
+      "frontend-design@claude-plugins-official" = false;
+      "claude-md-management@claude-plugins-official" = false;
+      "basecamp@37signals" = false;
+    };
+    skillOverrides = {
+      # Domain skills: only in the projects that use them.
+      systems-check = "off";
+      nix-update-doctor = "off";
+      dotfiles-sync = "off";
+      math-video = "off";
+      basecamp = "off";
+      # Rare or self-explanatory: the name is enough.
+      screen-recording = "name-only";
+      dataviz = "name-only";
+      claude-api = "name-only";
+      code-review = "name-only";
+      update-config = "name-only";
+      loop = "name-only";
+      run = "name-only";
+      simplify = "name-only";
+      security-review = "name-only";
+      workflow-authoring = "name-only";
+      # Commands Erik types himself.
+      bro = "user-invocable-only";
+      init = "user-invocable-only";
+      keybindings-help = "user-invocable-only";
+      fewer-permission-prompts = "user-invocable-only";
+      plugin-authoring = "user-invocable-only";
+      # Only for the Artifact tool, which is off.
+      artifact-design = "off";
+      artifact-diagramming = "off";
+    };
   };
   codexCli = executorHarnesses.codex;
   claudeCli = executorHarnesses.claude;
@@ -405,10 +467,11 @@ in
     fi
   '';
 
-  # Agent traces are never deleted (Erik, 2026-11-12). Claude Code deletes
-  # transcripts in projects/ older than `cleanupPeriodDays`, 30 by default.
   # settings.json is Claude's own mutable file (it writes /config choices to
-  # it), so only this one key is set and the rest is kept.
+  # it), so only the keys in claudeManagedSettings are set (deep merge) and
+  # the rest is kept. cleanupPeriodDays: agent traces are never deleted (Erik,
+  # 2026-11-12); Claude Code deletes transcripts in projects/ older than it,
+  # 30 days by default.
   home.activation.claudeKeepTranscripts = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     for dir in "$HOME/.claude" "$HOME/.claude_2"; do
       [ -d "$dir" ] || continue
@@ -417,9 +480,9 @@ in
       if [ -e "$file" ]; then
         current=$(${pkgs.jq}/bin/jq -e . "$file" 2>/dev/null) || { echo "claude: cannot parse $file, leaving it alone" >&2; continue; }
       fi
-      if [ "$(${pkgs.jq}/bin/jq '.cleanupPeriodDays // 0' <<<"$current")" -lt 36500 ]; then
-        run ${pkgs.jq}/bin/jq '.cleanupPeriodDays = 36500' <<<"$current" >"$file.tmp"
-        run mv "$file.tmp" "$file"
+      new=$(${pkgs.jq}/bin/jq --argjson m ${lib.escapeShellArg (builtins.toJSON claudeManagedSettings)} '. * $m' <<<"$current")
+      if [ "$new" != "$current" ]; then
+        run install -m 644 /dev/stdin "$file" <<<"$new"
       fi
     done
   '';

@@ -1,6 +1,6 @@
 ---
 name: screen-recording
-description: Screen recordings and video demos on Erik's PC. Load whenever Erik asks for a recording, video, screencast, demo, walkthrough, or "show me" of something done in an app or browser, or for QA evidence as video. Covers recording the agent monitor, arranging windows for a clean shot, and adding captions/title cards so the video explains itself.
+description: "Screen recordings and video demos of work in an app or browser, with captions and title cards."
 ---
 
 # Screen recordings and video demos
@@ -62,7 +62,8 @@ ffprobe -v error -show_entries format=duration -of csv=p=0 "$D/raw.mp4"
 Alternative for a single window regardless of what else is on screen:
 `mcp__agent-seat__record_window` / `stop_recording` (window-only MP4, max 10
 min; needs a separate `record` permission that Erik approves manually, so
-prefer wf-recorder).
+prefer wf-recorder). In Claude Code only the `computer-use` agent has
+`agent-seat` (computer-use skill, "Your tools").
 
 ## 3. Add captions and titles (ffmpeg)
 

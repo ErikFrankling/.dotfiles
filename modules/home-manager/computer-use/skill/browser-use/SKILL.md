@@ -1,6 +1,6 @@
 ---
 name: browser-use
-description: "Browser use on Erik's PC. Load whenever a task involves a website or web app: \"browser use\", \"computer use\" on a site, logging in to anything (GitHub, Gmail/Google, Microsoft/Teams/Outlook, Basecamp, cloud consoles, the apps Erik is building), testing/QA of a web UI, filling forms, downloading from a site. You drive the agent's own Chromium (logged in wherever Erik is in Firefox, plus 1Password) with the `browser` Playwright MCP. Authentication always uses real agent Chromium; never T3 built-in preview."
+description: "Websites on Erik's PC through the agent Chromium (`browser` MCP, logged in like Erik): logins, web QA, forms, downloads. All authentication goes here, never T3 preview."
 ---
 
 # Browser use on Erik's PC
@@ -20,7 +20,11 @@ profile, fix discovery: current Firefox uses `~/.config/mozilla/firefox`, with
 `~/.mozilla/firefox` as the legacy fallback. A genuine Google/other-provider
 reauthentication challenge in the real browser may still require Erik; name
 that exact challenge. This rule applies on all laptops and the PC, for both
-harnesses and their subagents. Public, unauthenticated previews are separate.
+harnesses and their subagents (Erik's explicit rule, 2026-11-10). Keep the
+rules about Erik's own windows, external communication and phone approval
+prompts while you do it. The built-in preview remains fine for public,
+unauthenticated pages and app UI previews that do not depend on existing
+accounts.
 
 **Never contact other people.** Never send, post, reply, react, comment, invite, share or connect with anyone else on Erik's behalf (Discord, LinkedIn, X, email, Teams, SMS, GitHub comments, connect invites, shared docs), unless Erik approved that exact message in this conversation. Drafts for Erik to send himself are fine. Notifications to Erik himself are fine.
 

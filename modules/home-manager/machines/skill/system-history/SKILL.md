@@ -1,6 +1,6 @@
 ---
 name: system-history
-description: What ran on Erik's pc or framework laptop at a past time, and how much RAM, CPU, swap and disk each program, unit and T3 agent thread used. A task manager you can scroll back. Load whenever Erik reports lag, a freeze, a spike, high RAM or a hard reboot ("who was spiking", "what filled memory", "why was it slow at 01:20"), or asks what a thread, build or test run cost. Do not answer from `top` now; look at the time it happened.
+description: "What ran on the pc or laptop at a past time and what each program or T3 thread used (lag, freezes, spikes, hard reboots, what a run cost)."
 ---
 
 # System history: top, but for the past

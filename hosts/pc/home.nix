@@ -279,7 +279,14 @@ in
       ]
       (_: {
         source = config.lib.file.mkOutOfStoreSymlink "/home/erikf/projects/mathvid/skill";
-      });
+      })
+  # Claude Code lists math-video only in the mathvid repo (and the personal
+  # agent); every other session has it off (ai.nix, claudeManagedSettings).
+  // {
+    "projects/mathvid/.claude/settings.json".text = builtins.toJSON {
+      skillOverrides.math-video = "on";
+    };
+  };
 
   home.packages = with pkgs; [
     prismlauncher

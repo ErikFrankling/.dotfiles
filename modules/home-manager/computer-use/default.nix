@@ -438,9 +438,23 @@ in
         }
       ))
       // {
-        ".codex/AGENTS.md".text = lib.mkBefore (builtins.readFile ./auth-browser-instructions.md);
-        ".codex-t3/AGENTS.md".text = lib.mkBefore (builtins.readFile ./auth-browser-instructions.md);
-        ".claude/CLAUDE.md".text = lib.mkBefore (builtins.readFile ./auth-browser-instructions.md);
+        # Claude Code sessions get only `browser` (ai.nix); cua and agent-seat
+        # cost every session ~2.5k tokens of tool names and instructions and
+        # were used in 2 of ~1900 sessions (2026-11-03..17). This subagent
+        # starts them on demand (Claude Code agent `mcpServers`).
+        ".claude/agents/computer-use.md".text = ''
+          ---
+          name: computer-use
+          description: Desktop GUI work on Erik's PC (apps, windows, real keyboard/mouse, window screenshots and recordings) with the cua and agent-seat tools. Brief it with the goal, the app or window, what done looks like and what evidence to bring back.
+          mcpServers:
+            - browser
+            - ${builtins.toJSON { inherit (config.programs.agent-desktop.mcpServers) cua; }}
+            - ${builtins.toJSON { inherit (config.programs.agent-desktop.mcpServers) agent-seat; }}
+          ---
+          You do desktop GUI work on Erik's PC for another agent. Load the computer-use skill first and follow it; also browser-use for websites and screen-recording for videos. Verify the result, then report what you did and saw, and the absolute paths of any screenshots or recordings.
+        '';
       };
+    # The authentication rule is one line of the global instructions
+    # (company-brain.nix); its full text is in the browser-use skill.
   };
 }

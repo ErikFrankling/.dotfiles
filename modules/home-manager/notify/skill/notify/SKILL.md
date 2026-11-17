@@ -1,6 +1,6 @@
 ---
 name: notify
-description: Send Erik a push notification on his phone (a native notification in his T3 Code app; tapping it opens your thread), or a one-time code (MFA, verification, pairing) he must type in. Load when you need his attention urgently, are blocked on his decision or login, finished something long he asked to hear about, or have a code he must type in. Any agent on Erik's machines can do this, the personal agent included.
+description: "Push a notification or one-time code to Erik's phone: urgent attention, a blocking decision or login, or a long job he asked to hear about."
 ---
 
 # Notify Erik on his phone

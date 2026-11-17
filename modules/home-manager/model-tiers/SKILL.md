@@ -1,6 +1,6 @@
 ---
 name: model-tiers
-description: Which model, provider and reasoning effort to use for a session, a delegated sub-agent or a scheduled task on Erik's machines. Claude (Opus 5.5, Sonnet 5.5, Haiku 5.5) is the default for everything; OpenCode, Grok and Codex are small plans for one job each; Fable is the second opinion. Load before launching a thread, delegating a task, scheduling a recurring task or writing an automated job, and when choosing the model for one.
+description: "Which model, provider and effort for a session, sub-agent or scheduled job: Claude by default, OpenCode, Grok and Codex for one job each, Fable for second opinions."
 ---
 
 # Model tiers

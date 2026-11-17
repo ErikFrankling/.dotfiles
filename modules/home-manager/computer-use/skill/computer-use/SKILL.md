@@ -1,6 +1,6 @@
 ---
 name: computer-use
-description: "Computer use on Erik's PC. Load whenever Erik says \"computer use\", \"use the computer\", \"click through\", \"QA this\", \"test the UI\", \"open the app\", \"take a screenshot\", or asks for anything done through a GUI: desktop apps, windows, keyboard/mouse input, screenshots, or screen recordings. For websites also load browser-use; for videos/demos also load screen-recording. Authentication always uses real agent Chromium; never T3 built-in preview."
+description: "Desktop GUI work on Erik's PC (apps, windows, keyboard/mouse, screenshots) through the computer-use agent. Websites: browser-use; videos: screen-recording."
 ---
 
 # Computer use on Erik's PC
@@ -79,6 +79,16 @@ Erik runs **Hyprland** (a tiling Wayland compositor) with three outputs:
 
 Tool names appear as e.g. `mcp__cua__get_window_state`,
 `mcp__agent-seat__input_window`, `mcp__browser__browser_navigate`.
+
+**In Claude Code, `cua` and `agent-seat` come with the `computer-use` agent,
+not with every session** (about 2.5k tokens of tool names and instructions
+that 99% of sessions never used; Erik, 2026-11-17). Every Claude session has
+`browser`. For desktop work, hand the GUI steps to that agent: the `Agent`
+tool with `subagent_type: "computer-use"`, a brief with the goal, the app or
+window, what done looks like and what evidence to bring back (screenshot or
+recording paths). It loads this skill itself and has all three servers.
+Codex and OpenCode sessions still get `cua` directly. If you *are* the
+`computer-use` agent, use the tools below directly.
 
 Shell helpers: `agent-desktop status` (health), `agent-desktop screenshot
 FILE.png` (the whole AGENT-1 screen), `hyprctl -i 0 clients -j` (window list;

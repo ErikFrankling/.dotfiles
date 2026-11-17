@@ -1,6 +1,6 @@
 ---
 name: dotfiles-sync
-description: Get Erik's ~/.dotfiles checkout committed, merged with origin/main and pushed. Load when the daily auto-update asks for it, or when Erik asks to sync, commit or push local dotfiles work, or to resolve a dotfiles merge conflict.
+description: "Commit, merge with origin/main and push local ~/.dotfiles work, or resolve a dotfiles merge conflict."
 ---
 
 # Syncing local dotfiles work

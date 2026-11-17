@@ -12,8 +12,9 @@ out does not mean Erik is logged out. Do not send Erik to sign into that empty
 profile. Run `agent-cookie-sync` and repair it if necessary before asking for
 login help. Use configured computer-use tools for native dialogs. This applies
 to both harnesses and subagents, on every machine. Public/unauthenticated UI
-previews may still use T3 preview. Full maintained rule:
-`modules/home-manager/computer-use/auth-browser-instructions.md`.
+previews may still use T3 preview. Full maintained rule: the browser-use skill
+(`modules/home-manager/computer-use/skill/browser-use/SKILL.md`); the global
+instructions (`modules/home-manager/company-brain.nix`) carry it as one line.
 
 ## Hard rule: no communication with people without Erik's approval
 

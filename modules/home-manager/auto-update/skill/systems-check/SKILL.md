@@ -1,6 +1,6 @@
 ---
 name: systems-check
-description: Morning systems check of Erik's machines and homelab. Also the incident procedure for repair sessions that health-watch starts when a health check keeps failing. Load for the scheduled morning check session, and whenever Erik asks whether "everything is working", for a health check of the pc, the framework laptop or the homelab, or why the daily update did not land somewhere.
+description: "Morning health check of the pc, framework and homelab, and the incident procedure for health-watch repair sessions."
 ---
 
 # Morning systems check: verify, repair, report

@@ -1,6 +1,6 @@
 ---
 name: bro
-description: "Re-explain the previous assistant message, or any text typed after the command, in a much simpler way. For when a reply made you go 'bro what'. Use /bro for a plain-language version of the last answer, or /bro <text> to simplify a pasted paragraph, error, email, or doc."
+description: "Re-explain the last reply, or text after /bro, in much simpler words."
 license: MIT
 ---
 

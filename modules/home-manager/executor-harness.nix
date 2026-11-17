@@ -27,6 +27,9 @@
   # to every session whether or not Executor is reachable. Used for computer
   # use on the PC, where screenshots should not round-trip through Executor.
   localMcpServers ? { },
+  # The subset Claude Code sessions get at launch (the rest can come with a
+  # subagent, see computer-use/default.nix).
+  claudeLocalMcpServers ? localMcpServers,
   # Explicit host opt-in: Erik wants unattended work without harness prompts.
   unattended ? false,
 }:
@@ -66,10 +69,12 @@ let
   );
   localMcpConfig = pkgs.writeText "local-mcp.json" (
     builtins.toJSON {
-      mcpServers = lib.mapAttrs (_: server: { type = "stdio"; } // server) localMcpServers;
+      mcpServers = lib.mapAttrs (_: server: { type = "stdio"; } // server) claudeLocalMcpServers;
     }
   );
-  localClaudeArgs = lib.optionalString (localMcpServers != { }) "--mcp-config=${localMcpConfig}";
+  localClaudeArgs = lib.optionalString (
+    claudeLocalMcpServers != { }
+  ) "--mcp-config=${localMcpConfig}";
   claudePermissionArgs = lib.optionalString unattended "--dangerously-skip-permissions";
   codexPermissionArgs = lib.optionalString unattended (
     lib.escapeShellArgs [

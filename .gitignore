@@ -1,8 +1,11 @@
 .codex
 noct4/
 
-# Agent scratch dirs — never commit (AGENTS.md)
-.claude/
+# Agent scratch dirs — never commit (AGENTS.md). settings.json is the
+# project's Claude Code settings: it turns the dotfiles-only skills on here
+# and in every clone the scheduled sessions use.
+.claude/*
+!.claude/settings.json
 
 # Company evidence belongs in private work storage, never this public repository.
 /hosts/samsung-ablo/evidence/

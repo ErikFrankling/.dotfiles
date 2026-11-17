@@ -1,6 +1,6 @@
 ---
 name: nix-update-doctor
-description: Run and repair the nightly NixOS update for Erik's machines. Load for the scheduled nightly update session, and whenever a `nix flake update`, rebuild, cache miss or evaluation warning in ~/.dotfiles needs dealing with (a broken package on unstable, a hash mismatch, a removed option, a deprecation, something compiling that should be cached).
+description: "Run and repair the nightly NixOS update and the T3 Code fork job: flake updates, rebuild failures, cache misses, evaluation warnings."
 ---
 
 # Nightly update: run it, repair it

@@ -1,6 +1,6 @@
 ---
 name: housekeeping
-description: Clean up what agents leave behind on Erik's machines (merged worktrees, dead scratch checkouts, per-worktree build output, stray `result` links) without ever touching agent traces or unfinished work. Every scheduled session (nightly update, T3 Code fork job, morning systems check, health-watch incidents) runs its "Start of run" sweep first and its "End of run" step last. Load it too whenever a task creates a worktree or clone, or when Erik asks to clean up disk.
+description: "Clean up worktrees, clones and build output agents left behind, never agent traces (full list here). Load when you create a worktree or clone, clean disk, or run a scheduled session."
 ---
 
 # Housekeeping: clean up first, clean up last
