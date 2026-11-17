@@ -373,6 +373,27 @@ in
         # slices T3 Code stops when its server restarts.
         systemd.user.slices.app-t3code-jobs.description = "Agent jobs that outlive their session";
 
+        # One memory bound for every agent's cargo build, test and clippy
+        # (Erik, 2026-11-17, wasm-box nix-plan N4), like nix-daemon's below:
+        # the kernel throttles at MemoryHigh instead of a queue admitting
+        # builds. It replaces wasm-box's build-sched and cargo-slot (an
+        # N-slot queue that kept fix branches waiting over an hour).
+        # A child of app-t3code.slice, so its caps, systemd-oomd and
+        # lag-guard still apply; nothing leaves the agent slice. A cargo
+        # gets here as a scope: `systemd-run --user --scope
+        # --slice=app-t3code-cargo.slice -- cargo ...` (the wasm-box dev
+        # shell's cargo does it itself).
+        # Sized from that day's 240 measured builds (build-sched peaks, tree
+        # RSS): p50 2.1 GiB, p90 3.5 GiB, max 6.1 GiB. Four typical builds
+        # (8.6) run under MemoryHigh; four p90 builds (14) reach MemoryMax.
+        systemd.user.slices.app-t3code-cargo = {
+          description = "Agents' cargo builds, one shared memory bound";
+          sliceConfig = {
+            MemoryHigh = "10G";
+            MemoryMax = "14G";
+          };
+        };
+
         # Agents' long-lived infra daemons (`agent-job daemon start`, see
         # agent-job.sh): declared, so agent-daemons.service can bring them
         # back after the user manager dies, which loses transient units
