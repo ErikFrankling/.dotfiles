@@ -385,12 +385,18 @@ in
         # shell's cargo does it itself).
         # Sized from that day's 240 measured builds (build-sched peaks, tree
         # RSS): p50 2.1 GiB, p90 3.5 GiB, max 6.1 GiB. Four typical builds
-        # (8.6) run under MemoryHigh; four p90 builds (14) reach MemoryMax.
+        # (8.6) run at about MemoryHigh.
+        # 8G / 12G / 2G swap, exactly nix-daemon's (16:31-17:06 the
+        # same day without them: 31 rustc at once, 7 GB of the slice swapped
+        # out, the system IO stall 90 % "full" for half an hour and lag-guard
+        # stopping builds). Past 12G the kernel OOM-kills in this slice
+        # instead of thrashing the disk.
         systemd.user.slices.app-t3code-cargo = {
           description = "Agents' cargo builds, one shared memory bound";
           sliceConfig = {
-            MemoryHigh = "10G";
-            MemoryMax = "14G";
+            MemoryHigh = "8G";
+            MemoryMax = "12G";
+            MemorySwapMax = "2G";
           };
         };
 
