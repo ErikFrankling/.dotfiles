@@ -3,17 +3,27 @@
 # long builds, test suites and emulators run on the pc for as long as the
 # desktop stays smooth (the agent slice caps in default.nix do most of that).
 # Runs as root every INTERVAL seconds over every process in the agent slice
-# (app-t3code.slice, except Erik's T3 terminals):
+# (app-t3code.slice, except Erik's T3 terminals) and the local Nix builds
+# (non-root processes of nix-daemon.service):
 #
 #   - Pressure: when Erik's own cgroups stall on disk IO or memory (avg10 over
-#     IO_FULL / MEM_FULL for SUSTAIN samples in a row), local Nix builds are
-#     stopped, and then by the kind of stall:
-#       memory (over MEM_FULL): the biggest agent job by RSS is stopped.
-#       disk IO: the agents' disk bandwidth on the stalled disk is cut
-#         (io.max on the agent slice, one THROTTLE_STEPS step per trigger),
-#         and given back a step per RELAX calm samples. Only when the lowest
-#         step is on and a disk-only stall goes on for FLOOR_SUSTAIN more
-#         triggers is a job stopped: the one doing the most IO on that disk.
+#     IO_FULL / MEM_FULL for SUSTAIN samples in a row), by the kind of stall:
+#       memory (over MEM_FULL): the biggest agent job or Nix build process by
+#         RSS is stopped.
+#       disk IO: the disk bandwidth of the agents and of nix-daemon on the
+#         stalled disk is cut (io.max on both cgroups, one THROTTLE_STEPS step
+#         per trigger), and given back a step per RELAX calm samples. Only when
+#         the lowest step is on and a disk-only stall goes on for FLOOR_SUSTAIN
+#         more triggers is a job stopped: the one doing the most IO on that
+#         disk, agent or Nix build.
+#
+# Local Nix builds are capped like the agents, not stopped first (2026-11-17).
+# Until then every trigger stopped every local build process before anything
+# else, whoever did the IO: 44 stops in 90 minutes that morning while agents'
+# cargo builds, du and a `nix store gc` loaded the disk, and wasm-box's local
+# Go and runtime derivations (~10 minutes each, built on the pc on purpose)
+# never finished. A stopped derivation loses all its work; a capped one only
+# slows down.
 #   - Agent thrash: when the agent slice stalls on memory (full avg10 over
 #     AGENT_MEM_FULL) while Erik's cgroups stall on disk IO (over
 #     AGENT_IO_FULL), its biggest job. A sample over both limits counts up,
@@ -76,7 +86,7 @@
 #
 # Environment: INTERVAL, IO_FULL, MEM_FULL, SUSTAIN, AGENT_MEM_FULL,
 # AGENT_IO_FULL, AGENT_SUSTAIN, THROTTLE_STEPS, RELAX, FLOOR_SUSTAIN, DEV_BUSY,
-# NOTIFY_EVERY, ERIK_UID, STATE, AGENTS_CGROUP (tests), DRY_RUN=1 (stops and
+# NOTIFY_EVERY, ERIK_UID, STATE, AGENTS_CGROUP and NIX_CGROUP (tests), DRY_RUN=1 (stops and
 # throttles nothing).
 
 # A watchdog must not die on a failed test or a vanished pid.
@@ -103,14 +113,25 @@ DEV_BUSY=${DEV_BUSY:-50}
 STATE=${STATE:-/run/lag-guard}
 
 agents=${AGENTS_CGROUP:-/sys/fs/cgroup/user.slice/user-$ERIK_UID.slice/user@$ERIK_UID.service/app.slice/app-t3code.slice}
-nixd=/sys/fs/cgroup/system.slice/nix-daemon.service
+nixd=${NIX_CGROUP:-/sys/fs/cgroup/system.slice/nix-daemon.service}
 providers='^(\.?claude(-wrapped)?|\.?codex.*|\.?opencode.*|\.?cursor-agent.*|\.?grok.*)$'
 homelab_hint="It was too much for Erik's pc right now: re-run it on the homelab with heavy -- <cmd> (emulator: heavy emulator start; Nix: nix-remote or rebuild --remote), or with fewer parallel jobs."
+nix_hint="This local Nix build was the top disk or memory user while the pc stalled with the build caps at their lowest. Re-run it (with fewer jobs: --max-jobs 1 --cores 4), or on the builder (nix-remote) if the project allows it."
 
 # All agent pids, minus Erik's T3 terminals.
 agent_pids() {
   find "$agents" -name cgroup.procs -not -path '*/t3code-terminal-*' -exec cat {} + 2>/dev/null
 }
+
+# Non-root processes of nix-daemon.service: the local build users.
+nix_pids() {
+  local pid uid
+  find "$nixd" -name cgroup.procs -exec cat {} + 2>/dev/null | while read -r pid; do
+    uid=$(awk '/^Uid:/ { print $2 }' "/proc/$pid/status" 2>/dev/null)
+    [ "${uid:-0}" != 0 ] && echo "$pid"
+  done
+}
+is_nix() { grep -q '/nix-daemon\.service' "/proc/$1/cgroup" 2>/dev/null; }
 
 rss_of() { awk '/^VmRSS/ { print $2; exit }' "/proc/$1/status" 2>/dev/null; }
 
@@ -120,13 +141,16 @@ stop() { # pid reason
   comm=$(cat "/proc/$pid/comm" 2>/dev/null) || return 0
   rss=$(rss_of "$pid")
   rss=$(awk -v k="${rss:-0}" 'BEGIN { printf "%.1fG", k / 1048576 }')
-  echo "stopping $pid $comm ($rss): $reason"
-  pending+=("$comm ($reason)")
+  local hint=$homelab_hint what=""
+  is_nix "$pid" && hint=$nix_hint what="nix build "
+  echo "stopping $what$pid $comm ($rss): $reason"
+  pending+=("$what$comm ($reason)")
   [ "$DRY_RUN" = 1 ] && return 0
-  # Tell the agent through the process's own stderr; never block on it.
+  # Tell the agent through the process's own stderr (for a Nix build, its
+  # build log); never block on it.
   # shellcheck disable=SC2016
   timeout 1 sh -c 'printf "\n[lag-guard] Killed %s (pid %s): %s. %s\n" "$1" "$2" "$3" "$4" > "/proc/$2/fd/2"' \
-    _ "$comm" "$pid" "$reason" "$homelab_hint" 2>/dev/null
+    _ "$comm" "$pid" "$reason" "$hint" 2>/dev/null
   kill -TERM "$pid" 2>/dev/null
   (
     sleep 5
@@ -135,8 +159,12 @@ stop() { # pid reason
 }
 
 # Agents themselves and their MCP servers are never stopped: killing one
-# breaks a session.
+# breaks a session. Nor is the nix daemon (root) itself.
 spared() { # pid
+  if is_nix "$1"; then
+    [ "$(awk '/^Uid:/ { print $2 }' "/proc/$1/status" 2>/dev/null)" = 0 ]
+    return
+  fi
   [[ $(cat "/proc/$1/comm" 2>/dev/null) =~ $providers ]] && return 0
   { tr '\0' ' ' <"/proc/$1/cmdline"; } 2>/dev/null | grep -Eq 'mcp|channel'
 }
@@ -146,10 +174,11 @@ prio() { # pid
   { tr '\0' '\n' <"/proc/$1/environ"; } 2>/dev/null | grep -Eqx '(AGENT_JOB_PRIO|WBOX_BUILD_PRIO)=1'
 }
 
-# The biggest agent process by RSS that is not an agent itself (over 0.5 GB).
-stop_biggest() { # reason
+# The biggest agent process by RSS that is not an agent itself (over 0.5 GB);
+# with "nix", local Nix build processes count too.
+stop_biggest() { # reason [nix]
   local pid rss best=0 best_pid="" pbest=0 pbest_pid=""
-  for pid in $(agent_pids); do
+  for pid in $(agent_pids) $([ "${2:-}" = nix ] && nix_pids); do
     spared "$pid" && continue
     rss=$(rss_of "$pid")
     [ "${rss:-0}" -gt 500000 ] || continue
@@ -259,47 +288,57 @@ stalled_dev() {
   echo "$dev ${busy:-0}"
 }
 
-# The agent slice's io.max on one disk. Written again every round while a cap
-# is on, because systemd puts its own value back on a daemon-reload.
-declare -A level=() base=()
+# The io.max of the agent slice and of nix-daemon on one disk, each at the
+# same step. Written again every round while a cap is on, because systemd
+# puts its own value back on a daemon-reload. State files: base-DEV (agents),
+# nix-base-DEV (nix-daemon).
+declare -A level=() base=() prefix=([$agents]=base [$nixd]=nix-base)
 read -r -a steps <<<"$THROTTLE_STEPS"
 apply_cap() { # dev
-  local dev=$1 line
-  if [ "${level[$dev]:-0}" -gt 0 ]; then
-    line=${steps[$((level[$dev] - 1))]}
-    line="rbps=${line%%:*} wbps=${line##*:}"
-  else
-    line=${base[$dev]}
-  fi
+  local dev=$1 line cg
   [ "$DRY_RUN" = 1 ] && return 0
-  echo "$dev $line" >"$agents/io.max" 2>/dev/null
+  for cg in "${!prefix[@]}"; do
+    if [ "${level[$dev]:-0}" -gt 0 ]; then
+      line=${steps[$((level[$dev] - 1))]}
+      line="rbps=${line%%:*} wbps=${line##*:}"
+    else
+      line=${base[$cg|$dev]}
+    fi
+    echo "$dev $line" >"$cg/io.max" 2>/dev/null
+  done
 }
 set_level() { # dev level [reason]
-  local dev=$1 new=$2
-  if [ -z "${base[$dev]:-}" ]; then
-    base[$dev]=$(awk -v d="$dev" '$1 == d { for (i = 2; i <= NF; i++) if ($i ~ /^[rw]bps=/) printf "%s ", $i }' "$agents/io.max" 2>/dev/null)
-    [ -n "${base[$dev]}" ] || base[$dev]="rbps=max wbps=max"
-    [ "$DRY_RUN" = 1 ] || { mkdir -p "$STATE" && echo "${base[$dev]}" >"$STATE/base-$dev"; }
-  fi
+  local dev=$1 new=$2 cg
+  for cg in "${!prefix[@]}"; do
+    [ -z "${base[$cg|$dev]:-}" ] || continue
+    base[$cg|$dev]=$(awk -v d="$dev" '$1 == d { for (i = 2; i <= NF; i++) if ($i ~ /^[rw]bps=/) printf "%s ", $i }' "$cg/io.max" 2>/dev/null)
+    [ -n "${base[$cg|$dev]}" ] || base[$cg|$dev]="rbps=max wbps=max"
+    [ "$DRY_RUN" = 1 ] || { mkdir -p "$STATE" && echo "${base[$cg|$dev]}" >"$STATE/${prefix[$cg]}-$dev"; }
+  done
   level[$dev]=$new
   apply_cap "$dev"
   if [ "$new" = 0 ]; then
-    echo "agents' disk cap on $(dev_name "$dev") lifted (back to ${base[$dev]% })"
-    unset "base[$dev]" "level[$dev]"
-    [ "$DRY_RUN" = 1 ] || rm -f "$STATE/base-$dev"
+    echo "agents' and nix-daemon's disk cap on $(dev_name "$dev") lifted (agents back to ${base[$agents|$dev]% }, nix-daemon to ${base[$nixd|$dev]% })"
+    for cg in "${!prefix[@]}"; do
+      unset "base[$cg|$dev]"
+      [ "$DRY_RUN" = 1 ] || rm -f "$STATE/${prefix[$cg]}-$dev"
+    done
+    unset "level[$dev]"
   else
-    echo "agents capped on $(dev_name "$dev") at step $new of ${#steps[@]} (read:write ${steps[$((new - 1))]} bytes/s)${3:+: $3}"
+    echo "agents and nix-daemon capped on $(dev_name "$dev") at step $new of ${#steps[@]} (read:write ${steps[$((new - 1))]} bytes/s each)${3:+: $3}"
   fi
 }
 # Caps a previous lag-guard left behind.
 restore_caps() {
-  local f dev
-  for f in "$STATE"/base-*; do
-    [ -e "$f" ] || continue
-    dev=${f##*/base-}
-    echo "$dev $(cat "$f")" >"$agents/io.max" 2>/dev/null
-    echo "agents' disk cap on $(dev_name "$dev") from an earlier run lifted"
-    rm -f "$f"
+  local f dev cg
+  for cg in "${!prefix[@]}"; do
+    for f in "$STATE/${prefix[$cg]}"-*; do
+      [ -e "$f" ] || continue
+      dev=${f##*/"${prefix[$cg]}"-}
+      echo "$dev $(cat "$f")" >"$cg/io.max" 2>/dev/null
+      echo "${cg##*/} disk cap on $(dev_name "$dev") from an earlier run lifted"
+      rm -f "$f"
+    done
   done
 }
 
@@ -314,10 +353,11 @@ cg_bytes() { # dev io.stat -> rbytes + wbytes on that disk
   awk -v d="$1" '$1 == d { for (i = 2; i <= NF; i++) { split($i, kv, "="); if (kv[1] == "rbytes" || kv[1] == "wbytes") n += kv[2] } } END { printf "%d\n", n }' "$2" 2>/dev/null
 }
 
-# The agent process doing the most IO in the cgroup doing the most IO on the
-# stalled disk, over a second. Per-disk numbers exist per cgroup only
-# (io.stat), so the cgroup is chosen by disk and the process inside it by its
-# own IO. Falls back to the biggest by RSS when nothing did any.
+# The agent or Nix build process doing the most IO in the cgroup doing the
+# most IO on the stalled disk, over a second. Per-disk numbers exist per
+# cgroup only (io.stat), so the cgroup is chosen by disk and the process
+# inside it by its own IO. Falls back to the biggest by RSS when nothing did
+# any.
 stop_io_top() { # dev reason
   local dev=$1 reason=$2 f d pid pids n cg best=0 best_pid="" pbest=0 pbest_pid=""
   local -A cg0=() p0=()
@@ -327,7 +367,7 @@ stop_io_top() { # dev reason
     cg0[$d]=$(cg_bytes "$dev" "$f")
     mapfile -t pids 2>/dev/null <"$d/cgroup.procs"
     for pid in "${pids[@]}"; do p0[$pid]=$(io_bytes "$pid"); done
-  done < <(find "$agents" -name io.stat -not -path '*/t3code-terminal-*' 2>/dev/null)
+  done < <(find "$agents" "$nixd" -name io.stat -not -path '*/t3code-terminal-*' 2>/dev/null)
   sleep 1
   while read -r n cg; do
     [ "${n:-0}" -gt 0 ] || break
@@ -350,7 +390,7 @@ stop_io_top() { # dev reason
   elif [ -n "$pbest_pid" ]; then
     stop "$pbest_pid" "$reason; it did the most disk IO on $(dev_name "$dev") ($((pbest / 1048576)) MB/s; priority job, but nothing else was using that disk)"
   else
-    stop_biggest "$reason"
+    stop_biggest "$reason" nix
   fi
 }
 
@@ -367,7 +407,7 @@ relax() { # samples
 
 streak=0 calm=0 floor_hits=0 erik_io=0 idle_logged=-100000
 check_pressure() {
-  local io mem pid uid reason dev busy
+  local io mem reason dev busy
   io=$(full io)
   mem=$(full memory)
   erik_io=${io:-0}
@@ -399,21 +439,15 @@ check_pressure() {
       calm=0
     fi
   fi
-  # Local Nix builds (build users are not root).
-  local nixpids
-  mapfile -t nixpids < <(find "$nixd" -name cgroup.procs -exec cat {} + 2>/dev/null)
-  for pid in "${nixpids[@]}"; do
-    uid=$(awk '/^Uid:/ { print $2 }' "/proc/$pid/status" 2>/dev/null)
-    [ "${uid:-0}" != 0 ] && stop "$pid" "$reason"
-  done
   # A memory stall: RSS is what counts.
   if [ "${mem:-0}" -gt "$MEM_FULL" ]; then
-    stop_biggest "$reason"
+    stop_biggest "$reason" nix
     [ "${io:-0}" -gt "$IO_FULL" ] || return 0
   fi
-  # A disk stall: cap the agents on that disk; stop a job only at the floor.
+  # A disk stall: cap the agents and Nix builds on that disk; stop a job only
+  # at the floor.
   if [ -z "$dev" ]; then
-    [ "${mem:-0}" -gt "$MEM_FULL" ] || stop_biggest "$reason"
+    [ "${mem:-0}" -gt "$MEM_FULL" ] || stop_biggest "$reason" nix
     return 0
   fi
   if [ "${level[$dev]:-0}" -lt ${#steps[@]} ]; then
@@ -426,7 +460,7 @@ check_pressure() {
   floor_hits=$((floor_hits + 1))
   [ "$floor_hits" -ge "$FLOOR_SUSTAIN" ] || return 0
   floor_hits=0
-  stop_io_top "$dev" "$reason with the agents' disk cap at its lowest"
+  stop_io_top "$dev" "$reason with the agents' and Nix builds' disk cap at its lowest"
 }
 
 # The agents themselves thrashing: their slice stalls on memory AND Erik's

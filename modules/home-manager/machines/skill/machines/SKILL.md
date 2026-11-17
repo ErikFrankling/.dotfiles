@@ -125,10 +125,11 @@ session, these run as their own user unit, `agent-job-NAME.service` in
   agents thrash (their
   slice stalled on memory while his apps stall on disk), it kills the
   biggest agent job by RSS. On disk IO, and only when the stalled device is
-  over 50 % busy, it first cuts the agents' bandwidth
+  over 50 % busy, it first cuts the bandwidth of the agents and of local Nix
+  builds (nix-daemon, capped the same way, never stopped first)
   on the stalled disk in three steps (down to 20 MB/s read, 5 MB/s write;
   given back when the desktop is calm), and only if the stall goes on kills
-  the job doing the most IO on that disk. So big scratch files (disk images,
+  the job doing the most IO on that disk (a Nix build process too). So big scratch files (disk images,
   dumps, task output) go to `/mnt/data`, not `/tmp` or `~`: the system disk is
   the one Erik's apps wait on. A shared job many sessions wait on sets
   `AGENT_JOB_PRIO=1` in its environment: it is passed over as a victim while
