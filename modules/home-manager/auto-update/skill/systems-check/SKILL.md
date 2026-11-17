@@ -297,6 +297,8 @@ beyond the short rev, no log excerpts; the thread has the details.
 
 ## Incident log
 
+
+- 2026-11-17 04:50 (health-watch) — `alert/SystemdUnitFailed/pc/systemd-coredump@8-24577-3142808_15717519`: wasm-box's own crash tests (`wbox` SIGSEGV/SIGABRT, plus python3.14 SIGSEGVs, 1155 cores, 1.9G in `/var/lib/systemd/coredump`) dumped a large process (2.4G peak, 8.5G read/written) at 04:31; under the heavy IO load it hit the unit's 5 min runtime limit (`Failed with result 'timeout'`). Cores for that PID were not stored. Disk fine (221G free). Agent test load, not a machine fault; left alone (system unit, `reset-failed` needs root and would only hide it).
 - 2026-11-17 03:50 (health-watch) — `alert/DiskFillingUp/data97//mnt/data` (firing since 02:16Z): `/mnt/data` 96% used, 39G free of 916G, unchanged since the 00:10 entry (same wasm-box/Erik-data owners). Report only, nothing deleted per the 2026-11-12 policy; not a machine fault. Housekeeping: nothing to remove, own clone clean, no worktrees, no `result` links.
 
 - 2026-11-17 01:20 (health-watch) — all 15 `phone/*` checks 500 (8 s timeouts) from 01:10 while `lan/*` passed: the Gatus tailscale sidecar lost its tunnel to the tailnet (tailscaled socket gone / stale CONNECT tunnels to 192.168.50.100:443) after the 01:00 rebuild activation. Fix: `rollout restart deploy/gatus` (maintenance window open) plus `ssh naiaclaw 'sudo ss -K state established dst 192.168.50.100 dport = :443'`; all 22 phone checks pass again. Same class as the 2026-10-26 / 11-07 entries.
