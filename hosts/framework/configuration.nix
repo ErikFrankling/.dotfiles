@@ -21,6 +21,7 @@
     ../../modules/nixos/laptop.nix
     ./dock-awake.nix
     ../../modules/nixos/auto-update.nix
+    # ../../modules/nixos/agent-backup.nix # nightly agent sessions -> R2; waits for the R2 key (to-do enable-cloudflare-r2-agent-traces)
     ../../modules/nixos/desktop.nix
     ../../modules/nixos/1password.nix
     # Same endpoint protection as samsung-ablo (Erik, 2026-11-12). Disk

@@ -683,6 +683,7 @@ let
     echo "disk /: $(df -h --output=avail,pcent / | tail -n 1 | xargs) (avail, used)"
     echo "failed system units: $(systemctl --failed --no-legend --plain | awk '{print $1}' | xargs)"
     echo "failed user units: $(systemctl --user --failed --no-legend --plain | awk '{print $1}' | xargs)"
+    echo "agent session backup (modules/nixos/agent-backup.nix): $(cat /var/lib/agent-backup/status 2> /dev/null || echo 'no check has run')"
     echo "auto-update, last 24h:"
     journalctl --user -u auto-update --since -24h -o short-iso --no-pager 2> /dev/null \
       | grep -v -i -e gssapi -e '^-- ' | tail -n 12 | sed 's/^/  /'

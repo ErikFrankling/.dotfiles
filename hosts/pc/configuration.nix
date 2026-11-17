@@ -106,6 +106,7 @@
     # ../../modules/nixos/executor.nix # local container; Executor runs on the homelab k3s instead
     # inputs.private.nixosModules.default # extra llama-swap models, no longer used (see flake.nix)
     ../../modules/nixos/auto-update.nix
+    # ../../modules/nixos/agent-backup.nix # nightly agent sessions -> R2; waits for the R2 key (to-do enable-cloudflare-r2-agent-traces)
     # The real GPU % for the shell; profile_peak below makes amdgpu's own read 100.
     ../../modules/nixos/gpu-busy
     # ../../modules/nixos/llama-cpp.nix

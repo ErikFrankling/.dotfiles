@@ -22,6 +22,12 @@ creation_rules:
     - age:
       - *primary
       - *wsl
+  # Shared by pc and framework: restic password and R2 key (modules/nixos/agent-backup.nix).
+  - path_regex: secrets/agent-backup\.yaml$
+    key_groups:
+    - age:
+      - *primary
+      - *wsl
   - path_regex: hosts/[^/]+/secrets/.*\.(yaml|json|ovpn|txt)$
     key_groups:
     - age:
