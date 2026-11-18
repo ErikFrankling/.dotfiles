@@ -5,9 +5,10 @@
 # 2026-11-12: agent traces are never deleted).
 #
 # Live SQLite databases (OpenCode, Codex, T3, omp, Grok) are copied with
-# SQLite's own .backup first; a plain file copy of a database that is being
+# SQLite's own VACUUM INTO first; a plain file copy of a database that is being
 # written can be corrupt. The copies land under /var/lib/agent-backup/sqlite
-# and the originals are excluded.
+# and the originals are excluded. First full run (pc, 2026-11-18): 194 GiB
+# read, 44 GiB stored, 50 minutes; nightly runs only send what changed.
 #
 # Alerts (notify-erik): the backup unit failing, no successful backup for 36
 # hours, and (pc) an agent's session store that stopped growing, which is what
