@@ -2,6 +2,7 @@
   pkgs,
   inputs,
   config,
+  lib,
   ...
 }:
 
@@ -107,6 +108,27 @@ in
     # package = inputs.voxtype.packages.${pkgs.stdenv.hostPlatform.system}.rocm;
     # package = inputs.voxtype.packages.${pkgs.stdenv.hostPlatform.system}.default;
     # model.name = "base.en";
+    # Parakeet TDT 0.6b v3 (the non-streaming model with punctuation), pinned in
+    # the store. Before 2026-11-18 it was a hand `voxtype setup` download in
+    # ~/.local/share/voxtype/models; a host that never ran it (samsung-ablo)
+    # crash-looped with "Model not found" and Super+E did nothing.
+    model.path = pkgs.linkFarm "parakeet-tdt-0.6b-v3" (
+      lib.mapAttrsToList
+        (name: hash: {
+          inherit name;
+          path = pkgs.fetchurl {
+            url = "https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx/resolve/8f23f0c03c8761650bdb5b40aaf3e40d2c15f1ce/${name}";
+            inherit hash;
+          };
+        })
+        {
+          "config.json" = "sha256-ZmkDx2uXmMrywhCv1PbNYLCKjb+YAOyNejvA0hSKxGY=";
+          "vocab.txt" = "sha256-1YVEZ56kvGrFY9H1Ret9R0vWz6Rn8KbiwdwcfTfjw10=";
+          "decoder_joint-model.onnx" = "sha256-6Xjd9miFJxgsEP3i60uDBoQhZImF7yP3qGvnMr6HBsE=";
+          "encoder-model.onnx" = "sha256-mKdLIbTMABfB5wMDGaSpb0qVBuUPBwjzpRbQKnfJa7E=";
+          "encoder-model.onnx.data" = "sha256-miLTcsUUVcNPE0BdolILrvtxJb0WmBOXVhQj7TLSTzY=";
+        }
+    );
     service.enable = true;
     settings = {
       # Recording is driven from Hyprland via `voxtype record toggle`, not
@@ -139,8 +161,7 @@ in
       audio.max_duration_secs = 1800;
       parakeet = {
         # Better final-quality local fallback than the streaming unified model.
-        # Download once into ~/.local/share/voxtype/models/parakeet-tdt-0.6b-v3.
-        model = "parakeet-tdt-0.6b-v3";
+        # The model itself comes from programs.voxtype.model.path above.
         streaming = false;
       };
     };
