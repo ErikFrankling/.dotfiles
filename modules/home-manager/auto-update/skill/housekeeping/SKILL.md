@@ -37,8 +37,10 @@ leftover `t3code-rebase*` worktrees from the fork job).
   checkouts). Only the extra worktrees hanging off them are in scope.
 - **Shared caches** (`~/.cache/sccache`, `~/.cache/*`, Go and Cargo caches
   under `/mnt/data/wbox-src/go-shared`, the Nix store). Erik wants build caches
-  kept (2026-11-11). Only build output that belongs to one finished worktree
-  goes, together with that worktree.
+  kept (2026-11-11) while they are in use. Caches that are clearly no longer
+  used may go (Erik, 2026-11-18): e.g. `docker builder prune --filter until=48h`
+  and dangling images (`docker image prune`) when the disk runs low. Build
+  output that belongs to one finished worktree goes with that worktree.
 
 ## Start of run: sweep what earlier runs left
 
