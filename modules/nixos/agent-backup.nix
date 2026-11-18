@@ -70,8 +70,11 @@ let
             dst="${stage}$f.backup"
             mkdir -p "$(dirname "$dst")"
             if [ "$(head -c 15 "$f")" = "SQLite format 3" ]; then
-              sqlite3 "$f" ".timeout 60000" ".backup \"$dst\"" && continue
-              echo "WARNING: sqlite .backup failed for $f, copying the raw files" >&2
+              # VACUUM INTO reads one snapshot; .backup starts over whenever
+              # the database is written, and T3 never stops writing its 8 GB one.
+              q=''${dst//\'/\'\'}
+              sqlite3 "$f" ".timeout 60000" "VACUUM INTO '$q'" && continue
+              echo "WARNING: sqlite VACUUM INTO failed for $f, copying the raw files" >&2
             fi
             cp "$f" "$dst"
             for side in wal shm journal; do
@@ -130,6 +133,10 @@ let
     Nice = 19;
     IOSchedulingClass = "idle";
     CPUSchedulingPolicy = "idle";
+    # ionice does nothing on NVMe; a bandwidth cap is what keeps the desktop
+    # responsive while ~14 GB of databases are copied (2026-11-18 lag-guard stall).
+    IOReadBandwidthMax = [ "/ 100M" ];
+    IOWriteBandwidthMax = [ "/ 50M" ];
   };
 in
 {
