@@ -336,6 +336,25 @@ let
           # One bound for both hosts together, against a hung build: never
           # "still building" the next night (2026-10-23).
           deadline=$(( $(date +%s) + minutes * 60 ))
+          # The builder's routine collection, once, before any build writes:
+          # below 150 GiB free on the node's disk, and even when the builds
+          # then fail. 2026-11-18: the after-builds collection kept being
+          # skipped by failed nightlies, weeks of unrooted build bulk grew the
+          # store, and the 01:00 prebuild's writes pushed the k8s node into
+          # kubelet DiskPressure, which evicted the whole cluster behind
+          # kyverno's fail-closed webhook. nix.conf's min-free there is only
+          # an emergency backstop at 80 GiB; at 150 every remote build ran its
+          # own full GC under the GC lock and hung (homelab, 2026-11-09).
+          if ! ssh nix-builder 8>&- '
+            export PATH=/nix/var/builder/bin:$PATH
+            free=$(df --output=avail -BG /nix | tail -n 1 | tr -dc 0-9)
+            if [ "$free" -lt 150 ]; then
+              nix-collect-garbage > /nix/var/builder/collect.log 2>&1
+              echo "rc=$? free $free G -> $(df --output=avail -BG /nix | tail -n 1 | tr -dc 0-9) G" >> /nix/var/builder/collect.log
+            fi
+          '; then
+            echo "== builder GC step failed; the build goes on" >&2
+          fi
           for host in ${lib.concatStringsSep " " hosts}; do
             log=${stateDir}/$prefix-$host.log
             echo "== building $host on the homelab (log: $log)"
@@ -391,15 +410,6 @@ let
             fi
           done
 
-          # The builder's routine collection, once, after the builds: below
-          # 150 GiB free on the node's disk. nix.conf's min-free there is only
-          # an emergency backstop at 80 GiB; at 150 every remote build ran its
-          # own full GC under the GC lock and hung (homelab, 2026-11-09).
-          ssh nix-builder 8>&- '
-            export PATH=/nix/var/builder/bin:$PATH
-            free=$(df --output=avail -BG /nix | tail -n 1 | tr -dc 0-9)
-            if [ "$free" -lt 150 ]; then nix-collect-garbage > /dev/null 2>&1; fi
-          ' || true
           # last-build says whether main was built; a deploy build of some
           # other checkout must not overwrite it.
           if [ "$lock" = ${buildLock} ]; then
