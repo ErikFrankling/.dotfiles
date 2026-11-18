@@ -18,7 +18,7 @@ and API key; they do not establish access to any external work account.
 | [PostHog](posthog-readonly/README.md) | Official MCP, operational read/write scopes; connected | None |
 | Vercel | Official OAuth MCP connected; Ablo project read verified | None for MCP; separate API-token app remains unlinked |
 | Vanta | Official hosted MCP, EU (`https://mcp.eu.vanta.com/mcp`), OAuth as erik@abloatai.com; frameworks, policies and computers read verified 2026-11-11 | None. The server has no read-only mode: it can do what Erik's Vanta role allows |
-| Figma | Official remote MCP (`https://mcp.figma.com/mcp`), OAuth scope `mcp:connect` | Sign in as erik@abloatai.com on the Executor connect page |
+| Figma | Not through Executor. Figma refuses OAuth clients that are not on its MCP catalog, so the `figma-mcp` app cannot sign in. Claude Code, Codex, Grok and Cursor connect to `https://mcp.figma.com/mcp` directly | Claude and Codex are signed in as erik@abloatai.com. Grok and Cursor still need their own Allow click |
 | AWS | Native AWS CLI SSO authenticated; default/erik/ablo developer profiles and ablo-readonly verified | Renew SSO when it expires; AWS MCP not installed |
 | 1Password vault access | `op` CLI working; native desktop Environments MCP configured in both harnesses | Desktop unlock/authorization when requested |
 
