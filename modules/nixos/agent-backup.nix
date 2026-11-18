@@ -195,7 +195,8 @@ in
       RandomizedDelaySec = "30m";
       Persistent = true;
     };
-    inhibitsSleep = true; # the laptop does not suspend mid-upload
+    # No inhibitsSleep: systemd-inhibit as a non-root user needs interactive
+    # polkit and fails the run. A run cut by sleep resumes from what is uploaded.
     # `restic-agent-traces` (restic with the repository and keys) is on PATH
     # for restores (createWrapper, on by default).
   };
