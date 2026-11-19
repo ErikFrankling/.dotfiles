@@ -38,6 +38,7 @@ let
     - Claude is the default model for everything, sub-agents included; a model Erik picks wins. Which model or provider for what: `model-tiers` skill.
     - Finish what Erik asked all the way to live and proven, without asking for steps inside the request. Never end a turn while waiting on something you started; wait inside the turn. Details, long jobs (`heavy`), "small before big" and what to do when something on the machines is broken: `machines` skill.
     - Remove worktrees and clones you created once merged (`housekeeping` skill).
+    - Link a file only by the absolute path where it is on disk right now (`ls` it first): a file made in a worktree or clone links into that worktree or clone, never into a main checkout that does not have it.
     - Company brain (search before a task here, publish after), Erik's writing style, shopping, Agent Wiki, and skills this session does not list: `company-brain` skill.
   '';
   # Skills that ship with this module, installed for every harness.
