@@ -63,6 +63,20 @@ in
   # MCP servers from ai.nix; work desktop control stays on this laptop.
   programs.agent-desktop.enable = true;
 
+  # The pc's global instructions (company-brain.nix) are personal and not
+  # loaded here; work agents get only this rule. Agents here kept linking files
+  # in ~/projects/ablo/<repo> that only existed in a worktree (2026-11-19).
+  home.file =
+    let
+      rules = ''
+        - Link a file only by the absolute path where it is on disk right now (`ls` it first): a file made in a worktree or clone links into that worktree or clone, never into a main checkout that does not have it.
+      '';
+    in
+    {
+      ".claude/CLAUDE.md".text = rules;
+      ".codex/AGENTS.md".text = rules;
+    };
+
   # Native AWS CLI SSO; authenticate with `aws sso login --sso-session ablo`.
   # Account/role profiles are added only after Identity Center lists access.
   programs.awscli = {
