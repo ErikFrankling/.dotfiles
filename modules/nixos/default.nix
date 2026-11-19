@@ -142,6 +142,10 @@
 
     extraOptions = ''
       min-free = ${toString (1024 * 1024 * 1024 * 10)} # will run GC if less than 10GB is free
+      # ...and stop once 20GB is free. Unset (unlimited), every auto-GC tried
+      # to delete all garbage, fresh unrooted build outputs included, under the
+      # big GC lock that blocks every build (samsung-ablo, 2026-11-19).
+      max-free = ${toString (1024 * 1024 * 1024 * 20)}
       eval-cores = 0
     '';
 

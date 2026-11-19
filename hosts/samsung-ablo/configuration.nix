@@ -106,7 +106,21 @@
   virtualisation.spiceUSBRedirection.enable = true;
 
   virtualisation.docker.enable = true;
+  # BuildKit's cache had no limit here: on 2026-11-19 it held 98.5G (859
+  # records, all used within 48 h) and / reached 100%, so Nix's min-free GC
+  # spun and every build stalled. 40G keeps a warm cache; BuildKit evicts the
+  # least recently used records above it (docs.docker.com/build/cache/garbage-collection).
+  virtualisation.docker.daemon.settings.builder.gc = {
+    enabled = true;
+    defaultKeepStorage = "40GB";
+  };
   users.extraUsers."${username}".extraGroups = [ "docker" ];
+
+  # Agent scratch in /tmp (on disk here) ages out after 1 idle day, checked
+  # hourly, as on the pc (modules/nixos/agent-priority, not enabled here).
+  # systemd's default of 10 days let /tmp reach 100G on 2026-11-19.
+  systemd.tmpfiles.rules = [ "q /tmp 1777 root root 1d" ];
+  systemd.timers.systemd-tmpfiles-clean.timerConfig.OnUnitActiveSec = lib.mkForce "1h";
 
   virtualisation.podman = {
     enable = true;
