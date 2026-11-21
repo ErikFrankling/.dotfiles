@@ -297,6 +297,8 @@ beyond the short rev, no log excerpts; the thread has the details.
 
 ## Incident log
 
+- 2026-11-21 10:10 (health-watch) — `alert/T3CodeErrors/samsung-ablo/t3code` (firing since 08:56Z): same laptop dictation `fetch failed` bursts as 11-14/11-19/11-20. The laptop is still silent (ssh banner timeout, `LaptopSilent` firing), so its log cannot be read or its t3code restarted from the pc. Nothing to repair; clears when it wakes on mains, applies main and t3code restarts when idle. Housekeeping: own clone clean, no worktrees or `result` links.
+
 - 2026-11-21 04:40 (health-watch) — `alert/DiskFillingUp/samsung-ablo` (`/` under 20% free, since 03:23Z): same laptop whose `/` was already near full on 11-18 (1.9% free after the builder incident); it is unreachable (ssh banner timeout, `LaptopSilent`), so nothing can be measured or cleaned from the pc. Not a pc fault; look at it when the laptop wakes on mains. Housekeeping: own clone clean, no worktrees or `result` links.
 
 - 2026-11-20 13:15 (health-watch) — `alert/T3CodeErrors/samsung-ablo/t3code` (firing since 12:00Z): same laptop dictation `fetch failed` bursts as 11-14/11-19. The laptop is unreachable (ssh banner timeout, `LaptopSilent` firing since 11-18), so its log cannot be read or its t3code restarted from the pc (agents never restart T3 anyway). Nothing to repair; clears when it wakes on mains, applies main and t3code restarts when idle. Housekeeping: own clone clean, no worktrees or `result` links.
