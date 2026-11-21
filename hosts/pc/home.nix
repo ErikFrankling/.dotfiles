@@ -202,7 +202,7 @@ in
     ../../modules/home-manager/search-sync.nix
     ../../modules/home-manager/fleet-push-creds.nix
     ../../modules/home-manager/machines
-    ../../modules/home-manager/heavy # `heavy`: heavy agent work on the homelab worker
+    ../../modules/home-manager/heavy # `heavy`: heavy agent work on the homelab worker (pc only: on samsung-ablo it would copy Ablo code to the homelab)
     ../../modules/home-manager/t3-android-release # Android release of the T3 fork without GitHub Actions
     ../../modules/home-manager/bro
     ../../modules/home-manager/ponytail # smallest-complete-change skills for every harness

@@ -8,6 +8,7 @@ description: "Erik's machines and how to reach them, load limits, `heavy` for lo
 | Machine | What it is | Reach it |
 |---|---|---|
 | **pc** | Erik's desktop: Ryzen 7 7800X3D, 16 threads, 30 GB RAM, RX 7900 XT 20 GB. LAN `192.168.50.232`. Runs Hyprland, his browsers, T3 Code (port 3773) and every agent session. | You are usually on it |
+| **samsung-ablo** | Erik's work laptop (Ablo), NixOS, with its own T3 Code server. Agents on Ablo code (Lobby, monorepo, ...) run here, never on the pc (SOC 2, `hosts/samsung-ablo/t3code.nix`). It has no `heavy`, `nix-remote` or `agent-job`: Ablo code never goes to the homelab, so its emulators and long jobs run on the laptop itself. `hostname` tells you which machine you are on. | From the pc: T3 linked environments |
 | **framework** | Erik's laptop, NixOS. Often asleep, off or away. | `ssh framework` (through the Proxmox Tailscale node; fails when asleep) |
 | **proxmox** | Hypervisor, i7-6700K, 8 threads, 62 GB RAM. Runs the Tailscale subnet router for `192.168.50.0/24`. | `ssh proxmox` (root) |
 | **k8s** | VM 200 on proxmox: the k3s node for the homelab (Kubernetes node name `naiaclaw`), 8 threads, 52 GB RAM, no swap. `192.168.50.100`. | `ssh k8s`, then `sudo kubectl ...` |
@@ -36,7 +37,7 @@ Ending a turn means your final report has been sent. Never end a turn while you 
 
 ### When the environment is broken
 
-If something on Erik's machines that your task needs is missing or broken (an MCP server or tool, computer use, a service, a package, a login, a skill), do not just report it and stop. Start a repair session in the `.dotfiles` T3 Code project (workspace root `/home/erikf/.dotfiles`, project id `d16c5128-fa5d-4f7e-bf79-9b395f60962b`) with `t3_thread_launch`. Its message says what you tried, the exact error, what you need it for, and: "find the root cause, fix it in the dotfiles following AGENTS.md, rebuild, commit and push, and report back". Link the thread to Erik (`[title](t3-thread://v1/<threadId>)`), then carry on with whatever does not depend on it, or wait for it with `t3_thread_wait` when it blocks the task. Without the T3 Code tools, tell Erik exactly what is broken.
+If something on Erik's machines that your task needs is missing or broken (an MCP server or tool, computer use, a service, a package, a login, a skill), do not just report it and stop. Start a repair session in the `.dotfiles` T3 Code project (workspace root `/home/erikf/.dotfiles`, project id on the pc `d16c5128-fa5d-4f7e-bf79-9b395f60962b`, on samsung-ablo `ef362433-4a27-4123-b59d-e170d192dcd3`; each T3 Code server has its own, `t3_project_list` shows it) with `t3_thread_launch`. Its message says what you tried, the exact error, what you need it for, and: "find the root cause, fix it in the dotfiles following AGENTS.md, rebuild, commit and push, and report back". Link the thread to Erik (`[title](t3-thread://v1/<threadId>)`), then carry on with whatever does not depend on it, or wait for it with `t3_thread_wait` when it blocks the task. Without the T3 Code tools, tell Erik exactly what is broken.
 
 ### Small before big
 
@@ -64,6 +65,9 @@ running out of memory.**
 | Big Gradle/APK release builds, long test suites, embedding/ML batches, data processing | `heavy -- <cmd>` (synced copy on the homelab worker; `heavy pull <path>` brings results back) |
 | An emulator you need for more than a few minutes | `heavy emulator start` (adb forwarded to the pc; gRPC/audio on 8554) |
 | Long Nix builds | `nix-remote build ...`, `rebuild --remote` |
+
+`heavy` exists only on the pc (`hosts/pc/home.nix`). samsung-ablo leaves it
+out on purpose, because it would copy Ablo code to the homelab.
 
 `heavy` in short (`heavy --help` for all of it):
 
