@@ -149,11 +149,17 @@
       eval-cores = 0
     '';
 
-    optimise.automatic = true;
-    optimise.dates = [ "05:00" ]; # Optional; allows customizing optimisation schedule
+    # The nightly optimiser replaced files of running programs with hard links
+    # to identical copies, so their binary showed as "(deleted)": 1Password
+    # quits when its own binary is replaced and refuses to talk to a browser
+    # whose binary is (its extension then asks for a separate login). Seen
+    # 2026-11-10/11 (1Password quit at 05:09/05:17) and 2026-11-20 (Firefox).
+    # Deduplicating when a path is added never touches a running file.
+    # optimise.automatic = true;
+    # optimise.dates = [ "05:00" ]; # Optional; allows customizing optimisation schedule
 
     settings = {
-      auto-optimise-store = false;
+      auto-optimise-store = true;
       experimental-features = [
         "nix-command"
         "flakes"
