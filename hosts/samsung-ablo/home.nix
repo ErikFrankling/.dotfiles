@@ -70,6 +70,7 @@ in
     let
       rules = ''
         - Link a file only by the absolute path where it is on disk right now (`ls` it first): a file made in a worktree or clone links into that worktree or clone, never into a main checkout that does not have it.
+        - No heavy work on this laptop: never run package installs, typechecks, test suites, infrastructure plans or tests, dev servers, containers or builds here. Verify through CI, and run anything interactive on cloud machines. Locally only read and edit code, use git and run small commands.
       '';
     in
     {
