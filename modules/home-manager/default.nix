@@ -73,7 +73,9 @@
     kubernetes-helm
     typst
     gh
-    # Cloudflare's CLI (Workers, Dynamic Workers, R2, D1, tunnels); `wrangler login` once per machine.
+    # Cloudflare's CLIs: `cf` (the new one, the whole Cloudflare API; `cf auth login` once per machine) and wrangler
+    # (Workers projects that still use it).
+    cf
     wrangler
     kubectl
   ];
