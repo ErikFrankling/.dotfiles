@@ -96,9 +96,34 @@ function arrange.run()
     return count[m.description] > 1 and m.name or ("desc:" .. m.description)
   end
 
+  -- One monitor on two cables (same serial; the office Dell over HDMI and
+  -- USB-C) shows one input at a time: the second output mirrors the first, so
+  -- whichever input it shows has the desktop and nothing hides beside it.
+  local primary_of = {}
+  for _, m in ipairs(monitors) do
+    if physical(m) and m.enabled and m.serial ~= "" and count[m.description] > 1 then
+      local p = primary_of[m.description]
+      if p == nil or m.name < p.name then
+        primary_of[m.description] = m
+      end
+    end
+  end
+
   local internal, boxes, strays = nil, {}, {}
   for _, m in ipairs(monitors) do
-    if not physical(m) then
+    local primary = physical(m) and primary_of[m.description]
+    if primary and primary ~= m then
+      strays[m.name] = true
+      if not m.is_mirror then
+        hl.monitor({
+          output = m.name,
+          mode = m.width > 0 and string.format("%dx%d@%.3f", m.width, m.height, m.refresh_rate) or "preferred",
+          position = "auto",
+          scale = m.scale,
+          mirror = primary.name,
+        })
+      end
+    elseif not physical(m) then
       strays[m.name] = true
     elseif m.name:find("^eDP") then
       internal = m
@@ -175,7 +200,8 @@ function arrange.run()
     rule(internal, selector(internal), inner.x, inner.y)
   end
   for _, b in ipairs(boxes) do
-    if b.x ~= b.m.x or b.y ~= b.m.y then
+    -- A former mirror whose twin is gone gets its own rule again.
+    if b.x ~= b.m.x or b.y ~= b.m.y or b.m.is_mirror then
       rule(b.m, selector(b.m), b.x, b.y)
     end
   end
