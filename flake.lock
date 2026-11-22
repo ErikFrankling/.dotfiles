@@ -1559,11 +1559,11 @@
         "nixpkgs": "nixpkgs_9"
       },
       "locked": {
-        "lastModified": 1795311194,
-        "narHash": "sha256-VY6evn+fMTKKUYbaxaE+7uNgbvEXIjeUtWh58/8NNKU=",
+        "lastModified": 1794925534,
+        "narHash": "sha256-khQc6hQ7KbqxrVf/FDbIT1wW4tdVt0qtWSumqVNA0cs=",
         "owner": "peteonrails",
         "repo": "voxtype",
-        "rev": "8a7b5ac6c9452e3ab1f0463c6a7c523b91c6f5cd",
+        "rev": "96a4277cf9575a51bee5cf27de4333d07264d44c",
         "type": "github"
       },
       "original": {
