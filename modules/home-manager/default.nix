@@ -73,6 +73,8 @@
     kubernetes-helm
     typst
     gh
+    # Cloudflare's CLI (Workers, Dynamic Workers, R2, D1, tunnels); `wrangler login` once per machine.
+    wrangler
     kubectl
   ];
 
