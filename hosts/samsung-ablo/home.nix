@@ -102,8 +102,12 @@ in
   # At the desk the KVM gives the laptop the pc's two screens; the built-in
   # screen follows the lid. Matched by model, not connector: the
   # KVM's DP-n names change each time it switches.
+  # Off since 2026-11-22: any set without a profile (the office Dell on two
+  # cables) fell back to the Nix rules, all at 0,0, overlapping, and the lid
+  # did nothing. hyprland.autoArrange below handles any set. Kept for
+  # reference.
   services.kanshi = {
-    enable = true;
+    enable = false;
     systemdTarget = "hyprland-session.target";
     settings = [
       # Positions come from the shell's displays window (erikshell
@@ -231,24 +235,28 @@ in
   # kanshi refuses its whole config when an include is missing. Seeded with
   # the office layout (built-in screen centred below the Dell); the displays
   # window owns the file afterwards.
-  home.activation.kanshiPositions = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    f="$HOME/.local/state/kanshi/positions"
-    if [ ! -e "$f" ]; then
-      run mkdir -p "$(dirname "$f")"
-      printf '%s\n' 'output "eDP-1" position 240,1080' 'output "Dell Inc. DELL U2724DE *" position 0,0' > "$f"
-    fi
-  '';
+  # Off with kanshi: while that file exists the shell's displays window writes
+  # it instead of moving the screens live.
+  # home.activation.kanshiPositions = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  #   f="$HOME/.local/state/kanshi/positions"
+  #   if [ ! -e "$f" ]; then
+  #     run mkdir -p "$(dirname "$f")"
+  #     printf '%s\n' 'output "eDP-1" position 240,1080' 'output "Dell Inc. DELL U2724DE *" position 0,0' > "$f"
+  #   fi
+  # '';
 
   # At either dock the built-in screen follows the lid. Profiles for the
   # other dock do not match, so those switch requests harmlessly fail.
-  wayland.windowManager.hyprland.settings.bind = [
-    (lidBind "off" "Lid opened: built-in screen on at the office" "office-lid-open")
-    (lidBind "on" "Lid closed: built-in screen off at the office" "office")
-    (lidBind "off" "Lid opened: built-in screen on at home" "docked-lid-open")
-    (lidBind "on" "Lid closed: built-in screen off at home" "docked")
-  ];
+  # Replaced, with kanshi, by the lid binds in auto-arrange.lua.
+  # wayland.windowManager.hyprland.settings.bind = [
+  #   (lidBind "off" "Lid opened: built-in screen on at the office" "office-lid-open")
+  #   (lidBind "on" "Lid closed: built-in screen off at the office" "office")
+  #   (lidBind "off" "Lid opened: built-in screen on at home" "docked-lid-open")
+  #   (lidBind "on" "Lid closed: built-in screen off at home" "docked")
+  # ];
 
   hyprland = {
+    autoArrange = true;
     keyboards = [
       {
         name = "erik-frankling-dactyl_manuform_5x6_64";

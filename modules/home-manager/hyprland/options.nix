@@ -48,6 +48,14 @@
         default = [ ];
       };
 
+      # Laptops: arrange screens without profiles, so they never overlap, and
+      # turn the built-in screen off with the lid (./auto-arrange.lua).
+      # Replaces kanshi; do not run both, kanshi overrides every rule.
+      autoArrange = mkOption {
+        type = types.bool;
+        default = false;
+      };
+
       mouse = {
         scroll_factor = mkOption {
           type = types.str;

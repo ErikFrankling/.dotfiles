@@ -197,7 +197,8 @@
             hl.define_submap("voxtype_suppress", function()
               hl.bind("F24", hl.dsp.no_op(), { description = "Nothing: keeps this submap registered" })
             end)
-          '';
+          ''
+          + lib.optionalString cfg.autoArrange (builtins.readFile ./auto-arrange.lua);
 
         settings = {
           monitor = map (
