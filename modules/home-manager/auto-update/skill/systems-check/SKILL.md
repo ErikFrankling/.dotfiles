@@ -297,6 +297,8 @@ beyond the short rev, no log excerpts; the thread has the details.
 
 ## Incident log
 
+- 2026-11-22 13:40 (health-watch) — `alert/T3CodeErrors/samsung-ablo/t3code` (since 12:27Z): same laptop dictation error bursts as 11-14/11-21; laptop still unreachable (ssh banner timeout, `LaptopSilent`), so nothing can be read or repaired from the pc. Clears when it wakes on mains, applies main and t3code restarts when idle. Housekeeping: own clone clean, no worktrees or `result` links.
+
 - 2026-11-22 02:05 (health-watch) — `alert/DiskAlmostFull/samsung-ablo` (`/` 8.7% free, since 00:20Z): same laptop as 11-18/11-21 (`DiskFillingUp`, `T3CodeErrors`); unreachable (ssh banner timeout, `LaptopSilent`), so nothing can be measured or cleaned from the pc. Not a pc fault; look at it when the laptop wakes on mains. Housekeeping: own clone clean, no worktrees or `result` links.
 
 - 2026-11-22 01:10 (health-watch) — `alert/DiskAlmostFull//dev/nvme0n1p4/ext4/pc` (7.97% free since 23:14Z, 139G of 1.8T) and `DiskFillingUp/samsung-ablo`: same pattern as 11-19/11-21 (agent worktrees, ~/.cache 65G, ~/.t3 40G; /tmp only 121M, /mnt/data 399G free). Docker prune was killed by lag-guard (pc IO stalling) and had nothing reclaimable before. Nothing safe to delete, report only. Laptop unreachable (ssh banner timeout), its disk cannot be touched from the pc. Housekeeping: own clone clean; only `result` links are inside ~/agent-traces (kept).
