@@ -39,7 +39,7 @@ in
                 ;
               pnpm = otherPkgs.pkgsMaster.pnpm_12;
               fetcherVersion = 4;
-              hash = "sha256-he7WAs6NY9w+Affrmwd2D4pGAsJzcAC2sGBfeqbVWlM=";
+              hash = "sha256-7Cq5/SCTFL8RqO6zyTVLSPw+xyUlqxearyJ7FCl4icg=";
             };
 
             # node-pty ships a prebuilt pty.node that needs libstdc++ but has no
