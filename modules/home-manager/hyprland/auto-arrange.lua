@@ -214,22 +214,75 @@ function arrange.run()
   end
 end
 
+-- A screen that is connected but has no mode (0x0) after Hyprland's three
+-- retries is blocked by a stream the last dock left running on a display pipe:
+-- aquamarine fails to switch it off on unplug, and nothing inside Hyprland can
+-- (quickshell docs/surveys/monitor-runtime.md). Switching to another console
+-- and back makes the kernel do a full modeset that drops it. Seen at the home
+-- KVM and, on 2026-11-23, with the office Dell blocked by the KVM's stream.
+-- At most once a minute, so a screen that is really broken cannot make it loop.
+local last_reset = -60
+local function stuck()
+  for _, m in ipairs(hl.get_monitors({ all = true })) do
+    if physical(m) and m.enabled and m.width == 0 then
+      return true
+    end
+  end
+  return false
+end
+local function reset_if_stuck()
+  local now = os.time()
+  if stuck() and now - last_reset >= 60 then
+    last_reset = now
+    hl.exec_cmd(
+      "v=$(/run/wrappers/bin/sudo -n fgconsole) && /run/wrappers/bin/sudo -n chvt $((v % 6 + 1))"
+        .. " && sleep 1 && /run/wrappers/bin/sudo -n chvt $v"
+    )
+  end
+end
+
 -- Plugging in an MST dock adds its screens one by one; wait until it settles.
-local generation = 0
+-- Never more than 10 runs in 30 s: a rule Hyprland keeps reporting as changed
+-- must not turn into a loop.
+local generation, runs = 0, {}
+local function guarded_run()
+  local now, recent = os.time(), {}
+  for _, t in ipairs(runs) do
+    if now - t < 30 then
+      recent[#recent + 1] = t
+    end
+  end
+  runs = recent
+  if #runs < 10 then
+    runs[#runs + 1] = now
+    arrange.run()
+  end
+end
 function arrange.schedule(ms)
   generation = generation + 1
   local mine = generation
   hl.timer(function()
     if mine == generation then
-      arrange.run()
+      guarded_run()
     end
   end, { timeout = ms or 700, type = "oneshot" })
+  hl.timer(function()
+    if mine == generation then
+      reset_if_stuck()
+    end
+  end, { timeout = 6000, type = "oneshot" })
 end
 
 hl.on("monitor.added", function()
   arrange.schedule()
 end)
 hl.on("monitor.removed", function()
+  arrange.schedule()
+end)
+-- A screen that gets its mode late (after a retry or the console switch) adds
+-- no monitor, only changes the layout. run() issues rules only when something
+-- is off, so the layout change its own rules cause ends there.
+hl.on("monitor.layout_changed", function()
   arrange.schedule()
 end)
 
