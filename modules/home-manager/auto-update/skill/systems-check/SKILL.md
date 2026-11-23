@@ -297,6 +297,8 @@ beyond the short rev, no log excerpts; the thread has the details.
 
 ## Incident log
 
+- 2026-11-23 19:55 (health-watch) — `alert/DiskAlmostFull/samsung-ablo` (/ 7.8% free, since 18:42Z): same laptop as 11-18/11-21/11-22 (`DiskFillingUp`, `T3CodeErrors`, `LaptopSilent`); ssh banner timeout, so its disk cannot be measured or cleaned from the pc. Not a pc fault; look at it when the laptop wakes on mains. Housekeeping: own clone clean, no worktrees or `result` links.
+
 - 2026-11-23 15:40 (health-watch) — `alert/DiskAlmostFull//dev/mapper/cryptroot/.../samsung-ablo` (`/` 9.7% free, since 14:26Z): same laptop as 11-18/11-22 (`DiskFillingUp`, `T3CodeErrors`); still unreachable (ssh banner timeout), so its disk cannot be measured or cleaned from the pc. Not a pc fault; look at it when the laptop wakes on mains. Housekeeping: own clone clean, no worktrees or `result` links.
 
 - 2026-11-22 13:40 (health-watch) — `alert/T3CodeErrors/samsung-ablo/t3code` (since 12:27Z): same laptop dictation error bursts as 11-14/11-21; laptop still unreachable (ssh banner timeout, `LaptopSilent`), so nothing can be read or repaired from the pc. Clears when it wakes on mains, applies main and t3code restarts when idle. Housekeeping: own clone clean, no worktrees or `result` links.
