@@ -454,6 +454,27 @@ in
           You do desktop GUI work on Erik's PC for another agent. Load the computer-use skill first and follow it; also browser-use for websites and screen-recording for videos. Verify the result, then report what you did and saw, and the absolute paths of any screenshots or recordings.
         '';
       };
+    # The agent Chromium uses its own --user-data-dir, where Chromium looks for
+    # native messaging hosts; 1Password's desktop app only writes this manifest
+    # into the default browser dirs, so without it the extension cannot reach
+    # the app and never fills a password (2026-11-23).
+    xdg.dataFile."agent-desktop/chromium/NativeMessagingHosts/com.1password.1password.json" = {
+      force = true;
+      text = builtins.toJSON {
+        name = "com.1password.1password";
+        description = "1Password BrowserSupport";
+        path = "/run/wrappers/bin/1Password-BrowserSupport";
+        type = "stdio";
+        allowed_origins = [
+          "chrome-extension://hjlinigoblmkhjejkmbegnoaljkphmgo/"
+          "chrome-extension://bkpbhnjcbehoklfkljkkbbmipaphipgl/"
+          "chrome-extension://gejiddohjgogedgjnonbofjigllpkmbf/"
+          "chrome-extension://khgocmkkpikpnmmkgmdnfckapcdkgfaf/"
+          "chrome-extension://aeblfdkhhhdcdjpifhhbdiojplfjncoa/"
+          "chrome-extension://dppgmdbiimibapkepcbdbmkaabgiofem/"
+        ];
+      };
+    };
     # The authentication rule is one line of the global instructions
     # (company-brain.nix); its full text is in the browser-use skill.
   };
