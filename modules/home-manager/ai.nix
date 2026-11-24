@@ -409,7 +409,7 @@ in
     pkgs.t3code
     inputs.llm-agents.packages.${system}.grok
     # Google Antigravity (erik.frankling@gmail.com): the IDE and its `agy` CLI.
-    antigravity
+    antigravity-ide
     inputs.llm-agents.packages.${system}.antigravity-cli
     # kiro-fhs
     # vscode-fhs
