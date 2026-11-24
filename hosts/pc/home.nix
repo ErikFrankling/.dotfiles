@@ -37,6 +37,8 @@ let
   # watches the file and applies the change without a restart. The logins are
   # not declarative: grok keeps its OAuth token in ~/.grok/auth.json (`grok
   # login --oauth`), Cursor's browser sign-in lives in T3's credential store.
+  # Antigravity (Google's ACP agent, erik.frankling@gmail.com) also starts off;
+  # T3 installs its runtime and signs it in from Settings > Providers.
   t3EnableProviders = pkgs.writeShellApplication {
     name = "t3code-enable-providers";
     runtimeInputs = [
@@ -57,15 +59,15 @@ let
       # worktree when its PR is merged or it has no commits beyond the default
       # branch, and keeps any with uncommitted changes (worktreeKeepWhen's
       # default). Logs and browser artifacts keep their default: never deleted.
-      filter='.providers.grok.enabled == true and .providers.cursor.enabled == true and .storageCleanup.worktreeOnMerge == true'
+      filter='.providers.grok.enabled == true and .providers.cursor.enabled == true and .providers.antigravity.enabled == true and .storageCleanup.worktreeOnMerge == true'
       if jq -e "$filter" <<<"$current" >/dev/null; then
         exit 0
       fi
       mkdir -p "$(dirname "$file")"
-      jq '.providers.grok.enabled = true | .providers.cursor.enabled = true | .storageCleanup.worktreeOnMerge = true' \
+      jq '.providers.grok.enabled = true | .providers.cursor.enabled = true | .providers.antigravity.enabled = true | .storageCleanup.worktreeOnMerge = true' \
         <<<"$current" >"$file.tmp"
       mv "$file.tmp" "$file"
-      echo "t3code: enabled the Grok and Cursor providers and worktree cleanup on merge in $file"
+      echo "t3code: enabled the Grok, Cursor and Antigravity providers and worktree cleanup on merge in $file"
     '';
   };
   # The server is keep-old: a rebuild never restarts it, because a restart

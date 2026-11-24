@@ -23,6 +23,19 @@
     run mv "$file.tmp" "$file"
   '';
 
+  # Antigravity (Google's ACP agent, erik.frankling@gmail.com) is a built-in T3
+  # provider that starts off. settings.json is the server's own state, so only
+  # flip the flag; the server watches the file and moves it into
+  # providerInstances. T3 installs the runtime and signs it in from
+  # Settings > Providers (as on the pc, hosts/pc/home.nix).
+  home.activation.t3codeAntigravity = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    file="$HOME/.t3/userdata/settings.json"
+    if [ -e "$file" ] && ${pkgs.jq}/bin/jq -e . "$file" >/dev/null 2>&1 && ! ${pkgs.jq}/bin/jq -e '(.providerInstances.antigravity.enabled // .providers.antigravity.enabled) == true' "$file" >/dev/null 2>&1; then
+      run ${pkgs.jq}/bin/jq '.providers.antigravity.enabled = true' "$file" > "$file.tmp"
+      run mv "$file.tmp" "$file"
+    fi
+  '';
+
   programs.t3code = {
     enable = true;
     server.enable = true;
