@@ -157,6 +157,13 @@
     # codex-desktop-linux.inputs.nixpkgs.follows = "nixpkgs";
     codex-desktop-linux.inputs.flake-utils.follows = "flake-utils";
 
+    # Granola (AI meeting notes). Proprietary, macOS/Windows only; this flake
+    # repackages the official macOS .dmg onto the Linux Electron runtime.
+    # Not in nixpkgs. Used on samsung-ablo (hosts/samsung-ablo/home.nix).
+    granola.url = "github:howird/granola-flake";
+    granola.inputs.nixpkgs.follows = "nixpkgs";
+    granola.inputs.flake-utils.follows = "flake-utils";
+
     # Grok Bot, xAI's desktop agent app (proprietary, ships only as a .deb).
     # Not in nixpkgs yet (draft PR #558990). This flake extracts app.asar from
     # the official .deb and runs it on nixpkgs Electron, so it keeps the

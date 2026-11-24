@@ -57,7 +57,13 @@ in
   ];
 
   # Ablo marketing 3D work (Blender scenes, MCP for Blender add-on).
-  home.packages = [ pkgs.blender ];
+  home.packages = [
+    pkgs.blender
+    inputs.granola.packages.${pkgs.stdenv.hostPlatform.system}.granola # meeting notes
+  ];
+
+  # Granola's sign-in ends with a granola:// redirect from the browser.
+  xdg.mimeApps.defaultApplications."x-scheme-handler/granola" = "granola.desktop";
 
   # Local browser, agent monitor and input seat. Harnesses get these local
   # MCP servers from ai.nix; work desktop control stays on this laptop.
