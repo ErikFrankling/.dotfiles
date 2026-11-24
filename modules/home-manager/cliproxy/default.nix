@@ -30,14 +30,28 @@ let
   # format with the client key, so no Google sign-in on this host. The hub's
   # Antigravity login (erik.frankling@gmail.com) carries per-login model aliases
   # for the bare names agy sends (gemini-4-neon -> gemini-4-neon-xhigh, ...;
-  # homelab docs/cliproxy.md). The allowlist keeps the hub's Claude, GPT and
-  # Grok models out of agy's picker.
+  # homelab docs/cliproxy.md), and CLIProxyAPI forwards thinkingConfig.thinkingLevel
+  # (low/medium/high/xhigh) upstream. Listing every variant lets agy group each
+  # family into one model with its normal Thinking Level picker (first listed
+  # variant is the default); the allowlist keeps Claude, GPT and Grok out.
   agyModels = lib.concatStringsSep "," [
+    "gemini-4-neon-high"
+    "gemini-4-neon-low"
+    "gemini-4-neon-medium"
     "gemini-4-neon-xhigh"
+    "gemini-4-hydrogen-high"
+    "gemini-4-hydrogen-low"
+    "gemini-4-hydrogen-medium"
     "gemini-4-hydrogen-xhigh"
     "gemini-4-argon-high"
+    "gemini-4-argon-low"
+    "gemini-4-argon-medium"
+    "gemini-4-carbon-medium"
+    "gemini-4-carbon-low"
     "gemini-4-carbon-high"
     "gemini-3.8-flash-high"
+    "gemini-3.8-flash-low"
+    "gemini-3.8-flash-medium"
     "gemini-3-flash"
     "gemini-3.5-flash-lite"
     "gemini-3.1-flash-lite"
@@ -48,9 +62,7 @@ let
     export AGY_LLM_GATEWAY_API_KEY
     export AGY_LLM_GATEWAY_WIRE_PROTOCOL=genai
     export AGY_LLM_GATEWAY_MODELS=${agyModels}
-    exec ${
-      inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.antigravity-cli
-    }/bin/agy "$@"
+    exec ${inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.antigravity-cli}/bin/agy "$@"
   '';
 
   codexConfig = pkgs.writeText "cliproxy-codex.py" ''
