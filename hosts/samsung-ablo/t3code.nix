@@ -25,13 +25,13 @@
 
   # Antigravity (Google's ACP agent, erik.frankling@gmail.com) is a built-in T3
   # provider that starts off. settings.json is the server's own state, so only
-  # flip the flag; the server watches the file and moves it into
-  # providerInstances. T3 installs the runtime and signs it in from
-  # Settings > Providers (as on the pc, hosts/pc/home.nix).
+  # set this instance; the server watches the file. It runs the `agy` CLI from
+  # modules/home-manager/ai.nix (the server's PATH lacks ~/.nix-profile/bin);
+  # sign it in from Settings > Providers (as on the pc, hosts/pc/home.nix).
   home.activation.t3codeAntigravity = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     file="$HOME/.t3/userdata/settings.json"
-    if [ -e "$file" ] && ${pkgs.jq}/bin/jq -e . "$file" >/dev/null 2>&1 && ! ${pkgs.jq}/bin/jq -e '(.providerInstances.antigravity.enabled // .providers.antigravity.enabled) == true' "$file" >/dev/null 2>&1; then
-      run ${pkgs.jq}/bin/jq '.providers.antigravity.enabled = true' "$file" > "$file.tmp"
+    if [ -e "$file" ] && ${pkgs.jq}/bin/jq -e . "$file" >/dev/null 2>&1 && ! ${pkgs.jq}/bin/jq -e '.providerInstances.antigravity.enabled == true and .providerInstances.antigravity.config.binaryPath == "~/.nix-profile/bin/agy"' "$file" >/dev/null 2>&1; then
+      run ${pkgs.jq}/bin/jq '.providerInstances.antigravity.driver = "antigravity" | .providerInstances.antigravity.enabled = true | .providerInstances.antigravity.config.binaryPath = "~/.nix-profile/bin/agy"' "$file" > "$file.tmp"
       run mv "$file.tmp" "$file"
     fi
   '';
