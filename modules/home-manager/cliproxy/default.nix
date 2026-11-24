@@ -3,6 +3,7 @@
   lib,
   pkgs,
   osConfig,
+  inputs,
   ...
 }:
 
@@ -23,6 +24,34 @@ let
   hub = "https://cliproxy.erikfrankling.duckdns.org";
   clientKey = osConfig.sops.secrets.cliproxy-client-key.path;
   python = pkgs.python3.withPackages (ps: [ ps.tomli-w ]);
+
+  # Google's Antigravity agent (`agy`, also what T3 Code's Antigravity provider
+  # runs) uses its built-in LLM gateway mode against the hub: Gemini API wire
+  # format with the client key, so no Google sign-in on this host. The hub's
+  # Antigravity login (erik.frankling@gmail.com) carries per-login model aliases
+  # for the bare names agy sends (gemini-4-neon -> gemini-4-neon-xhigh, ...;
+  # homelab docs/cliproxy.md). The allowlist keeps the hub's Claude, GPT and
+  # Grok models out of agy's picker.
+  agyModels = lib.concatStringsSep "," [
+    "gemini-4-neon-xhigh"
+    "gemini-4-hydrogen-xhigh"
+    "gemini-4-argon-high"
+    "gemini-4-carbon-high"
+    "gemini-3.8-flash-high"
+    "gemini-3-flash"
+    "gemini-3.5-flash-lite"
+    "gemini-3.1-flash-lite"
+  ];
+  agyCliproxy = pkgs.writeShellScriptBin "agy" ''
+    export AGY_LLM_GATEWAY_URL=${hub}
+    AGY_LLM_GATEWAY_API_KEY="$(cat ${clientKey})"
+    export AGY_LLM_GATEWAY_API_KEY
+    export AGY_LLM_GATEWAY_WIRE_PROTOCOL=genai
+    export AGY_LLM_GATEWAY_MODELS=${agyModels}
+    exec ${
+      inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.antigravity-cli
+    }/bin/agy "$@"
+  '';
 
   codexConfig = pkgs.writeText "cliproxy-codex.py" ''
     import os, sys, tomllib, tomli_w
@@ -63,10 +92,13 @@ in
   options.cliproxy.clients.enable = lib.mkOption {
     type = lib.types.bool;
     default = true;
-    description = "Point Claude Code and Codex on this host at the homelab CLIProxyAPI.";
+    description = "Point Claude Code, Codex and Antigravity (agy) on this host at the homelab CLIProxyAPI.";
   };
 
   config = {
+    # Wins over the plain antigravity-cli from ai.nix.
+    home.packages = lib.mkIf cfg.clients.enable [ (lib.hiPrio agyCliproxy) ];
+
     home.activation.cliproxyClients = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       settings="$HOME/.claude/settings.json"
       mkdir -p "$HOME/.claude" "$HOME/.codex"
