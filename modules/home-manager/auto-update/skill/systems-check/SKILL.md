@@ -299,6 +299,8 @@ beyond the short rev, no log excerpts; the thread has the details.
 
 - 2026-11-24 13:58 (health-watch) — `alert/DiskAlmostFull/samsung-ablo` (/ 4.3% free, since 12:45Z, with `T3CodeErrors`): same laptop as 11-18..11-24; still unreachable (ssh banner timeout, `LaptopSilent` since 11-18), so its disk cannot be measured or cleaned from the pc. Not a pc fault; look at it when it wakes on mains. Housekeeping: own clone clean, no worktrees or `result` links.
 
+- 2026-11-24 14:57 (health-watch) — `alert/DiskFillingUp/samsung-ablo` (/ under 20% free, since 13:30Z): same laptop as the 01:40 entry (`DiskAlmostFull`, `T3CodeErrors`, `LaptopSilent`); still unreachable (ssh banner timeout), so its disk cannot be measured or cleaned from the pc. Not a pc fault; look at it when it wakes on mains. Housekeeping: own clone clean, no worktrees or `result` links.
+
 - 2026-11-24 01:40 (health-watch) — `alert/DiskAlmostFull//dev/mapper/cryptroot/ext4/samsung-ablo` (/ 2.6% free, since 00:27Z): same laptop as 11-18/11-22/11-23; unreachable (ssh banner timeout), so its disk cannot be measured or cleaned from the pc. Not a pc fault; look at it when it wakes on mains. Housekeeping: own clone clean, no worktrees or `result` links; other job clones clean, left.
 
 - 2026-11-23 19:55 (health-watch) — `alert/DiskAlmostFull/samsung-ablo` (/ 7.8% free, since 18:42Z): same laptop as 11-18/11-21/11-22 (`DiskFillingUp`, `T3CodeErrors`, `LaptopSilent`); ssh banner timeout, so its disk cannot be measured or cleaned from the pc. Not a pc fault; look at it when the laptop wakes on mains. Housekeeping: own clone clean, no worktrees or `result` links.
