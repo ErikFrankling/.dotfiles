@@ -297,6 +297,8 @@ beyond the short rev, no log excerpts; the thread has the details.
 
 ## Incident log
 
+- 2026-11-25 (health-watch) — `alert/SystemdUnitFailed/pc/agent-input-plugin` (since 11-24 18:40Z): the unit reloads `guard-seat.so` after each activation and exits 1 with "A different computer-use plugin is loaded; restart Hyprland to replace it" (older guard 0.3.0-independent-seat is loaded; guard and agent-windows plugins are both present in `hyprctl plugin list`, so the agent seat works). Only Erik may restart the compositor; the unit clears after his next Hyprland restart. No repair, not urgent. Housekeeping: own clone clean; 250 agent worktrees left (mostly wasm-box/T3, unfinished or live per earlier sweeps), no `result` links outside agent-traces.
+
 - 2026-11-24 13:58 (health-watch) — `alert/DiskAlmostFull/samsung-ablo` (/ 4.3% free, since 12:45Z, with `T3CodeErrors`): same laptop as 11-18..11-24; still unreachable (ssh banner timeout, `LaptopSilent` since 11-18), so its disk cannot be measured or cleaned from the pc. Not a pc fault; look at it when it wakes on mains. Housekeeping: own clone clean, no worktrees or `result` links.
 
 - 2026-11-24 14:57 (health-watch) — `alert/DiskFillingUp/samsung-ablo` (/ under 20% free, since 13:30Z): same laptop as the 01:40 entry (`DiskAlmostFull`, `T3CodeErrors`, `LaptopSilent`); still unreachable (ssh banner timeout), so its disk cannot be measured or cleaned from the pc. Not a pc fault; look at it when it wakes on mains. Housekeeping: own clone clean, no worktrees or `result` links.
