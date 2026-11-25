@@ -12,8 +12,8 @@
 # and the DNS of one leaks into the other (madflex.de/tailscale-two-tailnets).
 # The host reaches the home LAN (192.168.50.0/24: Nix cache, logs, Grafana)
 # over a veth pair into the namespace; the names are public DNS records, so
-# no home resolver is needed. The phone reaches T3 Code through this tailnet,
-# on the node samsung-ablo-home.
+# no home resolver is needed. The phone reaches T3 Code over the Ablo tailnet
+# (samsung-ablo:3773), restricted by host firewall to Erik's phone only.
 #
 # Every agent on this laptop gets its model tokens from cliproxy on the home
 # LAN. Never stop or log out a tailscaled here before the other path to
@@ -34,6 +34,12 @@ let
   nsAddr = "10.200.0.2";
   homeLan = "192.168.50.0/24";
   t3Port = 3773;
+  # Ablo tailnet addresses (fixed per node in tailscale status):
+  # samsung-ablo (this laptop) and pixel-10-pro (Erik's phone).
+  workSelfV4 = "100.114.225.59";
+  workSelfV6 = "fd7a:115c:a1e0::ac46:e13c";
+  workPhoneV4 = "100.83.74.53";
+  workPhoneV6 = "fd7a:115c:a1e0::e246:4a36";
 in
 {
   # The shared module enrolls with the home tailnet's key (tailscale.nix);
@@ -93,10 +99,7 @@ in
   services.resolved.settings.Resolve.DNSStubListenerExtra = hostAddr;
   environment.etc."netns/home/resolv.conf".text = "nameserver ${hostAddr}\n";
   networking.firewall.interfaces.veth-home = {
-    allowedTCPPorts = [
-      53
-      t3Port
-    ];
+    allowedTCPPorts = [ 53 ];
     allowedUDPPorts = [ 53 ];
   };
 
@@ -169,27 +172,37 @@ in
     '';
   };
 
-  # T3 Code for the phone, on the home tailnet. T3 listens on the host's
-  # loopback only; the namespace reaches it through systemd's socket proxy on
-  # the veth address.
-  systemd.sockets.t3code-home-proxy = {
+  # T3 Code for Erik's phone on the Ablo tailnet (2026-11-25). T3 itself
+  # listens on 127.0.0.1:3773 only; this proxy exposes it on samsung-ablo's
+  # work-tailnet addresses instead of `tailscale serve` (which terminates in
+  # userspace and cannot be filtered per-peer by host iptables).
+  systemd.sockets.t3code-work-proxy = {
     wantedBy = [ "sockets.target" ];
-    listenStreams = [ "${hostAddr}:${toString t3Port}" ];
+    listenStreams = [
+      "${workSelfV4}:${toString t3Port}"
+      "[${workSelfV6}]:${toString t3Port}"
+    ];
     socketConfig.FreeBind = true;
   };
-  systemd.services.t3code-home-proxy = {
-    description = "T3 Code for the home tailnet namespace";
+  systemd.services.t3code-work-proxy = {
+    description = "T3 Code for Erik's phone on the Ablo tailnet";
     serviceConfig.ExecStart = "${config.systemd.package}/lib/systemd/systemd-socket-proxyd 127.0.0.1:${toString t3Port}";
   };
-  systemd.services.t3code-tailnet = {
-    description = "T3 Code access over the home tailnet";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "tailscaled-home-up.service" ];
-    requires = [ "tailscaled-home.service" ];
-    serviceConfig = {
-      ExecStart = "${tailscale}/bin/tailscale --socket=${socket} serve --tcp=${toString t3Port} tcp://${hostAddr}:${toString t3Port}";
-      Restart = "on-failure";
-      RestartSec = 5;
-    };
-  };
+
+  # Ablo's tailnet PacketFilter allows all teammates' devices to reach every
+  # port on samsung-ablo, and tailscaled's ts-input chain accepts all
+  # tailscale0 traffic ahead of nixos-fw. Filter in mangle PREROUTING (which
+  # tailscaled never touches) so only Erik's phone can reach TCP 3773 over
+  # tailscale0; Tailscale binds each IP to the peer's WireGuard key.
+  # Delete-before-add keeps firewall reloads idempotent (mangle is not flushed).
+  networking.firewall.extraCommands = ''
+    iptables -t mangle -D PREROUTING -i tailscale0 -p tcp --dport ${toString t3Port} ! -s ${workPhoneV4} -j DROP 2>/dev/null || true
+    iptables -t mangle -A PREROUTING -i tailscale0 -p tcp --dport ${toString t3Port} ! -s ${workPhoneV4} -j DROP
+    ip6tables -t mangle -D PREROUTING -i tailscale0 -p tcp --dport ${toString t3Port} ! -s ${workPhoneV6} -j DROP 2>/dev/null || true
+    ip6tables -t mangle -A PREROUTING -i tailscale0 -p tcp --dport ${toString t3Port} ! -s ${workPhoneV6} -j DROP
+  '';
+  networking.firewall.extraStopCommands = ''
+    iptables -t mangle -D PREROUTING -i tailscale0 -p tcp --dport ${toString t3Port} ! -s ${workPhoneV4} -j DROP 2>/dev/null || true
+    ip6tables -t mangle -D PREROUTING -i tailscale0 -p tcp --dport ${toString t3Port} ! -s ${workPhoneV6} -j DROP 2>/dev/null || true
+  '';
 }

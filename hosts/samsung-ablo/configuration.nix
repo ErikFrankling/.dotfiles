@@ -38,7 +38,7 @@
 
   networking.hostName = "samsung-ablo";
 
-  # T3 Code for the phone is served over the home tailnet: tailnets.nix.
+  # T3 Code for the phone is served over the Ablo tailnet (phone-only): tailnets.nix.
   # Until 2026-11-12 the laptop was in the home tailnet only:
   # systemd.services.t3code-tailnet = {
   #   description = "T3 Code access over Tailscale";
