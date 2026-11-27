@@ -297,6 +297,8 @@ beyond the short rev, no log excerpts; the thread has the details.
 
 ## Incident log
 
+- 2026-11-27 04:20 (health-watch) — `alert/T3CodeErrors/samsung-ablo/t3code` (since 03:02Z): same laptop dictation error bursts as 11-14/11-22/11-26; laptop still unreachable (ssh banner timeout, `LaptopSilent`), so nothing can be read or repaired from the pc. Clears when it wakes on mains, applies main and t3code restarts when idle. Housekeeping: own clone clean, no worktrees or `result` links.
+
 - 2026-11-26 15:50 (health-watch) — `alert/DiskFillingUp/samsung-ablo` again (since 14:33Z, with `T3CodeErrors`, `LaptopSilent`): laptop still unreachable (ssh banner timeout), so its disk cannot be measured or cleaned from the pc. Not a pc fault; look at it when it wakes on mains. Housekeeping: own clone clean, no worktrees or `result` links.
 
 - 2026-11-26 14:35 (health-watch) — `alert/T3CodeErrors/samsung-ablo/t3code` (since 13:17Z): same laptop dictation error bursts as 11-14 and 11-26 05:10; laptop still unreachable (ssh banner timeout, `LaptopSilent`), so nothing can be read or repaired from the pc. Clears when it wakes on mains, applies main and t3code restarts when idle. Housekeeping: own clone clean, no worktrees or `result` links.
