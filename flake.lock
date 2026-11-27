@@ -1521,11 +1521,11 @@
     "t3code-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1795671079,
-        "narHash": "sha256-5DCro6dnXy+aK8adKGkWvqphS2CeWJN/52lDLl8HCks=",
+        "lastModified": 1795756855,
+        "narHash": "sha256-zAzQnfUYBAujqZMfGMHgnc4490a0/Dfxt3JlY/lgFEo=",
         "owner": "ErikFrankling",
         "repo": "t3code",
-        "rev": "59a268fe5a7fce9c6855be01c5588cfd869ddd5f",
+        "rev": "55a82b565e741a83a301cadb55d2cbf58653d086",
         "type": "github"
       },
       "original": {
